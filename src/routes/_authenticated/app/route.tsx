@@ -8,13 +8,14 @@ export const Route = createFileRoute("/_authenticated/app")({
   component: MemberShell,
 });
 
-const NAV = [
+type NavItem = { to: "/app"; label: string; icon: typeof Home; exact?: boolean };
+const NAV: NavItem[] = [
   { to: "/app", label: "Home", icon: Home, exact: true },
   { to: "/app", label: "Workouts", icon: Dumbbell },
   { to: "/app", label: "Schedule", icon: Calendar },
   { to: "/app", label: "Progress", icon: Activity },
   { to: "/app", label: "You", icon: User },
-] as const;
+];
 
 function MemberShell() {
   const { data: user, isLoading } = useCurrentUser();
