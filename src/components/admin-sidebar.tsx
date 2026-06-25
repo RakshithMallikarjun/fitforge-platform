@@ -7,10 +7,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme-provider";
 
-type NavItem = { to: "/admin"; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 const NAV: NavItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/admin", label: "Members", icon: Users },
+  { to: "/admin/members", label: "Members", icon: Users },
   { to: "/admin", label: "Plans", icon: ClipboardList },
   { to: "/admin", label: "Exercises", icon: Dumbbell },
   { to: "/admin", label: "Analytics", icon: BarChart3 },
