@@ -46,7 +46,7 @@ export function AdminSidebar() {
           return (
             <Link
               key={item.label}
-              to={item.to}
+              to={item.to as any}
               className={[
                 "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                 active
