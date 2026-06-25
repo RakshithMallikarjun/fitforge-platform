@@ -1,89 +1,88 @@
 
-# FitForge — Steps 0 & 1
+# Step 2 — Admin Member Management
 
-Build the foundation for a white-label, multi-tenant B2B fitness SaaS with two apps in one codebase, plus the full Supabase data layer with RLS.
+Build the full member management module in the Admin PWA. Covers directory, CRUD, trainer assignment, and the Member 360 profile view.
 
-## Step 0 — Scaffold, routes, theming, design system
+## Routes
 
-**Routes (TanStack Start file-based)**
 ```
-src/routes/
-  __root.tsx              shell + ThemeProvider + QueryClient
-  index.tsx               marketing/login landing
-  auth.tsx                login / signup (email + password)
-  _authenticated/
-    route.tsx             managed gate (integration owns this)
-    admin/
-      route.tsx           Admin shell (sidebar + glass header) — admin/trainer only
-      index.tsx           dashboard (stats grid, engagement, payments, schedule)
-    app/
-      route.tsx           Member shell (mobile-first bottom nav) — member only
-      index.tsx           today's workout / quick actions
+src/routes/_authenticated/admin/
+  members.tsx              directory (list + filters + Add Member dialog + bulk import)
+  members.$memberId.tsx    Member 360 (tabbed profile)
 ```
-Role gate inside each shell route redirects wrong-role users.
 
-**Design system (src/styles.css)**
-- Tokens via `oklch` for: background `#F8FAFC`, surface `#FFFFFF`, primary emerald `#059669`, primary-foreground, secondary sky `#0284c7`, emerald-900 `#064E3B`, success/info/danger, border `#E2E8F0`, ring.
-- Radii: card `2rem` (32px), button `0.75rem` (12px).
-- Shadows: `--shadow-card`, `--shadow-card-hover` (12px 20px -5px).
-- Fonts loaded via `<link>` in `__root.tsx` head: General Sans (headings/numerals) + Satoshi (body) from Fontshare. `--font-display`, `--font-sans` tokens.
-- Custom utilities: `.card-lift` (translateY(-4px) + hover shadow, 0.3s ease), `.glass-header` (sticky, white/90, blur 12), `.timeline-bar` (2px colored left border).
-- Shadcn `button`, `card`, `badge` extended with `hero`/`bento`/`verified` variants — no ad-hoc colors in components.
+Add "Members" link to `AdminSidebar`.
 
-**Runtime branding (ThemeProvider)**
-- `src/lib/theme-provider.tsx` — context with `{ primaryColor, logoUrl, fontFamily }`, sets CSS vars on `:root` (`--primary`, `--font-sans`, etc.) via `useEffect`. Default = FitForge theme. Later swapped from `gyms` row; no rebuild needed.
+## 2.1 — Member Directory (`/admin/members`)
 
-**Shared shell pieces**
-- `AdminSidebar` (256px, nav items, "Practice Verified" card, logout)
-- `GlassHeader` (sticky, search pill, bell, avatar)
-- `BentoStatCard`, `TimelineItem`, `StatusBadge` reusable components
+**Table** (shadcn `<Table>` + TanStack Query):
+- Columns: photo + name, email, status badge (active / inactive / expiring soon), assigned trainer(s), join date, last login.
+- Search: name/email (client-side filter on fetched list).
+- Filters: status select, trainer select.
+- Sortable headers: name, join date, last login.
+- Row click → `/admin/members/$memberId`.
 
-**Landing page** — hero with both CTAs ("Member sign in" / "Gym admin sign in"), minimal — not a generic SaaS marketing dump.
+Status derivation: `users.active=false` → inactive; `member_profiles.membership_expires_at` within 14d → expiring soon; else active.
 
-## Step 1 — Supabase: schema, auth, RLS
+**Add Member dialog** — react-hook-form + zod:
+- Fields: name, email, phone, goals (textarea), experience level (select: beginner/intermediate/advanced), medical history (textarea), photo upload (Supabase Storage `member-photos` bucket).
+- Server function `inviteMember` (admin-only, `requireSupabaseAuth` + `has_role` check, loads `supabaseAdmin` inside handler):
+  1. `supabaseAdmin.auth.admin.inviteUserByEmail(email, { data: { gym_slug, role: 'member', display_name }})` — trigger creates `users` + `user_roles` + empty `member_profile` row.
+  2. Update `users` (phone, photo_url), update `member_profile` (goals, experience, medical_history).
+- Toast on success, invalidate `['members']`.
 
-Enable Lovable Cloud, then ship one migration containing:
+**CSV bulk import**:
+- Dialog with file input, parse with PapaParse client-side, preview table, "Import" calls `inviteMembersBulk` server fn (loops `inviteMember` logic), shows per-row success/error.
 
-**Enums**
-- `app_role`: `admin | trainer | member`
-- `subscription_plan`: `starter | growth | pro | chain`
-- `plan_status`: `active | archived`
+**Soft delete (Remove Member)**:
+- Row action menu → confirm dialog → `deactivateMember` server fn sets `users.active=false` and `trainer_assignments.active=false`. Historical data preserved.
 
-**Tables** (all with `id uuid pk default gen_random_uuid()`, `created_at timestamptz default now()`, `gym_id uuid` where applicable, FKs + indexes):
-gyms, users (id = auth.users.id), member_profiles, trainer_assignments, fitness_assessments, exercises (gym_id nullable for global library), workout_plans, workout_days, workout_exercises, workout_logs, exercise_logs, attendance_logs — exactly as specified.
+**Trainer Assignment**:
+- In member detail (and as row action): "Manage trainers" dialog — multi-select of gym's trainers, writes to `trainer_assignments` (insert new active rows, mark removed ones inactive).
 
-**Roles table (separate, per security rules)**
-- `user_roles(user_id, gym_id, role app_role, unique(user_id, role))` — roles NOT on `users` table.
+## 2.2 — Member 360 (`/admin/members/$memberId`)
 
-**Security-definer helpers** (`SECURITY DEFINER`, `search_path=public`):
-- `current_gym_id()` → reads `user_roles`/`users` for `auth.uid()`
-- `has_role(_user_id, _role)` → bool
-- `is_trainer_of(_member_id)` → bool via `trainer_assignments`
+Header card: photo, name, status badge, contact, "Edit" + "Assign trainer" actions.
 
-**RLS pattern on every gym-scoped table**
-- `gym_id = current_gym_id()` for SELECT
-- Admin: full CRUD within gym (`has_role(auth.uid(),'admin')`)
-- Trainer: rows where member is in `is_trainer_of(member_id)` + global exercises
-- Member: rows where `member_id = auth.uid()` (own profile/assessments/plans/logs); read-only exercise library
+**Tabs** (shadcn `Tabs`):
+1. **Overview** — demographics (DOB, gender, height, weight from `member_profile`), goals, experience, medical history, membership type & expiry, assigned trainers, contact info. Inline edit dialog.
+2. **Assessments** — list `fitness_assessments` rows (date, weight, body fat, key metrics). Empty state "No assessments yet — form coming in Step 3".
+3. **Workout Plans** — list `workout_plans` with status badge, day count, "View" link (deferred page).
+4. **Attendance** — `attendance_logs` table + simple monthly count.
+5. **Notes** — trainer notes (timestamped, author, body). Requires new `member_notes` table.
 
-**GRANTs** on every public table to `authenticated` + `service_role` (no `anon` — all data is auth-gated).
+## Data layer
 
-**Trigger**
-- `handle_new_user()` on `auth.users` insert → inserts into `public.users` (gym_id from signup metadata) and `user_roles` (default `member` unless metadata says otherwise).
+**New migration**: `member_notes` table
+```
+member_notes(id, gym_id, member_id, author_id, body text, created_at, updated_at)
+```
+RLS: admin full CRUD in gym; trainer can SELECT/INSERT/UPDATE/DELETE own notes for assigned members; member cannot read. GRANTs to `authenticated` + `service_role`.
 
-**Auth flow**
-- `/auth` page: sign in + sign up (with gym slug field on signup → resolves `gym_id`).
-- Session listener wired once in `__root.tsx` (filtered to identity events).
-- Post-auth redirect: admin/trainer → `/admin`, member → `/app`.
-- Sign-out: cancel queries → clear cache → signOut → navigate `/auth` replace.
+**Storage bucket**: `member-photos` (public read, authenticated write within own gym path). Migration creates bucket + policies.
 
-## Technical notes
+**Server functions** (`src/lib/members.functions.ts`):
+- `listMembers()` — admin/trainer scoped; joins `users`, `member_profiles`, latest `trainer_assignments` (with trainer names), last sign-in via `supabaseAdmin.auth.admin.listUsers` (admin only).
+- `getMember(memberId)` — single member with profile, trainers, recent assessments/plans/attendance/notes.
+- `inviteMember(input)`, `inviteMembersBulk(rows)`, `deactivateMember(id)`, `updateMember(id, patch)`.
+- `assignTrainers(memberId, trainerIds[])`.
+- `listTrainers()` — gym's trainers for selectors.
+- `listMemberNotes(memberId)`, `createMemberNote(memberId, body)`, `deleteMemberNote(id)`.
 
-- TanStack Query for all reads; `defaultPreloadStaleTime: 0`, per-request QueryClient.
-- Server-side reads use `requireSupabaseAuth` middleware; nothing imports `client.server` into route/component chains.
-- Multi-tenant isolation is enforced in the DB by RLS, not by app code — app code is the second line of defense.
-- PWA manifest + service worker deferred to a later step (offline workout logging arrives with Step 2's logging UI).
+All gated by `requireSupabaseAuth` + role check via `has_role` RPC.
 
-## What ships at the end of this turn
+## Components
 
-A bootable app with: themed design system, dual app shells with role-gated routing, working email/password auth, and the full schema + RLS so subsequent feature work just consumes typed Supabase queries.
+- `src/components/members/member-table.tsx`
+- `src/components/members/add-member-dialog.tsx`
+- `src/components/members/bulk-import-dialog.tsx`
+- `src/components/members/assign-trainers-dialog.tsx`
+- `src/components/members/member-notes.tsx`
+- `src/components/members/status-badge.tsx`
+
+## Out of scope (later steps)
+
+- Email-template customization (uses default Supabase invite email for now).
+- Fitness assessment form (Step 3).
+- Workout plan builder (Step 4).
+- Check-in flow (Step 5).

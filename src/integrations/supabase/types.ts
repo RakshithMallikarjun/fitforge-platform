@@ -285,32 +285,93 @@ export type Database = {
         }
         Relationships: []
       }
+      member_notes: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          gym_id: string
+          id: string
+          member_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          gym_id: string
+          id?: string
+          member_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          gym_id?: string
+          id?: string
+          member_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_notes_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_notes_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_profiles: {
         Row: {
           created_at: string
           dob: string | null
           emergency_contact: Json | null
+          experience_level: string | null
           gender: string | null
           goals: string | null
           health_notes: string | null
+          membership_expires_at: string | null
+          membership_type: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           dob?: string | null
           emergency_contact?: Json | null
+          experience_level?: string | null
           gender?: string | null
           goals?: string | null
           health_notes?: string | null
+          membership_expires_at?: string | null
+          membership_type?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           dob?: string | null
           emergency_contact?: Json | null
+          experience_level?: string | null
           gender?: string | null
           goals?: string | null
           health_notes?: string | null
+          membership_expires_at?: string | null
+          membership_type?: string | null
           user_id?: string
         }
         Relationships: [
@@ -406,27 +467,36 @@ export type Database = {
       }
       users: {
         Row: {
+          active: boolean
           created_at: string
           display_name: string | null
           email: string
           gym_id: string | null
           id: string
+          phone: string | null
+          photo_url: string | null
           push_subscription: Json | null
         }
         Insert: {
+          active?: boolean
           created_at?: string
           display_name?: string | null
           email: string
           gym_id?: string | null
           id: string
+          phone?: string | null
+          photo_url?: string | null
           push_subscription?: Json | null
         }
         Update: {
+          active?: boolean
           created_at?: string
           display_name?: string | null
           email?: string
           gym_id?: string | null
           id?: string
+          phone?: string | null
+          photo_url?: string | null
           push_subscription?: Json | null
         }
         Relationships: [
