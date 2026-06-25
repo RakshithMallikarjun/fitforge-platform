@@ -126,7 +126,7 @@ export const listTrainers = createServerFn({ method: "GET" })
 
 export const getMember = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { memberId: string }) => d)
+  .inputValidator((d: { memberId: string }) => d)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { gymId, isAdmin, isTrainer } = await getRolesAndGym(supabase, userId);
@@ -173,7 +173,7 @@ export const getMember = createServerFn({ method: "GET" })
 
 export const listMemberNotes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { memberId: string }) => d)
+  .inputValidator((d: { memberId: string }) => d)
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const { data: notes } = await supabase
@@ -191,7 +191,7 @@ export const listMemberNotes = createServerFn({ method: "GET" })
 
 export const createMemberNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { memberId: string; body: string }) => d)
+  .inputValidator((d: { memberId: string; body: string }) => d)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { gymId } = await getRolesAndGym(supabase, userId);
@@ -208,7 +208,7 @@ export const createMemberNote = createServerFn({ method: "POST" })
 
 export const deleteMemberNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { id: string }) => d)
+  .inputValidator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const { error } = await supabase.from("member_notes").delete().eq("id", data.id);
@@ -284,7 +284,7 @@ async function inviteOneMember(input: MemberInput, gymId: string) {
 
 export const inviteMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: MemberInput) => memberInputSchema.parse(d))
+  .inputValidator((d: MemberInput) => memberInputSchema.parse(d))
   .handler(async ({ data, context }) => {
     const gymId = await assertAdmin(context.supabase, context.userId);
     const id = await inviteOneMember(data, gymId);
@@ -293,7 +293,7 @@ export const inviteMember = createServerFn({ method: "POST" })
 
 export const inviteMembersBulk = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { members: MemberInput[] }) => ({ members: z.array(memberInputSchema).parse(d.members) }))
+  .inputValidator((d: { members: MemberInput[] }) => ({ members: z.array(memberInputSchema).parse(d.members) }))
   .handler(async ({ data, context }) => {
     const gymId = await assertAdmin(context.supabase, context.userId);
     const results: { email: string; ok: boolean; error?: string }[] = [];
@@ -310,7 +310,7 @@ export const inviteMembersBulk = createServerFn({ method: "POST" })
 
 export const updateMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { memberId: string; patch: Partial<MemberInput> }) => d)
+  .inputValidator((d: { memberId: string; patch: Partial<MemberInput> }) => d)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { gymId, isAdmin, isTrainer } = await getRolesAndGym(supabase, userId);
@@ -351,7 +351,7 @@ export const updateMember = createServerFn({ method: "POST" })
 
 export const setMemberActive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { memberId: string; active: boolean }) => d)
+  .inputValidator((d: { memberId: string; active: boolean }) => d)
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { error } = await context.supabase.from("users").update({ active: data.active }).eq("id", data.memberId);
@@ -361,7 +361,7 @@ export const setMemberActive = createServerFn({ method: "POST" })
 
 export const assignTrainers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { memberId: string; trainerIds: string[] }) => d)
+  .inputValidator((d: { memberId: string; trainerIds: string[] }) => d)
   .handler(async ({ data, context }) => {
     const gymId = await assertAdmin(context.supabase, context.userId);
     const { supabase } = context;
