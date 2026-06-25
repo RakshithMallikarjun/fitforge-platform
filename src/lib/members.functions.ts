@@ -371,7 +371,7 @@ export const assignTrainers = createServerFn({ method: "POST" })
       .select("id, trainer_id, active")
       .eq("member_id", data.memberId);
 
-    const want = new Set(data.trainerIds);
+    const want = new Set<string>(data.trainerIds as string[]);
     const have = new Map<string, any>((existing ?? []).map((r: any) => [r.trainer_id, r]));
 
     // Deactivate removed
