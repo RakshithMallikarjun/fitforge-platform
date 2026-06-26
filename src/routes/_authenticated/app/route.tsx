@@ -12,12 +12,13 @@ export const Route = createFileRoute("/_authenticated/app")({
   component: MemberShell,
 });
 
-const NAV = [
+const NAV: ReadonlyArray<{ to: "/app" | "/app/workouts" | "/app/progress" | "/app/profile"; label: string; icon: typeof Home; exact?: boolean }> = [
   { to: "/app", label: "Home", icon: Home, exact: true },
   { to: "/app/workouts", label: "Workouts", icon: Dumbbell },
   { to: "/app/progress", label: "Progress", icon: Activity },
   { to: "/app/profile", label: "Profile", icon: User },
-] as const;
+];
+
 
 function MemberShell() {
   const { data: user, isLoading } = useCurrentUser();

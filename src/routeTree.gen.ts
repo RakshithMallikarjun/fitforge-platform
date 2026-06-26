@@ -17,6 +17,9 @@ import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAppWorkoutsRouteImport } from './routes/_authenticated/app/workouts'
+import { Route as AuthenticatedAppProgressRouteImport } from './routes/_authenticated/app/progress'
+import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authenticated/app/profile'
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin/members'
 import { Route as AuthenticatedAdminMembersMemberIdRouteImport } from './routes/_authenticated/admin/members.$memberId'
 
@@ -59,6 +62,23 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+const AuthenticatedAppWorkoutsRoute =
+  AuthenticatedAppWorkoutsRouteImport.update({
+    id: '/workouts',
+    path: '/workouts',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppProgressRoute =
+  AuthenticatedAppProgressRouteImport.update({
+    id: '/progress',
+    path: '/progress',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppProfileRoute = AuthenticatedAppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
 const AuthenticatedAdminMembersRoute =
   AuthenticatedAdminMembersRouteImport.update({
     id: '/members',
@@ -79,6 +99,9 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/app': typeof AuthenticatedAppRouteRouteWithChildren
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
+  '/app/profile': typeof AuthenticatedAppProfileRoute
+  '/app/progress': typeof AuthenticatedAppProgressRoute
+  '/app/workouts': typeof AuthenticatedAppWorkoutsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
@@ -88,6 +111,9 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
+  '/app/profile': typeof AuthenticatedAppProfileRoute
+  '/app/progress': typeof AuthenticatedAppProgressRoute
+  '/app/workouts': typeof AuthenticatedAppWorkoutsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
@@ -101,6 +127,9 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteRouteWithChildren
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
+  '/_authenticated/app/profile': typeof AuthenticatedAppProfileRoute
+  '/_authenticated/app/progress': typeof AuthenticatedAppProgressRoute
+  '/_authenticated/app/workouts': typeof AuthenticatedAppWorkoutsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
@@ -114,6 +143,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/admin/members'
+    | '/app/profile'
+    | '/app/progress'
+    | '/app/workouts'
     | '/admin/'
     | '/app/'
     | '/admin/members/$memberId'
@@ -123,6 +155,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/admin/members'
+    | '/app/profile'
+    | '/app/progress'
+    | '/app/workouts'
     | '/admin'
     | '/app'
     | '/admin/members/$memberId'
@@ -135,6 +170,9 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/app'
     | '/_authenticated/admin/members'
+    | '/_authenticated/app/profile'
+    | '/_authenticated/app/progress'
+    | '/_authenticated/app/workouts'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/_authenticated/admin/members/$memberId'
@@ -205,6 +243,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/app/workouts': {
+      id: '/_authenticated/app/workouts'
+      path: '/workouts'
+      fullPath: '/app/workouts'
+      preLoaderRoute: typeof AuthenticatedAppWorkoutsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/progress': {
+      id: '/_authenticated/app/progress'
+      path: '/progress'
+      fullPath: '/app/progress'
+      preLoaderRoute: typeof AuthenticatedAppProgressRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/profile': {
+      id: '/_authenticated/app/profile'
+      path: '/profile'
+      fullPath: '/app/profile'
+      preLoaderRoute: typeof AuthenticatedAppProfileRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/admin/members': {
       id: '/_authenticated/admin/members'
       path: '/members'
@@ -254,10 +313,16 @@ const AuthenticatedAdminRouteRouteWithChildren =
   )
 
 interface AuthenticatedAppRouteRouteChildren {
+  AuthenticatedAppProfileRoute: typeof AuthenticatedAppProfileRoute
+  AuthenticatedAppProgressRoute: typeof AuthenticatedAppProgressRoute
+  AuthenticatedAppWorkoutsRoute: typeof AuthenticatedAppWorkoutsRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
 const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
+  AuthenticatedAppProfileRoute: AuthenticatedAppProfileRoute,
+  AuthenticatedAppProgressRoute: AuthenticatedAppProgressRoute,
+  AuthenticatedAppWorkoutsRoute: AuthenticatedAppWorkoutsRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
 
