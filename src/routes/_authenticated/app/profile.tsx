@@ -165,4 +165,4 @@ function ProfilePage() {
   );
 }
 
-<UserIcon className="hidden" />
+
