@@ -150,8 +150,8 @@ function MemberProfile() {
               render={(a: any) => (
                 <li key={a.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
                   <div>
-                    <p className="text-sm font-semibold">{new Date(a.assessment_date).toLocaleDateString()}</p>
-                    <p className="text-xs text-muted-foreground">Weight {a.weight_kg ?? "—"}kg · Body fat {a.body_fat_pct ?? "—"}%</p>
+                    <p className="text-sm font-semibold">{new Date(a.date).toLocaleDateString()}</p>
+                    <p className="text-xs text-muted-foreground">Weight {a.weight ?? "—"}kg · Body fat {a.body_fat_pct ?? "—"}%</p>
                   </div>
                 </li>
               )}
