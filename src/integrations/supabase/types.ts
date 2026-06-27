@@ -161,12 +161,15 @@ export type Database = {
       fitness_assessments: {
         Row: {
           arms: number | null
+          bench_1rm: number | null
           blood_pressure: string | null
           bmi: number | null
           body_fat_pct: number | null
           chest: number | null
           created_at: string
           date: string
+          deadlift_1rm: number | null
+          flexibility: number | null
           gym_id: string
           height: number | null
           hips: number | null
@@ -175,20 +178,25 @@ export type Database = {
           muscle_mass: number | null
           notes: string | null
           resting_hr: number | null
+          squat_1rm: number | null
           thighs: number | null
           trainer_id: string | null
+          unit_system: string
           vo2_max: number | null
           waist: number | null
           weight: number | null
         }
         Insert: {
           arms?: number | null
+          bench_1rm?: number | null
           blood_pressure?: string | null
           bmi?: number | null
           body_fat_pct?: number | null
           chest?: number | null
           created_at?: string
           date?: string
+          deadlift_1rm?: number | null
+          flexibility?: number | null
           gym_id: string
           height?: number | null
           hips?: number | null
@@ -197,20 +205,25 @@ export type Database = {
           muscle_mass?: number | null
           notes?: string | null
           resting_hr?: number | null
+          squat_1rm?: number | null
           thighs?: number | null
           trainer_id?: string | null
+          unit_system?: string
           vo2_max?: number | null
           waist?: number | null
           weight?: number | null
         }
         Update: {
           arms?: number | null
+          bench_1rm?: number | null
           blood_pressure?: string | null
           bmi?: number | null
           body_fat_pct?: number | null
           chest?: number | null
           created_at?: string
           date?: string
+          deadlift_1rm?: number | null
+          flexibility?: number | null
           gym_id?: string
           height?: number | null
           hips?: number | null
@@ -219,8 +232,10 @@ export type Database = {
           muscle_mass?: number | null
           notes?: string | null
           resting_hr?: number | null
+          squat_1rm?: number | null
           thighs?: number | null
           trainer_id?: string | null
+          unit_system?: string
           vo2_max?: number | null
           waist?: number | null
           weight?: number | null
