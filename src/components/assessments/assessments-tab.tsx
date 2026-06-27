@@ -88,7 +88,7 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
               {rows.map((a: any) => {
                 const isOpen = expanded === a.id;
                 return (
-                  <FragmentRow key={a.id}>
+                  <Fragment key={a.id}>
                     <TableRow
                       key={a.id}
                       className="cursor-pointer"
@@ -114,7 +114,7 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
                         </TableCell>
                       </TableRow>
                     )}
-                  </FragmentRow>
+                  </Fragment>
                 );
               })}
             </TableBody>
