@@ -33,15 +33,30 @@ function AdminDashboard() {
       <main className="mx-auto max-w-[1280px] space-y-8 px-8 py-8">
         {/* Stats grid */}
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <BentoStatCard
-            variant="dark"
-            label="MRR"
-            value="$24,580"
-            footer={<span className="inline-flex items-center gap-1"><ArrowUpRight className="h-3 w-3" /> 12.4% vs last month</span>}
-          />
-          <BentoStatCard label="Active members" value="342" footer="+18 this week" />
-          <BentoStatCard label="Sessions today" value="47" footer="Across 6 trainers" />
-          <BentoStatCard label="Retention 30d" value="92%" footer="Above benchmark" />
+          {statsLoading || !stats ? (
+            <>
+              <Skeleton className="h-32 rounded-[2rem]" />
+              <Skeleton className="h-32 rounded-[2rem]" />
+              <Skeleton className="h-32 rounded-[2rem]" />
+              <Skeleton className="h-32 rounded-[2rem]" />
+            </>
+          ) : (
+            <>
+              <BentoStatCard
+                variant="dark"
+                label="Active members"
+                value={stats.activeMembers.toLocaleString()}
+                footer={
+                  <span className="inline-flex items-center gap-1">
+                    <ArrowUpRight className="h-3 w-3" /> {stats.newThisMonth} new this month
+                  </span>
+                }
+              />
+              <BentoStatCard label="New this month" value={stats.newThisMonth.toLocaleString()} footer="Members joined" />
+              <BentoStatCard label="Sessions today" value={stats.sessionsToday.toLocaleString()} footer="Workouts logged" />
+              <BentoStatCard label="Avg check-ins / day" value={stats.avgCheckIns7d.toString()} footer="Last 7 days" />
+            </>
+          )}
         </section>
 
         {/* Two-column main */}
