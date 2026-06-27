@@ -73,10 +73,19 @@ export const createAssessment = createServerFn({ method: "POST" })
       bmi = Number((data.weight / (heightM * heightM)).toFixed(2));
     }
 
+    const { data: memberRow } = await supabase
+      .from("users")
+      .select("gym_id")
+      .eq("id", data.member_id)
+      .maybeSingle();
+    if (!memberRow?.gym_id) throw new Error("Member gym not found");
+
     const { data: inserted, error } = await supabase
       .from("fitness_assessments")
       .insert({
         member_id: data.member_id,
+        gym_id: memberRow.gym_id,
+        trainer_id: userId,
         date: data.date,
         unit_system: data.unit_system,
         weight: data.weight ?? null,
@@ -97,7 +106,6 @@ export const createAssessment = createServerFn({ method: "POST" })
         squat_1rm: data.squat_1rm ?? null,
         deadlift_1rm: data.deadlift_1rm ?? null,
         notes: data.notes ?? null,
-        recorded_by: userId,
       })
       .select()
       .single();
