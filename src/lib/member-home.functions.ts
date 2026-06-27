@@ -123,7 +123,7 @@ export const getMemberHome = createServerFn({ method: "GET" })
         const day = dayList[nextIdx];
         const { data: exs } = await supabase
           .from("workout_exercises")
-          .select("sets, rest_seconds, exercises(muscle_group)")
+          .select("sets, rest_seconds, exercises(muscle_groups)")
           .eq("day_id", day.id);
         const exercises = exs ?? [];
         const minutes = Math.max(
@@ -138,9 +138,7 @@ export const getMemberHome = createServerFn({ method: "GET" })
         );
         const muscleGroups = Array.from(
           new Set(
-            exercises
-              .map((e: any) => e.exercises?.muscle_group)
-              .filter((m: any): m is string => !!m),
+            exercises.flatMap((e: any) => (e.exercises?.muscle_groups ?? []) as string[]),
           ),
         ).slice(0, 4);
         nextWorkout = {
