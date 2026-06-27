@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, Calendar, LifeBuoy } from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
 import { BentoStatCard } from "@/components/bento-stat-card";
 import { TimelineItem } from "@/components/timeline-item";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { getAdminStats } from "@/lib/admin-stats.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminDashboard,
@@ -13,6 +16,11 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 function AdminDashboard() {
   const { data: user } = useCurrentUser();
   const initials = (user?.displayName ?? user?.email ?? "FF").slice(0, 2).toUpperCase();
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ["admin-stats"],
+    queryFn: () => getAdminStats(),
+  });
+
 
   return (
     <>
