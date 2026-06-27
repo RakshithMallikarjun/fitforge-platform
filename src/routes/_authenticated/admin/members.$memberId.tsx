@@ -10,6 +10,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { AssignTrainersDialog } from "@/components/members/assign-trainers-dialog";
 import { StatusBadge, getMembershipStatus } from "@/components/members/status-badge";
 import { MemberNotes } from "@/components/members/member-notes";
+import { AssessmentsTab } from "@/components/assessments/assessments-tab";
 
 export const Route = createFileRoute("/_authenticated/admin/members/$memberId")({
   component: MemberProfile,
@@ -143,20 +144,9 @@ function MemberProfile() {
 
           {/* ASSESSMENTS */}
           <TabsContent value="assessments">
-            <EmptyOrList
-              items={assessments}
-              emptyIcon={<FileText className="h-6 w-6" />}
-              emptyText="No assessments recorded yet."
-              render={(a: any) => (
-                <li key={a.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
-                  <div>
-                    <p className="text-sm font-semibold">{new Date(a.date).toLocaleDateString()}</p>
-                    <p className="text-xs text-muted-foreground">Weight {a.weight ?? "—"}kg · Body fat {a.body_fat_pct ?? "—"}%</p>
-                  </div>
-                </li>
-              )}
-            />
+            <AssessmentsTab memberId={memberId} />
           </TabsContent>
+
 
           {/* PLANS */}
           <TabsContent value="plans">
