@@ -149,7 +149,7 @@ export const getMember = createServerFn({ method: "GET" })
       supabase.from("users").select("*").eq("id", data.memberId).maybeSingle(),
       supabase.from("member_profiles").select("*").eq("user_id", data.memberId).maybeSingle(),
       supabase.from("trainer_assignments").select("id, trainer_id, active, assigned_at").eq("member_id", data.memberId).eq("active", true),
-      supabase.from("fitness_assessments").select("*").eq("member_id", data.memberId).order("assessment_date", { ascending: false }),
+      supabase.from("fitness_assessments").select("*").eq("member_id", data.memberId).order("date", { ascending: false }),
       supabase.from("workout_plans").select("*").eq("member_id", data.memberId).order("created_at", { ascending: false }),
       supabase.from("attendance_logs").select("*").eq("member_id", data.memberId).order("check_in_at", { ascending: false }).limit(100),
     ]);
