@@ -1,0 +1,372 @@
+import { useMemo, useState } from "react";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { z } from "zod";
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical, Plus, Trash2, Activity, X } from "lucide-react";
+import { GlassHeader } from "@/components/glass-header";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { listMembers } from "@/lib/members.functions";
+import { createPlan, getMemberSnapshot } from "@/lib/plans.functions";
+import { ExercisePickerDialog } from "@/components/exercises/exercise-picker-dialog";
+import type { ExerciseRow } from "@/lib/exercises.functions";
+
+export const Route = createFileRoute("/_authenticated/admin/plans/new")({
+  validateSearch: z.object({ memberId: z.string().uuid().optional() }),
+  component: PlanBuilder,
+});
+
+type ExerciseInput = {
+  uid: string;
+  exercise: ExerciseRow;
+  sets: number;
+  reps: string;
+  rest_seconds: number;
+  tempo: string;
+  notes: string;
+};
+
+type DayInput = {
+  uid: string;
+  label: string;
+  exercises: ExerciseInput[];
+};
+
+let uidCounter = 0;
+const uid = () => `id-${++uidCounter}-${Date.now()}`;
+
+function PlanBuilder() {
+  const navigate = useNavigate();
+  const search = useSearch({ from: "/_authenticated/admin/plans/new" });
+
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [name, setName] = useState("");
+  const [memberId, setMemberId] = useState<string>(search.memberId ?? "");
+  const [startDate, setStartDate] = useState("");
+  const [durationWeeks, setDurationWeeks] = useState<string>("");
+  const [notes, setNotes] = useState("");
+  const [isTemplate, setIsTemplate] = useState(false);
+  const [days, setDays] = useState<DayInput[]>([{ uid: uid(), label: "Day 1", exercises: [] }]);
+  const [pickerForDay, setPickerForDay] = useState<string | null>(null);
+
+  const { data: members = [] } = useQuery({ queryKey: ["members"], queryFn: () => listMembers() });
+  const { data: snapshot } = useQuery({
+    enabled: !!memberId,
+    queryKey: ["snapshot", memberId],
+    queryFn: () => getMemberSnapshot({ data: { memberId } }),
+  });
+
+  const create = useMutation({
+    mutationFn: () =>
+      createPlan({
+        data: {
+          name,
+          member_id: isTemplate ? null : memberId || null,
+          start_date: startDate || null,
+          duration_weeks: durationWeeks ? Number(durationWeeks) : null,
+          notes: notes || null,
+          is_template: isTemplate,
+          days: days.map((d) => ({
+            day_label: d.label,
+            exercises: d.exercises.map((e) => ({
+              exercise_id: e.exercise.id,
+              sets: e.sets || null,
+              reps: e.reps || null,
+              rest_seconds: e.rest_seconds || null,
+              tempo: e.tempo || null,
+              notes: e.notes || null,
+            })),
+          })),
+        },
+      }),
+    onSuccess: (r) => {
+      toast.success(isTemplate ? "Template saved" : "Plan assigned");
+      navigate({ to: "/admin/plans/$planId", params: { planId: r.id } });
+    },
+    onError: (e: any) => toast.error("Save failed", { description: e?.message }),
+  });
+
+  const canStep2 = name && (isTemplate || memberId);
+  const canFinish = canStep2 && days.length > 0;
+
+  return (
+    <>
+      <GlassHeader title="New plan" subtitle={`Step ${step} of 3`} />
+      <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
+        <div className="flex items-center gap-2 text-sm">
+          {[1, 2, 3].map((n) => (
+            <button
+              key={n}
+              onClick={() => setStep(n as 1 | 2 | 3)}
+              className={`rounded-full px-3 py-1.5 ${step === n ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+            >
+              {n === 1 ? "Details" : n === 2 ? "Days" : "Review"}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          <div className="space-y-6">
+            {step === 1 && (
+              <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+                <div>
+                  <Label>Plan name</Label>
+                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Hypertrophy block 1" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox id="tpl" checked={isTemplate} onCheckedChange={(v) => setIsTemplate(!!v)} />
+                  <Label htmlFor="tpl" className="cursor-pointer">Save as template (not assigned to a member)</Label>
+                </div>
+                {!isTemplate && (
+                  <div>
+                    <Label>Assign to member</Label>
+                    <Select value={memberId} onValueChange={setMemberId}>
+                      <SelectTrigger><SelectValue placeholder="Select a member…" /></SelectTrigger>
+                      <SelectContent>
+                        {members.map((m: any) => (
+                          <SelectItem key={m.id} value={m.id}>{m.display_name ?? m.email}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Start date</Label>
+                    <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Duration (weeks)</Label>
+                    <Input type="number" min={1} value={durationWeeks} onChange={(e) => setDurationWeeks(e.target.value)} />
+                  </div>
+                </div>
+                <div>
+                  <Label>Notes</Label>
+                  <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
+                </div>
+                <div className="flex justify-end">
+                  <Button disabled={!canStep2} onClick={() => setStep(2)}>Next: Days</Button>
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <DayBuilder days={days} setDays={setDays} onPick={(uid) => setPickerForDay(uid)} onNext={() => setStep(3)} />
+            )}
+
+            {step === 3 && (
+              <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+                <h3 className="text-lg font-semibold">Review</h3>
+                <div className="text-sm">
+                  <p><span className="text-muted-foreground">Name:</span> {name}</p>
+                  <p><span className="text-muted-foreground">Member:</span> {isTemplate ? "— (template)" : members.find((m: any) => m.id === memberId)?.display_name ?? "—"}</p>
+                  <p><span className="text-muted-foreground">Days:</span> {days.length} · <span className="text-muted-foreground">Exercises:</span> {days.reduce((a, d) => a + d.exercises.length, 0)}</p>
+                </div>
+                <ul className="space-y-2">
+                  {days.map((d) => (
+                    <li key={d.uid} className="rounded-xl border border-border p-3">
+                      <p className="text-sm font-semibold">{d.label}</p>
+                      <ul className="mt-1 text-xs text-muted-foreground">
+                        {d.exercises.map((e) => (
+                          <li key={e.uid}>• {e.exercise.name} — {e.sets || "?"}×{e.reps || "?"}</li>
+                        ))}
+                        {d.exercises.length === 0 && <li className="italic">No exercises</li>}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex items-center justify-between">
+                  <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
+                  <Button disabled={!canFinish || create.isPending} onClick={() => create.mutate()}>
+                    {create.isPending ? "Saving…" : isTemplate ? "Save template" : "Assign plan"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Side snapshot panel */}
+          <aside className="space-y-4">
+            {!isTemplate && memberId && snapshot && (
+              <div className="rounded-2xl border border-border bg-card p-5">
+                <h3 className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+                  <Activity className="h-4 w-4 text-primary" /> Latest assessment
+                </h3>
+                <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <Stat label="Weight" value={snapshot.weight ? `${snapshot.weight} kg` : "—"} />
+                  <Stat label="Body fat" value={snapshot.body_fat_pct ? `${snapshot.body_fat_pct}%` : "—"} />
+                  <Stat label="Bench 1RM" value={snapshot.bench_1rm ? `${snapshot.bench_1rm} kg` : "—"} />
+                  <Stat label="Squat 1RM" value={snapshot.squat_1rm ? `${snapshot.squat_1rm} kg` : "—"} />
+                  <Stat label="Deadlift 1RM" value={snapshot.deadlift_1rm ? `${snapshot.deadlift_1rm} kg` : "—"} />
+                </dl>
+              </div>
+            )}
+            {!isTemplate && memberId && !snapshot && (
+              <div className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+                No assessment on file yet.
+              </div>
+            )}
+          </aside>
+        </div>
+      </main>
+
+      <ExercisePickerDialog
+        open={!!pickerForDay}
+        onOpenChange={(v) => !v && setPickerForDay(null)}
+        onPick={(ex) => {
+          setDays((prev) =>
+            prev.map((d) =>
+              d.uid === pickerForDay
+                ? { ...d, exercises: [...d.exercises, { uid: uid(), exercise: ex, sets: 3, reps: "8-12", rest_seconds: 90, tempo: "", notes: "" }] }
+                : d,
+            ),
+          );
+        }}
+      />
+    </>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-muted/40 p-2">
+      <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</dt>
+      <dd className="text-sm font-semibold">{value}</dd>
+    </div>
+  );
+}
+
+function DayBuilder({
+  days, setDays, onPick, onNext,
+}: {
+  days: DayInput[];
+  setDays: React.Dispatch<React.SetStateAction<DayInput[]>>;
+  onPick: (uid: string) => void;
+  onNext: () => void;
+}) {
+  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+  const onDayDragEnd = (ev: DragEndEvent) => {
+    const { active, over } = ev;
+    if (!over || active.id === over.id) return;
+    setDays((prev) => {
+      const oldI = prev.findIndex((d) => d.uid === active.id);
+      const newI = prev.findIndex((d) => d.uid === over.id);
+      return arrayMove(prev, oldI, newI);
+    });
+  };
+  const addDay = () => setDays((p) => [...p, { uid: uid(), label: `Day ${p.length + 1}`, exercises: [] }]);
+
+  return (
+    <div className="space-y-4">
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDayDragEnd}>
+        <SortableContext items={days.map((d) => d.uid)} strategy={verticalListSortingStrategy}>
+          {days.map((d) => (
+            <SortableDay key={d.uid} day={d} setDays={setDays} onPick={() => onPick(d.uid)} />
+          ))}
+        </SortableContext>
+      </DndContext>
+      <div className="flex items-center justify-between">
+        <Button variant="outline" onClick={addDay}><Plus className="mr-1.5 h-4 w-4" /> Add day</Button>
+        <Button onClick={onNext} disabled={days.length === 0}>Next: Review</Button>
+      </div>
+    </div>
+  );
+}
+
+function SortableDay({
+  day, setDays, onPick,
+}: {
+  day: DayInput;
+  setDays: React.Dispatch<React.SetStateAction<DayInput[]>>;
+  onPick: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: day.uid });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  const updateLabel = (v: string) => setDays((p) => p.map((x) => (x.uid === day.uid ? { ...x, label: v } : x)));
+  const remove = () => setDays((p) => p.filter((x) => x.uid !== day.uid));
+  const updateEx = (uid: string, patch: Partial<ExerciseInput>) =>
+    setDays((p) => p.map((x) => x.uid === day.uid ? { ...x, exercises: x.exercises.map((e) => e.uid === uid ? { ...e, ...patch } : e) } : x));
+  const removeEx = (uid: string) =>
+    setDays((p) => p.map((x) => x.uid === day.uid ? { ...x, exercises: x.exercises.filter((e) => e.uid !== uid) } : x));
+
+  const onExDragEnd = (ev: DragEndEvent) => {
+    const { active, over } = ev;
+    if (!over || active.id === over.id) return;
+    setDays((p) => p.map((x) => {
+      if (x.uid !== day.uid) return x;
+      const oldI = x.exercises.findIndex((e) => e.uid === active.id);
+      const newI = x.exercises.findIndex((e) => e.uid === over.id);
+      return { ...x, exercises: arrayMove(x.exercises, oldI, newI) };
+    }));
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="rounded-2xl border border-border bg-card">
+      <div className="flex items-center gap-2 border-b border-border p-3">
+        <button {...attributes} {...listeners} className="cursor-grab text-muted-foreground"><GripVertical className="h-4 w-4" /></button>
+        <Input value={day.label} onChange={(e) => updateLabel(e.target.value)} className="max-w-[200px] font-semibold" />
+        <Badge variant="secondary" className="ml-auto">{day.exercises.length} exercises</Badge>
+        <Button variant="ghost" size="icon" onClick={remove}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+      </div>
+      <div className="space-y-2 p-3">
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onExDragEnd}>
+          <SortableContext items={day.exercises.map((e) => e.uid)} strategy={verticalListSortingStrategy}>
+            {day.exercises.map((e) => (
+              <SortableExercise key={e.uid} ex={e} onChange={(p) => updateEx(e.uid, p)} onRemove={() => removeEx(e.uid)} />
+            ))}
+          </SortableContext>
+        </DndContext>
+        <Button variant="outline" size="sm" className="w-full" onClick={onPick}>
+          <Plus className="mr-1.5 h-4 w-4" /> Add exercise
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function SortableExercise({ ex, onChange, onRemove }: { ex: ExerciseInput; onChange: (p: Partial<ExerciseInput>) => void; onRemove: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: ex.uid });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
+  return (
+    <div ref={setNodeRef} style={style} className="rounded-xl border border-border bg-background p-3">
+      <div className="flex items-center gap-2">
+        <button {...attributes} {...listeners} className="cursor-grab text-muted-foreground"><GripVertical className="h-4 w-4" /></button>
+        <p className="flex-1 truncate text-sm font-semibold">{ex.exercise.name}</p>
+        <Button variant="ghost" size="icon" onClick={onRemove}><X className="h-4 w-4" /></Button>
+      </div>
+      <div className="mt-2 grid grid-cols-4 gap-2">
+        <Field label="Sets"><Input type="number" min={1} value={ex.sets} onChange={(e) => onChange({ sets: Number(e.target.value) })} /></Field>
+        <Field label="Reps"><Input value={ex.reps} onChange={(e) => onChange({ reps: e.target.value })} placeholder="8-12" /></Field>
+        <Field label="Rest (s)"><Input type="number" min={0} value={ex.rest_seconds} onChange={(e) => onChange({ rest_seconds: Number(e.target.value) })} /></Field>
+        <Field label="Tempo"><Input value={ex.tempo} onChange={(e) => onChange({ tempo: e.target.value })} placeholder="3-1-1" /></Field>
+      </div>
+      <div className="mt-2">
+        <Field label="Notes"><Input value={ex.notes} onChange={(e) => onChange({ notes: e.target.value })} /></Field>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</Label>
+      {children}
+    </div>
+  );
+}
