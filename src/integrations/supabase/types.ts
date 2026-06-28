@@ -687,6 +687,7 @@ export type Database = {
           duration_weeks: number | null
           gym_id: string
           id: string
+          is_template: boolean
           member_id: string
           name: string
           notes: string | null
@@ -699,6 +700,7 @@ export type Database = {
           duration_weeks?: number | null
           gym_id: string
           id?: string
+          is_template?: boolean
           member_id: string
           name: string
           notes?: string | null
@@ -711,6 +713,7 @@ export type Database = {
           duration_weeks?: number | null
           gym_id?: string
           id?: string
+          is_template?: boolean
           member_id?: string
           name?: string
           notes?: string | null
