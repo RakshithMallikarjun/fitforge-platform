@@ -20,7 +20,12 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppWorkoutsRouteImport } from './routes/_authenticated/app/workouts'
 import { Route as AuthenticatedAppProgressRouteImport } from './routes/_authenticated/app/progress'
 import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authenticated/app/profile'
+import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
+import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin/members'
+import { Route as AuthenticatedAdminExercisesRouteImport } from './routes/_authenticated/admin/exercises'
+import { Route as AuthenticatedAdminPlansNewRouteImport } from './routes/_authenticated/admin/plans.new'
+import { Route as AuthenticatedAdminPlansPlanIdRouteImport } from './routes/_authenticated/admin/plans.$planId'
 import { Route as AuthenticatedAdminMembersMemberIdRouteImport } from './routes/_authenticated/admin/members.$memberId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -79,11 +84,40 @@ const AuthenticatedAppProfileRoute = AuthenticatedAppProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedAppRouteRoute,
 } as any)
+const AuthenticatedAdminTemplatesRoute =
+  AuthenticatedAdminTemplatesRouteImport.update({
+    id: '/templates',
+    path: '/templates',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminPlansRoute = AuthenticatedAdminPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
 const AuthenticatedAdminMembersRoute =
   AuthenticatedAdminMembersRouteImport.update({
     id: '/members',
     path: '/members',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminExercisesRoute =
+  AuthenticatedAdminExercisesRouteImport.update({
+    id: '/exercises',
+    path: '/exercises',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminPlansNewRoute =
+  AuthenticatedAdminPlansNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedAdminPlansRoute,
+  } as any)
+const AuthenticatedAdminPlansPlanIdRoute =
+  AuthenticatedAdminPlansPlanIdRouteImport.update({
+    id: '/$planId',
+    path: '/$planId',
+    getParentRoute: () => AuthenticatedAdminPlansRoute,
   } as any)
 const AuthenticatedAdminMembersMemberIdRoute =
   AuthenticatedAdminMembersMemberIdRouteImport.update({
@@ -98,25 +132,35 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/app': typeof AuthenticatedAppRouteRouteWithChildren
+  '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
+  '/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
+  '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/progress': typeof AuthenticatedAppProgressRoute
   '/app/workouts': typeof AuthenticatedAppWorkoutsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
+  '/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
+  '/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
+  '/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
+  '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/progress': typeof AuthenticatedAppProgressRoute
   '/app/workouts': typeof AuthenticatedAppWorkoutsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
+  '/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
+  '/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -126,13 +170,18 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteRouteWithChildren
+  '/_authenticated/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
+  '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
+  '/_authenticated/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/_authenticated/app/profile': typeof AuthenticatedAppProfileRoute
   '/_authenticated/app/progress': typeof AuthenticatedAppProgressRoute
   '/_authenticated/app/workouts': typeof AuthenticatedAppWorkoutsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
+  '/_authenticated/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
+  '/_authenticated/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -142,25 +191,35 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin'
     | '/app'
+    | '/admin/exercises'
     | '/admin/members'
+    | '/admin/plans'
+    | '/admin/templates'
     | '/app/profile'
     | '/app/progress'
     | '/app/workouts'
     | '/admin/'
     | '/app/'
     | '/admin/members/$memberId'
+    | '/admin/plans/$planId'
+    | '/admin/plans/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/admin/exercises'
     | '/admin/members'
+    | '/admin/plans'
+    | '/admin/templates'
     | '/app/profile'
     | '/app/progress'
     | '/app/workouts'
     | '/admin'
     | '/app'
     | '/admin/members/$memberId'
+    | '/admin/plans/$planId'
+    | '/admin/plans/new'
   id:
     | '__root__'
     | '/'
@@ -169,13 +228,18 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/admin'
     | '/_authenticated/app'
+    | '/_authenticated/admin/exercises'
     | '/_authenticated/admin/members'
+    | '/_authenticated/admin/plans'
+    | '/_authenticated/admin/templates'
     | '/_authenticated/app/profile'
     | '/_authenticated/app/progress'
     | '/_authenticated/app/workouts'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/_authenticated/admin/members/$memberId'
+    | '/_authenticated/admin/plans/$planId'
+    | '/_authenticated/admin/plans/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -264,12 +328,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppProfileRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/admin/templates': {
+      id: '/_authenticated/admin/templates'
+      path: '/templates'
+      fullPath: '/admin/templates'
+      preLoaderRoute: typeof AuthenticatedAdminTemplatesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/plans': {
+      id: '/_authenticated/admin/plans'
+      path: '/plans'
+      fullPath: '/admin/plans'
+      preLoaderRoute: typeof AuthenticatedAdminPlansRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/members': {
       id: '/_authenticated/admin/members'
       path: '/members'
       fullPath: '/admin/members'
       preLoaderRoute: typeof AuthenticatedAdminMembersRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/exercises': {
+      id: '/_authenticated/admin/exercises'
+      path: '/exercises'
+      fullPath: '/admin/exercises'
+      preLoaderRoute: typeof AuthenticatedAdminExercisesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/plans/new': {
+      id: '/_authenticated/admin/plans/new'
+      path: '/new'
+      fullPath: '/admin/plans/new'
+      preLoaderRoute: typeof AuthenticatedAdminPlansNewRouteImport
+      parentRoute: typeof AuthenticatedAdminPlansRoute
+    }
+    '/_authenticated/admin/plans/$planId': {
+      id: '/_authenticated/admin/plans/$planId'
+      path: '/$planId'
+      fullPath: '/admin/plans/$planId'
+      preLoaderRoute: typeof AuthenticatedAdminPlansPlanIdRouteImport
+      parentRoute: typeof AuthenticatedAdminPlansRoute
     }
     '/_authenticated/admin/members/$memberId': {
       id: '/_authenticated/admin/members/$memberId'
@@ -296,14 +395,36 @@ const AuthenticatedAdminMembersRouteWithChildren =
     AuthenticatedAdminMembersRouteChildren,
   )
 
+interface AuthenticatedAdminPlansRouteChildren {
+  AuthenticatedAdminPlansPlanIdRoute: typeof AuthenticatedAdminPlansPlanIdRoute
+  AuthenticatedAdminPlansNewRoute: typeof AuthenticatedAdminPlansNewRoute
+}
+
+const AuthenticatedAdminPlansRouteChildren: AuthenticatedAdminPlansRouteChildren =
+  {
+    AuthenticatedAdminPlansPlanIdRoute: AuthenticatedAdminPlansPlanIdRoute,
+    AuthenticatedAdminPlansNewRoute: AuthenticatedAdminPlansNewRoute,
+  }
+
+const AuthenticatedAdminPlansRouteWithChildren =
+  AuthenticatedAdminPlansRoute._addFileChildren(
+    AuthenticatedAdminPlansRouteChildren,
+  )
+
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminExercisesRoute: typeof AuthenticatedAdminExercisesRoute
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRouteWithChildren
+  AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRouteWithChildren
+  AuthenticatedAdminTemplatesRoute: typeof AuthenticatedAdminTemplatesRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminExercisesRoute: AuthenticatedAdminExercisesRoute,
     AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRouteWithChildren,
+    AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRouteWithChildren,
+    AuthenticatedAdminTemplatesRoute: AuthenticatedAdminTemplatesRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   }
 

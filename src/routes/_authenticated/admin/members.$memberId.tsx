@@ -149,17 +149,30 @@ function MemberProfile() {
 
 
           {/* PLANS */}
-          <TabsContent value="plans">
+          <TabsContent value="plans" className="space-y-3">
+            <div className="flex justify-end">
+              <Link
+                to="/admin/plans/new"
+                search={{ memberId }}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                <ClipboardList className="h-4 w-4" /> New plan for this member
+              </Link>
+            </div>
             <EmptyOrList
               items={plans}
               emptyIcon={<ClipboardList className="h-6 w-6" />}
               emptyText="No workout plans assigned yet."
               render={(p: any) => (
-                <li key={p.id} className="rounded-2xl border border-border bg-card p-4">
-                  <p className="text-sm font-semibold">{p.title ?? "Untitled plan"}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {p.start_date ? `Starts ${new Date(p.start_date).toLocaleDateString()}` : "No start date"}
-                  </p>
+                <li key={p.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{p.name ?? p.title ?? "Untitled plan"}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {p.start_date ? `Starts ${new Date(p.start_date).toLocaleDateString()}` : "No start date"}
+                      {p.status ? ` · ${p.status}` : ""}
+                    </p>
+                  </div>
+                  <Link to="/admin/plans/$planId" params={{ planId: p.id }} className="text-sm font-medium text-primary hover:underline">View</Link>
                 </li>
               )}
             />
