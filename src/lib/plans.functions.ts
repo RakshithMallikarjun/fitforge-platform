@@ -121,7 +121,7 @@ export const createPlan = createServerFn({ method: "POST" })
         duration_weeks: data.duration_weeks ?? null,
         notes: data.notes ?? null,
         is_template: data.is_template,
-        status: data.is_template ? "draft" : "active",
+        status: "active",
       })
       .select("id")
       .single();
