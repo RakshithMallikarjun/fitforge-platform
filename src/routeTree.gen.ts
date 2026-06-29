@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ManifestDotwebmanifestRouteImport } from './routes/manifest[.]webmanifest'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -31,6 +32,11 @@ import { Route as AuthenticatedAdminMembersMemberIdRouteImport } from './routes/
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManifestDotwebmanifestRoute = ManifestDotwebmanifestRouteImport.update({
+  id: '/manifest.webmanifest',
+  path: '/manifest.webmanifest',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -129,6 +135,7 @@ const AuthenticatedAdminMembersMemberIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/manifest.webmanifest': typeof ManifestDotwebmanifestRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/app': typeof AuthenticatedAppRouteRouteWithChildren
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/manifest.webmanifest': typeof ManifestDotwebmanifestRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/manifest.webmanifest': typeof ManifestDotwebmanifestRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteRouteWithChildren
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/manifest.webmanifest'
     | '/sitemap.xml'
     | '/admin'
     | '/app'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/manifest.webmanifest'
     | '/sitemap.xml'
     | '/admin/exercises'
     | '/admin/members'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/manifest.webmanifest'
     | '/sitemap.xml'
     | '/_authenticated/admin'
     | '/_authenticated/app'
@@ -246,6 +258,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ManifestDotwebmanifestRoute: typeof ManifestDotwebmanifestRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
 
@@ -256,6 +269,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manifest.webmanifest': {
+      id: '/manifest.webmanifest'
+      path: '/manifest.webmanifest'
+      fullPath: '/manifest.webmanifest'
+      preLoaderRoute: typeof ManifestDotwebmanifestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -469,18 +489,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ManifestDotwebmanifestRoute: ManifestDotwebmanifestRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
