@@ -25,6 +25,7 @@ import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin/members'
 import { Route as AuthenticatedAdminExercisesRouteImport } from './routes/_authenticated/admin/exercises'
+import { Route as AuthenticatedAppWorkoutDayIdRouteImport } from './routes/_authenticated/app/workout.$dayId'
 import { Route as AuthenticatedAdminPlansNewRouteImport } from './routes/_authenticated/admin/plans.new'
 import { Route as AuthenticatedAdminPlansPlanIdRouteImport } from './routes/_authenticated/admin/plans.$planId'
 import { Route as AuthenticatedAdminMembersMemberIdRouteImport } from './routes/_authenticated/admin/members.$memberId'
@@ -113,6 +114,12 @@ const AuthenticatedAdminExercisesRoute =
     path: '/exercises',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAppWorkoutDayIdRoute =
+  AuthenticatedAppWorkoutDayIdRouteImport.update({
+    id: '/workout/$dayId',
+    path: '/workout/$dayId',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 const AuthenticatedAdminPlansNewRoute =
   AuthenticatedAdminPlansNewRouteImport.update({
     id: '/new',
@@ -151,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
   '/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
   '/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
+  '/app/workout/$dayId': typeof AuthenticatedAppWorkoutDayIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -169,6 +177,7 @@ export interface FileRoutesByTo {
   '/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
   '/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
   '/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
+  '/app/workout/$dayId': typeof AuthenticatedAppWorkoutDayIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -191,6 +200,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
   '/_authenticated/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
   '/_authenticated/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
+  '/_authenticated/app/workout/$dayId': typeof AuthenticatedAppWorkoutDayIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/admin/members/$memberId'
     | '/admin/plans/$planId'
     | '/admin/plans/new'
+    | '/app/workout/$dayId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/admin/members/$memberId'
     | '/admin/plans/$planId'
     | '/admin/plans/new'
+    | '/app/workout/$dayId'
   id:
     | '__root__'
     | '/'
@@ -252,6 +264,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/members/$memberId'
     | '/_authenticated/admin/plans/$planId'
     | '/_authenticated/admin/plans/new'
+    | '/_authenticated/app/workout/$dayId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -376,6 +389,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminExercisesRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/app/workout/$dayId': {
+      id: '/_authenticated/app/workout/$dayId'
+      path: '/workout/$dayId'
+      fullPath: '/app/workout/$dayId'
+      preLoaderRoute: typeof AuthenticatedAppWorkoutDayIdRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/admin/plans/new': {
       id: '/_authenticated/admin/plans/new'
       path: '/new'
@@ -458,6 +478,7 @@ interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppProgressRoute: typeof AuthenticatedAppProgressRoute
   AuthenticatedAppWorkoutsRoute: typeof AuthenticatedAppWorkoutsRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+  AuthenticatedAppWorkoutDayIdRoute: typeof AuthenticatedAppWorkoutDayIdRoute
 }
 
 const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
@@ -465,6 +486,7 @@ const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppProgressRoute: AuthenticatedAppProgressRoute,
   AuthenticatedAppWorkoutsRoute: AuthenticatedAppWorkoutsRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+  AuthenticatedAppWorkoutDayIdRoute: AuthenticatedAppWorkoutDayIdRoute,
 }
 
 const AuthenticatedAppRouteRouteWithChildren =
