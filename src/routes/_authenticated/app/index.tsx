@@ -131,6 +131,7 @@ function WorkoutOfTheDay({
     );
   }
 
+  const navigate = useNavigate();
   return (
     <div className="bento-emerald">
       <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary-foreground/70">
@@ -150,7 +151,12 @@ function WorkoutOfTheDay({
           <Clock className="h-3.5 w-3.5" /> ~{next.estimatedMinutes} min
         </span>
       </div>
-      <Button variant="secondary" size="sm" className="mt-5 rounded-lg">
+      <Button
+        variant="secondary"
+        size="sm"
+        className="mt-5 rounded-lg"
+        onClick={() => navigate({ to: "/app/workout/$dayId", params: { dayId: next.dayId } })}
+      >
         <Play className="mr-1.5 h-3.5 w-3.5" />
         Start workout
       </Button>
