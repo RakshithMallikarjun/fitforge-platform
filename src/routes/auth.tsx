@@ -29,25 +29,31 @@ function AuthPage() {
   const [checking, setChecking] = useState(false);
   const [claiming, setClaiming] = useState(false);
 
-  // After a signed-in user lands here with no roles, check if their gym is unclaimed.
+  // After a signed-in user lands here, check if their gym is unclaimed.
+  // If so, offer the claim banner BEFORE redirecting — even if they already
+  // have a member role (common case: first user signed up as member by default).
   useEffect(() => {
     if (sessionLoading || !user) return;
-    if (user.primaryRole) {
-      navigate({
-        to: user.primaryRole === "admin" || user.primaryRole === "trainer" ? "/admin" : "/app",
-        replace: true,
-      });
+    const isStaff = user.roles.includes("admin") || user.roles.includes("trainer");
+    if (isStaff) {
+      navigate({ to: "/admin", replace: true });
       return;
     }
-    // No roles — see if the gym has any admin yet; if not, offer claim.
-    let cancelled = false;
     const slug = (user.session.user.user_metadata as any)?.gym_slug as string | undefined;
-    if (!slug) return;
+    if (!slug) {
+      if (user.primaryRole === "member") navigate({ to: "/app", replace: true });
+      return;
+    }
+    let cancelled = false;
     setChecking(true);
     gymHasAdmin({ data: { gymSlug: slug } })
       .then((res) => {
         if (cancelled) return;
-        if (res.gymExists && !res.hasAdmin) setClaimSlug(slug);
+        if (res.gymExists && !res.hasAdmin) {
+          setClaimSlug(slug);
+        } else if (user.primaryRole === "member") {
+          navigate({ to: "/app", replace: true });
+        }
       })
       .finally(() => !cancelled && setChecking(false));
     return () => {
