@@ -1,16 +1,18 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Dumbbell, ClipboardList,
-  BarChart3, Settings, LogOut, ShieldCheck,
+  BarChart3, Settings, LogOut, ShieldCheck, UserCog,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme-provider";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
-type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; adminOnly?: boolean };
 const NAV: NavItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/members", label: "Members", icon: Users },
+  { to: "/admin/staff", label: "Staff", icon: UserCog, adminOnly: true },
   { to: "/admin/exercises", label: "Exercises", icon: Dumbbell },
   { to: "/admin/plans", label: "Plans", icon: ClipboardList },
   { to: "/admin/templates", label: "Templates", icon: ClipboardList },
@@ -18,11 +20,15 @@ const NAV: NavItem[] = [
   { to: "/admin", label: "Settings", icon: Settings },
 ];
 
+
 export function AdminSidebar() {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { theme } = useTheme();
+  const { data: me } = useCurrentUser();
+  const isAdmin = !!me?.roles.includes("admin");
+
 
   async function signOut() {
     await qc.cancelQueries();
@@ -41,8 +47,9 @@ export function AdminSidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 px-3">
-        {NAV.map((item) => {
+        {NAV.filter((i) => !i.adminOnly || isAdmin).map((item) => {
           const active = item.exact ? path === item.to : path.startsWith(item.to);
+
           const Icon = item.icon;
           return (
             <Link

@@ -22,6 +22,7 @@ import { Route as AuthenticatedAppWorkoutsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppProgressRouteImport } from './routes/_authenticated/app/progress'
 import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authenticated/app/profile'
 import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
+import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin/staff'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin/members'
 import { Route as AuthenticatedAdminExercisesRouteImport } from './routes/_authenticated/admin/exercises'
@@ -97,6 +98,11 @@ const AuthenticatedAdminTemplatesRoute =
     path: '/templates',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
 const AuthenticatedAdminPlansRoute = AuthenticatedAdminPlansRouteImport.update({
   id: '/plans',
   path: '/plans',
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
+  '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/progress': typeof AuthenticatedAppProgressRoute
@@ -168,6 +175,7 @@ export interface FileRoutesByTo {
   '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
+  '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/progress': typeof AuthenticatedAppProgressRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
+  '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/_authenticated/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/_authenticated/app/profile': typeof AuthenticatedAppProfileRoute
   '/_authenticated/app/progress': typeof AuthenticatedAppProgressRoute
@@ -214,6 +223,7 @@ export interface FileRouteTypes {
     | '/admin/exercises'
     | '/admin/members'
     | '/admin/plans'
+    | '/admin/staff'
     | '/admin/templates'
     | '/app/profile'
     | '/app/progress'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/admin/exercises'
     | '/admin/members'
     | '/admin/plans'
+    | '/admin/staff'
     | '/admin/templates'
     | '/app/profile'
     | '/app/progress'
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/exercises'
     | '/_authenticated/admin/members'
     | '/_authenticated/admin/plans'
+    | '/_authenticated/admin/staff'
     | '/_authenticated/admin/templates'
     | '/_authenticated/app/profile'
     | '/_authenticated/app/progress'
@@ -368,6 +380,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTemplatesRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/staff': {
+      id: '/_authenticated/admin/staff'
+      path: '/staff'
+      fullPath: '/admin/staff'
+      preLoaderRoute: typeof AuthenticatedAdminStaffRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/plans': {
       id: '/_authenticated/admin/plans'
       path: '/plans'
@@ -455,6 +474,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminExercisesRoute: typeof AuthenticatedAdminExercisesRoute
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRouteWithChildren
   AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRouteWithChildren
+  AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
   AuthenticatedAdminTemplatesRoute: typeof AuthenticatedAdminTemplatesRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
@@ -464,6 +484,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminExercisesRoute: AuthenticatedAdminExercisesRoute,
     AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRouteWithChildren,
     AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRouteWithChildren,
+    AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
     AuthenticatedAdminTemplatesRoute: AuthenticatedAdminTemplatesRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   }
