@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Dumbbell } from "lucide-react";
+import { Dumbbell, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { claimGymAdmin, gymHasAdmin } from "@/lib/bootstrap.functions";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -20,17 +22,54 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { data: user, sessionLoading } = useCurrentUser();
+  const { data: user, sessionLoading, refetch } = useCurrentUser();
   const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [claimSlug, setClaimSlug] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [claiming, setClaiming] = useState(false);
 
+  // After a signed-in user lands here with no roles, check if their gym is unclaimed.
   useEffect(() => {
     if (sessionLoading || !user) return;
-    if (user.primaryRole === "admin" || user.primaryRole === "trainer") {
-      navigate({ to: "/admin", replace: true });
-    } else {
-      navigate({ to: "/app", replace: true });
+    if (user.primaryRole) {
+      navigate({
+        to: user.primaryRole === "admin" || user.primaryRole === "trainer" ? "/admin" : "/app",
+        replace: true,
+      });
+      return;
     }
+    // No roles — see if the gym has any admin yet; if not, offer claim.
+    let cancelled = false;
+    const slug = (user.session.user.user_metadata as any)?.gym_slug as string | undefined;
+    if (!slug) return;
+    setChecking(true);
+    gymHasAdmin({ data: { gymSlug: slug } })
+      .then((res) => {
+        if (cancelled) return;
+        if (res.gymExists && !res.hasAdmin) setClaimSlug(slug);
+      })
+      .finally(() => !cancelled && setChecking(false));
+    return () => {
+      cancelled = true;
+    };
   }, [user, sessionLoading, navigate]);
+
+  async function onClaim() {
+    if (!claimSlug) return;
+    setClaiming(true);
+    try {
+      await claimGymAdmin({ data: { gymSlug: claimSlug } });
+      toast.success("You're now the gym admin");
+      await qc.invalidateQueries({ queryKey: ["current-user"] });
+      await refetch();
+      navigate({ to: "/admin", replace: true });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not claim admin");
+    } finally {
+      setClaiming(false);
+    }
+  }
 
   return (
     <main className="grid min-h-screen place-items-center bg-background px-4">
@@ -41,6 +80,21 @@ function AuthPage() {
           </div>
           <span className="font-display text-lg font-bold">FitForge</span>
         </Link>
+
+        {claimSlug && (
+          <div className="mb-4 rounded-2xl border border-primary/30 bg-accent p-4">
+            <div className="flex items-center gap-2 text-primary">
+              <ShieldCheck className="h-4 w-4" />
+              <span className="text-xs font-semibold uppercase tracking-wider">Bootstrap</span>
+            </div>
+            <p className="mt-2 text-sm">
+              No admin exists for <strong>{claimSlug}</strong> yet — claim Admin access?
+            </p>
+            <Button onClick={onClaim} disabled={claiming} className="mt-3 h-10 w-full rounded-xl">
+              {claiming ? "Claiming…" : "Claim Admin"}
+            </Button>
+          </div>
+        )}
 
         <div className="rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)] md:p-8">
           <Tabs defaultValue="signin">
@@ -55,6 +109,7 @@ function AuthPage() {
               <SignUpForm />
             </TabsContent>
           </Tabs>
+          {checking && <p className="mt-3 text-center text-xs text-muted-foreground">Checking gym…</p>}
         </div>
       </div>
     </main>
@@ -102,6 +157,11 @@ function SignUpForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    // SECURITY: role is HARDCODED to "member". Public self-service sign-up must
+    // never grant admin/trainer — that would be a privilege-escalation vector.
+    // Legitimate paths to create staff:
+    //   - claimGymAdmin (src/lib/bootstrap.functions.ts) for the very first admin of a fresh gym
+    //   - inviteStaffMember (src/lib/staff.functions.ts) called from the admin-only Staff page
     const { error } = await supabase.auth.signUp({
       email,
       password,
