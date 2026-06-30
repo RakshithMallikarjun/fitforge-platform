@@ -1,22 +1,25 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Dumbbell, ClipboardList,
-  BarChart3, Settings, LogOut, ShieldCheck,
+  BarChart3, Settings, LogOut, ShieldCheck, UserCog,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme-provider";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
-type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; adminOnly?: boolean };
 const NAV: NavItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/members", label: "Members", icon: Users },
+  { to: "/admin/staff", label: "Staff", icon: UserCog, adminOnly: true },
   { to: "/admin/exercises", label: "Exercises", icon: Dumbbell },
   { to: "/admin/plans", label: "Plans", icon: ClipboardList },
   { to: "/admin/templates", label: "Templates", icon: ClipboardList },
   { to: "/admin", label: "Analytics", icon: BarChart3 },
   { to: "/admin", label: "Settings", icon: Settings },
 ];
+
 
 export function AdminSidebar() {
   const path = useRouterState({ select: (r) => r.location.pathname });
