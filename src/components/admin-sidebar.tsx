@@ -26,6 +26,9 @@ export function AdminSidebar() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { theme } = useTheme();
+  const { data: me } = useCurrentUser();
+  const isAdmin = !!me?.roles.includes("admin");
+
 
   async function signOut() {
     await qc.cancelQueries();
