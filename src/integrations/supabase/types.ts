@@ -264,6 +264,60 @@ export type Database = {
           },
         ]
       }
+      goals: {
+        Row: {
+          achieved_at: string | null
+          created_at: string
+          current_value: number | null
+          gym_id: string
+          id: string
+          member_id: string
+          name: string
+          target_date: string | null
+          target_value: number | null
+          unit: string | null
+        }
+        Insert: {
+          achieved_at?: string | null
+          created_at?: string
+          current_value?: number | null
+          gym_id: string
+          id?: string
+          member_id: string
+          name: string
+          target_date?: string | null
+          target_value?: number | null
+          unit?: string | null
+        }
+        Update: {
+          achieved_at?: string | null
+          created_at?: string
+          current_value?: number | null
+          gym_id?: string
+          id?: string
+          member_id?: string
+          name?: string
+          target_date?: string | null
+          target_value?: number | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goals_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gyms: {
         Row: {
           created_at: string
