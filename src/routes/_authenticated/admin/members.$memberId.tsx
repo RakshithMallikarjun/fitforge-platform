@@ -196,7 +196,20 @@ function MemberProfile() {
           </TabsContent>
 
           {/* ATTENDANCE */}
-          <TabsContent value="attendance">
+          <TabsContent value="attendance" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold tracking-tight">Last 12 weeks</h3>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => manualCheckin.mutate()}
+                disabled={manualCheckin.isPending}
+              >
+                <UserCheck className="h-4 w-4" /> Log attendance
+              </Button>
+            </div>
+            <AttendanceHeatmap logs={attendance ?? []} />
             <EmptyOrList
               items={attendance}
               emptyIcon={<Calendar className="h-6 w-6" />}
@@ -212,6 +225,13 @@ function MemberProfile() {
                 </li>
               )}
             />
+          </TabsContent>
+
+          {/* MESSAGES */}
+          <TabsContent value="messages">
+            <div className="rounded-2xl border border-border bg-card p-2">
+              <ThreadView otherUserId={memberId} otherName={user.display_name ?? user.email} />
+            </div>
           </TabsContent>
 
           {/* NOTES */}
