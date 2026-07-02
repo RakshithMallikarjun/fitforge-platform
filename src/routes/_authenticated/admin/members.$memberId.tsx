@@ -1,16 +1,21 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, ClipboardList, FileText, Mail, Phone, StickyNote, User, UserCog } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, Calendar, ClipboardList, FileText, Mail, MessageSquare, Phone, StickyNote, User, UserCog, UserCheck } from "lucide-react";
+import { toast } from "sonner";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMember } from "@/lib/members.functions";
+import { logAttendanceManual } from "@/lib/checkin.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { AssignTrainersDialog } from "@/components/members/assign-trainers-dialog";
 import { StatusBadge, getMembershipStatus } from "@/components/members/status-badge";
 import { MemberNotes } from "@/components/members/member-notes";
 import { AssessmentsTab } from "@/components/assessments/assessments-tab";
+import { AttendanceHeatmap } from "@/components/members/attendance-heatmap";
+import { ThreadView } from "@/components/messages/thread-view";
 
 export const Route = createFileRoute("/_authenticated/admin/members/$memberId")({
   component: MemberProfile,
@@ -21,10 +26,21 @@ function MemberProfile() {
   const { data: me } = useCurrentUser();
   const isAdmin = me?.roles.includes("admin");
   const [assignOpen, setAssignOpen] = useState(false);
+  const qc = useQueryClient();
+  const logManual = useServerFn(logAttendanceManual);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["member", memberId],
     queryFn: () => getMember({ data: { memberId } }),
+  });
+
+  const manualCheckin = useMutation({
+    mutationFn: () => logManual({ data: { memberId } }),
+    onSuccess: () => {
+      toast.success("Check-in logged");
+      qc.invalidateQueries({ queryKey: ["member", memberId] });
+    },
+    onError: (e: any) => toast.error("Could not log check-in", { description: e?.message }),
   });
 
   if (isLoading) {
@@ -86,6 +102,7 @@ function MemberProfile() {
             <TabsTrigger value="assessments"><FileText className="mr-1.5 h-4 w-4" /> Assessments</TabsTrigger>
             <TabsTrigger value="plans"><ClipboardList className="mr-1.5 h-4 w-4" /> Workout plans</TabsTrigger>
             <TabsTrigger value="attendance"><Calendar className="mr-1.5 h-4 w-4" /> Attendance</TabsTrigger>
+            <TabsTrigger value="messages"><MessageSquare className="mr-1.5 h-4 w-4" /> Messages</TabsTrigger>
             <TabsTrigger value="notes"><StickyNote className="mr-1.5 h-4 w-4" /> Notes</TabsTrigger>
           </TabsList>
 
@@ -179,7 +196,20 @@ function MemberProfile() {
           </TabsContent>
 
           {/* ATTENDANCE */}
-          <TabsContent value="attendance">
+          <TabsContent value="attendance" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold tracking-tight">Last 12 weeks</h3>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => manualCheckin.mutate()}
+                disabled={manualCheckin.isPending}
+              >
+                <UserCheck className="h-4 w-4" /> Log attendance
+              </Button>
+            </div>
+            <AttendanceHeatmap entries={attendance ?? []} />
             <EmptyOrList
               items={attendance}
               emptyIcon={<Calendar className="h-6 w-6" />}
@@ -195,6 +225,13 @@ function MemberProfile() {
                 </li>
               )}
             />
+          </TabsContent>
+
+          {/* MESSAGES */}
+          <TabsContent value="messages">
+            <div className="rounded-2xl border border-border bg-card p-2">
+              <ThreadView otherUserId={memberId} />
+            </div>
           </TabsContent>
 
           {/* NOTES */}

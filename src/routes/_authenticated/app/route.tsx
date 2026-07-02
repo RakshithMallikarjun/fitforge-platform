@@ -1,21 +1,24 @@
 import { createFileRoute, Link, Navigate, Outlet, useRouterState, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { Activity, Dumbbell, Home, LogOut, User } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Activity, Dumbbell, Home, LogOut, MessageSquare, User } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme-provider";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { registerSW } from "@/lib/pwa/register-sw";
+import { unreadCount } from "@/lib/messages.functions";
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: MemberShell,
 });
 
-const NAV: ReadonlyArray<{ to: "/app" | "/app/workouts" | "/app/progress" | "/app/profile"; label: string; icon: typeof Home; exact?: boolean }> = [
+const NAV: ReadonlyArray<{ to: "/app" | "/app/workouts" | "/app/progress" | "/app/messages" | "/app/profile"; label: string; icon: typeof Home; exact?: boolean; badgeKey?: "unread" }> = [
   { to: "/app", label: "Home", icon: Home, exact: true },
   { to: "/app/workouts", label: "Workouts", icon: Dumbbell },
   { to: "/app/progress", label: "Progress", icon: Activity },
+  { to: "/app/messages", label: "Messages", icon: MessageSquare, badgeKey: "unread" },
   { to: "/app/profile", label: "Profile", icon: User },
 ];
 
@@ -26,6 +29,13 @@ function MemberShell() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { theme } = useTheme();
+  const fetchUnread = useServerFn(unreadCount);
+  const { data: unread } = useQuery({
+    queryKey: ["unread-count"],
+    queryFn: () => fetchUnread(),
+    enabled: !!user,
+    refetchInterval: 30_000,
+  });
 
   useEffect(() => {
     void registerSW();
@@ -76,16 +86,24 @@ function MemberShell() {
           {NAV.map((item) => {
             const Icon = item.icon;
             const active = item.exact ? path === item.to : path.startsWith(item.to);
+            const badge = item.badgeKey === "unread" ? unread?.count ?? 0 : 0;
             return (
               <Link
                 key={item.label}
                 to={item.to}
                 className={[
-                  "flex flex-1 flex-col items-center gap-1 rounded-xl py-2 text-[10px] font-medium transition-colors",
+                  "relative flex flex-1 flex-col items-center gap-1 rounded-xl py-2 text-[10px] font-medium transition-colors",
                   active ? "text-primary" : "text-muted-foreground",
                 ].join(" ")}
               >
-                <Icon className="h-5 w-5" />
+                <span className="relative">
+                  <Icon className="h-5 w-5" />
+                  {badge > 0 && (
+                    <span className="absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                      {badge > 99 ? "99+" : badge}
+                    </span>
+                  )}
+                </span>
                 {item.label}
               </Link>
             );

@@ -2,11 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { get as idbGet, set as idbSet } from "idb-keyval";
 import {
   ArrowLeft,
   Check,
   ChevronLeft,
   ChevronRight,
+  CloudOff,
   PartyPopper,
   Play,
   SkipForward,
@@ -24,8 +26,21 @@ import {
   logSet,
   startWorkoutLog,
   type PrevSet,
+  type WorkoutDayData,
   type WorkoutDayExercise,
 } from "@/lib/workout-player.functions";
+import { enqueueLog } from "@/lib/pwa/offline-queue";
+
+function isOfflineError(e: unknown): boolean {
+  if (typeof navigator !== "undefined" && !navigator.onLine) return true;
+  const msg = String((e as any)?.message ?? e ?? "").toLowerCase();
+  return (
+    msg.includes("failed to fetch") ||
+    msg.includes("network") ||
+    msg.includes("load failed") ||
+    msg.includes("offline")
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/app/workout/$dayId")({
   component: WorkoutPlayer,
@@ -43,9 +58,27 @@ function WorkoutPlayer() {
   const finishWorkout = useServerFn(completeWorkout);
   const fetchPrev = useServerFn(getPreviousSetValues);
 
+  const cacheKey = `fitforge:day:${dayId}`;
+  const [offlineFallback, setOfflineFallback] = useState(false);
+
   const { data: dayData, isLoading } = useQuery({
     queryKey: ["workout-day", dayId],
-    queryFn: () => fetchDay({ data: { dayId } }),
+    queryFn: async (): Promise<WorkoutDayData> => {
+      try {
+        const fresh = await fetchDay({ data: { dayId } });
+        // Cache for offline
+        void idbSet(cacheKey, fresh).catch(() => {});
+        setOfflineFallback(false);
+        return fresh;
+      } catch (err) {
+        const cached = await idbGet<WorkoutDayData>(cacheKey).catch(() => null);
+        if (cached) {
+          setOfflineFallback(true);
+          return cached;
+        }
+        throw err;
+      }
+    },
   });
 
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -124,31 +157,53 @@ function WorkoutPlayer() {
   }, [current, prevMap]);
 
   const logSetMut = useMutation({
-    mutationFn: (input: {
+    mutationFn: async (input: {
       exerciseId: string;
       setNumber: number;
       weight: number | null;
       reps: number | null;
       completed: boolean;
-    }) =>
-      logOneSet({
-        data: {
-          logId: logId!,
-          exerciseId: input.exerciseId,
-          setNumber: input.setNumber,
-          weight: input.weight,
-          reps: input.reps,
-          completed: input.completed,
-        },
-      }),
+    }) => {
+      const payload = {
+        logId: logId!,
+        exerciseId: input.exerciseId,
+        setNumber: input.setNumber,
+        weight: input.weight,
+        reps: input.reps,
+        completed: input.completed,
+      };
+      try {
+        return await logOneSet({ data: payload });
+      } catch (err) {
+        if (isOfflineError(err)) {
+          await enqueueLog("logSet", payload);
+          toast.info("Saved offline — will sync when reconnected.");
+          return { queued: true } as any;
+        }
+        throw err;
+      }
+    },
     onError: (e: any) => toast.error("Could not save set", { description: e?.message }),
   });
 
   const completeMut = useMutation({
-    mutationFn: () =>
-      finishWorkout({
-        data: { logId: logId!, notes: notes.trim() || null, effortRating: effort },
-      }),
+    mutationFn: async () => {
+      const payload = {
+        logId: logId!,
+        notes: notes.trim() || null,
+        effortRating: effort,
+      };
+      try {
+        return await finishWorkout({ data: payload });
+      } catch (err) {
+        if (isOfflineError(err)) {
+          await enqueueLog("completeWorkout", { ...payload, synced_offline: true });
+          toast.info("Session saved offline — will sync when reconnected.");
+          return { ok: true, queued: true } as any;
+        }
+        throw err;
+      }
+    },
     onSuccess: () => {
       toast.success("Workout logged. Great work.");
       navigate({ to: "/app" });
@@ -249,6 +304,12 @@ function WorkoutPlayer() {
 
   return (
     <div className="space-y-5 pb-8">
+      {offlineFallback && (
+        <div className="flex items-center gap-2 rounded-2xl border border-secondary/30 bg-secondary-soft px-3 py-2 text-xs text-secondary">
+          <CloudOff className="h-3.5 w-3.5" />
+          Offline mode — sets will sync when you're back online.
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate({ to: "/app/workouts" })}

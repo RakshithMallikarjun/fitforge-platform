@@ -1,7 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Clock, Dumbbell, Flame, MessageSquareQuote, Play, Sparkles, TrendingUp } from "lucide-react";
+import { Clock, Dumbbell, Flame, MessageSquareQuote, Play, QrCode, Sparkles, TrendingUp } from "lucide-react";
 import { BentoStatCard } from "@/components/bento-stat-card";
 import { Button } from "@/components/ui/button";
 import { getMemberHome } from "@/lib/member-home.functions";
@@ -31,13 +31,22 @@ function MemberHome() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
-          {new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
-        </p>
-        <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">
-          Hey {name} — ready to train?
-        </h1>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+            {new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+          </p>
+          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">
+            Hey {name} — ready to train?
+          </h1>
+        </div>
+        <Link
+          to="/app/checkin"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-[var(--shadow-card)] hover:bg-muted"
+        >
+          <QrCode className="h-4 w-4 text-primary" />
+          Check in
+        </Link>
       </div>
 
       {/* Workout of the day hero */}
