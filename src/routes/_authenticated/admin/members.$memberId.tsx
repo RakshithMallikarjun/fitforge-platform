@@ -102,6 +102,7 @@ function MemberProfile() {
             <TabsTrigger value="assessments"><FileText className="mr-1.5 h-4 w-4" /> Assessments</TabsTrigger>
             <TabsTrigger value="plans"><ClipboardList className="mr-1.5 h-4 w-4" /> Workout plans</TabsTrigger>
             <TabsTrigger value="attendance"><Calendar className="mr-1.5 h-4 w-4" /> Attendance</TabsTrigger>
+            <TabsTrigger value="messages"><MessageSquare className="mr-1.5 h-4 w-4" /> Messages</TabsTrigger>
             <TabsTrigger value="notes"><StickyNote className="mr-1.5 h-4 w-4" /> Notes</TabsTrigger>
           </TabsList>
 
