@@ -230,7 +230,7 @@ function MemberProfile() {
           {/* MESSAGES */}
           <TabsContent value="messages">
             <div className="rounded-2xl border border-border bg-card p-2">
-              <ThreadView otherUserId={memberId} otherName={user.display_name ?? user.email} />
+              <ThreadView otherUserId={memberId} />
             </div>
           </TabsContent>
 
