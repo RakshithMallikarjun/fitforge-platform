@@ -58,9 +58,27 @@ function WorkoutPlayer() {
   const finishWorkout = useServerFn(completeWorkout);
   const fetchPrev = useServerFn(getPreviousSetValues);
 
+  const cacheKey = `fitforge:day:${dayId}`;
+  const [offlineFallback, setOfflineFallback] = useState(false);
+
   const { data: dayData, isLoading } = useQuery({
     queryKey: ["workout-day", dayId],
-    queryFn: () => fetchDay({ data: { dayId } }),
+    queryFn: async (): Promise<WorkoutDayData> => {
+      try {
+        const fresh = await fetchDay({ data: { dayId } });
+        // Cache for offline
+        void idbSet(cacheKey, fresh).catch(() => {});
+        setOfflineFallback(false);
+        return fresh;
+      } catch (err) {
+        const cached = await idbGet<WorkoutDayData>(cacheKey).catch(() => null);
+        if (cached) {
+          setOfflineFallback(true);
+          return cached;
+        }
+        throw err;
+      }
+    },
   });
 
   const [currentIdx, setCurrentIdx] = useState(0);
