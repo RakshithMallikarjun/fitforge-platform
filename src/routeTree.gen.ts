@@ -21,11 +21,14 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppWorkoutsRouteImport } from './routes/_authenticated/app/workouts'
 import { Route as AuthenticatedAppProgressRouteImport } from './routes/_authenticated/app/progress'
 import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authenticated/app/profile'
+import { Route as AuthenticatedAppMessagesRouteImport } from './routes/_authenticated/app/messages'
+import { Route as AuthenticatedAppCheckinRouteImport } from './routes/_authenticated/app/checkin'
 import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin/staff'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin/members'
 import { Route as AuthenticatedAdminExercisesRouteImport } from './routes/_authenticated/admin/exercises'
+import { Route as AuthenticatedAdminCheckinRouteImport } from './routes/_authenticated/admin/checkin'
 import { Route as AuthenticatedAppWorkoutDayIdRouteImport } from './routes/_authenticated/app/workout.$dayId'
 import { Route as AuthenticatedAdminPlansNewRouteImport } from './routes/_authenticated/admin/plans.new'
 import { Route as AuthenticatedAdminPlansPlanIdRouteImport } from './routes/_authenticated/admin/plans.$planId'
@@ -92,6 +95,17 @@ const AuthenticatedAppProfileRoute = AuthenticatedAppProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedAppRouteRoute,
 } as any)
+const AuthenticatedAppMessagesRoute =
+  AuthenticatedAppMessagesRouteImport.update({
+    id: '/messages',
+    path: '/messages',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppCheckinRoute = AuthenticatedAppCheckinRouteImport.update({
+  id: '/checkin',
+  path: '/checkin',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
 const AuthenticatedAdminTemplatesRoute =
   AuthenticatedAdminTemplatesRouteImport.update({
     id: '/templates',
@@ -118,6 +132,12 @@ const AuthenticatedAdminExercisesRoute =
   AuthenticatedAdminExercisesRouteImport.update({
     id: '/exercises',
     path: '/exercises',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminCheckinRoute =
+  AuthenticatedAdminCheckinRouteImport.update({
+    id: '/checkin',
+    path: '/checkin',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAppWorkoutDayIdRoute =
@@ -152,11 +172,14 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/app': typeof AuthenticatedAppRouteRouteWithChildren
+  '/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
+  '/app/checkin': typeof AuthenticatedAppCheckinRoute
+  '/app/messages': typeof AuthenticatedAppMessagesRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/progress': typeof AuthenticatedAppProgressRoute
   '/app/workouts': typeof AuthenticatedAppWorkoutsRoute
@@ -172,11 +195,14 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/manifest.webmanifest': typeof ManifestDotwebmanifestRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
+  '/app/checkin': typeof AuthenticatedAppCheckinRoute
+  '/app/messages': typeof AuthenticatedAppMessagesRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/progress': typeof AuthenticatedAppProgressRoute
   '/app/workouts': typeof AuthenticatedAppWorkoutsRoute
@@ -196,11 +222,14 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteRouteWithChildren
+  '/_authenticated/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/_authenticated/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/_authenticated/admin/templates': typeof AuthenticatedAdminTemplatesRoute
+  '/_authenticated/app/checkin': typeof AuthenticatedAppCheckinRoute
+  '/_authenticated/app/messages': typeof AuthenticatedAppMessagesRoute
   '/_authenticated/app/profile': typeof AuthenticatedAppProfileRoute
   '/_authenticated/app/progress': typeof AuthenticatedAppProgressRoute
   '/_authenticated/app/workouts': typeof AuthenticatedAppWorkoutsRoute
@@ -220,11 +249,14 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin'
     | '/app'
+    | '/admin/checkin'
     | '/admin/exercises'
     | '/admin/members'
     | '/admin/plans'
     | '/admin/staff'
     | '/admin/templates'
+    | '/app/checkin'
+    | '/app/messages'
     | '/app/profile'
     | '/app/progress'
     | '/app/workouts'
@@ -240,11 +272,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/manifest.webmanifest'
     | '/sitemap.xml'
+    | '/admin/checkin'
     | '/admin/exercises'
     | '/admin/members'
     | '/admin/plans'
     | '/admin/staff'
     | '/admin/templates'
+    | '/app/checkin'
+    | '/app/messages'
     | '/app/profile'
     | '/app/progress'
     | '/app/workouts'
@@ -263,11 +298,14 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/admin'
     | '/_authenticated/app'
+    | '/_authenticated/admin/checkin'
     | '/_authenticated/admin/exercises'
     | '/_authenticated/admin/members'
     | '/_authenticated/admin/plans'
     | '/_authenticated/admin/staff'
     | '/_authenticated/admin/templates'
+    | '/_authenticated/app/checkin'
+    | '/_authenticated/app/messages'
     | '/_authenticated/app/profile'
     | '/_authenticated/app/progress'
     | '/_authenticated/app/workouts'
@@ -373,6 +411,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppProfileRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/messages': {
+      id: '/_authenticated/app/messages'
+      path: '/messages'
+      fullPath: '/app/messages'
+      preLoaderRoute: typeof AuthenticatedAppMessagesRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/checkin': {
+      id: '/_authenticated/app/checkin'
+      path: '/checkin'
+      fullPath: '/app/checkin'
+      preLoaderRoute: typeof AuthenticatedAppCheckinRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/admin/templates': {
       id: '/_authenticated/admin/templates'
       path: '/templates'
@@ -406,6 +458,13 @@ declare module '@tanstack/react-router' {
       path: '/exercises'
       fullPath: '/admin/exercises'
       preLoaderRoute: typeof AuthenticatedAdminExercisesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/checkin': {
+      id: '/_authenticated/admin/checkin'
+      path: '/checkin'
+      fullPath: '/admin/checkin'
+      preLoaderRoute: typeof AuthenticatedAdminCheckinRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/app/workout/$dayId': {
@@ -471,6 +530,7 @@ const AuthenticatedAdminPlansRouteWithChildren =
   )
 
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminCheckinRoute: typeof AuthenticatedAdminCheckinRoute
   AuthenticatedAdminExercisesRoute: typeof AuthenticatedAdminExercisesRoute
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRouteWithChildren
   AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRouteWithChildren
@@ -481,6 +541,7 @@ interface AuthenticatedAdminRouteRouteChildren {
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminCheckinRoute: AuthenticatedAdminCheckinRoute,
     AuthenticatedAdminExercisesRoute: AuthenticatedAdminExercisesRoute,
     AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRouteWithChildren,
     AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRouteWithChildren,
@@ -495,6 +556,8 @@ const AuthenticatedAdminRouteRouteWithChildren =
   )
 
 interface AuthenticatedAppRouteRouteChildren {
+  AuthenticatedAppCheckinRoute: typeof AuthenticatedAppCheckinRoute
+  AuthenticatedAppMessagesRoute: typeof AuthenticatedAppMessagesRoute
   AuthenticatedAppProfileRoute: typeof AuthenticatedAppProfileRoute
   AuthenticatedAppProgressRoute: typeof AuthenticatedAppProgressRoute
   AuthenticatedAppWorkoutsRoute: typeof AuthenticatedAppWorkoutsRoute
@@ -503,6 +566,8 @@ interface AuthenticatedAppRouteRouteChildren {
 }
 
 const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
+  AuthenticatedAppCheckinRoute: AuthenticatedAppCheckinRoute,
+  AuthenticatedAppMessagesRoute: AuthenticatedAppMessagesRoute,
   AuthenticatedAppProfileRoute: AuthenticatedAppProfileRoute,
   AuthenticatedAppProgressRoute: AuthenticatedAppProgressRoute,
   AuthenticatedAppWorkoutsRoute: AuthenticatedAppWorkoutsRoute,
@@ -538,13 +603,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
