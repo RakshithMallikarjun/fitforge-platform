@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Dumbbell, ClipboardList,
-  BarChart3, Settings, LogOut, ShieldCheck, UserCog,
+  BarChart3, Settings, LogOut, ShieldCheck, UserCog, ScanLine,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ const NAV: NavItem[] = [
   { to: "/admin/exercises", label: "Exercises", icon: Dumbbell },
   { to: "/admin/plans", label: "Plans", icon: ClipboardList },
   { to: "/admin/templates", label: "Templates", icon: ClipboardList },
+  { to: "/admin/checkin", label: "Check-in", icon: ScanLine },
   { to: "/admin", label: "Analytics", icon: BarChart3 },
   { to: "/admin", label: "Settings", icon: Settings },
 ];
