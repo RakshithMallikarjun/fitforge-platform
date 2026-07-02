@@ -1,16 +1,21 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, ClipboardList, FileText, Mail, Phone, StickyNote, User, UserCog } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, Calendar, ClipboardList, FileText, Mail, MessageSquare, Phone, StickyNote, User, UserCog, UserCheck } from "lucide-react";
+import { toast } from "sonner";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMember } from "@/lib/members.functions";
+import { logAttendanceManual } from "@/lib/checkin.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { AssignTrainersDialog } from "@/components/members/assign-trainers-dialog";
 import { StatusBadge, getMembershipStatus } from "@/components/members/status-badge";
 import { MemberNotes } from "@/components/members/member-notes";
 import { AssessmentsTab } from "@/components/assessments/assessments-tab";
+import { AttendanceHeatmap } from "@/components/members/attendance-heatmap";
+import { ThreadView } from "@/components/messages/thread-view";
 
 export const Route = createFileRoute("/_authenticated/admin/members/$memberId")({
   component: MemberProfile,
