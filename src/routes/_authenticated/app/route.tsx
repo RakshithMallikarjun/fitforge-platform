@@ -1,21 +1,24 @@
 import { createFileRoute, Link, Navigate, Outlet, useRouterState, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { Activity, Dumbbell, Home, LogOut, User } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Activity, Dumbbell, Home, LogOut, MessageSquare, User } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme-provider";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { registerSW } from "@/lib/pwa/register-sw";
+import { unreadCount } from "@/lib/messages.functions";
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: MemberShell,
 });
 
-const NAV: ReadonlyArray<{ to: "/app" | "/app/workouts" | "/app/progress" | "/app/profile"; label: string; icon: typeof Home; exact?: boolean }> = [
+const NAV: ReadonlyArray<{ to: "/app" | "/app/workouts" | "/app/progress" | "/app/messages" | "/app/profile"; label: string; icon: typeof Home; exact?: boolean; badgeKey?: "unread" }> = [
   { to: "/app", label: "Home", icon: Home, exact: true },
   { to: "/app/workouts", label: "Workouts", icon: Dumbbell },
   { to: "/app/progress", label: "Progress", icon: Activity },
+  { to: "/app/messages", label: "Messages", icon: MessageSquare, badgeKey: "unread" },
   { to: "/app/profile", label: "Profile", icon: User },
 ];
 
