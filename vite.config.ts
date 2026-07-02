@@ -38,6 +38,9 @@ export default defineConfig({
           navigateFallback: "/offline.html",
           navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//, /^\/admin/, /^\/auth/],
           globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest}"],
+          // Custom bootstrap script hooked into the generated SW — enables
+          // Background Sync fan-out to open clients for offline queue flush.
+          importScripts: ["/sw-sync.js"],
           runtimeCaching: [
             {
               urlPattern: ({ request, url }) =>
