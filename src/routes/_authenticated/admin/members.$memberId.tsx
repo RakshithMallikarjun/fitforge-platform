@@ -26,10 +26,21 @@ function MemberProfile() {
   const { data: me } = useCurrentUser();
   const isAdmin = me?.roles.includes("admin");
   const [assignOpen, setAssignOpen] = useState(false);
+  const qc = useQueryClient();
+  const logManual = useServerFn(logAttendanceManual);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["member", memberId],
     queryFn: () => getMember({ data: { memberId } }),
+  });
+
+  const manualCheckin = useMutation({
+    mutationFn: () => logManual({ data: { memberId } }),
+    onSuccess: () => {
+      toast.success("Check-in logged");
+      qc.invalidateQueries({ queryKey: ["member", memberId] });
+    },
+    onError: (e: any) => toast.error("Could not log check-in", { description: e?.message }),
   });
 
   if (isLoading) {
