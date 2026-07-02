@@ -157,31 +157,53 @@ function WorkoutPlayer() {
   }, [current, prevMap]);
 
   const logSetMut = useMutation({
-    mutationFn: (input: {
+    mutationFn: async (input: {
       exerciseId: string;
       setNumber: number;
       weight: number | null;
       reps: number | null;
       completed: boolean;
-    }) =>
-      logOneSet({
-        data: {
-          logId: logId!,
-          exerciseId: input.exerciseId,
-          setNumber: input.setNumber,
-          weight: input.weight,
-          reps: input.reps,
-          completed: input.completed,
-        },
-      }),
+    }) => {
+      const payload = {
+        logId: logId!,
+        exerciseId: input.exerciseId,
+        setNumber: input.setNumber,
+        weight: input.weight,
+        reps: input.reps,
+        completed: input.completed,
+      };
+      try {
+        return await logOneSet({ data: payload });
+      } catch (err) {
+        if (isOfflineError(err)) {
+          await enqueueLog("logSet", payload);
+          toast.info("Saved offline — will sync when reconnected.");
+          return { queued: true } as any;
+        }
+        throw err;
+      }
+    },
     onError: (e: any) => toast.error("Could not save set", { description: e?.message }),
   });
 
   const completeMut = useMutation({
-    mutationFn: () =>
-      finishWorkout({
-        data: { logId: logId!, notes: notes.trim() || null, effortRating: effort },
-      }),
+    mutationFn: async () => {
+      const payload = {
+        logId: logId!,
+        notes: notes.trim() || null,
+        effortRating: effort,
+      };
+      try {
+        return await finishWorkout({ data: payload });
+      } catch (err) {
+        if (isOfflineError(err)) {
+          await enqueueLog("completeWorkout", { ...payload, synced_offline: true });
+          toast.info("Session saved offline — will sync when reconnected.");
+          return { ok: true, queued: true } as any;
+        }
+        throw err;
+      }
+    },
     onSuccess: () => {
       toast.success("Workout logged. Great work.");
       navigate({ to: "/app" });
