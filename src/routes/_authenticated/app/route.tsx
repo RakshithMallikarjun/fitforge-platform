@@ -86,16 +86,24 @@ function MemberShell() {
           {NAV.map((item) => {
             const Icon = item.icon;
             const active = item.exact ? path === item.to : path.startsWith(item.to);
+            const badge = item.badgeKey === "unread" ? unread?.count ?? 0 : 0;
             return (
               <Link
                 key={item.label}
                 to={item.to}
                 className={[
-                  "flex flex-1 flex-col items-center gap-1 rounded-xl py-2 text-[10px] font-medium transition-colors",
+                  "relative flex flex-1 flex-col items-center gap-1 rounded-xl py-2 text-[10px] font-medium transition-colors",
                   active ? "text-primary" : "text-muted-foreground",
                 ].join(" ")}
               >
-                <Icon className="h-5 w-5" />
+                <span className="relative">
+                  <Icon className="h-5 w-5" />
+                  {badge > 0 && (
+                    <span className="absolute -right-2 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                      {badge > 99 ? "99+" : badge}
+                    </span>
+                  )}
+                </span>
                 {item.label}
               </Link>
             );
