@@ -2,11 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { get as idbGet, set as idbSet } from "idb-keyval";
 import {
   ArrowLeft,
   Check,
   ChevronLeft,
   ChevronRight,
+  CloudOff,
   PartyPopper,
   Play,
   SkipForward,
@@ -24,8 +26,21 @@ import {
   logSet,
   startWorkoutLog,
   type PrevSet,
+  type WorkoutDayData,
   type WorkoutDayExercise,
 } from "@/lib/workout-player.functions";
+import { enqueueLog } from "@/lib/pwa/offline-queue";
+
+function isOfflineError(e: unknown): boolean {
+  if (typeof navigator !== "undefined" && !navigator.onLine) return true;
+  const msg = String((e as any)?.message ?? e ?? "").toLowerCase();
+  return (
+    msg.includes("failed to fetch") ||
+    msg.includes("network") ||
+    msg.includes("load failed") ||
+    msg.includes("offline")
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/app/workout/$dayId")({
   component: WorkoutPlayer,
