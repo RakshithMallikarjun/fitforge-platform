@@ -29,6 +29,13 @@ function MemberShell() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { theme } = useTheme();
+  const fetchUnread = useServerFn(unreadCount);
+  const { data: unread } = useQuery({
+    queryKey: ["unread-count"],
+    queryFn: () => fetchUnread(),
+    enabled: !!user,
+    refetchInterval: 30_000,
+  });
 
   useEffect(() => {
     void registerSW();
