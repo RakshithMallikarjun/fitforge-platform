@@ -20,7 +20,7 @@ type Msg = {
 
 export function ThreadView({ otherUserId, className }: { otherUserId: string; className?: string }) {
   const { data: me } = useCurrentUser();
-  const meId = me?.id;
+  const meId = me?.userId;
   const qc = useQueryClient();
   const fetchThread = useServerFn(getThread);
   const sendFn = useServerFn(sendMessage);

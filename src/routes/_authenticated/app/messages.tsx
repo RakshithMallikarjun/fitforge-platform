@@ -30,7 +30,7 @@ function MessagesPage() {
 
   // Realtime: refresh threads list on new inbound messages
   useEffect(() => {
-    if (!me?.id) return;
+    if (!me?.userId) return;
     const channel = supabase
       .channel(`inbox-${me.id}`)
       .on(
@@ -45,7 +45,7 @@ function MessagesPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [me?.id, qc]);
+  }, [me?.userId, qc]);
 
   if (withUser) {
     const t = threads?.find((x) => x.otherUserId === withUser);
