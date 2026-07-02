@@ -304,6 +304,12 @@ function WorkoutPlayer() {
 
   return (
     <div className="space-y-5 pb-8">
+      {offlineFallback && (
+        <div className="flex items-center gap-2 rounded-2xl border border-secondary/30 bg-secondary-soft px-3 py-2 text-xs text-secondary">
+          <CloudOff className="h-3.5 w-3.5" />
+          Offline mode — sets will sync when you're back online.
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate({ to: "/app/workouts" })}
