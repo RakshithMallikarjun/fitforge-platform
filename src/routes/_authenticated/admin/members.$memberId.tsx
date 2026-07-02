@@ -209,7 +209,7 @@ function MemberProfile() {
                 <UserCheck className="h-4 w-4" /> Log attendance
               </Button>
             </div>
-            <AttendanceHeatmap logs={attendance ?? []} />
+            <AttendanceHeatmap entries={attendance ?? []} />
             <EmptyOrList
               items={attendance}
               emptyIcon={<Calendar className="h-6 w-6" />}
