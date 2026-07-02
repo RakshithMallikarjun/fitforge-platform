@@ -32,10 +32,10 @@ function MessagesPage() {
   useEffect(() => {
     if (!me?.userId) return;
     const channel = supabase
-      .channel(`inbox-${me.id}`)
+      .channel(`inbox-${me.userId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `recipient_id=eq.${me.id}` },
+        { event: "INSERT", schema: "public", table: "messages", filter: `recipient_id=eq.${me.userId}` },
         () => {
           qc.invalidateQueries({ queryKey: ["threads"] });
           qc.invalidateQueries({ queryKey: ["unread-count"] });
