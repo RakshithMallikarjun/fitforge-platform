@@ -1,13 +1,17 @@
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, Calendar, LifeBuoy } from "lucide-react";
+import { ArrowUpDown, ArrowUpRight, Calendar, LifeBuoy } from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
 import { BentoStatCard } from "@/components/bento-stat-card";
 import { TimelineItem } from "@/components/timeline-item";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { getAdminStats } from "@/lib/admin-stats.functions";
+import { getAdminStats, getTrainerStats, type TrainerStat } from "@/lib/admin-stats.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminDashboard,
