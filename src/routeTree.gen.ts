@@ -30,6 +30,8 @@ import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminExercisesRouteImport } from './routes/_authenticated/admin/exercises'
 import { Route as AuthenticatedAdminCheckinRouteImport } from './routes/_authenticated/admin/checkin'
 import { Route as AuthenticatedAppWorkoutDayIdRouteImport } from './routes/_authenticated/app/workout.$dayId'
+import { Route as AuthenticatedAdminReportsEngagementRouteImport } from './routes/_authenticated/admin/reports.engagement'
+import { Route as AuthenticatedAdminReportsAttendanceRouteImport } from './routes/_authenticated/admin/reports.attendance'
 import { Route as AuthenticatedAdminPlansNewRouteImport } from './routes/_authenticated/admin/plans.new'
 import { Route as AuthenticatedAdminPlansPlanIdRouteImport } from './routes/_authenticated/admin/plans.$planId'
 import { Route as AuthenticatedAdminMembersMemberIdRouteImport } from './routes/_authenticated/admin/members.$memberId'
@@ -146,6 +148,18 @@ const AuthenticatedAppWorkoutDayIdRoute =
     path: '/workout/$dayId',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
+const AuthenticatedAdminReportsEngagementRoute =
+  AuthenticatedAdminReportsEngagementRouteImport.update({
+    id: '/reports/engagement',
+    path: '/reports/engagement',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminReportsAttendanceRoute =
+  AuthenticatedAdminReportsAttendanceRouteImport.update({
+    id: '/reports/attendance',
+    path: '/reports/attendance',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminPlansNewRoute =
   AuthenticatedAdminPlansNewRouteImport.update({
     id: '/new',
@@ -188,6 +202,8 @@ export interface FileRoutesByFullPath {
   '/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
   '/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
   '/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
+  '/admin/reports/attendance': typeof AuthenticatedAdminReportsAttendanceRoute
+  '/admin/reports/engagement': typeof AuthenticatedAdminReportsEngagementRoute
   '/app/workout/$dayId': typeof AuthenticatedAppWorkoutDayIdRoute
 }
 export interface FileRoutesByTo {
@@ -211,6 +227,8 @@ export interface FileRoutesByTo {
   '/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
   '/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
   '/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
+  '/admin/reports/attendance': typeof AuthenticatedAdminReportsAttendanceRoute
+  '/admin/reports/engagement': typeof AuthenticatedAdminReportsEngagementRoute
   '/app/workout/$dayId': typeof AuthenticatedAppWorkoutDayIdRoute
 }
 export interface FileRoutesById {
@@ -238,6 +256,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
   '/_authenticated/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
   '/_authenticated/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
+  '/_authenticated/admin/reports/attendance': typeof AuthenticatedAdminReportsAttendanceRoute
+  '/_authenticated/admin/reports/engagement': typeof AuthenticatedAdminReportsEngagementRoute
   '/_authenticated/app/workout/$dayId': typeof AuthenticatedAppWorkoutDayIdRoute
 }
 export interface FileRouteTypes {
@@ -265,6 +285,8 @@ export interface FileRouteTypes {
     | '/admin/members/$memberId'
     | '/admin/plans/$planId'
     | '/admin/plans/new'
+    | '/admin/reports/attendance'
+    | '/admin/reports/engagement'
     | '/app/workout/$dayId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -288,6 +310,8 @@ export interface FileRouteTypes {
     | '/admin/members/$memberId'
     | '/admin/plans/$planId'
     | '/admin/plans/new'
+    | '/admin/reports/attendance'
+    | '/admin/reports/engagement'
     | '/app/workout/$dayId'
   id:
     | '__root__'
@@ -314,6 +338,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/members/$memberId'
     | '/_authenticated/admin/plans/$planId'
     | '/_authenticated/admin/plans/new'
+    | '/_authenticated/admin/reports/attendance'
+    | '/_authenticated/admin/reports/engagement'
     | '/_authenticated/app/workout/$dayId'
   fileRoutesById: FileRoutesById
 }
@@ -474,6 +500,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppWorkoutDayIdRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/admin/reports/engagement': {
+      id: '/_authenticated/admin/reports/engagement'
+      path: '/reports/engagement'
+      fullPath: '/admin/reports/engagement'
+      preLoaderRoute: typeof AuthenticatedAdminReportsEngagementRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/reports/attendance': {
+      id: '/_authenticated/admin/reports/attendance'
+      path: '/reports/attendance'
+      fullPath: '/admin/reports/attendance'
+      preLoaderRoute: typeof AuthenticatedAdminReportsAttendanceRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/plans/new': {
       id: '/_authenticated/admin/plans/new'
       path: '/new'
@@ -537,6 +577,8 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
   AuthenticatedAdminTemplatesRoute: typeof AuthenticatedAdminTemplatesRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminReportsAttendanceRoute: typeof AuthenticatedAdminReportsAttendanceRoute
+  AuthenticatedAdminReportsEngagementRoute: typeof AuthenticatedAdminReportsEngagementRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
@@ -548,6 +590,10 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
     AuthenticatedAdminTemplatesRoute: AuthenticatedAdminTemplatesRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+    AuthenticatedAdminReportsAttendanceRoute:
+      AuthenticatedAdminReportsAttendanceRoute,
+    AuthenticatedAdminReportsEngagementRoute:
+      AuthenticatedAdminReportsEngagementRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =

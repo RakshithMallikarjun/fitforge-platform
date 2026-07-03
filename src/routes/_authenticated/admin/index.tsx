@@ -1,13 +1,17 @@
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, Calendar, LifeBuoy } from "lucide-react";
+import { ArrowUpDown, ArrowUpRight, Calendar, LifeBuoy } from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
 import { BentoStatCard } from "@/components/bento-stat-card";
 import { TimelineItem } from "@/components/timeline-item";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { getAdminStats } from "@/lib/admin-stats.functions";
+import { getAdminStats, getTrainerStats, type TrainerStat } from "@/lib/admin-stats.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminDashboard,
@@ -58,6 +62,10 @@ function AdminDashboard() {
             </>
           )}
         </section>
+
+        <TrainerPerformance />
+
+
 
         {/* Two-column main */}
         <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -178,3 +186,82 @@ function AdminDashboard() {
     </>
   );
 }
+
+type SortKey = "name" | "assignedMembers" | "plansThisMonth" | "assessmentsThisMonth";
+
+function TrainerPerformance() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["trainer-stats"],
+    queryFn: () => getTrainerStats(),
+  });
+  const [sort, setSort] = useState<SortKey>("assignedMembers");
+  const [dir, setDir] = useState<"asc" | "desc">("desc");
+
+  const rows = useMemo(() => {
+    const arr = [...(data ?? [])];
+    arr.sort((a, b) => {
+      let cmp = 0;
+      if (sort === "name") cmp = (a.displayName ?? a.email).localeCompare(b.displayName ?? b.email);
+      else cmp = (a[sort] as number) - (b[sort] as number);
+      return dir === "asc" ? cmp : -cmp;
+    });
+    return arr;
+  }, [data, sort, dir]);
+
+  function toggle(k: SortKey) {
+    if (sort === k) setDir(dir === "asc" ? "desc" : "asc");
+    else { setSort(k); setDir(k === "name" ? "asc" : "desc"); }
+  }
+
+  return (
+    <section className="rounded-[2rem] border border-border bg-card shadow-[var(--shadow-card)]">
+      <div className="p-6 pb-2">
+        <h2 className="text-base font-bold tracking-tight">Trainer performance</h2>
+        <p className="text-xs text-muted-foreground">Assigned members and month-to-date activity</p>
+      </div>
+      {isLoading ? (
+        <div className="space-y-2 p-6">
+          <Skeleton className="h-8" />
+          <Skeleton className="h-8" />
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead><Sort onClick={() => toggle("name")}>Trainer</Sort></TableHead>
+              <TableHead><Sort onClick={() => toggle("assignedMembers")}>Members</Sort></TableHead>
+              <TableHead><Sort onClick={() => toggle("plansThisMonth")}>Plans this month</Sort></TableHead>
+              <TableHead><Sort onClick={() => toggle("assessmentsThisMonth")}>Assessments this month</Sort></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((t: TrainerStat) => (
+              <TableRow key={t.trainerId}>
+                <TableCell className="font-medium">{t.displayName ?? t.email}</TableCell>
+                <TableCell className="font-numeric">{t.assignedMembers}</TableCell>
+                <TableCell className="font-numeric">{t.plansThisMonth}</TableCell>
+                <TableCell className="font-numeric">{t.assessmentsThisMonth}</TableCell>
+              </TableRow>
+            ))}
+            {!rows.length && (
+              <TableRow>
+                <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
+                  No trainers yet.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      )}
+    </section>
+  );
+}
+
+function Sort({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+  return (
+    <Button variant="ghost" size="sm" className="-ml-2 h-8" onClick={onClick}>
+      {children} <ArrowUpDown className="ml-1 h-3 w-3" />
+    </Button>
+  );
+}
+
