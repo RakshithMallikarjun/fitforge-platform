@@ -35,8 +35,6 @@ import { Route as AuthenticatedAdminReportsAttendanceRouteImport } from './route
 import { Route as AuthenticatedAdminPlansNewRouteImport } from './routes/_authenticated/admin/plans.new'
 import { Route as AuthenticatedAdminPlansPlanIdRouteImport } from './routes/_authenticated/admin/plans.$planId'
 import { Route as AuthenticatedAdminMembersMemberIdRouteImport } from './routes/_authenticated/admin/members.$memberId'
-import { Route as AuthenticatedAdminReportsAttendanceRouteImport } from './routes/_authenticated/admin/reports.attendance'
-import { Route as AuthenticatedAdminReportsEngagementRouteImport } from './routes/_authenticated/admin/reports.engagement'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -179,6 +177,18 @@ const AuthenticatedAdminMembersMemberIdRoute =
     id: '/$memberId',
     path: '/$memberId',
     getParentRoute: () => AuthenticatedAdminMembersRoute,
+  } as any)
+const AuthenticatedAdminReportsAttendanceRoute =
+  AuthenticatedAdminReportsAttendanceRouteImport.update({
+    id: '/reports/attendance',
+    path: '/reports/attendance',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminReportsEngagementRoute =
+  AuthenticatedAdminReportsEngagementRouteImport.update({
+    id: '/reports/engagement',
+    path: '/reports/engagement',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
