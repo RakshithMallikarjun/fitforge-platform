@@ -2,13 +2,14 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Dumbbell, ClipboardList,
   BarChart3, Settings, LogOut, ShieldCheck, UserCog, ScanLine,
+  CalendarClock, Activity,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme-provider";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
-type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; adminOnly?: boolean };
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; adminOnly?: boolean; group?: string };
 const NAV: NavItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/members", label: "Members", icon: Users },
@@ -17,6 +18,8 @@ const NAV: NavItem[] = [
   { to: "/admin/plans", label: "Plans", icon: ClipboardList },
   { to: "/admin/templates", label: "Templates", icon: ClipboardList },
   { to: "/admin/checkin", label: "Check-in", icon: ScanLine },
+  { to: "/admin/reports/attendance", label: "Attendance", icon: CalendarClock, group: "Reports" },
+  { to: "/admin/reports/engagement", label: "Engagement", icon: Activity, group: "Reports" },
   { to: "/admin", label: "Analytics", icon: BarChart3 },
   { to: "/admin", label: "Settings", icon: Settings },
 ];
