@@ -51,26 +51,41 @@ export function AdminSidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 px-3">
-        {NAV.filter((i) => !i.adminOnly || isAdmin).map((item) => {
-          const active = item.exact ? path === item.to : path.startsWith(item.to);
-
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.label}
-              to={item.to as any}
-              className={[
-                "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-                active
-                  ? "bg-accent text-primary"
-                  : "text-foreground/70 hover:bg-muted hover:text-foreground",
-              ].join(" ")}
-            >
-              <Icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          );
-        })}
+        {(() => {
+          const items = NAV.filter((i) => !i.adminOnly || isAdmin);
+          const out: React.ReactNode[] = [];
+          let lastGroup: string | undefined;
+          items.forEach((item) => {
+            if (item.group && item.group !== lastGroup) {
+              out.push(
+                <div key={`grp-${item.group}`} className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {item.group}
+                </div>,
+              );
+              lastGroup = item.group;
+            } else if (!item.group) {
+              lastGroup = undefined;
+            }
+            const active = item.exact ? path === item.to : path.startsWith(item.to);
+            const Icon = item.icon;
+            out.push(
+              <Link
+                key={`${item.label}-${item.to}`}
+                to={item.to as any}
+                className={[
+                  "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-accent text-primary"
+                    : "text-foreground/70 hover:bg-muted hover:text-foreground",
+                ].join(" ")}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Link>,
+            );
+          });
+          return out;
+        })()}
       </nav>
 
       <div className="space-y-3 p-4">
