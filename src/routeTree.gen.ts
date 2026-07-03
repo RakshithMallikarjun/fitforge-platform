@@ -178,18 +178,6 @@ const AuthenticatedAdminMembersMemberIdRoute =
     path: '/$memberId',
     getParentRoute: () => AuthenticatedAdminMembersRoute,
   } as any)
-const AuthenticatedAdminReportsAttendanceRoute =
-  AuthenticatedAdminReportsAttendanceRouteImport.update({
-    id: '/reports/attendance',
-    path: '/reports/attendance',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminReportsEngagementRoute =
-  AuthenticatedAdminReportsEngagementRouteImport.update({
-    id: '/reports/engagement',
-    path: '/reports/engagement',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
