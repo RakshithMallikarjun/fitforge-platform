@@ -192,8 +192,6 @@ export interface FileRoutesByFullPath {
   '/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
-  '/admin/reports/attendance': typeof AuthenticatedAdminReportsAttendanceRoute
-  '/admin/reports/engagement': typeof AuthenticatedAdminReportsEngagementRoute
   '/app/checkin': typeof AuthenticatedAppCheckinRoute
   '/app/messages': typeof AuthenticatedAppMessagesRoute
   '/app/profile': typeof AuthenticatedAppProfileRoute
