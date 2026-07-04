@@ -413,8 +413,9 @@ function AiSuggestionsPanel({
     return Array.from(s);
   }, [days]);
 
+  const suggestFn = useServerFn(suggestOverload);
   const mutation = useMutation({
-    mutationFn: () => suggestOverload({ data: { memberId, exerciseIds } }),
+    mutationFn: () => suggestFn({ data: { memberId, exerciseIds } }),
     onError: (e: any) => toast.error("Suggestions failed", { description: e?.message }),
   });
 
