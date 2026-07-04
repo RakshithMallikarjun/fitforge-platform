@@ -9,6 +9,7 @@ import { useTheme } from "@/lib/theme-provider";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { registerSW } from "@/lib/pwa/register-sw";
 import { unreadCount } from "@/lib/messages.functions";
+import { getGymTheme } from "@/lib/gym-theme.functions";
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: MemberShell,
