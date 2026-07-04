@@ -505,6 +505,60 @@ export type Database = {
           },
         ]
       }
+      overload_suggestions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          exercise_id: string
+          id: string
+          member_id: string
+          plan_id: string
+          suggestion: Json
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          exercise_id: string
+          id?: string
+          member_id: string
+          plan_id: string
+          suggestion: Json
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          exercise_id?: string
+          id?: string
+          member_id?: string
+          plan_id?: string
+          suggestion?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "overload_suggestions_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "overload_suggestions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "workout_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trainer_assignments: {
         Row: {
           active: boolean

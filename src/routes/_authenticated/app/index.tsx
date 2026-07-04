@@ -5,6 +5,7 @@ import { Clock, Dumbbell, Flame, MessageSquareQuote, Play, QrCode, Sparkles, Tre
 import { BentoStatCard } from "@/components/bento-stat-card";
 import { Button } from "@/components/ui/button";
 import { getMemberHome } from "@/lib/member-home.functions";
+import { getMemberTip } from "@/lib/overload.functions";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: MemberHome,
@@ -22,9 +23,15 @@ function formatRelative(iso: string | null): string {
 
 function MemberHome() {
   const fetchHome = useServerFn(getMemberHome);
+  const fetchTip = useServerFn(getMemberTip);
   const { data, isLoading } = useQuery({
     queryKey: ["member-home"],
     queryFn: () => fetchHome(),
+  });
+  const { data: tip } = useQuery({
+    queryKey: ["member-tip"],
+    queryFn: () => fetchTip(),
+    staleTime: 60_000,
   });
 
   const name = (data?.displayName ?? "").split(" ")[0] || "there";
@@ -87,6 +94,22 @@ function MemberHome() {
           {data?.lastWorkoutDate ? "Logged and counted toward your streak." : "No workouts logged yet — your journey starts here."}
         </p>
       </div>
+
+      {/* Trainer tip (AI overload suggestion, approved by staff) */}
+      {tip && (
+        <div className="rounded-[2rem] border border-primary/30 bg-primary/5 p-5">
+          <div className="flex items-center gap-2 text-primary">
+            <Sparkles className="h-4 w-4" />
+            <p className="text-xs font-semibold uppercase tracking-[0.15em]">Trainer tip</p>
+          </div>
+          <p className="mt-2 text-sm font-semibold text-foreground">
+            {tip.exerciseName}: aim for {tip.suggestion?.suggestedWeight ?? "—"}kg × {tip.suggestion?.suggestedReps ?? "—"}
+          </p>
+          {tip.suggestion?.reasoning && (
+            <p className="mt-1 text-xs text-muted-foreground">{tip.suggestion.reasoning}</p>
+          )}
+        </div>
+      )}
 
       {/* Latest trainer note */}
       {data?.latestNote && (
