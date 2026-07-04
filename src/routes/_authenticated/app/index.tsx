@@ -95,6 +95,22 @@ function MemberHome() {
         </p>
       </div>
 
+      {/* Trainer tip (AI overload suggestion, approved by staff) */}
+      {tip && (
+        <div className="rounded-[2rem] border border-primary/30 bg-primary/5 p-5">
+          <div className="flex items-center gap-2 text-primary">
+            <Sparkles className="h-4 w-4" />
+            <p className="text-xs font-semibold uppercase tracking-[0.15em]">Trainer tip</p>
+          </div>
+          <p className="mt-2 text-sm font-semibold text-foreground">
+            {tip.exerciseName}: aim for {tip.suggestion?.suggestedWeight ?? "—"}kg × {tip.suggestion?.suggestedReps ?? "—"}
+          </p>
+          {tip.suggestion?.reasoning && (
+            <p className="mt-1 text-xs text-muted-foreground">{tip.suggestion.reasoning}</p>
+          )}
+        </div>
+      )}
+
       {/* Latest trainer note */}
       {data?.latestNote && (
         <div className="rounded-[2rem] border border-border bg-secondary-soft p-5">
