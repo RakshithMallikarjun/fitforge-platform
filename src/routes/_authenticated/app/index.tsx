@@ -5,6 +5,7 @@ import { Clock, Dumbbell, Flame, MessageSquareQuote, Play, QrCode, Sparkles, Tre
 import { BentoStatCard } from "@/components/bento-stat-card";
 import { Button } from "@/components/ui/button";
 import { getMemberHome } from "@/lib/member-home.functions";
+import { getMemberTip } from "@/lib/overload.functions";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: MemberHome,
