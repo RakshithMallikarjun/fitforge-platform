@@ -29,14 +29,25 @@ function MemberShell() {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { theme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const fetchUnread = useServerFn(unreadCount);
+  const fetchTheme = useServerFn(getGymTheme);
   const { data: unread } = useQuery({
     queryKey: ["unread-count"],
     queryFn: () => fetchUnread(),
     enabled: !!user,
     refetchInterval: 30_000,
   });
+  const { data: gymTheme } = useQuery({
+    queryKey: ["gym-theme"],
+    queryFn: () => fetchTheme(),
+    enabled: !!user,
+    staleTime: 5 * 60_000,
+  });
+
+  useEffect(() => {
+    if (gymTheme) setTheme(gymTheme);
+  }, [gymTheme, setTheme]);
 
   useEffect(() => {
     void registerSW();
