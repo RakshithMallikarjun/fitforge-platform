@@ -23,9 +23,15 @@ function formatRelative(iso: string | null): string {
 
 function MemberHome() {
   const fetchHome = useServerFn(getMemberHome);
+  const fetchTip = useServerFn(getMemberTip);
   const { data, isLoading } = useQuery({
     queryKey: ["member-home"],
     queryFn: () => fetchHome(),
+  });
+  const { data: tip } = useQuery({
+    queryKey: ["member-tip"],
+    queryFn: () => fetchTip(),
+    staleTime: 60_000,
   });
 
   const name = (data?.displayName ?? "").split(" ")[0] || "there";
