@@ -396,3 +396,74 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
+
+function AiSuggestionsPanel({
+  memberId,
+  days,
+  onApply,
+}: {
+  memberId: string;
+  days: DayInput[];
+  onApply: (exerciseId: string, weight: number | null, reps: number | null) => void;
+}) {
+  const exerciseIds = useMemo(() => {
+    const s = new Set<string>();
+    for (const d of days) for (const e of d.exercises) s.add(e.exercise.id);
+    return Array.from(s);
+  }, [days]);
+
+  const mutation = useMutation({
+    mutationFn: () => suggestOverload({ data: { memberId, exerciseIds } }),
+    onError: (e: any) => toast.error("Suggestions failed", { description: e?.message }),
+  });
+
+  const suggestions: ExerciseSuggestion[] = mutation.data ?? [];
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <h3 className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+        <Sparkles className="h-4 w-4 text-primary" /> AI suggestions
+      </h3>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Next-week targets based on the member's last 4 weeks of logs.
+      </p>
+      <Button
+        size="sm"
+        variant="outline"
+        className="mt-3 w-full"
+        disabled={exerciseIds.length === 0 || mutation.isPending}
+        onClick={() => mutation.mutate()}
+      >
+        {mutation.isPending
+          ? "Analyzing…"
+          : suggestions.length
+            ? "Refresh"
+            : "Generate suggestions"}
+      </Button>
+      {suggestions.length > 0 && (
+        <ul className="mt-4 space-y-2">
+          {suggestions.map((s) => (
+            <li key={s.exerciseId} className="rounded-xl border border-border bg-background p-3 text-xs">
+              <p className="font-semibold text-foreground">{s.exerciseName}</p>
+              <p className="mt-0.5 text-muted-foreground">
+                Now: {s.currentAvg.weight ?? "—"}kg × {s.currentAvg.reps ?? "—"}
+              </p>
+              <p className="mt-0.5 text-primary">
+                Target: {s.suggestedWeight ?? "—"}kg × {s.suggestedReps ?? "—"}
+              </p>
+              <p className="mt-1 italic text-muted-foreground">{s.reasoning}</p>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="mt-2 h-7 gap-1 px-2 text-xs"
+                onClick={() => onApply(s.exerciseId, s.suggestedWeight, s.suggestedReps)}
+              >
+                <Check className="h-3 w-3" /> Apply
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
