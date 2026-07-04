@@ -220,6 +220,31 @@ function PlanBuilder() {
                 No assessment on file yet.
               </div>
             )}
+            {!isTemplate && memberId && (
+              <AiSuggestionsPanel
+                memberId={memberId}
+                days={days}
+                onApply={(exId, w, r) => {
+                  setDays((prev) =>
+                    prev.map((d) => ({
+                      ...d,
+                      exercises: d.exercises.map((e) =>
+                        e.exercise.id === exId
+                          ? {
+                              ...e,
+                              reps: r != null ? String(r) : e.reps,
+                              notes: e.notes
+                                ? `${e.notes} · target ${w ?? "—"}kg`
+                                : `Target ${w ?? "—"}kg`,
+                            }
+                          : e,
+                      ),
+                    })),
+                  );
+                  toast.success("Suggestion applied");
+                }}
+              />
+            )}
           </aside>
         </div>
       </main>
