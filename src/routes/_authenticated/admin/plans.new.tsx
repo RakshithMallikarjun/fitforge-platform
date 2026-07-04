@@ -10,7 +10,7 @@ import {
   arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Trash2, Activity, X } from "lucide-react";
+import { GripVertical, Plus, Trash2, Activity, X, Sparkles, Check } from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { listMembers } from "@/lib/members.functions";
 import { createPlan, getMemberSnapshot } from "@/lib/plans.functions";
+import { suggestOverload, type ExerciseSuggestion } from "@/lib/overload.functions";
 import { ExercisePickerDialog } from "@/components/exercises/exercise-picker-dialog";
 import type { ExerciseRow } from "@/lib/exercises.functions";
 
