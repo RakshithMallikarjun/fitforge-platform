@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 export type GymTheme = {
   primaryColor: string;     // hex
@@ -57,10 +57,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.style.setProperty("--font-body", `"${theme.fontFamily}", ui-sans-serif, system-ui, sans-serif`);
   }, [theme]);
 
-  const value = useMemo<Ctx>(
-    () => ({ theme, setTheme: (t) => setThemeState((prev) => ({ ...prev, ...t })) }),
-    [theme],
-  );
+  const setTheme = useCallback((t: Partial<GymTheme>) => {
+    setThemeState((prev) => ({ ...prev, ...t }));
+  }, []);
+
+  const value = useMemo<Ctx>(() => ({ theme, setTheme }), [theme, setTheme]);
 
   return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;
 }
