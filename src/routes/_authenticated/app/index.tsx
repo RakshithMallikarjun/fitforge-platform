@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Clock, Dumbbell, Flame, MessageSquareQuote, Play, QrCode, Sparkles, TrendingUp } from "lucide-react";
+import { Clock, Dumbbell, MessageSquareQuote, Play, QrCode, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { BentoStatCard } from "@/components/bento-stat-card";
 import { Button } from "@/components/ui/button";
 import { getMemberHome } from "@/lib/member-home.functions";
@@ -62,22 +63,18 @@ function MemberHome() {
       <div className="grid grid-cols-2 gap-3">
         <BentoStatCard
           label="Streak"
-          value={isLoading ? "—" : `${data?.streakDays ?? 0} day${(data?.streakDays ?? 0) === 1 ? "" : "s"}`}
-          footer={
-            <span className="inline-flex items-center gap-1">
-              <Flame className="h-3 w-3" />
-              {(data?.streakDays ?? 0) > 0 ? "Keep it going" : "Start today"}
-            </span>
-          }
+          value={isLoading ? "—" : `🔥 ${data?.currentStreak ?? 0}-day streak`}
+          footer={(data?.currentStreak ?? 0) === 0 ? "Start your streak today" : "Keep it going"}
         />
         <BentoStatCard
-          label="This week"
-          value={isLoading ? "—" : `${data?.weekCompleted ?? 0} / ${data?.weekTarget ?? 4}`}
+          label="Consistency"
+          value={isLoading ? "—" : `📅 ${data?.weeklyConsistency ?? 0}% this week`}
           footer={
-            <span className="inline-flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              {(data?.weekCompleted ?? 0) >= (data?.weekTarget ?? 4) ? "Goal hit" : "On track"}
-            </span>
+            (data?.weeklyConsistency ?? 0) >= 80 ? (
+              <Badge className="border-success/30 bg-success/15 text-success">On track!</Badge>
+            ) : (
+              "Last 7 days"
+            )
           }
         />
       </div>
