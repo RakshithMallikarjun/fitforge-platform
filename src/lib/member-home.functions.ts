@@ -5,9 +5,11 @@ export type MemberHomeData = {
   gym: { name: string; primary_color: string | null; logo_url: string | null } | null;
   displayName: string | null;
   streakDays: number;
+  currentStreak: number;
   lastWorkoutDate: string | null;
   weekCompleted: number;
   weekTarget: number;
+  weeklyConsistency: number;
   activePlan: { id: string; name: string } | null;
   nextWorkout: {
     dayId: string;
@@ -88,10 +90,19 @@ export const getMemberHome = createServerFn({ method: "GET" })
       while (completedDates.has(cursor.toISOString().slice(0, 10))) {
         streakDays++;
         cursor.setDate(cursor.getDate() - 1);
-      }
     }
+  }
 
-    const lastWorkoutDate =
+  // Weekly consistency: percentage of the last 7 days (rolling) with a completed workout
+  let weekHitDays = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    if (completedDates.has(d.toISOString().slice(0, 10))) weekHitDays++;
+  }
+  const weeklyConsistency = Math.round((weekHitDays / 7) * 100);
+
+  const lastWorkoutDate =
       (logs ?? []).find((l: any) => l.completed_at)?.date ?? null;
 
     // weekly progress (Mon–Sun)
@@ -166,9 +177,11 @@ export const getMemberHome = createServerFn({ method: "GET" })
         : null,
       displayName,
       streakDays,
+      currentStreak: streakDays,
       lastWorkoutDate,
       weekCompleted,
       weekTarget: 4,
+      weeklyConsistency,
       activePlan,
       nextWorkout,
       latestNote,
