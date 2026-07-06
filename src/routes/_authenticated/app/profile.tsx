@@ -180,3 +180,86 @@ function ProfilePage() {
 }
 
 
+
+function PushNotificationsSection() {
+  const qc = useQueryClient();
+  const statusFn = useServerFn(getPushStatus);
+  const subFn = useServerFn(subscribePush);
+  const unsubFn = useServerFn(unsubscribePush);
+
+  const { data: status } = useQuery({
+    queryKey: ["push-status"],
+    queryFn: () => statusFn(),
+  });
+  const enabled = !!status?.enabled;
+  const [busy, setBusy] = useState(false);
+
+  const supported =
+    typeof window !== "undefined" &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window;
+
+  async function enable() {
+    setBusy(true);
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        toast.error("Notifications blocked", {
+          description: "Enable them in your browser settings to receive reminders.",
+        });
+        return;
+      }
+      const vapid = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+      if (!vapid) throw new Error("VAPID public key not configured");
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapid),
+      });
+      await subFn({ data: { subscription: sub.toJSON() } });
+      qc.invalidateQueries({ queryKey: ["push-status"] });
+      toast.success("Notifications enabled");
+    } catch (e: any) {
+      toast.error("Could not enable notifications", { description: e?.message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function disable() {
+    setBusy(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) await sub.unsubscribe();
+      await unsubFn();
+      qc.invalidateQueries({ queryKey: ["push-status"] });
+      toast.success("Notifications disabled");
+    } catch (e: any) {
+      toast.error("Could not disable", { description: e?.message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <div className="flex items-center gap-3">
+        <div className="grid h-10 w-10 place-items-center rounded-full bg-primary-soft text-primary">
+          <Bell className="h-5 w-5" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold">Push Notifications</p>
+          <p className="text-xs text-muted-foreground">
+            {supported ? "Workout & plan reminders" : "Not supported on this device"}
+          </p>
+        </div>
+        <Switch
+          checked={enabled}
+          disabled={!supported || busy}
+          onCheckedChange={(v) => (v ? enable() : disable())}
+        />
+      </div>
+    </div>
+  );
+}
