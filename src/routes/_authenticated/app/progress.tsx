@@ -76,6 +76,54 @@ function ProgressPage() {
 }
 
 function SkeletonCard() {
+
+/* ---------------- FITNESS SCORE CARD ---------------- */
+
+function FitnessScoreCard({ score }: { score: FitnessScore }) {
+  if (!score.hasAssessment || score.score == null) {
+    return (
+      <div className="rounded-[2rem] border border-border bg-card p-6 text-center shadow-[var(--shadow-card)]">
+        <p className="text-sm font-semibold">Fitness Score</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Complete your first fitness assessment with your trainer to unlock your score.
+        </p>
+      </div>
+    );
+  }
+  const s = score.score;
+  const barColor =
+    s < 40 ? "bg-red-500" :
+    s < 70 ? "bg-amber-500" :
+    s < 90 ? "bg-green-500" : "bg-yellow-400";
+  const trendEl =
+    score.trend == null ? (
+      <span className="text-xs text-muted-foreground">First assessment</span>
+    ) : score.trend > 0 ? (
+      <span className="text-xs font-semibold text-green-600">↑ +{score.trend}</span>
+    ) : score.trend < 0 ? (
+      <span className="text-xs font-semibold text-red-600">↓ {score.trend}</span>
+    ) : (
+      <span className="text-xs text-muted-foreground">No change</span>
+    );
+
+  return (
+    <div className="rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)]">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Fitness Score</p>
+        {trendEl}
+      </div>
+      <div className="mt-2 flex items-baseline gap-3">
+        <p className="font-numeric text-5xl font-bold tracking-tight">{s}</p>
+        <p className="text-sm font-semibold text-muted-foreground">{score.label}</p>
+      </div>
+      <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div className={`h-full ${barColor} transition-all`} style={{ width: `${s}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function _SkeletonCard() {
   return <div className="h-40 animate-pulse rounded-[2rem] bg-muted" />;
 }
 
