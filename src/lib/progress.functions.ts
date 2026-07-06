@@ -139,6 +139,86 @@ const goalInputSchema = z.object({
   target_date: z.string().nullable().optional(),
 });
 
+export type FitnessScore = {
+  score: number | null;
+  label: string;
+  trend: number | null;
+  hasAssessment: boolean;
+};
+
+function computeAssessmentScore(a: any, streak: number): number | null {
+  const parts: { pts: number; weight: number }[] = [];
+  if (a.body_fat_pct != null) {
+    parts.push({ pts: Math.max(0, 20 - (Number(a.body_fat_pct) - 15) * 0.8), weight: 20 });
+  }
+  if (a.vo2_max != null) {
+    parts.push({ pts: Math.min(20, (Number(a.vo2_max) / 55) * 20), weight: 20 });
+  }
+  if (a.resting_hr != null) {
+    parts.push({ pts: Math.max(0, 20 - (Number(a.resting_hr) - 50) * 0.4), weight: 20 });
+  }
+  parts.push({ pts: Math.min(20, streak * 1.5), weight: 20 });
+  if (a.bench_1rm != null && a.weight != null && Number(a.weight) > 0) {
+    parts.push({ pts: Math.min(20, (Number(a.bench_1rm) / Number(a.weight)) * 10), weight: 20 });
+  }
+  if (parts.length === 0) return null;
+  const totalWeight = parts.reduce((s, p) => s + p.weight, 0);
+  const raw = parts.reduce((s, p) => s + p.pts, 0);
+  // Re-weight to 100
+  return Math.round((raw / totalWeight) * 100);
+}
+
+export const getFitnessScore = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<FitnessScore> => {
+    const { supabase, userId } = context;
+    const [assessRes, logsRes] = await Promise.all([
+      supabase
+        .from("fitness_assessments")
+        .select("date, weight, body_fat_pct, vo2_max, resting_hr, bench_1rm")
+        .eq("member_id", userId)
+        .order("date", { ascending: false })
+        .limit(2),
+      supabase
+        .from("workout_logs")
+        .select("date, completed_at")
+        .eq("member_id", userId)
+        .not("completed_at", "is", null)
+        .order("date", { ascending: false })
+        .limit(60),
+    ]);
+
+    // streak calc (same logic as member-home)
+    const completedDates = new Set((logsRes.data ?? []).map((l: any) => l.date as string));
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().slice(0, 10);
+    const yest = new Date(today); yest.setDate(yest.getDate() - 1);
+    const yestStr = yest.toISOString().slice(0, 10);
+    let streak = 0;
+    let cursor = new Date(today);
+    if (completedDates.has(todayStr) || completedDates.has(yestStr)) {
+      if (!completedDates.has(todayStr)) cursor = yest;
+      while (completedDates.has(cursor.toISOString().slice(0, 10))) {
+        streak++;
+        cursor.setDate(cursor.getDate() - 1);
+      }
+    }
+
+    const rows = assessRes.data ?? [];
+    if (rows.length === 0) {
+      return { score: null, label: "No assessment", trend: null, hasAssessment: false };
+    }
+    const score = computeAssessmentScore(rows[0], streak);
+    const prev = rows[1] ? computeAssessmentScore(rows[1], streak) : null;
+    const trend = score != null && prev != null ? score - prev : null;
+    const label =
+      score == null ? "No data" :
+      score < 40 ? "Needs Work" :
+      score < 70 ? "Building" :
+      score < 90 ? "Strong" : "Elite";
+    return { score, label, trend, hasAssessment: true };
+  });
+
 export const createGoal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => goalInputSchema.parse(d))
