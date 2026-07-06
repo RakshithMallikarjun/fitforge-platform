@@ -122,7 +122,7 @@ function FitnessScoreCard({ score }: { score: FitnessScore }) {
   );
 }
 
-function _SkeletonCard() {
+function SkeletonCard() {
   return <div className="h-40 animate-pulse rounded-[2rem] bg-muted" />;
 }
 
