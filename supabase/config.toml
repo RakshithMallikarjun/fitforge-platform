@@ -1,1 +1,4 @@
 project_id = "snsszxftzrwdrnbmifoe"
+
+[functions.notify-plan-assigned]
+verify_jwt = false
