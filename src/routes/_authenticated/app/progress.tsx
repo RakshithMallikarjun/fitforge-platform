@@ -75,9 +75,8 @@ function ProgressPage() {
   );
 }
 
-function SkeletonCard() {
-
 /* ---------------- FITNESS SCORE CARD ---------------- */
+
 
 function FitnessScoreCard({ score }: { score: FitnessScore }) {
   if (!score.hasAssessment || score.score == null) {
