@@ -155,6 +155,8 @@ function ProfilePage() {
         )}
       </div>
 
+      <PushNotificationsSection />
+
       <Link
         to="/app/progress"
         search={{ tab: "goals" } as never}
