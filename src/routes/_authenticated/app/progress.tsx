@@ -29,9 +29,14 @@ export const Route = createFileRoute("/_authenticated/app/progress")({
 
 function ProgressPage() {
   const fetchFn = useServerFn(getProgressData);
+  const fetchScoreFn = useServerFn(getFitnessScore);
   const { data, isLoading } = useQuery({
     queryKey: ["progress-data"],
     queryFn: () => fetchFn(),
+  });
+  const { data: fitnessScore } = useQuery({
+    queryKey: ["fitness-score"],
+    queryFn: () => fetchScoreFn(),
   });
 
   return (
@@ -42,6 +47,8 @@ function ProgressPage() {
         </div>
         <h1 className="font-display text-2xl font-bold tracking-tight">Progress</h1>
       </div>
+
+      {fitnessScore && <FitnessScoreCard score={fitnessScore} />}
 
       <Tabs defaultValue="body" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
