@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  getProgressData, createGoal, deleteGoal,
-  type ProgressData,
+  getProgressData, createGoal, deleteGoal, getFitnessScore,
+  type ProgressData, type FitnessScore,
 } from "@/lib/progress.functions";
 
 export const Route = createFileRoute("/_authenticated/app/progress")({
