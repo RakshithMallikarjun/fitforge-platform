@@ -1,13 +1,25 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, LogOut, Mail, Pencil, Target, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Bell, Check, LogOut, Mail, Pencil, Target, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { getMemberProfile, updateMyDisplayName } from "@/lib/profile.functions";
+import { subscribePush, unsubscribePush, getPushStatus } from "@/lib/push.functions";
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
 
 export const Route = createFileRoute("/_authenticated/app/profile")({
   component: ProfilePage,
