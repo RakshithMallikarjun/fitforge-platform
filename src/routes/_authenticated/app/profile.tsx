@@ -214,7 +214,7 @@ function PushNotificationsSection() {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapid),
+        applicationServerKey: urlBase64ToUint8Array(vapid).buffer as ArrayBuffer,
       });
       await subFn({ data: { subscription: sub.toJSON() } });
       qc.invalidateQueries({ queryKey: ["push-status"] });
