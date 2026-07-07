@@ -26,39 +26,62 @@ function WorkoutsPage() {
           <Skeleton className="h-24 rounded-[2rem]" />
         </div>
       ) : data?.activePlan ? (
-        <section className="space-y-3">
+        <section className="space-y-5">
           <div className="flex items-baseline justify-between">
             <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Active plan</p>
             <p className="text-xs font-medium">{data.activePlan.name}</p>
           </div>
-          {data.activePlan.days.map((d) => (
-            <Link
-              key={d.id}
-              to="/app/workout/$dayId"
-              params={{ dayId: d.id }}
-              className="card-lift block rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-display text-base font-bold tracking-tight">{d.day_label}</p>
-                  {d.muscleGroups.length > 0 && (
-                    <p className="mt-1 text-xs capitalize text-muted-foreground">
-                      {d.muscleGroups.join(" · ")}
-                    </p>
-                  )}
-                  <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <Dumbbell className="h-3.5 w-3.5" /> {d.exerciseCount} exercises
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" /> ~{d.estimatedMinutes} min
+          {(() => {
+            const meta: Record<string, { label: string; emoji: string; badgeClass: string }> = {
+              warmup: { label: "Warm-Up", emoji: "🔥", badgeClass: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300" },
+              main: { label: "Main Workout", emoji: "💪", badgeClass: "bg-primary/15 text-primary" },
+              cooldown: { label: "Cooldown", emoji: "🧘", badgeClass: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300" },
+            };
+            const order: Array<"warmup" | "main" | "cooldown"> = ["warmup", "main", "cooldown"];
+            const groups = order
+              .map((bt) => ({ bt, days: data.activePlan!.days.filter((d) => (d.block_type ?? "main") === bt) }))
+              .filter((g) => g.days.length > 0);
+            const hasSections = groups.length > 1;
+            return groups.map((g) => (
+              <div key={g.bt} className="space-y-3">
+                {hasSections && (
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${meta[g.bt].badgeClass}`}>
+                      <span>{meta[g.bt].emoji}</span> {meta[g.bt].label}
                     </span>
                   </div>
-                </div>
-                <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                )}
+                {g.days.map((d) => (
+                  <Link
+                    key={d.id}
+                    to="/app/workout/$dayId"
+                    params={{ dayId: d.id }}
+                    className="card-lift block rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-display text-base font-bold tracking-tight">{d.day_label}</p>
+                        {d.muscleGroups.length > 0 && (
+                          <p className="mt-1 text-xs capitalize text-muted-foreground">
+                            {d.muscleGroups.join(" · ")}
+                          </p>
+                        )}
+                        <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1">
+                            <Dumbbell className="h-3.5 w-3.5" /> {d.exerciseCount} exercises
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" /> ~{d.estimatedMinutes} min
+                          </span>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                    </div>
+                  </Link>
+                ))}
               </div>
-            </Link>
-          ))}
+            ));
+          })()}
         </section>
       ) : (
         <div className="rounded-[2rem] border border-border bg-card p-8 text-center shadow-[var(--shadow-card)]">
