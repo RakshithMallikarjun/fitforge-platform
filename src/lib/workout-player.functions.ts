@@ -19,8 +19,10 @@ export type WorkoutDayExercise = {
   };
 };
 
+export type BlockType = "warmup" | "main" | "cooldown";
+
 export type WorkoutDayData = {
-  day: { id: string; day_label: string; order: number; plan_id: string };
+  day: { id: string; day_label: string; order: number; plan_id: string; block_type: BlockType };
   plan: { id: string; name: string } | null;
   exercises: WorkoutDayExercise[];
 };
