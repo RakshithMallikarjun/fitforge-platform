@@ -85,6 +85,7 @@ const exerciseInputSchema = z.object({
 
 const dayInputSchema = z.object({
   day_label: z.string().min(1),
+  block_type: z.enum(["warmup", "main", "cooldown"]).default("main"),
   exercises: z.array(exerciseInputSchema).default([]),
 });
 
