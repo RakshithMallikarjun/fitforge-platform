@@ -92,6 +92,7 @@ function PlanBuilder() {
           is_template: isTemplate,
           days: days.map((d) => ({
             day_label: d.label,
+            block_type: d.block_type,
             exercises: d.exercises.map((e) => ({
               exercise_id: e.exercise.id,
               sets: e.sets || null,
