@@ -303,7 +303,7 @@ function DayBuilder({
       return arrayMove(prev, oldI, newI);
     });
   };
-  const addDay = () => setDays((p) => [...p, { uid: uid(), label: `Day ${p.length + 1}`, exercises: [] }]);
+  const addDay = () => setDays((p) => [...p, { uid: uid(), label: `Day ${p.length + 1}`, block_type: "main", exercises: [] }]);
 
   return (
     <div className="space-y-4">
