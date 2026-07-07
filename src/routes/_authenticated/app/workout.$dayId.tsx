@@ -357,7 +357,20 @@ function WorkoutPlayer() {
             <Sparkles className="h-8 w-8" />
           </div>
         )}
-        <h2 className="mt-4 font-display text-xl font-bold tracking-tight">{ex.exercise.name}</h2>
+        {(() => {
+          const bt = dayData.day.block_type ?? "main";
+          const meta = {
+            warmup: { label: "Warm-Up", emoji: "🔥", cls: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300" },
+            main: { label: "Main Workout", emoji: "💪", cls: "bg-primary/15 text-primary" },
+            cooldown: { label: "Cooldown", emoji: "🧘", cls: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300" },
+          }[bt];
+          return (
+            <span className={`mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${meta.cls}`}>
+              <span>{meta.emoji}</span> {meta.label}
+            </span>
+          );
+        })()}
+        <h2 className="mt-2 font-display text-xl font-bold tracking-tight">{ex.exercise.name}</h2>
         {ex.exercise.muscle_groups.length > 0 && (
           <p className="mt-0.5 text-xs capitalize text-muted-foreground">
             {ex.exercise.muscle_groups.join(" · ")}
