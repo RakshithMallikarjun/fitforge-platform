@@ -262,7 +262,7 @@ export const getWorkoutsBrowser = createServerFn({ method: "GET" })
       const { data: days } = await supabase
         .from("workout_days")
         .select(
-          "id, day_label, order, workout_exercises(sets, rest_seconds, exercises(muscle_groups))",
+          "id, day_label, order, block_type, workout_exercises(sets, rest_seconds, exercises(muscle_groups))",
         )
         .eq("plan_id", plans[0].id)
         .order("order", { ascending: true });
@@ -290,6 +290,7 @@ export const getWorkoutsBrowser = createServerFn({ method: "GET" })
             id: d.id,
             day_label: d.day_label,
             order: d.order ?? 0,
+            block_type: (d.block_type ?? "main") as BlockType,
             exerciseCount: exs.length,
             estimatedMinutes: minutes,
             muscleGroups,
