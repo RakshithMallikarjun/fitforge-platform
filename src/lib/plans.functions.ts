@@ -251,3 +251,104 @@ export const getMemberSnapshot = createServerFn({ method: "GET" })
       .maybeSingle();
     return row ?? null;
   });
+
+export const bulkAssignPlan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        planId: z.string().uuid(),
+        memberIds: z.array(z.string().uuid()).min(1),
+        startDate: z.string().nullable().optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { gymId, isAdmin, isTrainer } = await getRolesAndGym(supabase, userId);
+    if (!gymId || (!isAdmin && !isTrainer)) throw new Error("Forbidden");
+
+    const { data: src, error: srcErr } = await supabase
+      .from("workout_plans")
+      .select(
+        "name, duration_weeks, notes, users:member_id(display_name, email), workout_days(id, day_label, block_type, order, workout_exercises(exercise_id, sets, reps, rest_seconds, tempo, notes, order))",
+      )
+      .eq("id", data.planId)
+      .maybeSingle();
+    if (srcErr || !src) throw new Error(srcErr?.message ?? "Plan not found");
+
+    const sortedDays = ((src as any).workout_days ?? [])
+      .slice()
+      .sort((a: any, b: any) => a.order - b.order);
+
+    let assigned = 0;
+    const errors: string[] = [];
+
+    for (const memberId of data.memberIds) {
+      // Get member name for error reporting
+      let memberLabel = memberId.slice(0, 8);
+      const { data: mu } = await supabase
+        .from("users")
+        .select("display_name, email")
+        .eq("id", memberId)
+        .maybeSingle();
+      if (mu) memberLabel = (mu as any).display_name ?? (mu as any).email ?? memberLabel;
+
+      try {
+        const { data: plan, error: planErr } = await supabase
+          .from("workout_plans")
+          .insert({
+            gym_id: gymId,
+            trainer_id: userId,
+            member_id: memberId,
+            name: (src as any).name,
+            duration_weeks: (src as any).duration_weeks,
+            notes: (src as any).notes,
+            start_date: data.startDate ?? null,
+            is_template: false,
+            status: "active",
+          })
+          .select("id")
+          .single();
+        if (planErr) throw new Error(planErr.message);
+
+        for (let i = 0; i < sortedDays.length; i++) {
+          const d = sortedDays[i] as any;
+          const { data: newDay, error: dErr } = await supabase
+            .from("workout_days")
+            .insert({
+              plan_id: plan.id,
+              day_label: d.day_label,
+              block_type: d.block_type ?? "main",
+              order: i,
+            })
+            .select("id")
+            .single();
+          if (dErr) throw new Error(dErr.message);
+          const exs = (d.workout_exercises ?? [])
+            .slice()
+            .sort((a: any, b: any) => a.order - b.order);
+          if (exs.length) {
+            const rows = exs.map((e: any, idx: number) => ({
+              day_id: newDay.id,
+              exercise_id: e.exercise_id,
+              sets: e.sets,
+              reps: e.reps,
+              rest_seconds: e.rest_seconds,
+              tempo: e.tempo,
+              notes: e.notes,
+              order: idx,
+            }));
+            const { error: exErr } = await supabase.from("workout_exercises").insert(rows);
+            if (exErr) throw new Error(exErr.message);
+          }
+        }
+        assigned++;
+      } catch (e: any) {
+        errors.push(`${memberLabel}: ${e?.message ?? "unknown error"}`);
+      }
+    }
+
+    return { assigned, errors };
+  });
+
