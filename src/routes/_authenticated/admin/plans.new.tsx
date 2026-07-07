@@ -41,10 +41,19 @@ type ExerciseInput = {
   notes: string;
 };
 
+type BlockType = "warmup" | "main" | "cooldown";
+
 type DayInput = {
   uid: string;
   label: string;
+  block_type: BlockType;
   exercises: ExerciseInput[];
+};
+
+const BLOCK_META: Record<BlockType, { label: string; badgeClass: string; emoji: string }> = {
+  warmup: { label: "Warm-Up", badgeClass: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900", emoji: "🔥" },
+  main: { label: "Main Workout", badgeClass: "bg-primary/15 text-primary border-primary/30", emoji: "💪" },
+  cooldown: { label: "Cooldown", badgeClass: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-900", emoji: "🧘" },
 };
 
 let uidCounter = 0;
