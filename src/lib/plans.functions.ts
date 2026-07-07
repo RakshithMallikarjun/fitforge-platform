@@ -132,7 +132,7 @@ export const createPlan = createServerFn({ method: "POST" })
       const d = data.days[i];
       const { data: day, error: dayErr } = await supabase
         .from("workout_days")
-        .insert({ plan_id: plan.id, day_label: d.day_label, order: i })
+        .insert({ plan_id: plan.id, day_label: d.day_label, block_type: d.block_type, order: i })
         .select("id")
         .single();
       if (dayErr) throw new Error(dayErr.message);
