@@ -70,7 +70,7 @@ function PlanBuilder() {
   const [durationWeeks, setDurationWeeks] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [isTemplate, setIsTemplate] = useState(false);
-  const [days, setDays] = useState<DayInput[]>([{ uid: uid(), label: "Day 1", exercises: [] }]);
+  const [days, setDays] = useState<DayInput[]>([{ uid: uid(), label: "Day 1", block_type: "main", exercises: [] }]);
   const [pickerForDay, setPickerForDay] = useState<string | null>(null);
 
   const { data: members = [] } = useQuery({ queryKey: ["members"], queryFn: () => listMembers() });
