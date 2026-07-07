@@ -72,6 +72,7 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
         day_label: (day as any).day_label,
         order: (day as any).order ?? 0,
         plan_id: (day as any).plan_id,
+        block_type: ((day as any).block_type ?? "main") as BlockType,
       },
       plan: (day as any).workout_plans
         ? { id: (day as any).workout_plans.id, name: (day as any).workout_plans.name }
