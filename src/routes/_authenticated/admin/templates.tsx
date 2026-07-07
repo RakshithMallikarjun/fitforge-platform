@@ -1,16 +1,16 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ClipboardList, Copy } from "lucide-react";
+import { ClipboardList, Copy, Loader2, Search } from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { listPlans, assignPlan } from "@/lib/plans.functions";
+import { listPlans, bulkAssignPlan } from "@/lib/plans.functions";
 import { listMembers } from "@/lib/members.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/templates")({
@@ -20,8 +20,9 @@ export const Route = createFileRoute("/_authenticated/admin/templates")({
 function TemplatesPage() {
   const navigate = useNavigate();
   const [assignFor, setAssignFor] = useState<string | null>(null);
-  const [assignMember, setAssignMember] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [assignDate, setAssignDate] = useState("");
+  const [query, setQuery] = useState("");
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["plans", "templates"],
@@ -29,16 +30,60 @@ function TemplatesPage() {
   });
   const { data: members = [] } = useQuery({ queryKey: ["members"], queryFn: () => listMembers() });
 
-  const assign = useMutation({
+  const activeMembers = useMemo(
+    () => (members as any[]).filter((m) => (m.status ?? "active") === "active"),
+    [members],
+  );
+  const filteredMembers = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return activeMembers;
+    return activeMembers.filter((m) =>
+      ((m.display_name ?? "") + " " + (m.email ?? "")).toLowerCase().includes(q),
+    );
+  }, [activeMembers, query]);
+
+  const bulk = useMutation({
     mutationFn: () =>
-      assignPlan({ data: { planId: assignFor!, memberId: assignMember, startDate: assignDate || null } }),
+      bulkAssignPlan({
+        data: {
+          planId: assignFor!,
+          memberIds: Array.from(selected),
+          startDate: assignDate || null,
+        },
+      }),
     onSuccess: (r) => {
-      toast.success("Template assigned");
+      if (r.assigned > 0) {
+        toast.success(`Template assigned to ${r.assigned} member${r.assigned === 1 ? "" : "s"}`);
+      }
+      if (r.errors.length > 0) {
+        toast.warning(`${r.errors.length} assignment${r.errors.length === 1 ? "" : "s"} failed`, {
+          description: r.errors.slice(0, 5).join("\n"),
+        });
+      }
       setAssignFor(null);
-      navigate({ to: "/admin/plans/$planId", params: { planId: r.id } });
+      setSelected(new Set());
+      setAssignDate("");
+      setQuery("");
+      if (r.assigned > 0) navigate({ to: "/admin/plans" });
     },
-    onError: (e: any) => toast.error("Assign failed", { description: e?.message }),
+    onError: (e: any) => toast.error("Bulk assign failed", { description: e?.message }),
   });
+
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function openAssign(id: string) {
+    setAssignFor(id);
+    setSelected(new Set());
+    setAssignDate("");
+    setQuery("");
+  }
 
   return (
     <>
@@ -61,8 +106,8 @@ function TemplatesPage() {
               <li key={t.id} className="rounded-2xl border border-border bg-card p-5">
                 <Link to="/admin/plans/$planId" params={{ planId: t.id }} className="text-base font-semibold hover:underline">{t.name}</Link>
                 <p className="mt-1 text-xs text-muted-foreground">{t.day_count} days{t.duration_weeks ? ` · ${t.duration_weeks} wk` : ""}</p>
-                <Button size="sm" variant="outline" className="mt-3" onClick={() => { setAssignFor(t.id); setAssignMember(""); setAssignDate(""); }}>
-                  <Copy className="mr-1.5 h-4 w-4" /> Use template
+                <Button size="sm" variant="outline" className="mt-3" onClick={() => openAssign(t.id)}>
+                  <Copy className="mr-1.5 h-4 w-4" /> Bulk assign
                 </Button>
               </li>
             ))}
@@ -70,28 +115,68 @@ function TemplatesPage() {
         )}
       </main>
 
-      <Dialog open={!!assignFor} onOpenChange={(v) => !v && setAssignFor(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Assign template</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label>Member</Label>
-              <Select value={assignMember} onValueChange={setAssignMember}>
-                <SelectTrigger><SelectValue placeholder="Select a member…" /></SelectTrigger>
-                <SelectContent>
-                  {members.map((m: any) => <SelectItem key={m.id} value={m.id}>{m.display_name ?? m.email}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+      <Dialog open={!!assignFor} onOpenChange={(v) => !v && !bulk.isPending && setAssignFor(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Bulk assign template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
             <div>
               <Label>Start date</Label>
               <Input type="date" value={assignDate} onChange={(e) => setAssignDate(e.target.value)} />
             </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Members</Label>
+                <span className="text-xs text-muted-foreground">{selected.size} selected</span>
+              </div>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  className="pl-8"
+                  placeholder="Search members…"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </div>
+              <div className="max-h-72 overflow-y-auto rounded-xl border border-border">
+                {filteredMembers.length === 0 ? (
+                  <p className="p-4 text-sm text-muted-foreground">No members found.</p>
+                ) : (
+                  <ul className="divide-y divide-border">
+                    {filteredMembers.map((m: any) => (
+                      <li key={m.id}>
+                        <label className="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-muted/50">
+                          <Checkbox
+                            checked={selected.has(m.id)}
+                            onCheckedChange={() => toggle(m.id)}
+                          />
+                          <span className="flex-1 truncate text-sm">
+                            {m.display_name ?? m.email}
+                          </span>
+                          {m.display_name && m.email && (
+                            <span className="truncate text-xs text-muted-foreground">{m.email}</span>
+                          )}
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignFor(null)}>Cancel</Button>
-            <Button disabled={!assignMember || assign.isPending} onClick={() => assign.mutate()}>
-              {assign.isPending ? "Assigning…" : "Assign"}
+            <Button variant="outline" onClick={() => setAssignFor(null)} disabled={bulk.isPending}>
+              Cancel
+            </Button>
+            <Button disabled={selected.size === 0 || bulk.isPending} onClick={() => bulk.mutate()}>
+              {bulk.isPending ? (
+                <>
+                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Assigning…
+                </>
+              ) : (
+                <>Assign to {selected.size} member{selected.size === 1 ? "" : "s"}</>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
