@@ -173,7 +173,7 @@ export const assignPlan = createServerFn({ method: "POST" })
     const { data: src, error: srcErr } = await supabase
       .from("workout_plans")
       .select(
-        "name, duration_weeks, notes, workout_days(id, day_label, order, workout_exercises(exercise_id, sets, reps, rest_seconds, tempo, notes, order))",
+        "name, duration_weeks, notes, workout_days(id, day_label, block_type, order, workout_exercises(exercise_id, sets, reps, rest_seconds, tempo, notes, order))",
       )
       .eq("id", data.planId)
       .maybeSingle();
@@ -201,7 +201,7 @@ export const assignPlan = createServerFn({ method: "POST" })
       const d = days[i] as any;
       const { data: newDay, error: dErr } = await supabase
         .from("workout_days")
-        .insert({ plan_id: plan.id, day_label: d.day_label, order: i })
+        .insert({ plan_id: plan.id, day_label: d.day_label, block_type: d.block_type ?? "main", order: i })
         .select("id")
         .single();
       if (dErr) throw new Error(dErr.message);
