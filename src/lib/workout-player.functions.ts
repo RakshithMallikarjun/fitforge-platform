@@ -230,6 +230,7 @@ export type WorkoutsBrowserData = {
       id: string;
       day_label: string;
       order: number;
+      block_type: BlockType;
       exerciseCount: number;
       estimatedMinutes: number;
       muscleGroups: string[];
