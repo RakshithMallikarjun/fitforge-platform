@@ -34,7 +34,7 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data: day, error: dayErr } = await supabase
       .from("workout_days")
-      .select("id, day_label, order, plan_id, workout_plans:plan_id(id, name)")
+      .select("id, day_label, order, plan_id, block_type, workout_plans:plan_id(id, name)")
       .eq("id", data.dayId)
       .maybeSingle();
     if (dayErr || !day) throw new Error(dayErr?.message ?? "Day not found");
