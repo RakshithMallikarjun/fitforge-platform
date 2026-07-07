@@ -686,6 +686,7 @@ export type Database = {
       }
       workout_days: {
         Row: {
+          block_type: string | null
           created_at: string
           day_label: string
           id: string
@@ -693,6 +694,7 @@ export type Database = {
           plan_id: string
         }
         Insert: {
+          block_type?: string | null
           created_at?: string
           day_label: string
           id?: string
@@ -700,6 +702,7 @@ export type Database = {
           plan_id: string
         }
         Update: {
+          block_type?: string | null
           created_at?: string
           day_label?: string
           id?: string

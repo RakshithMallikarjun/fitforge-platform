@@ -41,10 +41,19 @@ type ExerciseInput = {
   notes: string;
 };
 
+type BlockType = "warmup" | "main" | "cooldown";
+
 type DayInput = {
   uid: string;
   label: string;
+  block_type: BlockType;
   exercises: ExerciseInput[];
+};
+
+const BLOCK_META: Record<BlockType, { label: string; badgeClass: string; emoji: string }> = {
+  warmup: { label: "Warm-Up", badgeClass: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900", emoji: "🔥" },
+  main: { label: "Main Workout", badgeClass: "bg-primary/15 text-primary border-primary/30", emoji: "💪" },
+  cooldown: { label: "Cooldown", badgeClass: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-900", emoji: "🧘" },
 };
 
 let uidCounter = 0;
@@ -61,7 +70,7 @@ function PlanBuilder() {
   const [durationWeeks, setDurationWeeks] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [isTemplate, setIsTemplate] = useState(false);
-  const [days, setDays] = useState<DayInput[]>([{ uid: uid(), label: "Day 1", exercises: [] }]);
+  const [days, setDays] = useState<DayInput[]>([{ uid: uid(), label: "Day 1", block_type: "main", exercises: [] }]);
   const [pickerForDay, setPickerForDay] = useState<string | null>(null);
 
   const { data: members = [] } = useQuery({ queryKey: ["members"], queryFn: () => listMembers() });
@@ -83,6 +92,7 @@ function PlanBuilder() {
           is_template: isTemplate,
           days: days.map((d) => ({
             day_label: d.label,
+            block_type: d.block_type,
             exercises: d.exercises.map((e) => ({
               exercise_id: e.exercise.id,
               sets: e.sets || null,
@@ -294,7 +304,7 @@ function DayBuilder({
       return arrayMove(prev, oldI, newI);
     });
   };
-  const addDay = () => setDays((p) => [...p, { uid: uid(), label: `Day ${p.length + 1}`, exercises: [] }]);
+  const addDay = () => setDays((p) => [...p, { uid: uid(), label: `Day ${p.length + 1}`, block_type: "main", exercises: [] }]);
 
   return (
     <div className="space-y-4">
@@ -325,6 +335,8 @@ function SortableDay({
   const sensors = useSensors(useSensor(PointerSensor));
 
   const updateLabel = (v: string) => setDays((p) => p.map((x) => (x.uid === day.uid ? { ...x, label: v } : x)));
+  const updateBlockType = (v: BlockType) =>
+    setDays((p) => p.map((x) => (x.uid === day.uid ? { ...x, block_type: v } : x)));
   const remove = () => setDays((p) => p.filter((x) => x.uid !== day.uid));
   const updateEx = (uid: string, patch: Partial<ExerciseInput>) =>
     setDays((p) => p.map((x) => x.uid === day.uid ? { ...x, exercises: x.exercises.map((e) => e.uid === uid ? { ...e, ...patch } : e) } : x));
@@ -342,11 +354,24 @@ function SortableDay({
     }));
   };
 
+  const meta = BLOCK_META[day.block_type];
+
   return (
     <div ref={setNodeRef} style={style} className="rounded-2xl border border-border bg-card">
-      <div className="flex items-center gap-2 border-b border-border p-3">
+      <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">
         <button {...attributes} {...listeners} className="cursor-grab text-muted-foreground"><GripVertical className="h-4 w-4" /></button>
         <Input value={day.label} onChange={(e) => updateLabel(e.target.value)} className="max-w-[200px] font-semibold" />
+        <Select value={day.block_type} onValueChange={(v) => updateBlockType(v as BlockType)}>
+          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="warmup">Warm-Up</SelectItem>
+            <SelectItem value="main">Main Workout</SelectItem>
+            <SelectItem value="cooldown">Cooldown</SelectItem>
+          </SelectContent>
+        </Select>
+        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${meta.badgeClass}`}>
+          <span>{meta.emoji}</span> {meta.label}
+        </span>
         <Badge variant="secondary" className="ml-auto">{day.exercises.length} exercises</Badge>
         <Button variant="ghost" size="icon" onClick={remove}><Trash2 className="h-4 w-4 text-destructive" /></Button>
       </div>

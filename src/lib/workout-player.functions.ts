@@ -19,8 +19,10 @@ export type WorkoutDayExercise = {
   };
 };
 
+export type BlockType = "warmup" | "main" | "cooldown";
+
 export type WorkoutDayData = {
-  day: { id: string; day_label: string; order: number; plan_id: string };
+  day: { id: string; day_label: string; order: number; plan_id: string; block_type: BlockType };
   plan: { id: string; name: string } | null;
   exercises: WorkoutDayExercise[];
 };
@@ -32,7 +34,7 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data: day, error: dayErr } = await supabase
       .from("workout_days")
-      .select("id, day_label, order, plan_id, workout_plans:plan_id(id, name)")
+      .select("id, day_label, order, plan_id, block_type, workout_plans:plan_id(id, name)")
       .eq("id", data.dayId)
       .maybeSingle();
     if (dayErr || !day) throw new Error(dayErr?.message ?? "Day not found");
@@ -70,6 +72,7 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
         day_label: (day as any).day_label,
         order: (day as any).order ?? 0,
         plan_id: (day as any).plan_id,
+        block_type: ((day as any).block_type ?? "main") as BlockType,
       },
       plan: (day as any).workout_plans
         ? { id: (day as any).workout_plans.id, name: (day as any).workout_plans.name }
@@ -227,6 +230,7 @@ export type WorkoutsBrowserData = {
       id: string;
       day_label: string;
       order: number;
+      block_type: BlockType;
       exerciseCount: number;
       estimatedMinutes: number;
       muscleGroups: string[];
@@ -258,7 +262,7 @@ export const getWorkoutsBrowser = createServerFn({ method: "GET" })
       const { data: days } = await supabase
         .from("workout_days")
         .select(
-          "id, day_label, order, workout_exercises(sets, rest_seconds, exercises(muscle_groups))",
+          "id, day_label, order, block_type, workout_exercises(sets, rest_seconds, exercises(muscle_groups))",
         )
         .eq("plan_id", plans[0].id)
         .order("order", { ascending: true });
@@ -286,6 +290,7 @@ export const getWorkoutsBrowser = createServerFn({ method: "GET" })
             id: d.id,
             day_label: d.day_label,
             order: d.order ?? 0,
+            block_type: (d.block_type ?? "main") as BlockType,
             exerciseCount: exs.length,
             estimatedMinutes: minutes,
             muscleGroups,

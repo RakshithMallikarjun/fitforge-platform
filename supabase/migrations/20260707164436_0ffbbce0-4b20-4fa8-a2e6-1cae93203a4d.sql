@@ -1,0 +1,1 @@
+ALTER TABLE public.workout_days ADD COLUMN IF NOT EXISTS block_type text CHECK (block_type IN ('warmup', 'main', 'cooldown')) DEFAULT 'main';
