@@ -249,13 +249,22 @@ function MemberProfile() {
       </main>
 
       {isAdmin && (
-        <AssignTrainersDialog
-          open={assignOpen}
-          onOpenChange={setAssignOpen}
-          memberId={memberId}
-          memberName={user.display_name ?? user.email}
-          initialTrainerIds={trainers.map((t: any) => t.id)}
-        />
+        <>
+          <AssignTrainersDialog
+            open={assignOpen}
+            onOpenChange={setAssignOpen}
+            memberId={memberId}
+            memberName={user.display_name ?? user.email}
+            initialTrainerIds={trainers.map((t: any) => t.id)}
+          />
+          <EditMembershipDialog
+            open={membershipOpen}
+            onOpenChange={setMembershipOpen}
+            memberId={memberId}
+            currentType={profile?.membership_type ?? null}
+            currentExpiresAt={profile?.membership_expires_at ?? null}
+          />
+        </>
       )}
     </>
   );
