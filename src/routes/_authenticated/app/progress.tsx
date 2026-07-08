@@ -22,6 +22,7 @@ import {
   getProgressData, createGoal, deleteGoal, getFitnessScore,
   type ProgressData, type FitnessScore,
 } from "@/lib/progress.functions";
+import { listPersonalRecords, type PersonalRecord } from "@/lib/workout-player.functions";
 
 export const Route = createFileRoute("/_authenticated/app/progress")({
   component: ProgressPage,
