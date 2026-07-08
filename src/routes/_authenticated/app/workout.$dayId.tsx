@@ -88,6 +88,8 @@ function WorkoutPlayer() {
   const [phase, setPhase] = useState<"playing" | "complete">("playing");
   const [notes, setNotes] = useState("");
   const [effort, setEffort] = useState<number | null>(null);
+  const [newPRs, setNewPRs] = useState<NewPR[]>([]);
+  const [finished, setFinished] = useState(false);
 
   // Start a log as soon as the day loads.
   useEffect(() => {
