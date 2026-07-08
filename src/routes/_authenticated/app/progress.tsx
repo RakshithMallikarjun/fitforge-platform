@@ -252,6 +252,11 @@ function epley(weight: number, reps: number) {
 }
 
 function StrengthTab({ data }: { data: ProgressData }) {
+  const fetchPRs = useServerFn(listPersonalRecords);
+  const { data: personalRecords = [] } = useQuery({
+    queryKey: ["personal-records"],
+    queryFn: () => fetchPRs(),
+  });
   const logs = data.exerciseLogs;
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
 
