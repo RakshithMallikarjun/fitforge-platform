@@ -173,34 +173,72 @@ function MemberProfile() {
 
 
           {/* PLANS */}
-          <TabsContent value="plans" className="space-y-3">
-            <div className="flex justify-end">
+          <TabsContent value="plans" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold tracking-tight">Plan history</h3>
               <Link
                 to="/admin/plans/new"
                 search={{ memberId }}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
-                <ClipboardList className="h-4 w-4" /> New plan for this member
+                <ClipboardList className="h-4 w-4" /> New plan from template
               </Link>
             </div>
-            <EmptyOrList
-              items={plans}
-              emptyIcon={<ClipboardList className="h-6 w-6" />}
-              emptyText="No workout plans assigned yet."
-              render={(p: any) => (
-                <li key={p.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{p.name ?? p.title ?? "Untitled plan"}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {p.start_date ? `Starts ${new Date(p.start_date).toLocaleDateString()}` : "No start date"}
-                      {p.status ? ` · ${p.status}` : ""}
-                    </p>
-                  </div>
-                  <Link to="/admin/plans/$planId" params={{ planId: p.id }} className="text-sm font-medium text-primary hover:underline">View</Link>
-                </li>
-              )}
-            />
+            {plans.length === 0 ? (
+              <div className="grid place-items-center gap-2 rounded-2xl border border-dashed border-border py-12 text-sm text-muted-foreground">
+                <ClipboardList className="h-6 w-6" />
+                No workout plans assigned yet.
+              </div>
+            ) : (
+              <ol className="relative space-y-3 border-l border-border pl-6">
+                {[...plans]
+                  .sort((a: any, b: any) => {
+                    const aActive = a.status === "active" ? 1 : 0;
+                    const bActive = b.status === "active" ? 1 : 0;
+                    if (aActive !== bActive) return bActive - aActive;
+                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                  })
+                  .map((p: any) => {
+                    const isActive = p.status === "active";
+                    const badgeCls = isActive
+                      ? "bg-primary-soft text-primary"
+                      : "bg-muted text-muted-foreground";
+                    const badgeLabel = isActive ? "Active" : "Archived";
+                    const completed = p.completed_logs_count ?? 0;
+                    const total = p.total_sessions ?? 0;
+                    return (
+                      <li key={p.id} className="relative">
+                        <span className={`absolute -left-[29px] top-4 grid h-4 w-4 place-items-center rounded-full border-2 border-background ${isActive ? "bg-primary" : "bg-muted-foreground/40"}`} />
+                        <div className="rounded-2xl border border-border bg-card p-4">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="truncate text-sm font-semibold">{p.name ?? "Untitled plan"}</p>
+                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${badgeCls}`}>
+                                  {badgeLabel}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {p.start_date ? `Starts ${new Date(p.start_date).toLocaleDateString()}` : "No start date"}
+                                {p.duration_weeks ? ` · ${p.duration_weeks} ${p.duration_weeks === 1 ? "week" : "weeks"}` : ""}
+                                {typeof p.day_count === "number" ? ` · ${p.day_count} ${p.day_count === 1 ? "day" : "days"}` : ""}
+                              </p>
+                              <p className="mt-1 text-xs font-medium text-foreground">
+                                {completed} / {total} sessions logged
+                              </p>
+                            </div>
+                            <Link to="/admin/plans/$planId" params={{ planId: p.id }} className="text-sm font-medium text-primary hover:underline">
+                              View plan
+                            </Link>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+              </ol>
+            )}
           </TabsContent>
+
 
           {/* ATTENDANCE */}
           <TabsContent value="attendance" className="space-y-4">
