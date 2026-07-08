@@ -25,6 +25,7 @@ import {
   getWorkoutDay,
   logSet,
   startWorkoutLog,
+  type NewPR,
   type PrevSet,
   type WorkoutDayData,
   type WorkoutDayExercise,
