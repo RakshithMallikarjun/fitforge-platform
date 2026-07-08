@@ -202,14 +202,20 @@ function WorkoutPlayer() {
         if (isOfflineError(err)) {
           await enqueueLog("completeWorkout", { ...payload, synced_offline: true });
           toast.info("Session saved offline — will sync when reconnected.");
-          return { ok: true, queued: true } as any;
+          return { ok: true, newPRs: [] as NewPR[], queued: true } as any;
         }
         throw err;
       }
     },
-    onSuccess: () => {
-      toast.success("Workout logged. Great work.");
-      navigate({ to: "/app" });
+    onSuccess: (res: any) => {
+      const prs: NewPR[] = res?.newPRs ?? [];
+      setNewPRs(prs);
+      setFinished(true);
+      if (prs.length > 0) {
+        toast.success(`🏆 ${prs.length} new PR${prs.length > 1 ? "s" : ""}!`);
+      } else {
+        toast.success("Workout logged. Great work.");
+      }
     },
     onError: (e: any) => toast.error("Could not finish", { description: e?.message }),
   });
