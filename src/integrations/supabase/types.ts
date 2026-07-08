@@ -559,6 +559,71 @@ export type Database = {
           },
         ]
       }
+      personal_records: {
+        Row: {
+          achieved_at: string
+          created_at: string
+          exercise_id: string
+          gym_id: string
+          id: string
+          log_id: string | null
+          member_id: string
+          reps: number | null
+          weight: number
+        }
+        Insert: {
+          achieved_at?: string
+          created_at?: string
+          exercise_id: string
+          gym_id: string
+          id?: string
+          log_id?: string | null
+          member_id: string
+          reps?: number | null
+          weight: number
+        }
+        Update: {
+          achieved_at?: string
+          created_at?: string
+          exercise_id?: string
+          gym_id?: string
+          id?: string
+          log_id?: string | null
+          member_id?: string
+          reps?: number | null
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personal_records_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "personal_records_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "personal_records_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "workout_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "personal_records_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trainer_assignments: {
         Row: {
           active: boolean

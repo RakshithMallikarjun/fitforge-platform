@@ -203,13 +203,22 @@ export const logSet = createServerFn({ method: "POST" })
     return { id: ins.id as string };
   });
 
+export type NewPR = { exerciseName: string; weight: number; reps: number };
+
 export const completeWorkout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
     (d: { logId: string; notes: string | null; effortRating: number | null }) => d,
   )
-  .handler(async ({ data, context }) => {
-    const { supabase } = context;
+  .handler(async ({ data, context }): Promise<{ ok: true; newPRs: NewPR[] }> => {
+    const { supabase, userId } = context;
+    const { data: logRow, error: logErr } = await supabase
+      .from("workout_logs")
+      .select("id, member_id, gym_id, date")
+      .eq("id", data.logId)
+      .maybeSingle();
+    if (logErr || !logRow) throw new Error(logErr?.message ?? "Log not found");
+
     const { error } = await supabase
       .from("workout_logs")
       .update({
@@ -219,7 +228,67 @@ export const completeWorkout = createServerFn({ method: "POST" })
       })
       .eq("id", data.logId);
     if (error) throw new Error(error.message);
-    return { ok: true };
+
+    // PR detection: for each exercise in this session, find today's max weight
+    const { data: todaySets } = await supabase
+      .from("exercise_logs")
+      .select("exercise_id, weight, reps, completed")
+      .eq("log_id", data.logId);
+
+    const todayMax = new Map<string, { weight: number; reps: number }>();
+    for (const s of (todaySets ?? []) as any[]) {
+      if (!s.completed || s.weight == null) continue;
+      const w = Number(s.weight);
+      if (!isFinite(w) || w <= 0) continue;
+      const cur = todayMax.get(s.exercise_id);
+      if (!cur || w > cur.weight) todayMax.set(s.exercise_id, { weight: w, reps: Number(s.reps ?? 0) });
+    }
+
+    const newPRs: NewPR[] = [];
+    if (todayMax.size > 0) {
+      const exerciseIds = Array.from(todayMax.keys());
+      const [{ data: existingPRs }, { data: exerciseRows }] = await Promise.all([
+        supabase
+          .from("personal_records")
+          .select("exercise_id, weight")
+          .eq("member_id", userId)
+          .in("exercise_id", exerciseIds),
+        supabase.from("exercises").select("id, name").in("id", exerciseIds),
+      ]);
+      const prMap = new Map<string, number>();
+      for (const p of (existingPRs ?? []) as any[]) prMap.set(p.exercise_id, Number(p.weight));
+      const nameMap = new Map<string, string>();
+      for (const e of (exerciseRows ?? []) as any[]) nameMap.set(e.id, e.name);
+
+      for (const [exerciseId, { weight, reps }] of todayMax.entries()) {
+        const prev = prMap.get(exerciseId) ?? -Infinity;
+        if (weight > prev) {
+          const { error: upErr } = await supabase
+            .from("personal_records")
+            .upsert(
+              {
+                member_id: userId,
+                exercise_id: exerciseId,
+                gym_id: logRow.gym_id,
+                weight,
+                reps: reps || null,
+                achieved_at: logRow.date,
+                log_id: data.logId,
+              },
+              { onConflict: "member_id,exercise_id" },
+            );
+          if (!upErr) {
+            newPRs.push({
+              exerciseName: nameMap.get(exerciseId) ?? "Exercise",
+              weight,
+              reps,
+            });
+          }
+        }
+      }
+    }
+
+    return { ok: true, newPRs };
   });
 
 export type WorkoutsBrowserData = {
@@ -315,4 +384,33 @@ export const getWorkoutsBrowser = createServerFn({ method: "GET" })
     }));
 
     return { activePlan, pastWorkouts };
+  });
+
+export type PersonalRecord = {
+  id: string;
+  exercise_id: string;
+  exercise_name: string;
+  weight: number;
+  reps: number | null;
+  achieved_at: string;
+};
+
+export const listPersonalRecords = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<PersonalRecord[]> => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("personal_records")
+      .select("id, exercise_id, weight, reps, achieved_at, exercises:exercise_id(name)")
+      .eq("member_id", userId)
+      .order("achieved_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r: any) => ({
+      id: r.id,
+      exercise_id: r.exercise_id,
+      exercise_name: r.exercises?.name ?? "Exercise",
+      weight: Number(r.weight),
+      reps: r.reps,
+      achieved_at: r.achieved_at,
+    }));
   });
