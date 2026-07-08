@@ -165,6 +165,7 @@ function MembersPage() {
                     </button>
                   </TableHead>
                   <TableHead>Trainers</TableHead>
+                  <TableHead>Expiry</TableHead>
                   <TableHead>
                     <button className="inline-flex items-center gap-1" onClick={() => toggleSort("joined")}>
                       Joined <ArrowUpDown className="h-3 w-3" />
