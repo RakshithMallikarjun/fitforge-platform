@@ -387,6 +387,34 @@ function StrengthTab({ data }: { data: ProgressData }) {
           ))}
         </div>
       </div>
+
+      <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+        <div className="flex items-center gap-2">
+          <Trophy className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold">PRs</h3>
+        </div>
+        {personalRecords.length === 0 ? (
+          <p className="mt-3 text-xs text-muted-foreground">
+            No personal records yet — complete a workout to start tracking your bests.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {(personalRecords as PersonalRecord[]).map((pr) => (
+              <li key={pr.id} className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{pr.exercise_name}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {format(parseISO(pr.achieved_at), "PPP")}
+                  </p>
+                </div>
+                <span className="font-numeric text-sm font-bold text-primary">
+                  {pr.weight} kg{pr.reps ? ` × ${pr.reps}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
