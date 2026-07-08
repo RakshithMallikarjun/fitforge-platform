@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Calendar, ClipboardList, FileText, Mail, MessageSquare, Phone, StickyNote, User, UserCog, UserCheck } from "lucide-react";
+import { ArrowLeft, Calendar, ClipboardList, FileText, Mail, MessageSquare, Phone, StickyNote, User, UserCog, UserCheck, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { getMember } from "@/lib/members.functions";
 import { logAttendanceManual } from "@/lib/checkin.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { AssignTrainersDialog } from "@/components/members/assign-trainers-dialog";
+import { EditMembershipDialog } from "@/components/members/edit-membership-dialog";
 import { StatusBadge, getMembershipStatus } from "@/components/members/status-badge";
 import { MemberNotes } from "@/components/members/member-notes";
 import { AssessmentsTab } from "@/components/assessments/assessments-tab";
@@ -26,6 +27,7 @@ function MemberProfile() {
   const { data: me } = useCurrentUser();
   const isAdmin = me?.roles.includes("admin");
   const [assignOpen, setAssignOpen] = useState(false);
+  const [membershipOpen, setMembershipOpen] = useState(false);
   const qc = useQueryClient();
   const logManual = useServerFn(logAttendanceManual);
 
@@ -89,9 +91,14 @@ function MemberProfile() {
             </div>
           </div>
           {isAdmin && (
-            <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setAssignOpen(true)}>
-              <UserCog className="mr-1.5 h-4 w-4" /> Assign trainers
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setMembershipOpen(true)}>
+                <CreditCard className="mr-1.5 h-4 w-4" /> Edit membership
+              </Button>
+              <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setAssignOpen(true)}>
+                <UserCog className="mr-1.5 h-4 w-4" /> Assign trainers
+              </Button>
+            </div>
           )}
         </div>
 
@@ -242,13 +249,22 @@ function MemberProfile() {
       </main>
 
       {isAdmin && (
-        <AssignTrainersDialog
-          open={assignOpen}
-          onOpenChange={setAssignOpen}
-          memberId={memberId}
-          memberName={user.display_name ?? user.email}
-          initialTrainerIds={trainers.map((t: any) => t.id)}
-        />
+        <>
+          <AssignTrainersDialog
+            open={assignOpen}
+            onOpenChange={setAssignOpen}
+            memberId={memberId}
+            memberName={user.display_name ?? user.email}
+            initialTrainerIds={trainers.map((t: any) => t.id)}
+          />
+          <EditMembershipDialog
+            open={membershipOpen}
+            onOpenChange={setMembershipOpen}
+            memberId={memberId}
+            currentType={profile?.membership_type ?? null}
+            currentExpiresAt={profile?.membership_expires_at ?? null}
+          />
+        </>
       )}
     </>
   );

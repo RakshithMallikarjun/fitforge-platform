@@ -349,6 +349,37 @@ export const updateMember = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const updateMemberMembership = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { memberId: string; membershipType: string; membershipExpiresAt: string | null }) => d)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { gymId, isAdmin, isTrainer } = await getRolesAndGym(supabase, userId);
+    if (!gymId) throw new Error("No gym");
+    if (!isAdmin) {
+      if (!isTrainer) throw new Error("Forbidden");
+      const { data: a } = await supabase
+        .from("trainer_assignments")
+        .select("id")
+        .eq("trainer_id", userId)
+        .eq("member_id", data.memberId)
+        .eq("active", true)
+        .maybeSingle();
+      if (!a) throw new Error("Forbidden");
+    }
+    const { data: updated, error } = await supabase
+      .from("member_profiles")
+      .update({
+        membership_type: data.membershipType,
+        membership_expires_at: data.membershipExpiresAt || null,
+      })
+      .eq("user_id", data.memberId)
+      .select()
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return updated;
+  });
+
 export const setMemberActive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { memberId: string; active: boolean }) => d)
