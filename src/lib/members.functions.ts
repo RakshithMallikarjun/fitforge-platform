@@ -173,9 +173,9 @@ export const getMember = createServerFn({ method: "GET" })
         supabase.from("workout_days").select("id, plan_id").in("plan_id", planIds),
       ]);
       const logCount = new Map<string, number>();
-      for (const l of logs ?? []) logCount.set(l.plan_id, (logCount.get(l.plan_id) ?? 0) + 1);
+      for (const l of (logs ?? []) as any[]) if (l.plan_id) logCount.set(l.plan_id, (logCount.get(l.plan_id) ?? 0) + 1);
       const dayCount = new Map<string, number>();
-      for (const d of days ?? []) dayCount.set(d.plan_id, (dayCount.get(d.plan_id) ?? 0) + 1);
+      for (const d of (days ?? []) as any[]) if (d.plan_id) dayCount.set(d.plan_id, (dayCount.get(d.plan_id) ?? 0) + 1);
       plansWithCounts = (plans ?? []).map((p: any) => ({
         ...p,
         completed_logs_count: logCount.get(p.id) ?? 0,
