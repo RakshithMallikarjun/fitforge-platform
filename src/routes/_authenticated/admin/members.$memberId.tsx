@@ -27,6 +27,7 @@ function MemberProfile() {
   const { data: me } = useCurrentUser();
   const isAdmin = me?.roles.includes("admin");
   const [assignOpen, setAssignOpen] = useState(false);
+  const [membershipOpen, setMembershipOpen] = useState(false);
   const qc = useQueryClient();
   const logManual = useServerFn(logAttendanceManual);
 
