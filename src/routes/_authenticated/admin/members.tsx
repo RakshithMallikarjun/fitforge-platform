@@ -215,6 +215,13 @@ function MembersPage() {
                           </div>
                         )}
                       </TableCell>
+                      <TableCell className="text-xs">
+                        {m.profile?.membership_expires_at ? (
+                          <span className="text-foreground">{new Date(m.profile.membership_expires_at).toLocaleDateString()}</span>
+                        ) : (
+                          <span className="text-muted-foreground">No expiry</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}
                       </TableCell>
