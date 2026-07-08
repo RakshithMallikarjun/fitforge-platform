@@ -304,6 +304,9 @@ function WorkoutPlayer() {
       setEffort={setEffort}
       onFinish={() => completeMut.mutate()}
       submitting={completeMut.isPending}
+      finished={finished}
+      newPRs={newPRs}
+      onDone={() => navigate({ to: "/app" })}
     />;
   }
 
