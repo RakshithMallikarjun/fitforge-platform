@@ -385,3 +385,32 @@ export const getWorkoutsBrowser = createServerFn({ method: "GET" })
 
     return { activePlan, pastWorkouts };
   });
+
+export type PersonalRecord = {
+  id: string;
+  exercise_id: string;
+  exercise_name: string;
+  weight: number;
+  reps: number | null;
+  achieved_at: string;
+};
+
+export const listPersonalRecords = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<PersonalRecord[]> => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("personal_records")
+      .select("id, exercise_id, weight, reps, achieved_at, exercises:exercise_id(name)")
+      .eq("member_id", userId)
+      .order("achieved_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r: any) => ({
+      id: r.id,
+      exercise_id: r.exercise_id,
+      exercise_name: r.exercises?.name ?? "Exercise",
+      weight: Number(r.weight),
+      reps: r.reps,
+      achieved_at: r.achieved_at,
+    }));
+  });
