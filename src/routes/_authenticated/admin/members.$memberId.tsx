@@ -91,9 +91,14 @@ function MemberProfile() {
             </div>
           </div>
           {isAdmin && (
-            <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setAssignOpen(true)}>
-              <UserCog className="mr-1.5 h-4 w-4" /> Assign trainers
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setMembershipOpen(true)}>
+                <CreditCard className="mr-1.5 h-4 w-4" /> Edit membership
+              </Button>
+              <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setAssignOpen(true)}>
+                <UserCog className="mr-1.5 h-4 w-4" /> Assign trainers
+              </Button>
+            </div>
           )}
         </div>
 
