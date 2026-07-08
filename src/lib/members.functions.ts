@@ -159,12 +159,37 @@ export const getMember = createServerFn({ method: "GET" })
       ? await supabase.from("users").select("id, display_name, email, photo_url").in("id", trainerIds)
       : { data: [] as any[] };
 
+    // Enrich plans with completed workout log counts and day counts
+    const planIds = (plans ?? []).map((p: any) => p.id);
+    let plansWithCounts: any[] = plans ?? [];
+    if (planIds.length) {
+      const [{ data: logs }, { data: days }] = await Promise.all([
+        supabase
+          .from("workout_logs")
+          .select("plan_id, completed_at")
+          .eq("member_id", data.memberId)
+          .in("plan_id", planIds)
+          .not("completed_at", "is", null),
+        supabase.from("workout_days").select("id, plan_id").in("plan_id", planIds),
+      ]);
+      const logCount = new Map<string, number>();
+      for (const l of logs ?? []) logCount.set(l.plan_id, (logCount.get(l.plan_id) ?? 0) + 1);
+      const dayCount = new Map<string, number>();
+      for (const d of days ?? []) dayCount.set(d.plan_id, (dayCount.get(d.plan_id) ?? 0) + 1);
+      plansWithCounts = (plans ?? []).map((p: any) => ({
+        ...p,
+        completed_logs_count: logCount.get(p.id) ?? 0,
+        day_count: dayCount.get(p.id) ?? 0,
+        total_sessions: (dayCount.get(p.id) ?? 0) * (p.duration_weeks ?? 1),
+      }));
+    }
+
     return {
       user,
       profile,
       trainers: trainers ?? [],
       assessments: assessments ?? [],
-      plans: plans ?? [],
+      plans: plansWithCounts,
       attendance: attendance ?? [],
     };
   });
