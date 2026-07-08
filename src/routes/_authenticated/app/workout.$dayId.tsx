@@ -536,6 +536,9 @@ function CompletionScreen({
   setEffort,
   onFinish,
   submitting,
+  finished,
+  newPRs,
+  onDone,
 }: {
   notes: string;
   setNotes: (v: string) => void;
@@ -543,6 +546,9 @@ function CompletionScreen({
   setEffort: (n: number) => void;
   onFinish: () => void;
   submitting: boolean;
+  finished: boolean;
+  newPRs: NewPR[];
+  onDone: () => void;
 }) {
   return (
     <div className="space-y-5 pb-8 animate-fade-in">
@@ -550,45 +556,76 @@ function CompletionScreen({
         <div className="mx-auto grid h-16 w-16 animate-scale-in place-items-center rounded-full bg-white/15">
           <Check className="h-8 w-8 text-primary-foreground" />
         </div>
-        <p className="mt-4 font-display text-2xl font-bold">Session complete</p>
-        <p className="mt-1 text-xs text-primary-foreground/80">Log your effort and notes below.</p>
+        <p className="mt-4 font-display text-2xl font-bold">Workout Complete</p>
+        <p className="mt-1 text-xs text-primary-foreground/80">
+          {finished ? "Nice session — your log is saved." : "Log your effort and notes below."}
+        </p>
       </div>
 
-      <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-        <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Effort rating</p>
-        <div className="mt-3 grid grid-cols-10 gap-1.5">
-          {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => setEffort(n)}
-              className={[
-                "grid aspect-square place-items-center rounded-lg border text-sm font-semibold transition-colors",
-                effort === n
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-input bg-background text-foreground hover:bg-muted",
-              ].join(" ")}
-            >
-              {n}
-            </button>
-          ))}
+      {finished && newPRs.length > 0 && (
+        <div className="rounded-[2rem] border border-primary/30 bg-primary/5 p-5 shadow-[var(--shadow-card)] animate-scale-in">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🏆</span>
+            <p className="font-display text-lg font-bold tracking-tight">New Personal Records!</p>
+          </div>
+          <ul className="mt-3 space-y-2">
+            {newPRs.map((pr, i) => (
+              <li key={i} className="flex items-center justify-between rounded-xl bg-background/60 px-3 py-2">
+                <span className="text-sm font-semibold">{pr.exerciseName}</span>
+                <span className="font-numeric text-sm font-bold text-primary">
+                  {pr.weight} kg{pr.reps ? ` × ${pr.reps}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
-      </div>
+      )}
 
-      <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-        <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Session notes</p>
-        <Textarea
-          rows={4}
-          className="mt-3 rounded-2xl"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="How did it feel? Any PRs?"
-        />
-      </div>
+      {!finished && (
+        <>
+          <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Effort rating</p>
+            <div className="mt-3 grid grid-cols-10 gap-1.5">
+              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setEffort(n)}
+                  className={[
+                    "grid aspect-square place-items-center rounded-lg border text-sm font-semibold transition-colors",
+                    effort === n
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-background text-foreground hover:bg-muted",
+                  ].join(" ")}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      <Button className="w-full rounded-xl" onClick={onFinish} disabled={submitting}>
-        {submitting ? "Saving…" : "Finish workout"}
-      </Button>
+          <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Session notes</p>
+            <Textarea
+              rows={4}
+              className="mt-3 rounded-2xl"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="How did it feel? Any PRs?"
+            />
+          </div>
+        </>
+      )}
+
+      {finished ? (
+        <Button className="w-full rounded-xl" onClick={onDone}>
+          Done
+        </Button>
+      ) : (
+        <Button className="w-full rounded-xl" onClick={onFinish} disabled={submitting}>
+          {submitting ? "Saving…" : "Finish workout"}
+        </Button>
+      )}
     </div>
   );
 }
