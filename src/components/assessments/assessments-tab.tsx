@@ -15,12 +15,35 @@ import { NewAssessmentSheet } from "./new-assessment-sheet";
 
 export function AssessmentsTab({ memberId }: { memberId: string }) {
   const fetchFn = useServerFn(listAssessments);
+  const exportFn = useServerFn(exportAssessmentReport);
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["assessments", memberId],
     queryFn: () => fetchFn({ data: { memberId } }),
   });
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  async function handleDownload() {
+    setExporting(true);
+    const tId = toast.loading("Generating report…");
+    try {
+      const { html } = await exportFn({ data: { memberId } });
+      const w = window.open("", "_blank");
+      if (!w) {
+        toast.error("Popup blocked — allow popups to download the report", { id: tId });
+        return;
+      }
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      toast.success("Report ready — use the print dialog to save as PDF", { id: tId });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to generate report", { id: tId });
+    } finally {
+      setExporting(false);
+    }
+  }
 
   const latest = rows[0];
   const dueDays = latest ? differenceInDays(new Date(), new Date(latest.date)) : null;
