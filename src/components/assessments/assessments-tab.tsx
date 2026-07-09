@@ -2,24 +2,48 @@ import { Fragment, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { format, differenceInDays } from "date-fns";
-import { AlertTriangle, ChevronDown, ChevronRight, Plus, FileText } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight, Plus, FileText, Download } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { listAssessments } from "@/lib/assessments.functions";
+import { listAssessments, exportAssessmentReport } from "@/lib/assessments.functions";
 import { NewAssessmentSheet } from "./new-assessment-sheet";
 
 export function AssessmentsTab({ memberId }: { memberId: string }) {
   const fetchFn = useServerFn(listAssessments);
+  const exportFn = useServerFn(exportAssessmentReport);
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["assessments", memberId],
     queryFn: () => fetchFn({ data: { memberId } }),
   });
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  async function handleDownload() {
+    setExporting(true);
+    const tId = toast.loading("Generating report…");
+    try {
+      const { html } = await exportFn({ data: { memberId } });
+      const w = window.open("", "_blank");
+      if (!w) {
+        toast.error("Popup blocked — allow popups to download the report", { id: tId });
+        return;
+      }
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      toast.success("Report ready — use the print dialog to save as PDF", { id: tId });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to generate report", { id: tId });
+    } finally {
+      setExporting(false);
+    }
+  }
 
   const latest = rows[0];
   const dueDays = latest ? differenceInDays(new Date(), new Date(latest.date)) : null;
@@ -48,9 +72,14 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
             </p>
           )}
         </div>
-        <Button onClick={() => setOpen(true)} className="rounded-lg">
-          <Plus className="mr-1.5 h-4 w-4" /> New assessment
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleDownload} disabled={exporting || rows.length === 0} className="rounded-lg">
+            <Download className="mr-1.5 h-4 w-4" /> {exporting ? "Generating…" : "Download PDF"}
+          </Button>
+          <Button onClick={() => setOpen(true)} className="rounded-lg">
+            <Plus className="mr-1.5 h-4 w-4" /> New assessment
+          </Button>
+        </div>
       </div>
 
       {isDue && (
