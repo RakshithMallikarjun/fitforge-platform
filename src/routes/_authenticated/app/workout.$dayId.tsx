@@ -55,15 +55,19 @@ type SetState = { weight: string; reps: string; done: boolean };
 function WorkoutPlayer() {
   const { dayId } = Route.useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const fetchDay = useServerFn(getWorkoutDay);
   const startLog = useServerFn(startWorkoutLog);
   const logOneSet = useServerFn(logSet);
   const finishWorkout = useServerFn(completeWorkout);
   const fetchPrev = useServerFn(getPreviousSetValues);
+  const fetchAlts = useServerFn(getExerciseAlternatives);
+  const swapExerciseFn = useServerFn(substituteExercise);
 
   const cacheKey = `fitforge:day:${dayId}`;
   const [offlineFallback, setOfflineFallback] = useState(false);
+  const [swapOpen, setSwapOpen] = useState(false);
 
   const { data: dayData, isLoading } = useQuery({
     queryKey: ["workout-day", dayId],
