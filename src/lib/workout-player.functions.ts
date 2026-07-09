@@ -32,7 +32,7 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { dayId: string }) => d)
   .handler(async ({ data, context }): Promise<WorkoutDayData> => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { data: day, error: dayErr } = await supabase
       .from("workout_days")
       .select("id, day_label, order, plan_id, block_type, workout_plans:plan_id(id, name)")
@@ -49,23 +49,41 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
       .order("order", { ascending: true });
     if (exErr) throw new Error(exErr.message);
 
-    const exercises: WorkoutDayExercise[] = (rows ?? []).map((r: any) => ({
-      id: r.id,
-      order: r.order ?? 0,
-      sets: r.sets ?? 3,
-      reps: r.reps,
-      rest_seconds: r.rest_seconds ?? 60,
-      notes: r.notes,
-      tempo: r.tempo,
-      exercise: {
-        id: r.exercises?.id,
-        name: r.exercises?.name ?? "Exercise",
-        muscle_groups: r.exercises?.muscle_groups ?? [],
-        video_url: r.exercises?.video_url ?? null,
-        thumbnail_url: r.exercises?.thumbnail_url ?? null,
-        description: r.exercises?.description ?? null,
-      },
-    }));
+    const weIds = (rows ?? []).map((r: any) => r.id);
+    const subMap = new Map<string, any>();
+    if (weIds.length) {
+      const { data: subs } = await supabase
+        .from("workout_exercise_substitutions")
+        .select("original_workout_exercise_id, substitute_exercise_id, exercises:substitute_exercise_id(id, name, muscle_groups, video_url, thumbnail_url, description)")
+        .eq("member_id", userId)
+        .in("original_workout_exercise_id", weIds);
+      for (const s of (subs ?? []) as any[]) {
+        subMap.set(s.original_workout_exercise_id, s);
+      }
+    }
+
+    const exercises: WorkoutDayExercise[] = (rows ?? []).map((r: any) => {
+      const sub = subMap.get(r.id);
+      const src = sub?.exercises ?? r.exercises;
+      return {
+        id: r.id,
+        order: r.order ?? 0,
+        sets: r.sets ?? 3,
+        reps: r.reps,
+        rest_seconds: r.rest_seconds ?? 60,
+        notes: r.notes,
+        tempo: r.tempo,
+        substituted: !!sub,
+        exercise: {
+          id: src?.id,
+          name: src?.name ?? "Exercise",
+          muscle_groups: src?.muscle_groups ?? [],
+          video_url: src?.video_url ?? null,
+          thumbnail_url: src?.thumbnail_url ?? null,
+          description: src?.description ?? null,
+        },
+      };
+    });
 
     return {
       day: {
