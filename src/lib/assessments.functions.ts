@@ -194,8 +194,8 @@ export const exportAssessmentReport = createServerFn({ method: "POST" })
 
     const rowsHtml = metrics.map(([label, key, suffix]) => {
       const cells = assessments.map((a: any, i: number) => {
-        const v = a[key];
-        const prev = i > 0 ? assessments[i - 1][key] : null;
+        const v = a[key as string];
+        const prev = i > 0 ? (assessments[i - 1] as any)[key as string] : null;
         const display = v == null || v === "" ? "—" : `${typeof v === "number" ? Number(v).toFixed(1) : esc(v)}${suffix ? " " + suffix : ""}`;
         const t = typeof v === "number" && typeof prev === "number" ? trend(v, prev) : "";
         return `<td>${display}${t}</td>`;
