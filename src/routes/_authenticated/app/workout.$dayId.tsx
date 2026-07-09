@@ -397,7 +397,14 @@ function WorkoutPlayer() {
             </span>
           );
         })()}
-        <h2 className="mt-2 font-display text-xl font-bold tracking-tight">{ex.exercise.name}</h2>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <h2 className="font-display text-xl font-bold tracking-tight">{ex.exercise.name}</h2>
+          {ex.substituted && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-secondary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-secondary">
+              <ArrowLeftRight className="h-3 w-3" /> Substituted
+            </span>
+          )}
+        </div>
         {ex.exercise.muscle_groups.length > 0 && (
           <p className="mt-0.5 text-xs capitalize text-muted-foreground">
             {ex.exercise.muscle_groups.join(" · ")}
