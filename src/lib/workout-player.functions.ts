@@ -9,6 +9,7 @@ export type WorkoutDayExercise = {
   rest_seconds: number;
   notes: string | null;
   tempo: string | null;
+  substituted: boolean;
   exercise: {
     id: string;
     name: string;
