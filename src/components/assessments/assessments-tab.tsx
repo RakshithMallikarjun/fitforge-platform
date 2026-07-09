@@ -72,9 +72,14 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
             </p>
           )}
         </div>
-        <Button onClick={() => setOpen(true)} className="rounded-lg">
-          <Plus className="mr-1.5 h-4 w-4" /> New assessment
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleDownload} disabled={exporting || rows.length === 0} className="rounded-lg">
+            <Download className="mr-1.5 h-4 w-4" /> {exporting ? "Generating…" : "Download PDF"}
+          </Button>
+          <Button onClick={() => setOpen(true)} className="rounded-lg">
+            <Plus className="mr-1.5 h-4 w-4" /> New assessment
+          </Button>
+        </div>
       </div>
 
       {isDue && (
