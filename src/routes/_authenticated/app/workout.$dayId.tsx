@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { get as idbGet, set as idbSet } from "idb-keyval";
 import {
   ArrowLeft,
+  ArrowLeftRight,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -19,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   completeWorkout,
   getPreviousSetValues,
@@ -30,6 +32,7 @@ import {
   type WorkoutDayData,
   type WorkoutDayExercise,
 } from "@/lib/workout-player.functions";
+import { getExerciseAlternatives, substituteExercise, type ExerciseRow } from "@/lib/exercises.functions";
 import { enqueueLog } from "@/lib/pwa/offline-queue";
 
 function isOfflineError(e: unknown): boolean {
