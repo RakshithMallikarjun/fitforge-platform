@@ -151,15 +151,15 @@ export const exportAssessmentReport = createServerFn({ method: "POST" })
 
     const { data: member } = await supabase
       .from("users")
-      .select("full_name, email, gym_id")
+      .select("display_name, email, gym_id")
       .eq("id", data.memberId)
       .maybeSingle();
-    const memberName = member?.full_name || member?.email || "Member";
+    const memberName = (member as any)?.display_name || (member as any)?.email || "Member";
 
     let gymName = "";
-    if (member?.gym_id) {
-      const { data: gym } = await supabase.from("gyms").select("name").eq("id", member.gym_id).maybeSingle();
-      gymName = gym?.name || "";
+    if ((member as any)?.gym_id) {
+      const { data: gym } = await supabase.from("gyms").select("name").eq("id", (member as any).gym_id).maybeSingle();
+      gymName = (gym as any)?.name || "";
     }
 
     const { data: rows } = await supabase
