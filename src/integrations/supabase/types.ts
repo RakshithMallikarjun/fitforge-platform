@@ -784,6 +784,52 @@ export type Database = {
           },
         ]
       }
+      workout_exercise_substitutions: {
+        Row: {
+          created_at: string
+          id: string
+          member_id: string
+          original_workout_exercise_id: string
+          substitute_exercise_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          member_id: string
+          original_workout_exercise_id: string
+          substitute_exercise_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          member_id?: string
+          original_workout_exercise_id?: string
+          substitute_exercise_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_exercise_substitution_original_workout_exercise_id_fkey"
+            columns: ["original_workout_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "workout_exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_exercise_substitutions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_exercise_substitutions_substitute_exercise_id_fkey"
+            columns: ["substitute_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workout_exercises: {
         Row: {
           created_at: string

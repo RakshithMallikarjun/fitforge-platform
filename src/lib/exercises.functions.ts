@@ -117,3 +117,84 @@ export const deleteExercise = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const getExerciseAlternatives = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        exerciseId: z.string().uuid(),
+        muscleGroup: z.string().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+
+    const { data: target } = await supabase
+      .from("exercises")
+      .select("id, muscle_groups")
+      .eq("id", data.exerciseId)
+      .maybeSingle();
+
+    const groups: string[] = data.muscleGroup
+      ? [data.muscleGroup]
+      : ((target as any)?.muscle_groups ?? []);
+
+    if (!groups.length) return [] as ExerciseRow[];
+
+    const difficultyOrder = ["beginner", "intermediate", "advanced"];
+    const { data: rows, error } = await supabase
+      .from("exercises")
+      .select("*")
+      .overlaps("muscle_groups", groups)
+      .neq("id", data.exerciseId)
+      .limit(20);
+    if (error) throw new Error(error.message);
+
+    const sorted = (rows ?? []).slice().sort((a: any, b: any) => {
+      const ai = difficultyOrder.indexOf(a.difficulty ?? "");
+      const bi = difficultyOrder.indexOf(b.difficulty ?? "");
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
+    return sorted.slice(0, 5) as ExerciseRow[];
+  });
+
+export const substituteExercise = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        workoutExerciseId: z.string().uuid(),
+        newExerciseId: z.string().uuid(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+
+    // Verify caller is the member assigned to the plan containing this workout_exercise
+    const { data: we } = await supabase
+      .from("workout_exercises")
+      .select("id, workout_days:day_id(plan_id, workout_plans:plan_id(member_id))")
+      .eq("id", data.workoutExerciseId)
+      .maybeSingle();
+
+    const memberId = (we as any)?.workout_days?.workout_plans?.member_id;
+    if (!memberId || memberId !== userId) throw new Error("Forbidden");
+
+    const { data: row, error } = await supabase
+      .from("workout_exercise_substitutions")
+      .upsert(
+        {
+          original_workout_exercise_id: data.workoutExerciseId,
+          substitute_exercise_id: data.newExerciseId,
+          member_id: userId,
+        },
+        { onConflict: "original_workout_exercise_id,member_id" },
+      )
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });

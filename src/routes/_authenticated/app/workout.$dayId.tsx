@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { get as idbGet, set as idbSet } from "idb-keyval";
 import {
   ArrowLeft,
+  ArrowLeftRight,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -19,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   completeWorkout,
   getPreviousSetValues,
@@ -30,6 +32,7 @@ import {
   type WorkoutDayData,
   type WorkoutDayExercise,
 } from "@/lib/workout-player.functions";
+import { getExerciseAlternatives, substituteExercise, type ExerciseRow } from "@/lib/exercises.functions";
 import { enqueueLog } from "@/lib/pwa/offline-queue";
 
 function isOfflineError(e: unknown): boolean {
@@ -52,15 +55,19 @@ type SetState = { weight: string; reps: string; done: boolean };
 function WorkoutPlayer() {
   const { dayId } = Route.useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const fetchDay = useServerFn(getWorkoutDay);
   const startLog = useServerFn(startWorkoutLog);
   const logOneSet = useServerFn(logSet);
   const finishWorkout = useServerFn(completeWorkout);
   const fetchPrev = useServerFn(getPreviousSetValues);
+  const fetchAlts = useServerFn(getExerciseAlternatives);
+  const swapExerciseFn = useServerFn(substituteExercise);
 
   const cacheKey = `fitforge:day:${dayId}`;
   const [offlineFallback, setOfflineFallback] = useState(false);
+  const [swapOpen, setSwapOpen] = useState(false);
 
   const { data: dayData, isLoading } = useQuery({
     queryKey: ["workout-day", dayId],
@@ -345,7 +352,15 @@ function WorkoutPlayer() {
       </div>
 
       {/* Exercise hero */}
-      <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <div className="relative rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+        <button
+          type="button"
+          onClick={() => setSwapOpen(true)}
+          aria-label="Swap exercise"
+          className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full bg-background/90 text-muted-foreground shadow-sm ring-1 ring-border hover:text-foreground"
+        >
+          <ArrowLeftRight className="h-4 w-4" />
+        </button>
         {ex.exercise.thumbnail_url ? (
           <a
             href={ex.exercise.video_url ?? "#"}
@@ -382,7 +397,14 @@ function WorkoutPlayer() {
             </span>
           );
         })()}
-        <h2 className="mt-2 font-display text-xl font-bold tracking-tight">{ex.exercise.name}</h2>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <h2 className="font-display text-xl font-bold tracking-tight">{ex.exercise.name}</h2>
+          {ex.substituted && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-secondary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-secondary">
+              <ArrowLeftRight className="h-3 w-3" /> Substituted
+            </span>
+          )}
+        </div>
         {ex.exercise.muscle_groups.length > 0 && (
           <p className="mt-0.5 text-xs capitalize text-muted-foreground">
             {ex.exercise.muscle_groups.join(" · ")}
@@ -488,7 +510,98 @@ function WorkoutPlayer() {
           </Button>
         )}
       </div>
+
+      <SwapExerciseDialog
+        open={swapOpen}
+        onOpenChange={setSwapOpen}
+        workoutExerciseId={ex.id}
+        exerciseId={ex.exercise.id}
+        fetchAlts={fetchAlts}
+        onSwap={async (newExerciseId) => {
+          try {
+            await swapExerciseFn({ data: { workoutExerciseId: ex.id, newExerciseId } });
+            toast.success("Exercise substituted");
+            setSwapOpen(false);
+            await queryClient.invalidateQueries({ queryKey: ["workout-day", dayId] });
+          } catch (e: any) {
+            toast.error("Could not substitute", { description: e?.message });
+          }
+        }}
+      />
     </div>
+  );
+}
+
+function SwapExerciseDialog({
+  open,
+  onOpenChange,
+  workoutExerciseId,
+  exerciseId,
+  fetchAlts,
+  onSwap,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  workoutExerciseId: string;
+  exerciseId: string;
+  fetchAlts: (args: { data: { exerciseId: string } }) => Promise<ExerciseRow[]>;
+  onSwap: (newExerciseId: string) => void;
+}) {
+  const { data: alts = [], isLoading } = useQuery({
+    queryKey: ["exercise-alts", workoutExerciseId, exerciseId],
+    queryFn: () => fetchAlts({ data: { exerciseId } }),
+    enabled: open,
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Choose an alternative</DialogTitle>
+          <DialogDescription>Pick a swap targeting the same muscle group.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+            </div>
+          ) : alts.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              No alternatives found for this exercise.
+            </p>
+          ) : (
+            alts.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => onSwap(a.id)}
+                className="flex w-full items-start justify-between gap-3 rounded-xl border border-border bg-card p-3 text-left transition-colors hover:bg-muted"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{a.name}</p>
+                  {a.muscle_groups?.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {a.muscle_groups.slice(0, 3).map((m) => (
+                        <span key={m} className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium capitalize text-primary">
+                          {m}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {a.difficulty && (
+                  <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium capitalize text-muted-foreground">
+                    {a.difficulty}
+                  </span>
+                )}
+              </button>
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
