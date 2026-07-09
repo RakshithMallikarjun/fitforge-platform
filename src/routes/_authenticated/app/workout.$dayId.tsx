@@ -352,7 +352,15 @@ function WorkoutPlayer() {
       </div>
 
       {/* Exercise hero */}
-      <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <div className="relative rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+        <button
+          type="button"
+          onClick={() => setSwapOpen(true)}
+          aria-label="Swap exercise"
+          className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full bg-background/90 text-muted-foreground shadow-sm ring-1 ring-border hover:text-foreground"
+        >
+          <ArrowLeftRight className="h-4 w-4" />
+        </button>
         {ex.exercise.thumbnail_url ? (
           <a
             href={ex.exercise.video_url ?? "#"}
