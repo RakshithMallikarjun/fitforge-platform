@@ -510,7 +510,98 @@ function WorkoutPlayer() {
           </Button>
         )}
       </div>
+
+      <SwapExerciseDialog
+        open={swapOpen}
+        onOpenChange={setSwapOpen}
+        workoutExerciseId={ex.id}
+        exerciseId={ex.exercise.id}
+        fetchAlts={fetchAlts}
+        onSwap={async (newExerciseId) => {
+          try {
+            await swapExerciseFn({ data: { workoutExerciseId: ex.id, newExerciseId } });
+            toast.success("Exercise substituted");
+            setSwapOpen(false);
+            await queryClient.invalidateQueries({ queryKey: ["workout-day", dayId] });
+          } catch (e: any) {
+            toast.error("Could not substitute", { description: e?.message });
+          }
+        }}
+      />
     </div>
+  );
+}
+
+function SwapExerciseDialog({
+  open,
+  onOpenChange,
+  workoutExerciseId,
+  exerciseId,
+  fetchAlts,
+  onSwap,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  workoutExerciseId: string;
+  exerciseId: string;
+  fetchAlts: (args: { data: { exerciseId: string } }) => Promise<ExerciseRow[]>;
+  onSwap: (newExerciseId: string) => void;
+}) {
+  const { data: alts = [], isLoading } = useQuery({
+    queryKey: ["exercise-alts", workoutExerciseId, exerciseId],
+    queryFn: () => fetchAlts({ data: { exerciseId } }),
+    enabled: open,
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Choose an alternative</DialogTitle>
+          <DialogDescription>Pick a swap targeting the same muscle group.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+            </div>
+          ) : alts.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              No alternatives found for this exercise.
+            </p>
+          ) : (
+            alts.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => onSwap(a.id)}
+                className="flex w-full items-start justify-between gap-3 rounded-xl border border-border bg-card p-3 text-left transition-colors hover:bg-muted"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{a.name}</p>
+                  {a.muscle_groups?.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {a.muscle_groups.slice(0, 3).map((m) => (
+                        <span key={m} className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium capitalize text-primary">
+                          {m}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {a.difficulty && (
+                  <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium capitalize text-muted-foreground">
+                    {a.difficulty}
+                  </span>
+                )}
+              </button>
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
