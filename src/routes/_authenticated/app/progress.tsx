@@ -52,11 +52,12 @@ function ProgressPage() {
       {fitnessScore && <FitnessScoreCard score={fitnessScore} />}
 
       <Tabs defaultValue="body" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="body">Body</TabsTrigger>
           <TabsTrigger value="strength">Strength</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
           <TabsTrigger value="goals">Goals</TabsTrigger>
+          <TabsTrigger value="photos">Photos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="body" className="mt-4">
@@ -70,6 +71,9 @@ function ProgressPage() {
         </TabsContent>
         <TabsContent value="goals" className="mt-4">
           {isLoading ? <SkeletonCard /> : <GoalsTab data={data!} />}
+        </TabsContent>
+        <TabsContent value="photos" className="mt-4">
+          <PhotosTab />
         </TabsContent>
       </Tabs>
     </div>
