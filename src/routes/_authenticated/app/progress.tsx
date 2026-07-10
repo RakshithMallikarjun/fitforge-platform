@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { format, parseISO, isWithinInterval } from "date-fns";
-import { TrendingUp, Plus, Trash2, Trophy, Target, Dumbbell, Activity } from "lucide-react";
+import { TrendingUp, Plus, Trash2, Trophy, Target, Dumbbell, Activity, Camera } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
