@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createAssessment } from "@/lib/assessments.functions";
+import { uploadProgressPhoto } from "@/lib/progress.functions";
 
 const formSchema = z.object({
   date: z.string().min(1),
