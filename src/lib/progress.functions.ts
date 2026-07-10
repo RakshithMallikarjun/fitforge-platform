@@ -286,3 +286,109 @@ export const deleteGoal = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/* ---------------- PROGRESS PHOTOS ---------------- */
+
+export type ProgressPhoto = {
+  id: string;
+  member_id: string;
+  gym_id: string;
+  assessment_id: string | null;
+  photo_url: string;
+  taken_at: string;
+  created_at: string;
+};
+
+const uploadPhotoSchema = z.object({
+  member_id: z.string().uuid(),
+  assessment_id: z.string().uuid().nullable().optional(),
+  taken_at: z.string().nullable().optional(),
+  file_base64: z.string().min(10),
+  content_type: z.string().default("image/jpeg"),
+  file_ext: z.string().default("jpg"),
+});
+
+function base64ToBytes(b64: string): Uint8Array {
+  const clean = b64.includes(",") ? b64.split(",")[1] : b64;
+  const bin = atob(clean);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+export const uploadProgressPhoto = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => uploadPhotoSchema.parse(d))
+  .handler(async ({ data, context }): Promise<ProgressPhoto> => {
+    const { supabase, userId } = context;
+
+    // Resolve gym for the member
+    const { data: memberRow, error: mErr } = await supabase
+      .from("users")
+      .select("gym_id")
+      .eq("id", data.member_id)
+      .maybeSingle();
+    if (mErr) throw new Error(mErr.message);
+    if (!memberRow?.gym_id) throw new Error("Member gym not found");
+
+    // Permission: self OR trainer/admin (RLS on progress_photos also enforces this)
+    if (data.member_id !== userId) {
+      const [{ data: roles }, { data: assign }] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", userId),
+        supabase
+          .from("trainer_assignments")
+          .select("id")
+          .eq("trainer_id", userId)
+          .eq("member_id", data.member_id)
+          .eq("active", true)
+          .maybeSingle(),
+      ]);
+      const r = (roles ?? []).map((x: any) => x.role);
+      if (!r.includes("admin") && !assign) throw new Error("Forbidden");
+    }
+
+    const ext = (data.file_ext || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+    const key = `${memberRow.gym_id}/${crypto.randomUUID()}.${ext}`;
+    const bytes = base64ToBytes(data.file_base64);
+
+    const { error: upErr } = await supabase.storage
+      .from("member-photos")
+      .upload(key, bytes, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: data.content_type || "image/jpeg",
+      });
+    if (upErr) throw new Error(upErr.message);
+
+    const { data: signed, error: sErr } = await supabase.storage
+      .from("member-photos")
+      .createSignedUrl(key, 60 * 60 * 24 * 365 * 10);
+    if (sErr || !signed?.signedUrl) throw new Error(sErr?.message ?? "Could not sign URL");
+
+    const { data: inserted, error: insErr } = await supabase
+      .from("progress_photos")
+      .insert({
+        member_id: data.member_id,
+        gym_id: memberRow.gym_id,
+        assessment_id: data.assessment_id ?? null,
+        photo_url: signed.signedUrl,
+        taken_at: data.taken_at ?? new Date().toISOString().slice(0, 10),
+      })
+      .select()
+      .single();
+    if (insErr) throw new Error(insErr.message);
+
+    return inserted as ProgressPhoto;
+  });
+
+export const getProgressPhotos = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ProgressPhoto[]> => {
+    const { data, error } = await context.supabase
+      .from("progress_photos")
+      .select("*")
+      .eq("member_id", context.userId)
+      .order("taken_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as ProgressPhoto[];
+  });

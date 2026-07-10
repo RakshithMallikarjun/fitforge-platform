@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createAssessment } from "@/lib/assessments.functions";
+import { uploadProgressPhoto } from "@/lib/progress.functions";
 
 const formSchema = z.object({
   date: z.string().min(1),
@@ -70,6 +71,9 @@ export function NewAssessmentSheet({
 }) {
   const qc = useQueryClient();
   const createFn = useServerFn(createAssessment);
+  const uploadPhotoFn = useServerFn(uploadProgressPhoto);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -131,7 +135,26 @@ export function NewAssessmentSheet({
 
   const mutation = useMutation({
     mutationFn: (payload: any) => createFn({ data: payload }),
-    onSuccess: () => {
+    onSuccess: async (inserted: any) => {
+      if (photoFile && inserted?.id) {
+        try {
+          const base64 = await fileToBase64(photoFile);
+          const ext = (photoFile.name.split(".").pop() ?? "jpg").toLowerCase();
+          await uploadPhotoFn({
+            data: {
+              member_id: memberId,
+              assessment_id: inserted.id,
+              taken_at: inserted.date ?? undefined,
+              file_base64: base64,
+              content_type: photoFile.type || "image/jpeg",
+              file_ext: ext,
+            },
+          });
+          qc.invalidateQueries({ queryKey: ["progress-photos"] });
+        } catch (err: any) {
+          toast.error(`Assessment saved, but photo upload failed: ${err?.message ?? "unknown error"}`);
+        }
+      }
       toast.success("Assessment recorded");
       qc.invalidateQueries({ queryKey: ["assessments", memberId] });
       onOpenChange(false);
@@ -140,6 +163,8 @@ export function NewAssessmentSheet({
         unit_system: "metric",
       });
       setLastUnit("metric");
+      setPhotoFile(null);
+      setPhotoPreview(null);
     },
     onError: (e: any) => toast.error(e.message ?? "Failed to save assessment"),
   });
@@ -265,6 +290,44 @@ export function NewAssessmentSheet({
             <Textarea rows={4} placeholder="Any observations…" {...form.register("notes")} />
           </Section>
 
+          {/* Progress photo */}
+          <Section title="Progress photo (optional)">
+            <div className="space-y-2">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setPhotoFile(f);
+                  if (f) {
+                    const url = URL.createObjectURL(f);
+                    setPhotoPreview(url);
+                  } else {
+                    setPhotoPreview(null);
+                  }
+                }}
+              />
+              {photoPreview && (
+                <div className="relative inline-block">
+                  <img
+                    src={photoPreview}
+                    alt="Progress preview"
+                    className="h-40 w-40 rounded-xl object-cover border border-border"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="absolute right-1 top-1 h-7"
+                    onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Section>
+
           <SheetFooter className="gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={mutation.isPending}>
@@ -276,6 +339,21 @@ export function NewAssessmentSheet({
     </Sheet>
   );
 }
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === "string") resolve(result);
+      else reject(new Error("Failed to read file"));
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

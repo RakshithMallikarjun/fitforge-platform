@@ -624,6 +624,58 @@ export type Database = {
           },
         ]
       }
+      progress_photos: {
+        Row: {
+          assessment_id: string | null
+          created_at: string
+          gym_id: string
+          id: string
+          member_id: string
+          photo_url: string
+          taken_at: string
+        }
+        Insert: {
+          assessment_id?: string | null
+          created_at?: string
+          gym_id: string
+          id?: string
+          member_id: string
+          photo_url: string
+          taken_at?: string
+        }
+        Update: {
+          assessment_id?: string | null
+          created_at?: string
+          gym_id?: string
+          id?: string
+          member_id?: string
+          photo_url?: string
+          taken_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progress_photos_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "fitness_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_photos_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_photos_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trainer_assignments: {
         Row: {
           active: boolean
