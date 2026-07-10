@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  getProgressData, createGoal, deleteGoal, getFitnessScore,
-  type ProgressData, type FitnessScore,
+  getProgressData, createGoal, deleteGoal, getFitnessScore, getProgressPhotos,
+  type ProgressData, type FitnessScore, type ProgressPhoto,
 } from "@/lib/progress.functions";
 import { listPersonalRecords, type PersonalRecord } from "@/lib/workout-player.functions";
 
