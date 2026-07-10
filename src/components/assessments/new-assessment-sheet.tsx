@@ -290,6 +290,44 @@ export function NewAssessmentSheet({
             <Textarea rows={4} placeholder="Any observations…" {...form.register("notes")} />
           </Section>
 
+          {/* Progress photo */}
+          <Section title="Progress photo (optional)">
+            <div className="space-y-2">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setPhotoFile(f);
+                  if (f) {
+                    const url = URL.createObjectURL(f);
+                    setPhotoPreview(url);
+                  } else {
+                    setPhotoPreview(null);
+                  }
+                }}
+              />
+              {photoPreview && (
+                <div className="relative inline-block">
+                  <img
+                    src={photoPreview}
+                    alt="Progress preview"
+                    className="h-40 w-40 rounded-xl object-cover border border-border"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="absolute right-1 top-1 h-7"
+                    onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Section>
+
           <SheetFooter className="gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={mutation.isPending}>
