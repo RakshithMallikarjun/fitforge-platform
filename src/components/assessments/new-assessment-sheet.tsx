@@ -71,6 +71,9 @@ export function NewAssessmentSheet({
 }) {
   const qc = useQueryClient();
   const createFn = useServerFn(createAssessment);
+  const uploadPhotoFn = useServerFn(uploadProgressPhoto);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
