@@ -135,7 +135,26 @@ export function NewAssessmentSheet({
 
   const mutation = useMutation({
     mutationFn: (payload: any) => createFn({ data: payload }),
-    onSuccess: () => {
+    onSuccess: async (inserted: any) => {
+      if (photoFile && inserted?.id) {
+        try {
+          const base64 = await fileToBase64(photoFile);
+          const ext = (photoFile.name.split(".").pop() ?? "jpg").toLowerCase();
+          await uploadPhotoFn({
+            data: {
+              member_id: memberId,
+              assessment_id: inserted.id,
+              taken_at: inserted.date ?? undefined,
+              file_base64: base64,
+              content_type: photoFile.type || "image/jpeg",
+              file_ext: ext,
+            },
+          });
+          qc.invalidateQueries({ queryKey: ["progress-photos"] });
+        } catch (err: any) {
+          toast.error(`Assessment saved, but photo upload failed: ${err?.message ?? "unknown error"}`);
+        }
+      }
       toast.success("Assessment recorded");
       qc.invalidateQueries({ queryKey: ["assessments", memberId] });
       onOpenChange(false);
@@ -144,6 +163,8 @@ export function NewAssessmentSheet({
         unit_system: "metric",
       });
       setLastUnit("metric");
+      setPhotoFile(null);
+      setPhotoPreview(null);
     },
     onError: (e: any) => toast.error(e.message ?? "Failed to save assessment"),
   });
