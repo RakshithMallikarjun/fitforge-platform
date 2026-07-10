@@ -623,3 +623,82 @@ function GoalsTab({ data }: { data: ProgressData }) {
     </div>
   );
 }
+
+/* ---------------- PHOTOS TAB ---------------- */
+
+function PhotosTab() {
+  const fetchFn = useServerFn(getProgressPhotos);
+  const { data: photos = [], isLoading } = useQuery({
+    queryKey: ["progress-photos"],
+    queryFn: () => fetchFn(),
+  });
+  const [compareOpen, setCompareOpen] = useState(false);
+
+  if (isLoading) return <SkeletonCard />;
+
+  if (photos.length === 0) {
+    return (
+      <EmptyCard
+        icon={Camera}
+        title="No progress photos yet"
+        subtitle="Your trainer can add progress photos during your assessment."
+      />
+    );
+  }
+
+  const sorted = [...(photos as ProgressPhoto[])].sort((a, b) => a.taken_at.localeCompare(b.taken_at));
+  const oldest = sorted[0];
+  const newest = sorted[sorted.length - 1];
+
+  return (
+    <div className="space-y-4">
+      {sorted.length >= 2 && (
+        <div className="flex justify-end">
+          <Dialog open={compareOpen} onOpenChange={setCompareOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="secondary" className="rounded-lg">
+                <Camera className="mr-1 h-4 w-4" />
+                Compare
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Before &amp; After</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-3">
+                <PhotoTile photo={oldest} label="Oldest" />
+                <PhotoTile photo={newest} label="Most recent" />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        {sorted.map((p) => (
+          <div key={p.id} className="space-y-1">
+            <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-muted">
+              <img src={p.photo_url} alt={`Progress photo from ${p.taken_at}`} className="h-full w-full object-cover" />
+            </div>
+            <p className="text-center text-xs text-muted-foreground">
+              {format(parseISO(p.taken_at), "PPP")}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PhotoTile({ photo, label }: { photo: ProgressPhoto; label: string }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+      <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-muted">
+        <img src={photo.photo_url} alt={`Progress photo from ${photo.taken_at}`} className="h-full w-full object-cover" />
+      </div>
+      <p className="text-center text-xs font-medium">{format(parseISO(photo.taken_at), "PPP")}</p>
+    </div>
+  );
+}
+
