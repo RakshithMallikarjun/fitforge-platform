@@ -301,6 +301,11 @@ function MemberProfile() {
             memberId={memberId}
             currentType={profile?.membership_type ?? null}
             currentExpiresAt={profile?.membership_expires_at ?? null}
+            currentBillingCycle={(profile as any)?.billing_cycle ?? null}
+            currentPaymentAmount={(profile as any)?.last_payment_amount ?? null}
+            currentPaymentDate={(profile as any)?.last_payment_date ?? null}
+            currentPaymentConfirmed={(profile as any)?.payment_confirmed ?? false}
+            currentPaymentNotes={(profile as any)?.payment_notes ?? null}
           />
         </>
       )}
