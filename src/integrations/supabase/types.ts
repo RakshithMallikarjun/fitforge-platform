@@ -20,6 +20,7 @@ export type Database = {
           check_out_at: string | null
           gym_id: string
           id: string
+          location_type: string | null
           member_id: string
         }
         Insert: {
@@ -27,6 +28,7 @@ export type Database = {
           check_out_at?: string | null
           gym_id: string
           id?: string
+          location_type?: string | null
           member_id: string
         }
         Update: {
@@ -34,6 +36,7 @@ export type Database = {
           check_out_at?: string | null
           gym_id?: string
           id?: string
+          location_type?: string | null
           member_id?: string
         }
         Relationships: [

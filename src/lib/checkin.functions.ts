@@ -118,3 +118,31 @@ export const logAttendanceManual = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Member-initiated self check-in (At Home / At Gym). */
+export const selfCheckin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { locationType: "gym" | "home" }) => {
+    if (d?.locationType !== "gym" && d?.locationType !== "home") {
+      throw new Error("Invalid location");
+    }
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: me } = await supabase
+      .from("users")
+      .select("gym_id")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!me?.gym_id) throw new Error("No gym");
+
+    const { error } = await supabase.from("attendance_logs").insert({
+      gym_id: me.gym_id,
+      member_id: userId,
+      check_in_at: new Date().toISOString(),
+      location_type: data.locationType,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true as const, locationType: data.locationType };
+  });

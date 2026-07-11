@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { QRCodeSVG } from "qrcode.react";
-import { ArrowLeft, RefreshCw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { issueCheckinToken } from "@/lib/checkin.functions";
+import { Dumbbell, Home } from "lucide-react";
+import { selfCheckin } from "@/lib/checkin.functions";
 
 export const Route = createFileRoute("/_authenticated/app/checkin")({
   component: CheckinPage,
@@ -13,75 +11,65 @@ export const Route = createFileRoute("/_authenticated/app/checkin")({
 
 function CheckinPage() {
   const navigate = useNavigate();
-  const issue = useServerFn(issueCheckinToken);
-  const [token, setToken] = useState<string | null>(null);
-  const [ttl, setTtl] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
+  const checkin = useServerFn(selfCheckin);
 
-  async function refresh() {
-    setLoading(true);
-    try {
-      const r = await issue();
-      setToken(r.token);
-      setTtl(r.expiresIn);
-    } catch (e: any) {
-      toast.error("Could not generate check-in code", { description: e?.message });
-    } finally {
-      setLoading(false);
-    }
-  }
+  const mutation = useMutation({
+    mutationFn: (locationType: "gym" | "home") => checkin({ data: { locationType } }),
+    onSuccess: () => {
+      toast.success("Check-in recorded ✓");
+      navigate({ to: "/app" });
+    },
+    onError: (e: any) => toast.error("Check-in failed", { description: e?.message }),
+  });
 
-  useEffect(() => {
-    void refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (ttl <= 0) return;
-    const id = window.setInterval(() => setTtl((t) => Math.max(0, t - 1)), 1000);
-    return () => window.clearInterval(id);
-  }, [ttl]);
-
-  const expired = ttl === 0 && token !== null;
+  const disabled = mutation.isPending;
 
   return (
-    <div className="space-y-5">
-      <button
-        onClick={() => navigate({ to: "/app" })}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" /> Home
-      </button>
-
-      <div>
-        <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Gym check-in</p>
-        <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">Scan me at the desk</h1>
+    <main className="mx-auto flex min-h-[100dvh] max-w-lg flex-col justify-center px-6 py-10">
+      <div className="mb-8 text-center">
+        <h1 className="text-2xl font-bold tracking-tight">Log today's visit</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">Where are you working out today?</p>
       </div>
 
-      <div className="rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)]">
-        <div className="grid place-items-center rounded-2xl bg-white p-6">
-          {token && !expired ? (
-            <QRCodeSVG value={token} size={240} bgColor="#ffffff" fgColor="#0F172A" level="M" />
-          ) : (
-            <div className="grid h-[240px] w-[240px] place-items-center text-sm text-muted-foreground">
-              {loading ? "Generating…" : "Code expired"}
-            </div>
-          )}
-        </div>
-        <div className="mt-4 flex items-center justify-between">
-          <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            {expired ? "Expired" : `Expires in ${Math.floor(ttl / 60)}:${String(ttl % 60).padStart(2, "0")}`}
+      <div className="grid gap-4">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => mutation.mutate("gym")}
+          className="group flex items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-[var(--shadow-card)] transition hover:border-primary hover:bg-accent disabled:opacity-60"
+        >
+          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary-soft text-primary text-2xl">
+            <Dumbbell className="h-7 w-7" />
           </div>
-          <Button variant="outline" size="sm" className="rounded-xl" onClick={refresh} disabled={loading}>
-            <RefreshCw className="mr-1.5 h-4 w-4" /> New code
-          </Button>
-        </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-base font-semibold">🏋️ At the Gym</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Gym attendance will be recorded for your trainer
+            </p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => mutation.mutate("home")}
+          className="group flex items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-[var(--shadow-card)] transition hover:border-primary hover:bg-accent disabled:opacity-60"
+        >
+          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary-soft text-primary text-2xl">
+            <Home className="h-7 w-7" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-base font-semibold">🏠 At Home</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Home session will be logged to your progress
+            </p>
+          </div>
+        </button>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Show this code to the front desk to log your visit. Codes expire after 5 minutes for your security.
-      </p>
-    </div>
+      {disabled && (
+        <p className="mt-6 text-center text-xs text-muted-foreground">Recording…</p>
+      )}
+    </main>
   );
 }
