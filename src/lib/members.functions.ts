@@ -374,9 +374,20 @@ export const updateMember = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const membershipUpdateSchema = z.object({
+  memberId: z.string(),
+  membershipType: z.string(),
+  membershipExpiresAt: z.string().nullable(),
+  billingCycle: z.enum(["monthly", "quarterly", "half_year", "annual"]).nullable().optional(),
+  lastPaymentAmount: z.number().nullable().optional(),
+  lastPaymentDate: z.string().nullable().optional(),
+  paymentConfirmed: z.boolean().optional(),
+  paymentNotes: z.string().max(300).nullable().optional(),
+});
+
 export const updateMemberMembership = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { memberId: string; membershipType: string; membershipExpiresAt: string | null }) => d)
+  .inputValidator((d: z.infer<typeof membershipUpdateSchema>) => membershipUpdateSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { gymId, isAdmin, isTrainer } = await getRolesAndGym(supabase, userId);
@@ -392,12 +403,19 @@ export const updateMemberMembership = createServerFn({ method: "POST" })
         .maybeSingle();
       if (!a) throw new Error("Forbidden");
     }
+    const patch: any = {
+      membership_type: data.membershipType,
+      membership_expires_at: data.membershipExpiresAt || null,
+    };
+    if (data.billingCycle !== undefined) patch.billing_cycle = data.billingCycle;
+    if (data.lastPaymentAmount !== undefined) patch.last_payment_amount = data.lastPaymentAmount;
+    if (data.lastPaymentDate !== undefined) patch.last_payment_date = data.lastPaymentDate || null;
+    if (data.paymentConfirmed !== undefined) patch.payment_confirmed = data.paymentConfirmed;
+    if (data.paymentNotes !== undefined) patch.payment_notes = data.paymentNotes;
+
     const { data: updated, error } = await supabase
       .from("member_profiles")
-      .update({
-        membership_type: data.membershipType,
-        membership_expires_at: data.membershipExpiresAt || null,
-      })
+      .update(patch)
       .eq("user_id", data.memberId)
       .select()
       .maybeSingle();
