@@ -408,6 +408,7 @@ export type Database = {
       }
       member_profiles: {
         Row: {
+          billing_cycle: string | null
           created_at: string
           dob: string | null
           emergency_contact: Json | null
@@ -415,11 +416,16 @@ export type Database = {
           gender: string | null
           goals: string | null
           health_notes: string | null
+          last_payment_amount: number | null
+          last_payment_date: string | null
           membership_expires_at: string | null
           membership_type: string | null
+          payment_confirmed: boolean
+          payment_notes: string | null
           user_id: string
         }
         Insert: {
+          billing_cycle?: string | null
           created_at?: string
           dob?: string | null
           emergency_contact?: Json | null
@@ -427,11 +433,16 @@ export type Database = {
           gender?: string | null
           goals?: string | null
           health_notes?: string | null
+          last_payment_amount?: number | null
+          last_payment_date?: string | null
           membership_expires_at?: string | null
           membership_type?: string | null
+          payment_confirmed?: boolean
+          payment_notes?: string | null
           user_id: string
         }
         Update: {
+          billing_cycle?: string | null
           created_at?: string
           dob?: string | null
           emergency_contact?: Json | null
@@ -439,8 +450,12 @@ export type Database = {
           gender?: string | null
           goals?: string | null
           health_notes?: string | null
+          last_payment_amount?: number | null
+          last_payment_date?: string | null
           membership_expires_at?: string | null
           membership_type?: string | null
+          payment_confirmed?: boolean
+          payment_notes?: string | null
           user_id?: string
         }
         Relationships: [
