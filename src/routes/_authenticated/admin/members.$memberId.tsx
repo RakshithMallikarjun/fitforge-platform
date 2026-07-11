@@ -152,6 +152,39 @@ function MemberProfile() {
               </div>
             </div>
 
+            {isAdmin && (() => {
+              const p: any = profile ?? {};
+              const cycleLabel = ({ monthly: "Monthly", quarterly: "Quarterly", half_year: "Half-year", annual: "Annual" } as any)[p.billing_cycle] ?? "—";
+              const confirmed = !!p.payment_confirmed;
+              return (
+                <div className="rounded-2xl border border-border bg-card p-5">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold tracking-tight">Payment</h3>
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${confirmed ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-red-500/15 text-red-600 dark:text-red-400"}`}>
+                      {confirmed ? "✓ Confirmed" : "✗ Unconfirmed"}
+                    </span>
+                  </div>
+                  <dl className="mt-3 grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <dt className="text-muted-foreground text-xs">Billing cycle</dt>
+                      <dd className="mt-0.5 font-medium">{cycleLabel}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground text-xs">Last payment</dt>
+                      <dd className="mt-0.5 font-medium">{p.last_payment_date ? new Date(p.last_payment_date).toLocaleDateString() : "—"}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground text-xs">Amount</dt>
+                      <dd className="mt-0.5 font-medium">{p.last_payment_amount != null ? `₹${Number(p.last_payment_amount).toLocaleString()}` : "—"}</dd>
+                    </div>
+                  </dl>
+                  {p.payment_notes && (
+                    <p className="mt-3 whitespace-pre-wrap text-xs text-muted-foreground">{p.payment_notes}</p>
+                  )}
+                </div>
+              );
+            })()}
+
             {profile?.goals && (
               <div className="rounded-2xl border border-border bg-card p-5">
                 <h3 className="text-sm font-semibold tracking-tight">Goals</h3>
