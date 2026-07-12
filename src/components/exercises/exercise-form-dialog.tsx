@@ -104,14 +104,16 @@ export function ExerciseFormDialog({ open, onOpenChange, initial }: Props) {
             <Label>Description</Label>
             <Textarea value={description ?? ""} onChange={(e) => setDescription(e.target.value)} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <div>
-              <Label>Video URL</Label>
-              <Input value={videoUrl ?? ""} onChange={(e) => setVideoUrl(e.target.value)} />
+              <Label>YouTube Video URL (optional)</Label>
+              <Input value={videoUrl ?? ""} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
+              <p className="mt-1 text-[11px] text-muted-foreground">Paste a YouTube video URL for the exercise demonstration, e.g. https://www.youtube.com/watch?v=… — leave blank to use auto-search.</p>
             </div>
             <div>
-              <Label>Thumbnail URL</Label>
+              <Label>Thumbnail URL (optional)</Label>
               <Input value={thumbnailUrl ?? ""} onChange={(e) => setThumbnailUrl(e.target.value)} />
+              <p className="mt-1 text-[11px] text-muted-foreground">Leave blank to auto-generate from YouTube URL.</p>
             </div>
           </div>
           <div>
