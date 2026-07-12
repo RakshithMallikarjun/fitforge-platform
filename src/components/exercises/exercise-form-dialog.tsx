@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
-import { createExercise, updateExercise, type ExerciseRow } from "@/lib/exercises.functions";
+import { createExercise, updateExercise, getYoutubeThumbnail, type ExerciseRow } from "@/lib/exercises.functions";
 
 type Props = {
   open: boolean;
