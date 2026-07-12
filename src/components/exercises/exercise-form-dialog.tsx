@@ -66,11 +66,12 @@ export function ExerciseFormDialog({ open, onOpenChange, initial }: Props) {
 
   const save = useMutation({
     mutationFn: async () => {
+      const finalThumb = thumbnailUrl?.trim() || (videoUrl ? getYoutubeThumbnail(videoUrl) : "") || null;
       const payload = {
         name,
         description: description || null,
         video_url: videoUrl || null,
-        thumbnail_url: thumbnailUrl || null,
+        thumbnail_url: finalThumb,
         muscle_groups: muscleGroups,
         equipment,
         difficulty: difficulty as "beginner" | "intermediate" | "advanced",
