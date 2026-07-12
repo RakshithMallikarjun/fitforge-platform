@@ -151,7 +151,7 @@ export const getMember = createServerFn({ method: "GET" })
       supabase.from("trainer_assignments").select("id, trainer_id, active, assigned_at").eq("member_id", data.memberId).eq("active", true),
       supabase.from("fitness_assessments").select("*").eq("member_id", data.memberId).order("date", { ascending: false }),
       supabase.from("workout_plans").select("*").eq("member_id", data.memberId).order("created_at", { ascending: false }),
-      supabase.from("attendance_logs").select("*").eq("member_id", data.memberId).order("check_in_at", { ascending: false }).limit(100),
+      supabase.from("attendance_logs").select("id, member_id, gym_id, check_in_at, check_out_at, location_type").eq("member_id", data.memberId).order("check_in_at", { ascending: false }).limit(100),
     ]);
 
     const trainerIds = (assigns ?? []).map((a: any) => a.trainer_id);
