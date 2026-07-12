@@ -39,9 +39,13 @@ export function ExercisePickerDialog({ open, onOpenChange, onPick }: Props) {
           <ul className="divide-y divide-border">
             {filtered.map((e) => (
               <li key={e.id} className="flex items-center gap-3 p-3">
-                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
-                  {e.thumbnail_url && <img src={e.thumbnail_url} alt="" className="h-full w-full object-cover" />}
-                </div>
+                {e.thumbnail_url ? (
+                  <img src={e.thumbnail_url} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+                ) : (
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-muted text-[10px] font-semibold uppercase text-muted-foreground">
+                    {(e.muscle_groups?.[0] ?? "ex").slice(0, 3)}
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{e.name}</p>
                   <div className="mt-0.5 flex flex-wrap gap-1">
