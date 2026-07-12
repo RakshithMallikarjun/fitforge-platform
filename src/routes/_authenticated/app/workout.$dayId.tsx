@@ -55,9 +55,8 @@ export const Route = createFileRoute("/_authenticated/app/workout/$dayId")({
   component: WorkoutPlayer,
 });
 
-function roundTo(value: number, step: number) {
-  return Math.round(value / step) * step;
-}
+
+
 
 function Stepper({
   value,
