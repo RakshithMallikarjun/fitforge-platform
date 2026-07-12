@@ -292,16 +292,22 @@ function MemberProfile() {
               items={attendance}
               emptyIcon={<Calendar className="h-6 w-6" />}
               emptyText="No check-ins yet."
-              render={(a: any) => (
-                <li key={a.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
-                  <div>
-                    <p className="text-sm font-semibold">{new Date(a.check_in_at).toLocaleString()}</p>
-                    {a.check_out_at && (
-                      <p className="text-xs text-muted-foreground">Checked out {new Date(a.check_out_at).toLocaleTimeString()}</p>
-                    )}
-                  </div>
-                </li>
-              )}
+              render={(a: any) => {
+                const isHome = a.location_type === "home";
+                return (
+                  <li key={a.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
+                    <div>
+                      <p className="text-sm font-semibold">{new Date(a.check_in_at).toLocaleString()}</p>
+                      {a.check_out_at && (
+                        <p className="text-xs text-muted-foreground">Checked out {new Date(a.check_out_at).toLocaleTimeString()}</p>
+                      )}
+                    </div>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${isHome ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground"}`}>
+                      {isHome ? "Home" : "Gym"}
+                    </span>
+                  </li>
+                );
+              }}
             />
           </TabsContent>
 

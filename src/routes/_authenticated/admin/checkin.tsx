@@ -112,7 +112,7 @@ function AdminCheckin() {
           {recent.length === 0 ? (
             <p className="mt-3 text-sm text-muted-foreground">No scans yet.</p>
           ) : (
-            <ul className="mt-3 space-y-2 text-sm">
+          <ul className="mt-3 space-y-2 text-sm">
               {recent.map((r) => (
                 <li key={r.at} className="flex items-center gap-2">
                   {r.ok ? (
@@ -122,6 +122,9 @@ function AdminCheckin() {
                   )}
                   <span className="text-muted-foreground">{new Date(r.at).toLocaleTimeString()}</span>
                   <span>{r.message}</span>
+                  <span className="ml-auto inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                    Gym
+                  </span>
                 </li>
               ))}
             </ul>
