@@ -55,6 +55,154 @@ export const Route = createFileRoute("/_authenticated/app/workout/$dayId")({
   component: WorkoutPlayer,
 });
 
+function roundTo(value: number, step: number) {
+  return Math.round(value / step) * step;
+}
+
+function Stepper({
+  value,
+  onChange,
+  step,
+  min,
+  max,
+  unit,
+  decimals = 0,
+  ariaLabel,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  step: number;
+  min: number;
+  max: number;
+  unit?: string;
+  decimals?: number;
+  ariaLabel: string;
+}) {
+  const holdRef = useRef<{ timeout: number | null; interval: number | null }>({
+    timeout: null,
+    interval: null,
+  });
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [draft, setDraft] = useState("");
+  const hasValue = value !== "" && value != null;
+  const numeric = hasValue ? Number(value) : NaN;
+  const display = hasValue && !Number.isNaN(numeric) ? numeric.toFixed(decimals) : "—";
+
+  function apply(next: number) {
+    const clamped = Math.min(max, Math.max(min, next));
+    const rounded = decimals > 0 ? Math.round(clamped * 10 ** decimals) / 10 ** decimals : Math.round(clamped);
+    onChange(String(rounded));
+  }
+
+  function bump(dir: 1 | -1) {
+    const base = hasValue && !Number.isNaN(numeric) ? numeric : min;
+    apply(base + dir * step);
+  }
+
+  function startHold(dir: 1 | -1) {
+    bump(dir);
+    holdRef.current.timeout = window.setTimeout(() => {
+      holdRef.current.interval = window.setInterval(() => bump(dir), 90);
+    }, 400);
+  }
+
+  function endHold() {
+    if (holdRef.current.timeout) window.clearTimeout(holdRef.current.timeout);
+    if (holdRef.current.interval) window.clearInterval(holdRef.current.interval);
+    holdRef.current.timeout = null;
+    holdRef.current.interval = null;
+  }
+
+  useEffect(() => () => endHold(), []);
+
+  const valueNode = (
+    <span className="min-w-[4.5rem] text-center font-display text-2xl font-bold tabular-nums">
+      {display}
+      {unit ? <span className="ml-1 text-sm font-semibold text-muted-foreground">{unit}</span> : null}
+    </span>
+  );
+
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-xl border border-input bg-background px-2 py-1.5">
+      <button
+        type="button"
+        aria-label={`Decrease ${ariaLabel}`}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          startHold(-1);
+        }}
+        onPointerUp={endHold}
+        onPointerLeave={endHold}
+        onPointerCancel={endHold}
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-input bg-background text-foreground hover:bg-muted active:bg-muted"
+      >
+        <Minus className="h-4 w-4" />
+      </button>
+      {hasValue ? (
+        valueNode
+      ) : (
+        <Popover
+          open={popoverOpen}
+          onOpenChange={(o) => {
+            setPopoverOpen(o);
+            if (o) setDraft("");
+          }}
+        >
+          <PopoverTrigger asChild>
+            <button type="button" className="min-w-[4.5rem] text-center font-display text-2xl font-bold text-muted-foreground">
+              {display}
+              {unit ? <span className="ml-1 text-sm font-semibold text-muted-foreground">{unit}</span> : null}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-3" align="center">
+            <p className="mb-2 text-xs font-semibold text-muted-foreground">Set {ariaLabel}</p>
+            <Input
+              autoFocus
+              inputMode={decimals > 0 ? "decimal" : "numeric"}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && draft) {
+                  const n = Number(draft);
+                  if (!Number.isNaN(n)) apply(n);
+                  setPopoverOpen(false);
+                }
+              }}
+              placeholder={unit ?? ""}
+            />
+            <Button
+              size="sm"
+              className="mt-2 w-full"
+              onClick={() => {
+                const n = Number(draft);
+                if (!Number.isNaN(n)) apply(n);
+                setPopoverOpen(false);
+              }}
+            >
+              Set
+            </Button>
+          </PopoverContent>
+        </Popover>
+      )}
+      <button
+        type="button"
+        aria-label={`Increase ${ariaLabel}`}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          startHold(1);
+        }}
+        onPointerUp={endHold}
+        onPointerLeave={endHold}
+        onPointerCancel={endHold}
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-input bg-background text-foreground hover:bg-muted active:bg-muted"
+      >
+        <Plus className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+
 type SetState = { weight: string; reps: string; done: boolean };
 
 function WorkoutPlayer() {
