@@ -2,6 +2,32 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+export function getYoutubeVideoId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.hostname === "youtu.be") return u.pathname.slice(1) || null;
+    if (u.hostname.endsWith("youtube.com")) {
+      if (u.pathname === "/watch") return u.searchParams.get("v");
+      if (u.pathname.startsWith("/embed/")) return u.pathname.split("/")[2] ?? null;
+      if (u.pathname.startsWith("/shorts/")) return u.pathname.split("/")[2] ?? null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export function getYoutubeEmbedUrl(url: string): string | null {
+  const id = getYoutubeVideoId(url);
+  return id ? `https://www.youtube.com/embed/${id}` : null;
+}
+
+export function getYoutubeThumbnail(url: string): string {
+  const id = getYoutubeVideoId(url);
+  return id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : "";
+}
+
 type Role = "admin" | "trainer" | "member";
 
 async function getRolesAndGym(supabase: any, userId: string) {
