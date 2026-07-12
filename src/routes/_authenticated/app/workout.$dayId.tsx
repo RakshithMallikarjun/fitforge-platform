@@ -37,7 +37,7 @@ import {
   type WorkoutDayData,
   type WorkoutDayExercise,
 } from "@/lib/workout-player.functions";
-import { getExerciseAlternatives, substituteExercise, type ExerciseRow } from "@/lib/exercises.functions";
+import { getExerciseAlternatives, substituteExercise, getYoutubeEmbedUrl, type ExerciseRow } from "@/lib/exercises.functions";
 import { enqueueLog } from "@/lib/pwa/offline-queue";
 
 function isOfflineError(e: unknown): boolean {
@@ -513,29 +513,56 @@ function WorkoutPlayer() {
         >
           <ArrowLeftRight className="h-4 w-4" />
         </button>
-        {ex.exercise.thumbnail_url ? (
-          <a
-            href={ex.exercise.video_url ?? "#"}
-            target="_blank"
-            rel="noreferrer"
-            className="relative block aspect-video overflow-hidden rounded-2xl bg-muted"
-          >
-            <img
-              src={ex.exercise.thumbnail_url}
-              alt={ex.exercise.name}
-              className="h-full w-full object-cover"
-            />
-            {ex.exercise.video_url && (
-              <span className="absolute inset-0 grid place-items-center bg-black/30 text-white">
-                <Play className="h-8 w-8" />
-              </span>
-            )}
-          </a>
-        ) : (
-          <div className="grid aspect-video place-items-center rounded-2xl bg-accent text-primary">
-            <Sparkles className="h-8 w-8" />
-          </div>
-        )}
+        {(() => {
+          const embed = getYoutubeEmbedUrl(ex.exercise.video_url ?? "");
+          if (embed) {
+            return (
+              <div className="relative aspect-video overflow-hidden rounded-2xl bg-muted">
+                <iframe
+                  src={embed}
+                  title={ex.exercise.name}
+                  allow="autoplay; fullscreen"
+                  allowFullScreen
+                  className="h-full w-full"
+                />
+              </div>
+            );
+          }
+          if (ex.exercise.thumbnail_url) {
+            return (
+              <a
+                href={ex.exercise.video_url ?? "#"}
+                target="_blank"
+                rel="noreferrer"
+                className="relative block aspect-video overflow-hidden rounded-2xl bg-muted"
+              >
+                <img
+                  src={ex.exercise.thumbnail_url}
+                  alt={ex.exercise.name}
+                  className="h-full w-full object-cover"
+                />
+                {ex.exercise.video_url && (
+                  <span className="absolute inset-0 grid place-items-center bg-black/30 text-white">
+                    <Play className="h-8 w-8" />
+                  </span>
+                )}
+              </a>
+            );
+          }
+          return (
+            <div className="flex flex-col items-center gap-2 rounded-2xl bg-accent p-6 text-primary">
+              <Sparkles className="h-8 w-8" />
+              <a
+                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(ex.exercise.name + " exercise tutorial")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-semibold underline"
+              >
+                Search on YouTube
+              </a>
+            </div>
+          );
+        })()}
         {(() => {
           const bt = dayData.day.block_type ?? "main";
           const meta = {

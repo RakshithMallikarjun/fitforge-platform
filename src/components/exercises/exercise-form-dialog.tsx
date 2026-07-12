@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
-import { createExercise, updateExercise, type ExerciseRow } from "@/lib/exercises.functions";
+import { createExercise, updateExercise, getYoutubeThumbnail, type ExerciseRow } from "@/lib/exercises.functions";
 
 type Props = {
   open: boolean;
@@ -66,11 +66,12 @@ export function ExerciseFormDialog({ open, onOpenChange, initial }: Props) {
 
   const save = useMutation({
     mutationFn: async () => {
+      const finalThumb = thumbnailUrl?.trim() || (videoUrl ? getYoutubeThumbnail(videoUrl) : "") || null;
       const payload = {
         name,
         description: description || null,
         video_url: videoUrl || null,
-        thumbnail_url: thumbnailUrl || null,
+        thumbnail_url: finalThumb,
         muscle_groups: muscleGroups,
         equipment,
         difficulty: difficulty as "beginner" | "intermediate" | "advanced",
@@ -103,14 +104,16 @@ export function ExerciseFormDialog({ open, onOpenChange, initial }: Props) {
             <Label>Description</Label>
             <Textarea value={description ?? ""} onChange={(e) => setDescription(e.target.value)} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <div>
-              <Label>Video URL</Label>
-              <Input value={videoUrl ?? ""} onChange={(e) => setVideoUrl(e.target.value)} />
+              <Label>YouTube Video URL (optional)</Label>
+              <Input value={videoUrl ?? ""} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
+              <p className="mt-1 text-[11px] text-muted-foreground">Paste a YouTube video URL for the exercise demonstration, e.g. https://www.youtube.com/watch?v=… — leave blank to use auto-search.</p>
             </div>
             <div>
-              <Label>Thumbnail URL</Label>
+              <Label>Thumbnail URL (optional)</Label>
               <Input value={thumbnailUrl ?? ""} onChange={(e) => setThumbnailUrl(e.target.value)} />
+              <p className="mt-1 text-[11px] text-muted-foreground">Leave blank to auto-generate from YouTube URL.</p>
             </div>
           </div>
           <div>
