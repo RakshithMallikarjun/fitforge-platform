@@ -10,11 +10,14 @@ import {
   ChevronLeft,
   ChevronRight,
   CloudOff,
+  Minus,
   PartyPopper,
   Play,
+  Plus,
   SkipForward,
   Sparkles,
 } from "lucide-react";
+
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
