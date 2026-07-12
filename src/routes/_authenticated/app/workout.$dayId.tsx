@@ -581,49 +581,68 @@ function WorkoutPlayer() {
       {/* Set logger */}
       <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
         <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Log your sets</p>
-        <div className="mt-3 space-y-2">
+        <div className="mt-3 space-y-4">
           {rows.map((row, idx) => {
             const p = prev.find((x) => x.set_number === idx + 1) ?? prev[idx];
-            const placeholder = p
-              ? `prev: ${p.weight ?? "—"} kg × ${p.reps ?? "—"}`
-              : "—";
+            const lastPill =
+              p && (p.weight != null || p.reps != null)
+                ? `Last: ${p.weight ?? "—"} kg × ${p.reps ?? "—"}`
+                : null;
             return (
-              <div key={idx} className="flex items-center gap-2">
-                <span className="w-7 text-center text-xs font-semibold text-muted-foreground">
-                  {idx + 1}
-                </span>
-                <Input
-                  inputMode="decimal"
-                  className="rounded-xl"
-                  placeholder={p?.weight != null ? String(p.weight) : "kg"}
-                  value={row.weight}
-                  onChange={(e) => updateSet(ex.id, idx, { weight: e.target.value })}
-                />
-                <span className="text-xs text-muted-foreground">kg</span>
-                <Input
-                  inputMode="numeric"
-                  className="rounded-xl"
-                  placeholder={p?.reps != null ? String(p.reps) : "reps"}
-                  value={row.reps}
-                  onChange={(e) => updateSet(ex.id, idx, { reps: e.target.value })}
-                />
-                <button
-                  type="button"
-                  onClick={() => toggleSetDone(ex, idx)}
-                  aria-label={row.done ? "Mark set undone" : "Mark set done"}
-                  className={[
-                    "grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition-colors",
-                    row.done
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-input bg-background text-muted-foreground hover:bg-muted",
-                  ].join(" ")}
-                >
-                  <Check className="h-4 w-4" />
-                </button>
+              <div key={idx} className="rounded-2xl border border-border bg-background/60 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-muted-foreground">Set {idx + 1}</span>
+                  {lastPill && (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      {lastPill}
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
+                  <div>
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Weight (kg)</p>
+                    <Stepper
+                      value={row.weight}
+                      onChange={(v) => updateSet(ex.id, idx, { weight: v })}
+                      step={2.5}
+                      min={0}
+                      max={1000}
+                      unit="kg"
+                      decimals={1}
+                      ariaLabel="weight"
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Reps</p>
+                    <Stepper
+                      value={row.reps}
+                      onChange={(v) => updateSet(ex.id, idx, { reps: v })}
+                      step={1}
+                      min={1}
+                      max={100}
+                      decimals={0}
+                      ariaLabel="reps"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleSetDone(ex, idx)}
+                    aria-label={row.done ? "Mark set undone" : "Mark set done"}
+                    className={[
+                      "grid h-11 w-11 shrink-0 place-items-center rounded-xl border transition-colors",
+                      row.done
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-input bg-background text-muted-foreground hover:bg-muted",
+                    ].join(" ")}
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             );
           })}
         </div>
+
         {prev.length === 0 && (
           <p className="mt-3 text-[11px] text-muted-foreground">No previous data — this is your baseline.</p>
         )}
