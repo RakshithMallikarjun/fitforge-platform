@@ -10,17 +10,22 @@ import {
   ChevronLeft,
   ChevronRight,
   CloudOff,
+  Minus,
   PartyPopper,
   Play,
+  Plus,
   SkipForward,
   Sparkles,
 } from "lucide-react";
+
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 import {
   completeWorkout,
   getPreviousSetValues,
@@ -49,6 +54,153 @@ function isOfflineError(e: unknown): boolean {
 export const Route = createFileRoute("/_authenticated/app/workout/$dayId")({
   component: WorkoutPlayer,
 });
+
+
+
+
+function Stepper({
+  value,
+  onChange,
+  step,
+  min,
+  max,
+  unit,
+  decimals = 0,
+  ariaLabel,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  step: number;
+  min: number;
+  max: number;
+  unit?: string;
+  decimals?: number;
+  ariaLabel: string;
+}) {
+  const holdRef = useRef<{ timeout: number | null; interval: number | null }>({
+    timeout: null,
+    interval: null,
+  });
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [draft, setDraft] = useState("");
+  const hasValue = value !== "" && value != null;
+  const numeric = hasValue ? Number(value) : NaN;
+  const display = hasValue && !Number.isNaN(numeric) ? numeric.toFixed(decimals) : "—";
+
+  function apply(next: number) {
+    const clamped = Math.min(max, Math.max(min, next));
+    const rounded = decimals > 0 ? Math.round(clamped * 10 ** decimals) / 10 ** decimals : Math.round(clamped);
+    onChange(String(rounded));
+  }
+
+  function bump(dir: 1 | -1) {
+    const base = hasValue && !Number.isNaN(numeric) ? numeric : min;
+    apply(base + dir * step);
+  }
+
+  function startHold(dir: 1 | -1) {
+    bump(dir);
+    holdRef.current.timeout = window.setTimeout(() => {
+      holdRef.current.interval = window.setInterval(() => bump(dir), 90);
+    }, 400);
+  }
+
+  function endHold() {
+    if (holdRef.current.timeout) window.clearTimeout(holdRef.current.timeout);
+    if (holdRef.current.interval) window.clearInterval(holdRef.current.interval);
+    holdRef.current.timeout = null;
+    holdRef.current.interval = null;
+  }
+
+  useEffect(() => () => endHold(), []);
+
+  const valueNode = (
+    <span className="min-w-[4.5rem] text-center font-display text-2xl font-bold tabular-nums">
+      {display}
+      {unit ? <span className="ml-1 text-sm font-semibold text-muted-foreground">{unit}</span> : null}
+    </span>
+  );
+
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-xl border border-input bg-background px-2 py-1.5">
+      <button
+        type="button"
+        aria-label={`Decrease ${ariaLabel}`}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          startHold(-1);
+        }}
+        onPointerUp={endHold}
+        onPointerLeave={endHold}
+        onPointerCancel={endHold}
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-input bg-background text-foreground hover:bg-muted active:bg-muted"
+      >
+        <Minus className="h-4 w-4" />
+      </button>
+      {hasValue ? (
+        valueNode
+      ) : (
+        <Popover
+          open={popoverOpen}
+          onOpenChange={(o) => {
+            setPopoverOpen(o);
+            if (o) setDraft("");
+          }}
+        >
+          <PopoverTrigger asChild>
+            <button type="button" className="min-w-[4.5rem] text-center font-display text-2xl font-bold text-muted-foreground">
+              {display}
+              {unit ? <span className="ml-1 text-sm font-semibold text-muted-foreground">{unit}</span> : null}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-3" align="center">
+            <p className="mb-2 text-xs font-semibold text-muted-foreground">Set {ariaLabel}</p>
+            <Input
+              autoFocus
+              inputMode={decimals > 0 ? "decimal" : "numeric"}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && draft) {
+                  const n = Number(draft);
+                  if (!Number.isNaN(n)) apply(n);
+                  setPopoverOpen(false);
+                }
+              }}
+              placeholder={unit ?? ""}
+            />
+            <Button
+              size="sm"
+              className="mt-2 w-full"
+              onClick={() => {
+                const n = Number(draft);
+                if (!Number.isNaN(n)) apply(n);
+                setPopoverOpen(false);
+              }}
+            >
+              Set
+            </Button>
+          </PopoverContent>
+        </Popover>
+      )}
+      <button
+        type="button"
+        aria-label={`Increase ${ariaLabel}`}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          startHold(1);
+        }}
+        onPointerUp={endHold}
+        onPointerLeave={endHold}
+        onPointerCancel={endHold}
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-input bg-background text-foreground hover:bg-muted active:bg-muted"
+      >
+        <Plus className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
 
 type SetState = { weight: string; reps: string; done: boolean };
 
@@ -428,49 +580,68 @@ function WorkoutPlayer() {
       {/* Set logger */}
       <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
         <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Log your sets</p>
-        <div className="mt-3 space-y-2">
+        <div className="mt-3 space-y-4">
           {rows.map((row, idx) => {
             const p = prev.find((x) => x.set_number === idx + 1) ?? prev[idx];
-            const placeholder = p
-              ? `prev: ${p.weight ?? "—"} kg × ${p.reps ?? "—"}`
-              : "—";
+            const lastPill =
+              p && (p.weight != null || p.reps != null)
+                ? `Last: ${p.weight ?? "—"} kg × ${p.reps ?? "—"}`
+                : null;
             return (
-              <div key={idx} className="flex items-center gap-2">
-                <span className="w-7 text-center text-xs font-semibold text-muted-foreground">
-                  {idx + 1}
-                </span>
-                <Input
-                  inputMode="decimal"
-                  className="rounded-xl"
-                  placeholder={p?.weight != null ? String(p.weight) : "kg"}
-                  value={row.weight}
-                  onChange={(e) => updateSet(ex.id, idx, { weight: e.target.value })}
-                />
-                <span className="text-xs text-muted-foreground">kg</span>
-                <Input
-                  inputMode="numeric"
-                  className="rounded-xl"
-                  placeholder={p?.reps != null ? String(p.reps) : "reps"}
-                  value={row.reps}
-                  onChange={(e) => updateSet(ex.id, idx, { reps: e.target.value })}
-                />
-                <button
-                  type="button"
-                  onClick={() => toggleSetDone(ex, idx)}
-                  aria-label={row.done ? "Mark set undone" : "Mark set done"}
-                  className={[
-                    "grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition-colors",
-                    row.done
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-input bg-background text-muted-foreground hover:bg-muted",
-                  ].join(" ")}
-                >
-                  <Check className="h-4 w-4" />
-                </button>
+              <div key={idx} className="rounded-2xl border border-border bg-background/60 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-muted-foreground">Set {idx + 1}</span>
+                  {lastPill && (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      {lastPill}
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
+                  <div>
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Weight (kg)</p>
+                    <Stepper
+                      value={row.weight}
+                      onChange={(v) => updateSet(ex.id, idx, { weight: v })}
+                      step={2.5}
+                      min={0}
+                      max={1000}
+                      unit="kg"
+                      decimals={1}
+                      ariaLabel="weight"
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Reps</p>
+                    <Stepper
+                      value={row.reps}
+                      onChange={(v) => updateSet(ex.id, idx, { reps: v })}
+                      step={1}
+                      min={1}
+                      max={100}
+                      decimals={0}
+                      ariaLabel="reps"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleSetDone(ex, idx)}
+                    aria-label={row.done ? "Mark set undone" : "Mark set done"}
+                    className={[
+                      "grid h-11 w-11 shrink-0 place-items-center rounded-xl border transition-colors",
+                      row.done
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-input bg-background text-muted-foreground hover:bg-muted",
+                    ].join(" ")}
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             );
           })}
         </div>
+
         {prev.length === 0 && (
           <p className="mt-3 text-[11px] text-muted-foreground">No previous data — this is your baseline.</p>
         )}
