@@ -37,7 +37,7 @@ import {
   type WorkoutDayData,
   type WorkoutDayExercise,
 } from "@/lib/workout-player.functions";
-import { getExerciseAlternatives, substituteExercise, type ExerciseRow } from "@/lib/exercises.functions";
+import { getExerciseAlternatives, substituteExercise, getYoutubeEmbedUrl, type ExerciseRow } from "@/lib/exercises.functions";
 import { enqueueLog } from "@/lib/pwa/offline-queue";
 
 function isOfflineError(e: unknown): boolean {
