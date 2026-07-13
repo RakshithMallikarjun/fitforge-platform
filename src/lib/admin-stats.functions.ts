@@ -214,14 +214,33 @@ export const getEngagementReport = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<EngagementRow[]> => {
     const { supabase, userId } = context;
-    const { data: me } = await supabase.from("users").select("gym_id").eq("id", userId).maybeSingle();
-    const gymId = (me as any)?.gym_id as string | null;
-    if (!gymId) return [];
+    try {
+      const { data: me } = await supabase.from("users").select("gym_id").eq("id", userId).maybeSingle();
+      const gymId = (me as any)?.gym_id as string | null;
+      if (!gymId) return [];
 
-    const { data: memberRoles } = await supabase
-      .from("user_roles").select("user_id").eq("gym_id", gymId).eq("role", "member");
-    const memberIds = (memberRoles ?? []).map((r: any) => r.user_id as string);
-    if (!memberIds.length) return [];
+      const { data: myRoles } = await supabase
+        .from("user_roles").select("role").eq("user_id", userId);
+      const roles = (myRoles ?? []).map((r: any) => r.role as string);
+      const isAdmin = roles.includes("admin");
+      const isTrainer = roles.includes("trainer");
+
+      const { data: memberRoles } = await supabase
+        .from("user_roles").select("user_id").eq("gym_id", gymId).eq("role", "member");
+      let memberIds = (memberRoles ?? []).map((r: any) => r.user_id as string);
+
+      if (!isAdmin && isTrainer) {
+        const { data: myAssigned } = await supabase
+          .from("trainer_assignments")
+          .select("member_id")
+          .eq("gym_id", gymId)
+          .eq("trainer_id", userId)
+          .eq("active", true);
+        const assignedSet = new Set((myAssigned ?? []).map((a: any) => a.member_id as string));
+        memberIds = memberIds.filter((id) => assignedSet.has(id));
+      }
+      if (!memberIds.length) return [];
+
 
     const { data: members } = await supabase
       .from("users").select("id, display_name, email").in("id", memberIds);
@@ -300,4 +319,9 @@ export const getEngagementReport = createServerFn({ method: "GET" })
       lastCheckIn: r.lastCheckIn,
       trainer: r.trainer,
     }));
+    } catch (err) {
+      console.error("getEngagementReport failed:", err);
+      throw err;
+    }
   });
+
