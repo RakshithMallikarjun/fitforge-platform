@@ -21,7 +21,7 @@ const NAV: NavItem[] = [
   { to: "/admin/reports/attendance", label: "Attendance", icon: CalendarClock, group: "Reports" },
   { to: "/admin/reports/engagement", label: "Engagement", icon: Activity, group: "Reports" },
   { to: "/admin", label: "Analytics", icon: BarChart3 },
-  { to: "/admin/settings", label: "Settings", icon: Settings },
+  { to: "/admin/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];
 
 
