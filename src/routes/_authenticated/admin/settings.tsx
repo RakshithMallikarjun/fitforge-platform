@@ -39,6 +39,31 @@ function SettingsPage() {
   const [logoUrl, setLogoUrl] = useState("");
   const [fontFamily, setFontFamily] = useState<string>("Satoshi");
 
+  const { data: me } = useCurrentUser();
+  const isAdmin = !!me?.roles.includes("admin");
+
+  if (!isAdmin) {
+    return (
+      <div className="mx-auto flex max-w-3xl flex-col items-center justify-center px-6 py-20 text-center">
+        <div className="rounded-2xl border border-border bg-muted/40 p-8">
+          <h1 className="mb-2 font-display text-xl font-semibold tracking-tight">
+            Branding settings are only available to gym administrators.
+          </h1>
+          <p className="mb-6 text-sm text-muted-foreground">
+            Please contact your gym admin if you need changes made.
+          </p>
+          <Link
+            to="/admin"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to admin dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
     if (!gym) return;
     setName(gym.name ?? "");
