@@ -89,6 +89,27 @@ function MemberShell() {
 
       <main className="mx-auto max-w-md px-5 py-6">
         <Outlet />
+        <div className="mt-10 flex flex-col items-center gap-2 border-t border-border pt-6 text-xs text-muted-foreground">
+          <button
+            type="button"
+            onClick={() => {
+              const email = user?.email ?? "";
+              const gymName = theme.name ?? "";
+              window.location.href = `mailto:support@fitforge.app?subject=${encodeURIComponent("FitForge Support Request")}&body=${encodeURIComponent(`User: ${email}\nGym: ${gymName}\n\nPlease describe your issue:`)}`;
+            }}
+            className="font-medium text-primary hover:underline"
+          >
+            Need a hand? Talk to support
+          </button>
+          <a
+            href="https://wa.me/919999999999?text=Hi,%20I%20need%20help%20with%20FitForge"
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-primary hover:underline"
+          >
+            Chat on WhatsApp
+          </a>
+        </div>
       </main>
 
       <InstallPrompt />
