@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { formatDistanceToNowStrict } from "date-fns";
-import { ArrowUpDown } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatDistanceToNowStrict, format } from "date-fns";
+import { ArrowUpDown, RefreshCw } from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,7 +35,8 @@ function ago(iso: string | null) {
 }
 
 function EngagementReportPage() {
-  const { data, isLoading } = useQuery({
+  const queryClient = useQueryClient();
+  const { data, isLoading, isError, error, dataUpdatedAt, refetch, isFetching } = useQuery({
     queryKey: ["engagement-report"],
     queryFn: () => getEngagementReport(),
   });
@@ -64,12 +65,47 @@ function EngagementReportPage() {
     <>
       <GlassHeader title="Member engagement" subtitle="Score = workouts×3 + check-ins×2 + messages×1 (last 30 days)" />
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            {dataUpdatedAt
+              ? `Last refreshed ${format(new Date(dataUpdatedAt), "PP p")}`
+              : "Loading…"}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => queryClient.invalidateQueries({ queryKey: ["engagement-report"] })}
+            disabled={isFetching}
+          >
+            <RefreshCw className={["mr-2 h-3 w-3", isFetching ? "animate-spin" : ""].join(" ")} />
+            Refresh
+          </Button>
+        </div>
         <div className="rounded-[2rem] border border-border bg-card shadow-[var(--shadow-card)]">
           {isLoading ? (
             <div className="space-y-3 p-6">
               <Skeleton className="h-8" />
               <Skeleton className="h-8" />
               <Skeleton className="h-8" />
+            </div>
+          ) : isError ? (
+            <div className="space-y-4 p-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                Could not load engagement data — please try refreshing.
+              </p>
+              {error instanceof Error && (
+                <p className="text-xs text-destructive">{error.message}</p>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  queryClient.invalidateQueries({ queryKey: ["engagement-report"] });
+                  refetch();
+                }}
+              >
+                Retry
+              </Button>
             </div>
           ) : (
             <Table>
