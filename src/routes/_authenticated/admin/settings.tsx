@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { ArrowLeft } from "lucide-react";
 import { getGymSettings, updateGymSettings } from "@/lib/gym-theme.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   component: SettingsPage,
@@ -36,6 +38,31 @@ function SettingsPage() {
   const [primaryColor, setPrimaryColor] = useState("#059669");
   const [logoUrl, setLogoUrl] = useState("");
   const [fontFamily, setFontFamily] = useState<string>("Satoshi");
+
+  const { data: me } = useCurrentUser();
+  const isAdmin = !!me?.roles.includes("admin");
+
+  if (!isAdmin) {
+    return (
+      <div className="mx-auto flex max-w-3xl flex-col items-center justify-center px-6 py-20 text-center">
+        <div className="rounded-2xl border border-border bg-muted/40 p-8">
+          <h1 className="mb-2 font-display text-xl font-semibold tracking-tight">
+            Branding settings are only available to gym administrators.
+          </h1>
+          <p className="mb-6 text-sm text-muted-foreground">
+            Please contact your gym admin if you need changes made.
+          </p>
+          <Link
+            to="/admin"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to admin dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     if (!gym) return;
