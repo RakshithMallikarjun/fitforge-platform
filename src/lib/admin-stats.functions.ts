@@ -319,4 +319,9 @@ export const getEngagementReport = createServerFn({ method: "GET" })
       lastCheckIn: r.lastCheckIn,
       trainer: r.trainer,
     }));
+    } catch (err) {
+      console.error("getEngagementReport failed:", err);
+      throw err;
+    }
   });
+
