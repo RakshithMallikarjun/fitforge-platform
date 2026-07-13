@@ -176,9 +176,25 @@ function AdminDashboard() {
               <p className="mt-1 text-xs text-white/80">
                 Our team is on call 9–6 to help you launch your member app.
               </p>
-              <Button variant="secondary" size="sm" className="mt-4 rounded-lg">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="mt-4 rounded-lg"
+                onClick={() => {
+                  const email = user?.email ?? "";
+                  window.location.href = `mailto:support@fitforge.app?subject=${encodeURIComponent("FitForge Support Request")}&body=${encodeURIComponent(`User: ${email}\n\nPlease describe your issue:`)}`;
+                }}
+              >
                 Talk to support
               </Button>
+              <a
+                href="https://wa.me/919999999999?text=Hi,%20I%20need%20help%20with%20FitForge"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-block text-xs font-medium text-white/90 underline underline-offset-4 hover:text-white"
+              >
+                Chat on WhatsApp
+              </a>
             </div>
           </div>
         </section>
