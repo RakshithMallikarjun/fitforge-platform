@@ -29,6 +29,16 @@ function AuthPage() {
   const [checking, setChecking] = useState(false);
   const [claiming, setClaiming] = useState(false);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.sessionStorage.getItem("ff_deactivated") === "1") {
+      window.sessionStorage.removeItem("ff_deactivated");
+      toast.error("Your account has been deactivated", {
+        description: "Please contact your gym.",
+      });
+    }
+  }, []);
+
   // After a signed-in user lands here, check if their gym is unclaimed.
   // If so, offer the claim banner BEFORE redirecting — even if they already
   // have a member role (common case: first user signed up as member by default).

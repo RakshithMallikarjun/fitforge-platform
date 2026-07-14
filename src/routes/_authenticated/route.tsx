@@ -6,6 +6,18 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
+    const { data: profile } = await supabase
+      .from("users")
+      .select("active")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    if (profile && profile.active === false) {
+      await supabase.auth.signOut();
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem("ff_deactivated", "1");
+      }
+      throw redirect({ to: "/auth" });
+    }
     return { user: data.user };
   },
   component: () => <Outlet />,

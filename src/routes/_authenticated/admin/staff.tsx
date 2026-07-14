@@ -1,17 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, ShieldCheck, UserCog } from "lucide-react";
+import { Plus, ShieldCheck, UserCog, MoreHorizontal, UserX, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { inviteStaffMember, listStaff } from "@/lib/staff.functions";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { inviteStaffMember, listStaff, setStaffActive } from "@/lib/staff.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 export const Route = createFileRoute("/_authenticated/admin/staff")({
@@ -44,6 +46,17 @@ function StaffPage() {
       setRole("trainer");
     },
     onError: (e: any) => toast.error("Invite failed", { description: e?.message }),
+  });
+
+  const [deactivateTarget, setDeactivateTarget] = useState<{ id: string; name: string } | null>(null);
+  const setActive = useMutation({
+    mutationFn: (vars: { userId: string; active: boolean }) => setStaffActive({ data: vars }),
+    onSuccess: (_d, vars) => {
+      toast.success(vars.active ? "Staff reactivated" : "Staff deactivated");
+      qc.invalidateQueries({ queryKey: ["staff"] });
+      setDeactivateTarget(null);
+    },
+    onError: (e: any) => toast.error("Action failed", { description: e?.message }),
   });
 
   if (!isAdmin) {
@@ -81,29 +94,64 @@ function StaffPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Roles</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Joined</TableHead>
+                  <TableHead className="w-[60px]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(staff as any[]).map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell className="font-medium">{u.display_name ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{u.email}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {u.roles.map((r: string) => (
-                          <Badge key={r} variant={r === "admin" ? "default" : "secondary"}>
-                            {r === "admin" && <ShieldCheck className="mr-1 h-3 w-3" />}
-                            {r}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {(staff as any[]).map((u) => {
+                  const isSelf = u.id === me?.userId;
+                  return (
+                    <TableRow key={u.id} className={u.active === false ? "opacity-60" : undefined}>
+                      <TableCell className="font-medium">{u.display_name ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          {u.roles.map((r: string) => (
+                            <Badge key={r} variant={r === "admin" ? "default" : "secondary"}>
+                              {r === "admin" && <ShieldCheck className="mr-1 h-3 w-3" />}
+                              {r}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {u.active === false ? (
+                          <Badge variant="outline" className="border-destructive/40 text-destructive">Inactive</Badge>
+                        ) : (
+                          <Badge variant="secondary">Active</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {!isSelf && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger className="rounded-lg p-1.5 hover:bg-muted">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {u.active === false ? (
+                                <DropdownMenuItem onClick={() => setActive.mutate({ userId: u.id, active: true })}>
+                                  <UserCheck className="mr-2 h-4 w-4" /> Reactivate
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => setDeactivateTarget({ id: u.id, name: u.display_name ?? u.email })}
+                                >
+                                  <UserX className="mr-2 h-4 w-4" /> Deactivate
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
@@ -146,6 +194,25 @@ function StaffPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deactivateTarget} onOpenChange={(v) => !v && setDeactivateTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deactivate {deactivateTarget?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              They will no longer be able to log in until reactivated.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deactivateTarget && setActive.mutate({ userId: deactivateTarget.id, active: false })}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
