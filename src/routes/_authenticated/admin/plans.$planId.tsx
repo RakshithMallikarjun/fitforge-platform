@@ -25,8 +25,29 @@ function PlanView() {
       <GlassHeader title={plan.name} subtitle={plan.users?.display_name ?? plan.users?.email ?? "Template"} />
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
         <Link to="/admin/plans" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> All plans
+          <ArrowLeft className="h-4 w-4" /> Back to Plans
         </Link>
+
+        {plan.member_id && !plan.is_template && (
+          <Link
+            to="/admin/members/$memberId"
+            params={{ memberId: plan.member_id }}
+            className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 hover:bg-muted/40"
+          >
+            <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-primary">
+              {plan.users?.photo_url
+                ? <img src={plan.users.photo_url} alt="" className="h-full w-full object-cover" />
+                : (plan.users?.display_name ?? plan.users?.email ?? "??").slice(0, 2).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">{plan.users?.display_name ?? plan.users?.email ?? "Member"}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {plan.users?.email}{plan.membership_type ? ` · ${plan.membership_type}` : ""}
+              </p>
+            </div>
+            <span className="text-xs text-primary">View profile →</span>
+          </Link>
+        )}
 
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-5">
           <Badge variant="secondary" className="capitalize">{plan.status}</Badge>
