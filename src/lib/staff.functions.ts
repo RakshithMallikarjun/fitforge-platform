@@ -75,3 +75,24 @@ export const listStaff = createServerFn({ method: "GET" })
     }
     return (users ?? []).map((u: any) => ({ ...u, roles: rolesByUser.get(u.id) ?? [] }));
   });
+
+export const setStaffActive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string; active: boolean }) => d)
+  .handler(async ({ data, context }) => {
+    const gymId = await assertAdminGym(context.supabase, context.userId);
+    if (data.userId === context.userId) throw new Error("You cannot change your own active status");
+    // Ensure target is in the same gym
+    const { data: target } = await context.supabase
+      .from("users")
+      .select("gym_id")
+      .eq("id", data.userId)
+      .maybeSingle();
+    if (!target || target.gym_id !== gymId) throw new Error("Not found");
+    const { error } = await context.supabase
+      .from("users")
+      .update({ active: data.active })
+      .eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
