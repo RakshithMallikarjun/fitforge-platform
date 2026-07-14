@@ -94,29 +94,64 @@ function StaffPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Roles</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Joined</TableHead>
+                  <TableHead className="w-[60px]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(staff as any[]).map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell className="font-medium">{u.display_name ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{u.email}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {u.roles.map((r: string) => (
-                          <Badge key={r} variant={r === "admin" ? "default" : "secondary"}>
-                            {r === "admin" && <ShieldCheck className="mr-1 h-3 w-3" />}
-                            {r}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {(staff as any[]).map((u) => {
+                  const isSelf = u.id === me?.userId;
+                  return (
+                    <TableRow key={u.id} className={u.active === false ? "opacity-60" : undefined}>
+                      <TableCell className="font-medium">{u.display_name ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          {u.roles.map((r: string) => (
+                            <Badge key={r} variant={r === "admin" ? "default" : "secondary"}>
+                              {r === "admin" && <ShieldCheck className="mr-1 h-3 w-3" />}
+                              {r}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {u.active === false ? (
+                          <Badge variant="outline" className="border-destructive/40 text-destructive">Inactive</Badge>
+                        ) : (
+                          <Badge variant="secondary">Active</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {!isSelf && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger className="rounded-lg p-1.5 hover:bg-muted">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {u.active === false ? (
+                                <DropdownMenuItem onClick={() => setActive.mutate({ userId: u.id, active: true })}>
+                                  <UserCheck className="mr-2 h-4 w-4" /> Reactivate
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => setDeactivateTarget({ id: u.id, name: u.display_name ?? u.email })}
+                                >
+                                  <UserX className="mr-2 h-4 w-4" /> Deactivate
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
