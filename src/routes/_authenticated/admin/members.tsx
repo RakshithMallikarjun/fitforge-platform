@@ -251,7 +251,7 @@ function MembersPage() {
                               {m.active ? (
                                 <DropdownMenuItem
                                   className="text-destructive focus:text-destructive"
-                                  onClick={() => setActive.mutate({ memberId: m.id, active: false })}
+                                  onClick={() => setDeactivateTarget({ id: m.id, name: m.display_name ?? m.email })}
                                 >
                                   <UserX className="mr-2 h-4 w-4" /> Deactivate
                                 </DropdownMenuItem>
