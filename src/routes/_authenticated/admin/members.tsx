@@ -109,6 +109,11 @@ function MembersPage() {
       />
 
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
+        {!isAdmin && (
+          <div className="rounded-2xl border border-border bg-accent/40 px-4 py-3 text-sm text-foreground">
+            Showing your assigned members ({(members as any[]).length}). Admins can see all members.
+          </div>
+        )}
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-3">
           <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 min-w-[240px]">
@@ -129,16 +134,18 @@ function MembersPage() {
               <SelectItem value="inactive">Inactive</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={trainerFilter} onValueChange={setTrainerFilter}>
-            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Trainer" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All trainers</SelectItem>
-              <SelectItem value="none">Unassigned</SelectItem>
-              {(trainers as any[]).map((t) => (
-                <SelectItem key={t.id} value={t.id}>{t.display_name ?? t.email}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isAdmin && (
+            <Select value={trainerFilter} onValueChange={setTrainerFilter}>
+              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Trainer" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All trainers</SelectItem>
+                <SelectItem value="none">Unassigned</SelectItem>
+                {(trainers as any[]).map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.display_name ?? t.email}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         {/* Table */}
