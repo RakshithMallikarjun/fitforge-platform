@@ -39,6 +39,7 @@ function MembersPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [assignFor, setAssignFor] = useState<{ id: string; name: string; trainerIds: string[] } | null>(null);
+  const [deactivateTarget, setDeactivateTarget] = useState<{ id: string; name: string } | null>(null);
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["members"],
