@@ -48,6 +48,17 @@ function StaffPage() {
     onError: (e: any) => toast.error("Invite failed", { description: e?.message }),
   });
 
+  const [deactivateTarget, setDeactivateTarget] = useState<{ id: string; name: string } | null>(null);
+  const setActive = useMutation({
+    mutationFn: (vars: { userId: string; active: boolean }) => setStaffActive({ data: vars }),
+    onSuccess: (_d, vars) => {
+      toast.success(vars.active ? "Staff reactivated" : "Staff deactivated");
+      qc.invalidateQueries({ queryKey: ["staff"] });
+      setDeactivateTarget(null);
+    },
+    onError: (e: any) => toast.error("Action failed", { description: e?.message }),
+  });
+
   if (!isAdmin) {
     return (
       <main className="grid min-h-[60vh] place-items-center text-sm text-muted-foreground">
