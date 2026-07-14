@@ -134,16 +134,18 @@ function MembersPage() {
               <SelectItem value="inactive">Inactive</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={trainerFilter} onValueChange={setTrainerFilter}>
-            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Trainer" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All trainers</SelectItem>
-              <SelectItem value="none">Unassigned</SelectItem>
-              {(trainers as any[]).map((t) => (
-                <SelectItem key={t.id} value={t.id}>{t.display_name ?? t.email}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isAdmin && (
+            <Select value={trainerFilter} onValueChange={setTrainerFilter}>
+              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Trainer" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All trainers</SelectItem>
+                <SelectItem value="none">Unassigned</SelectItem>
+                {(trainers as any[]).map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.display_name ?? t.email}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         {/* Table */}
