@@ -13,7 +13,10 @@ export const Route = createFileRoute("/_authenticated")({
       .maybeSingle();
     if (profile && profile.active === false) {
       await supabase.auth.signOut();
-      throw redirect({ to: "/auth", search: { deactivated: "1" } as any });
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem("ff_deactivated", "1");
+      }
+      throw redirect({ to: "/auth" });
     }
     return { user: data.user };
   },
