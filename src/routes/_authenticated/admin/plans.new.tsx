@@ -27,7 +27,10 @@ import { ExercisePickerDialog } from "@/components/exercises/exercise-picker-dia
 import type { ExerciseRow } from "@/lib/exercises.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/plans/new")({
-  validateSearch: z.object({ memberId: z.string().uuid().optional() }),
+  validateSearch: z.object({
+    memberId: z.string().uuid().optional(),
+    isTemplate: z.boolean().optional(),
+  }),
   component: PlanBuilder,
 });
 
@@ -63,13 +66,15 @@ function PlanBuilder() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/_authenticated/admin/plans/new" });
 
+  const forceTemplate = search.isTemplate === true;
+
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [name, setName] = useState("");
   const [memberId, setMemberId] = useState<string>(search.memberId ?? "");
   const [startDate, setStartDate] = useState("");
   const [durationWeeks, setDurationWeeks] = useState<string>("");
   const [notes, setNotes] = useState("");
-  const [isTemplate, setIsTemplate] = useState(false);
+  const [isTemplate, setIsTemplate] = useState(forceTemplate);
   const [days, setDays] = useState<DayInput[]>([{ uid: uid(), label: "Day 1", block_type: "main", exercises: [] }]);
   const [pickerForDay, setPickerForDay] = useState<string | null>(null);
 
@@ -106,7 +111,8 @@ function PlanBuilder() {
       }),
     onSuccess: (r) => {
       toast.success(isTemplate ? "Template saved" : "Plan assigned");
-      navigate({ to: "/admin/plans/$planId", params: { planId: r.id } });
+      if (isTemplate) navigate({ to: "/admin/templates" });
+      else navigate({ to: "/admin/plans/$planId", params: { planId: r.id } });
     },
     onError: (e: any) => toast.error("Save failed", { description: e?.message }),
   });
@@ -116,7 +122,7 @@ function PlanBuilder() {
 
   return (
     <>
-      <GlassHeader title="New plan" subtitle={`Step ${step} of 3`} />
+      <GlassHeader title={forceTemplate ? "New template" : "New plan"} subtitle={`Step ${step} of 3`} />
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
         <div className="flex items-center gap-2 text-sm">
           {[1, 2, 3].map((n) => (
@@ -139,10 +145,10 @@ function PlanBuilder() {
                   <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Hypertrophy block 1" />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Checkbox id="tpl" checked={isTemplate} onCheckedChange={(v) => setIsTemplate(!!v)} />
+                  <Checkbox id="tpl" checked={isTemplate} disabled={forceTemplate} onCheckedChange={(v) => setIsTemplate(!!v)} />
                   <Label htmlFor="tpl" className="cursor-pointer">Save as template (not assigned to a member)</Label>
                 </div>
-                {!isTemplate && (
+                {!isTemplate && !forceTemplate && (
                   <div>
                     <Label>Assign to member</Label>
                     <Select value={memberId} onValueChange={setMemberId}>

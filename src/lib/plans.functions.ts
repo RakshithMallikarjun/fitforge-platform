@@ -30,7 +30,7 @@ export const listPlans = createServerFn({ method: "GET" })
     let q = supabase
       .from("workout_plans")
       .select(
-        "id, name, member_id, status, start_date, duration_weeks, is_template, created_at, users:member_id(display_name, email), workout_days(id)",
+        "id, name, member_id, trainer_id, status, start_date, duration_weeks, is_template, created_at, users:member_id(display_name, email), trainer:trainer_id(display_name, email), workout_days(id, workout_exercises(id))",
       )
       .order("created_at", { ascending: false });
     if (data?.memberId) q = q.eq("member_id", data.memberId);
@@ -42,11 +42,17 @@ export const listPlans = createServerFn({ method: "GET" })
       name: r.name,
       member_id: r.member_id,
       member_name: r.users?.display_name ?? r.users?.email ?? null,
+      trainer_id: r.trainer_id,
+      trainer_name: r.trainer?.display_name ?? r.trainer?.email ?? null,
       status: r.status,
       start_date: r.start_date,
       duration_weeks: r.duration_weeks,
       is_template: r.is_template,
       day_count: (r.workout_days ?? []).length,
+      exercise_count: (r.workout_days ?? []).reduce(
+        (sum: number, d: any) => sum + (d.workout_exercises?.length ?? 0),
+        0,
+      ),
     }));
   });
 
