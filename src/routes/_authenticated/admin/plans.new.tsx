@@ -122,7 +122,7 @@ function PlanBuilder() {
 
   return (
     <>
-      <GlassHeader title="New plan" subtitle={`Step ${step} of 3`} />
+      <GlassHeader title={forceTemplate ? "New template" : "New plan"} subtitle={`Step ${step} of 3`} />
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
         <div className="flex items-center gap-2 text-sm">
           {[1, 2, 3].map((n) => (
