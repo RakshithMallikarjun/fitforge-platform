@@ -66,13 +66,15 @@ function PlanBuilder() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/_authenticated/admin/plans/new" });
 
+  const forceTemplate = search.isTemplate === true;
+
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [name, setName] = useState("");
   const [memberId, setMemberId] = useState<string>(search.memberId ?? "");
   const [startDate, setStartDate] = useState("");
   const [durationWeeks, setDurationWeeks] = useState<string>("");
   const [notes, setNotes] = useState("");
-  const [isTemplate, setIsTemplate] = useState(false);
+  const [isTemplate, setIsTemplate] = useState(forceTemplate);
   const [days, setDays] = useState<DayInput[]>([{ uid: uid(), label: "Day 1", block_type: "main", exercises: [] }]);
   const [pickerForDay, setPickerForDay] = useState<string | null>(null);
 
