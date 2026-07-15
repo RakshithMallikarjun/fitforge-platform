@@ -145,10 +145,10 @@ function PlanBuilder() {
                   <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Hypertrophy block 1" />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Checkbox id="tpl" checked={isTemplate} onCheckedChange={(v) => setIsTemplate(!!v)} />
+                  <Checkbox id="tpl" checked={isTemplate} disabled={forceTemplate} onCheckedChange={(v) => setIsTemplate(!!v)} />
                   <Label htmlFor="tpl" className="cursor-pointer">Save as template (not assigned to a member)</Label>
                 </div>
-                {!isTemplate && (
+                {!isTemplate && !forceTemplate && (
                   <div>
                     <Label>Assign to member</Label>
                     <Select value={memberId} onValueChange={setMemberId}>
