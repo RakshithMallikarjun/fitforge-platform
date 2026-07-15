@@ -27,7 +27,10 @@ import { ExercisePickerDialog } from "@/components/exercises/exercise-picker-dia
 import type { ExerciseRow } from "@/lib/exercises.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/plans/new")({
-  validateSearch: z.object({ memberId: z.string().uuid().optional() }),
+  validateSearch: z.object({
+    memberId: z.string().uuid().optional(),
+    isTemplate: z.boolean().optional(),
+  }),
   component: PlanBuilder,
 });
 
