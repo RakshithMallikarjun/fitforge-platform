@@ -111,7 +111,8 @@ function PlanBuilder() {
       }),
     onSuccess: (r) => {
       toast.success(isTemplate ? "Template saved" : "Plan assigned");
-      navigate({ to: "/admin/plans/$planId", params: { planId: r.id } });
+      if (isTemplate) navigate({ to: "/admin/templates" });
+      else navigate({ to: "/admin/plans/$planId", params: { planId: r.id } });
     },
     onError: (e: any) => toast.error("Save failed", { description: e?.message }),
   });
