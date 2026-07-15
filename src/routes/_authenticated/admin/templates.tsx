@@ -91,7 +91,9 @@ function TemplatesPage() {
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl font-bold tracking-tight">Plan templates</h2>
-          <Button onClick={() => navigate({ to: "/admin/plans/new" })}>New template</Button>
+          <Button onClick={() => navigate({ to: "/admin/plans/new", search: { isTemplate: true } })}>
+            + New template
+          </Button>
         </div>
 
         {isLoading ? (
@@ -102,11 +104,32 @@ function TemplatesPage() {
           </div>
         ) : (
           <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {templates.map((t) => (
-              <li key={t.id} className="rounded-2xl border border-border bg-card p-5">
-                <Link to="/admin/plans/$planId" params={{ planId: t.id }} className="text-base font-semibold hover:underline">{t.name}</Link>
-                <p className="mt-1 text-xs text-muted-foreground">{t.day_count} days{t.duration_weeks ? ` · ${t.duration_weeks} wk` : ""}</p>
-                <Button size="sm" variant="outline" className="mt-3" onClick={() => openAssign(t.id)}>
+            {templates.map((t: any) => (
+              <li
+                key={t.id}
+                className="cursor-pointer rounded-2xl border border-border bg-card p-5 transition hover:border-primary/40 hover:bg-muted/40"
+                onClick={() => navigate({ to: "/admin/plans/$planId", params: { planId: t.id } })}
+              >
+                <Link
+                  to="/admin/plans/$planId"
+                  params={{ planId: t.id }}
+                  className="text-base font-semibold hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {t.name}
+                </Link>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t.day_count} days · {t.exercise_count ?? 0} exercises{t.duration_weeks ? ` · ${t.duration_weeks} wk` : ""}
+                </p>
+                {t.trainer_name && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">Created by: {t.trainer_name}</p>
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-3"
+                  onClick={(e) => { e.stopPropagation(); openAssign(t.id); }}
+                >
                   <Copy className="mr-1.5 h-4 w-4" /> Bulk assign
                 </Button>
               </li>
