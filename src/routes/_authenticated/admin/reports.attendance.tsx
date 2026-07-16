@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { format, subDays } from "date-fns";
+import { format, subDays, subMonths, subYears } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import {
   Bar,
@@ -27,11 +27,28 @@ export const Route = createFileRoute("/_authenticated/admin/reports/attendance")
   component: AttendanceReportPage,
 });
 
+type Preset = "7d" | "15d" | "30d" | "6m" | "1y";
+
+const PRESETS: { key: Preset; label: string; from: Date; to: Date }[] = [
+  { key: "7d", label: "Last 7 days", from: subDays(new Date(), 6), to: new Date() },
+  { key: "15d", label: "Last 15 days", from: subDays(new Date(), 14), to: new Date() },
+  { key: "30d", label: "Last 30 days", from: subDays(new Date(), 29), to: new Date() },
+  { key: "6m", label: "Last 6 months", from: subMonths(new Date(), 6), to: new Date() },
+  { key: "1y", label: "Last 1 year", from: subYears(new Date(), 1), to: new Date() },
+];
+
 function AttendanceReportPage() {
+  const [selectedPreset, setSelectedPreset] = useState<Preset | null>("30d");
   const [range, setRange] = useState<{ from: Date; to: Date }>({
     from: subDays(new Date(), 29),
     to: new Date(),
   });
+
+  const applyPreset = (preset: Preset) => {
+    const p = PRESETS.find((x) => x.key === preset)!;
+    setSelectedPreset(preset);
+    setRange({ from: p.from, to: p.to });
+  };
 
   const start = format(range.from, "yyyy-MM-dd");
   const end = format(range.to, "yyyy-MM-dd");
@@ -45,10 +62,21 @@ function AttendanceReportPage() {
     <>
       <GlassHeader title="Attendance report" subtitle="Check-in trends across your gym" />
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center gap-3">
+          {PRESETS.map((p) => (
+            <Button
+              key={p.key}
+              variant={selectedPreset === p.key ? "default" : "outline"}
+              size="sm"
+              className="rounded-xl"
+              onClick={() => applyPreset(p.key)}
+            >
+              {p.label}
+            </Button>
+          ))}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="rounded-xl">
+              <Button variant="outline" size="sm" className="rounded-xl">
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {format(range.from, "MMM d")} – {format(range.to, "MMM d, yyyy")}
               </Button>
@@ -57,7 +85,12 @@ function AttendanceReportPage() {
               <Calendar
                 mode="range"
                 selected={range}
-                onSelect={(r: any) => r?.from && r?.to && setRange(r)}
+                onSelect={(r: any) => {
+                  if (r?.from && r?.to) {
+                    setSelectedPreset(null);
+                    setRange(r);
+                  }
+                }}
                 numberOfMonths={2}
                 className={cn("p-3 pointer-events-auto")}
               />
