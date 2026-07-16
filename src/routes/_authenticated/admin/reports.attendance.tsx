@@ -62,10 +62,21 @@ function AttendanceReportPage() {
     <>
       <GlassHeader title="Attendance report" subtitle="Check-in trends across your gym" />
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center gap-3">
+          {PRESETS.map((p) => (
+            <Button
+              key={p.key}
+              variant={selectedPreset === p.key ? "default" : "outline"}
+              size="sm"
+              className="rounded-xl"
+              onClick={() => applyPreset(p.key)}
+            >
+              {p.label}
+            </Button>
+          ))}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="rounded-xl">
+              <Button variant="outline" size="sm" className="rounded-xl">
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {format(range.from, "MMM d")} – {format(range.to, "MMM d, yyyy")}
               </Button>
@@ -74,7 +85,12 @@ function AttendanceReportPage() {
               <Calendar
                 mode="range"
                 selected={range}
-                onSelect={(r: any) => r?.from && r?.to && setRange(r)}
+                onSelect={(r: any) => {
+                  if (r?.from && r?.to) {
+                    setSelectedPreset(null);
+                    setRange(r);
+                  }
+                }}
                 numberOfMonths={2}
                 className={cn("p-3 pointer-events-auto")}
               />
