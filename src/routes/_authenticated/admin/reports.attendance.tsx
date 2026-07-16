@@ -27,11 +27,28 @@ export const Route = createFileRoute("/_authenticated/admin/reports/attendance")
   component: AttendanceReportPage,
 });
 
+type Preset = "7d" | "15d" | "30d" | "6m" | "1y";
+
+const PRESETS: { key: Preset; label: string; from: Date; to: Date }[] = [
+  { key: "7d", label: "Last 7 days", from: subDays(new Date(), 6), to: new Date() },
+  { key: "15d", label: "Last 15 days", from: subDays(new Date(), 14), to: new Date() },
+  { key: "30d", label: "Last 30 days", from: subDays(new Date(), 29), to: new Date() },
+  { key: "6m", label: "Last 6 months", from: subMonths(new Date(), 6), to: new Date() },
+  { key: "1y", label: "Last 1 year", from: subYears(new Date(), 1), to: new Date() },
+];
+
 function AttendanceReportPage() {
+  const [selectedPreset, setSelectedPreset] = useState<Preset | null>("30d");
   const [range, setRange] = useState<{ from: Date; to: Date }>({
     from: subDays(new Date(), 29),
     to: new Date(),
   });
+
+  const applyPreset = (preset: Preset) => {
+    const p = PRESETS.find((x) => x.key === preset)!;
+    setSelectedPreset(preset);
+    setRange({ from: p.from, to: p.to });
+  };
 
   const start = format(range.from, "yyyy-MM-dd");
   const end = format(range.to, "yyyy-MM-dd");
