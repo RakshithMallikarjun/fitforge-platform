@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { format, subDays } from "date-fns";
+import { format, subDays, subMonths, subYears } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import {
   Bar,
