@@ -96,10 +96,26 @@ export const listMembers = createServerFn({ method: "GET" })
       assignMap.set(a.member_id, list);
     }
 
-    return (users ?? []).map((u: any) => ({
+    const { signPhotoField, signPhotoValue } = await import("./photo-signing");
+    const signedUsers = await signPhotoField(supabase, (users ?? []) as any[], "photo_url");
+    // Also sign trainer photos so profile chips render.
+    const signedTrainers = await signPhotoField(supabase, (trainers ?? []) as any[], "photo_url" as any);
+    const signedTrainerMap = new Map(signedTrainers.map((t: any) => [t.id, t]));
+    const signedAssignMap = new Map<string, any[]>();
+    for (const a of assignments ?? []) {
+      const t = signedTrainerMap.get(a.trainer_id);
+      if (!t) continue;
+      const list = signedAssignMap.get(a.member_id) ?? [];
+      list.push(t);
+      signedAssignMap.set(a.member_id, list);
+    }
+    // silence unused-var lint
+    void signPhotoValue;
+
+    return signedUsers.map((u: any) => ({
       ...u,
       profile: profileMap.get(u.id) ?? null,
-      trainers: assignMap.get(u.id) ?? [],
+      trainers: signedAssignMap.get(u.id) ?? [],
       last_sign_in_at: lastSignInMap.get(u.id) ?? null,
     }));
   });
