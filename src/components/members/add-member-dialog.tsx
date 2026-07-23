@@ -53,8 +53,9 @@ export function AddMemberDialog({ open, onOpenChange }: Props) {
     if (!file || !me?.gymId) return;
     setUploading(true);
     try {
-      const url = await uploadMemberPhoto(file, me.gymId);
-      update("photo_url", url);
+      const path = await uploadMemberPhoto(file, me.gymId);
+      update("photo_url", path);
+      setPreviewUrl(await signMemberPhotoForDisplay(path));
     } catch (err: any) {
       toast.error("Upload failed", { description: err?.message });
     } finally {
