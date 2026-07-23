@@ -32,7 +32,9 @@ export const listThreads = createServerFn({ method: "GET" })
     const { data: users } = ids.length
       ? await supabase.from("users").select("id, display_name, email, photo_url").in("id", ids)
       : { data: [] as any[] };
-    const uMap = new Map((users ?? []).map((u: any) => [u.id, u]));
+    const { signPhotoField } = await import("./photo-signing");
+    const signedUsers = await signPhotoField(supabase, (users ?? []) as any[], "photo_url");
+    const uMap = new Map(signedUsers.map((u: any) => [u.id, u]));
 
     return ids.map((id) => {
       const entry = byOther.get(id)!;
