@@ -69,8 +69,10 @@ export const getThread = createServerFn({ method: "GET" })
       .select("id, display_name, email, photo_url")
       .eq("id", data.otherUserId)
       .maybeSingle();
+    const { signPhotoValue } = await import("./photo-signing");
+    const signedOther = other ? { ...other, photo_url: await signPhotoValue(supabase, (other as any).photo_url) } : other;
 
-    return { messages: msgs ?? [], other };
+    return { messages: msgs ?? [], other: signedOther };
   });
 
 export const sendMessage = createServerFn({ method: "POST" })
