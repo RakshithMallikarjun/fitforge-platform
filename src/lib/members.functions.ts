@@ -200,10 +200,16 @@ export const getMember = createServerFn({ method: "GET" })
       }));
     }
 
+    const { signPhotoValue, signPhotoField } = await import("./photo-signing");
+    const signedUser = user
+      ? { ...user, photo_url: await signPhotoValue(supabase, (user as any).photo_url) }
+      : user;
+    const signedTrainers = await signPhotoField(supabase, (trainers ?? []) as any[], "photo_url" as any);
+
     return {
-      user,
+      user: signedUser,
       profile,
-      trainers: trainers ?? [],
+      trainers: signedTrainers,
       assessments: assessments ?? [],
       plans: plansWithCounts,
       attendance: attendance ?? [],
