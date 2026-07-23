@@ -34,11 +34,12 @@ export const getMemberProfile = createServerFn({ method: "GET" })
         .maybeSingle(),
     ]);
 
+    const { signPhotoValue } = await import("./photo-signing");
     return {
       id: userId,
       displayName: (user as any)?.display_name ?? null,
       email: (user as any)?.email ?? null,
-      photoUrl: (user as any)?.photo_url ?? null,
+      photoUrl: await signPhotoValue(supabase, (user as any)?.photo_url ?? null),
       latestAssessment: assessment
         ? {
             date: (assessment as any).date,

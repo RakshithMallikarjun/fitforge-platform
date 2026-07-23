@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { inviteMember, type MemberInput } from "@/lib/members.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { uploadMemberPhoto } from "@/lib/photo-upload";
+import { uploadMemberPhoto, signMemberPhotoForDisplay } from "@/lib/photo-upload";
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void };
 
@@ -31,6 +31,7 @@ export function AddMemberDialog({ open, onOpenChange }: Props) {
   const { data: me } = useCurrentUser();
   const [form, setForm] = useState<MemberInput>(empty);
   const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const mut = useMutation({
     mutationFn: (data: MemberInput) => inviteMember({ data }),

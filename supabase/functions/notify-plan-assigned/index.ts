@@ -22,6 +22,16 @@ const supabase = createClient(
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  // Require shared secret header so anonymous callers cannot spam pushes.
+  const SHARED = Deno.env.get("NOTIFY_WEBHOOK_SECRET");
+  const provided = req.headers.get("x-webhook-secret") ?? "";
+  if (!SHARED || provided.length !== SHARED.length || provided !== SHARED) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const payload = await req.json();
     // Supabase DB webhook shape: { type, table, record, old_record, schema }

@@ -80,6 +80,15 @@ export const sendMessage = createServerFn({ method: "POST" })
     if (!body) throw new Error("Empty message");
     const { data: u } = await supabase.from("users").select("gym_id").eq("id", userId).maybeSingle();
     if (!u?.gym_id) throw new Error("No gym");
+    // Enforce that recipient belongs to the sender's gym.
+    const { data: recip } = await supabase
+      .from("users")
+      .select("id, gym_id")
+      .eq("id", data.recipientId)
+      .maybeSingle();
+    if (!recip || recip.gym_id !== u.gym_id) {
+      throw new Error("Recipient not found in your gym");
+    }
     const { data: ins, error } = await supabase
       .from("messages")
       .insert({ gym_id: u.gym_id, sender_id: userId, recipient_id: data.recipientId, body })

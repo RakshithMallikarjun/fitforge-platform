@@ -29,9 +29,29 @@ export const gymHasAdmin = createServerFn({ method: "GET" })
 
 export const claimGymAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { gymSlug: string }) => z.object({ gymSlug: z.string().min(1) }).parse(d))
+  .inputValidator((d: { gymSlug: string; bootstrapToken: string }) =>
+    z
+      .object({
+        gymSlug: z.string().min(1),
+        bootstrapToken: z.string().min(1),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { userId } = context;
+
+    // Bootstrap admin requires a shared token configured out-of-band by the
+    // platform operator. This prevents any signed-in user from racing to claim
+    // admin of an unclaimed gym slug.
+    const expected = process.env.BOOTSTRAP_ADMIN_TOKEN;
+    if (!expected) throw new Error("Bootstrap is disabled");
+    if (
+      data.bootstrapToken.length !== expected.length ||
+      data.bootstrapToken !== expected
+    ) {
+      throw new Error("Invalid bootstrap token");
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: gym, error: gErr } = await supabaseAdmin
@@ -51,14 +71,12 @@ export const claimGymAdmin = createServerFn({ method: "POST" })
       throw new Error("This gym already has an admin — ask them to invite you instead.");
     }
 
-    // Ensure user.gym_id matches
     const { error: uErr } = await supabaseAdmin
       .from("users")
       .update({ gym_id: gym.id })
       .eq("id", userId);
     if (uErr) throw new Error(uErr.message);
 
-    // Insert admin role (idempotent on UNIQUE(user_id, role))
     const { error: rErr } = await supabaseAdmin
       .from("user_roles")
       .insert({ user_id: userId, gym_id: gym.id, role: "admin" });
