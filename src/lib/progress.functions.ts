@@ -360,25 +360,24 @@ export const uploadProgressPhoto = createServerFn({ method: "POST" })
       });
     if (upErr) throw new Error(upErr.message);
 
-    const { data: signed, error: sErr } = await supabase.storage
-      .from("member-photos")
-      .createSignedUrl(key, 60 * 60 * 24 * 365 * 10);
-    if (sErr || !signed?.signedUrl) throw new Error(sErr?.message ?? "Could not sign URL");
-
+    // Store only the storage object path in the database. Consumers mint
+    // short-lived signed URLs on read (see getProgressPhotos below).
     const { data: inserted, error: insErr } = await supabase
       .from("progress_photos")
       .insert({
         member_id: data.member_id,
         gym_id: memberRow.gym_id,
         assessment_id: data.assessment_id ?? null,
-        photo_url: signed.signedUrl,
+        photo_url: key,
         taken_at: data.taken_at ?? new Date().toISOString().slice(0, 10),
       })
       .select()
       .single();
     if (insErr) throw new Error(insErr.message);
 
-    return inserted as ProgressPhoto;
+    const { signPhotoValue } = await import("./photo-signing");
+    const signed = await signPhotoValue(supabase, key);
+    return { ...(inserted as ProgressPhoto), photo_url: signed ?? key };
   });
 
 export const getProgressPhotos = createServerFn({ method: "GET" })
@@ -390,5 +389,6 @@ export const getProgressPhotos = createServerFn({ method: "GET" })
       .eq("member_id", context.userId)
       .order("taken_at", { ascending: true });
     if (error) throw new Error(error.message);
-    return (data ?? []) as ProgressPhoto[];
+    const { signPhotoField } = await import("./photo-signing");
+    return (await signPhotoField(context.supabase, (data ?? []) as any[], "photo_url")) as ProgressPhoto[];
   });

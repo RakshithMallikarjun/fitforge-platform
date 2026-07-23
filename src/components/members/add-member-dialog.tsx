@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { inviteMember, type MemberInput } from "@/lib/members.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { uploadMemberPhoto } from "@/lib/photo-upload";
+import { uploadMemberPhoto, signMemberPhotoForDisplay } from "@/lib/photo-upload";
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void };
 
@@ -31,6 +31,7 @@ export function AddMemberDialog({ open, onOpenChange }: Props) {
   const { data: me } = useCurrentUser();
   const [form, setForm] = useState<MemberInput>(empty);
   const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const mut = useMutation({
     mutationFn: (data: MemberInput) => inviteMember({ data }),
@@ -52,8 +53,9 @@ export function AddMemberDialog({ open, onOpenChange }: Props) {
     if (!file || !me?.gymId) return;
     setUploading(true);
     try {
-      const url = await uploadMemberPhoto(file, me.gymId);
-      update("photo_url", url);
+      const path = await uploadMemberPhoto(file, me.gymId);
+      update("photo_url", path);
+      setPreviewUrl(await signMemberPhotoForDisplay(path));
     } catch (err: any) {
       toast.error("Upload failed", { description: err?.message });
     } finally {
@@ -72,8 +74,9 @@ export function AddMemberDialog({ open, onOpenChange }: Props) {
         <div className="grid gap-4 py-2 md:grid-cols-2">
           <div className="md:col-span-2 flex items-center gap-4">
             <div className="grid h-16 w-16 place-items-center overflow-hidden rounded-full bg-accent text-primary">
-              {form.photo_url ? (
-                <img src={form.photo_url} alt="" className="h-full w-full object-cover" />
+              {previewUrl ? (
+                <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+
               ) : (
                 <span className="text-lg font-semibold">{(form.name || "??").slice(0, 2).toUpperCase()}</span>
               )}

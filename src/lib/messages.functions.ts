@@ -32,7 +32,9 @@ export const listThreads = createServerFn({ method: "GET" })
     const { data: users } = ids.length
       ? await supabase.from("users").select("id, display_name, email, photo_url").in("id", ids)
       : { data: [] as any[] };
-    const uMap = new Map((users ?? []).map((u: any) => [u.id, u]));
+    const { signPhotoField } = await import("./photo-signing");
+    const signedUsers = await signPhotoField(supabase, (users ?? []) as any[], "photo_url");
+    const uMap = new Map(signedUsers.map((u: any) => [u.id, u]));
 
     return ids.map((id) => {
       const entry = byOther.get(id)!;
@@ -67,8 +69,10 @@ export const getThread = createServerFn({ method: "GET" })
       .select("id, display_name, email, photo_url")
       .eq("id", data.otherUserId)
       .maybeSingle();
+    const { signPhotoValue } = await import("./photo-signing");
+    const signedOther = other ? { ...other, photo_url: await signPhotoValue(supabase, (other as any).photo_url) } : other;
 
-    return { messages: msgs ?? [], other };
+    return { messages: msgs ?? [], other: signedOther };
   });
 
 export const sendMessage = createServerFn({ method: "POST" })
@@ -80,6 +84,15 @@ export const sendMessage = createServerFn({ method: "POST" })
     if (!body) throw new Error("Empty message");
     const { data: u } = await supabase.from("users").select("gym_id").eq("id", userId).maybeSingle();
     if (!u?.gym_id) throw new Error("No gym");
+    // Enforce that recipient belongs to the sender's gym.
+    const { data: recip } = await supabase
+      .from("users")
+      .select("id, gym_id")
+      .eq("id", data.recipientId)
+      .maybeSingle();
+    if (!recip || recip.gym_id !== u.gym_id) {
+      throw new Error("Recipient not found in your gym");
+    }
     const { data: ins, error } = await supabase
       .from("messages")
       .insert({ gym_id: u.gym_id, sender_id: userId, recipient_id: data.recipientId, body })

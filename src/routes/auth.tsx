@@ -26,6 +26,7 @@ function AuthPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [claimSlug, setClaimSlug] = useState<string | null>(null);
+  const [claimToken, setClaimToken] = useState("");
   const [checking, setChecking] = useState(false);
   const [claiming, setClaiming] = useState(false);
 
@@ -73,9 +74,13 @@ function AuthPage() {
 
   async function onClaim() {
     if (!claimSlug) return;
+    if (!claimToken.trim()) {
+      toast.error("Enter the bootstrap token from your gym operator");
+      return;
+    }
     setClaiming(true);
     try {
-      await claimGymAdmin({ data: { gymSlug: claimSlug } });
+      await claimGymAdmin({ data: { gymSlug: claimSlug, bootstrapToken: claimToken.trim() } });
       toast.success("You're now the gym admin");
       await qc.invalidateQueries({ queryKey: ["current-user"] });
       await refetch();
@@ -104,8 +109,16 @@ function AuthPage() {
               <span className="text-xs font-semibold uppercase tracking-wider">Bootstrap</span>
             </div>
             <p className="mt-2 text-sm">
-              No admin exists for <strong>{claimSlug}</strong> yet — claim Admin access?
+              No admin exists for <strong>{claimSlug}</strong> yet — enter your bootstrap token to claim Admin access.
             </p>
+            <Input
+              type="password"
+              autoComplete="off"
+              placeholder="Bootstrap token"
+              value={claimToken}
+              onChange={(e) => setClaimToken(e.target.value)}
+              className="mt-3 h-10 rounded-xl"
+            />
             <Button onClick={onClaim} disabled={claiming} className="mt-3 h-10 w-full rounded-xl">
               {claiming ? "Claiming…" : "Claim Admin"}
             </Button>
