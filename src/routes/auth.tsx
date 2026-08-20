@@ -236,6 +236,11 @@ function SignUpForm() {
         <Input id="su-gym" required value={gymSlug} onChange={(e) => setGymSlug(e.target.value)} placeholder="fitforge" />
         <p className="text-xs text-muted-foreground">Use the code your gym gave you. The demo gym is <code>fitforge</code>.</p>
       </div>
+      <div className="space-y-2">
+        <Label htmlFor="su-join">Join code</Label>
+        <Input id="su-join" required value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="Provided by your gym" />
+      </div>
+
       <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl">
         {loading ? "Creating account…" : "Create account"}
       </Button>
