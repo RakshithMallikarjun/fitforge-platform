@@ -53,10 +53,12 @@ function AdminCheckin() {
           if (busyRef.current) return;
           busyRef.current = true;
           try {
-            const r = await verify({ data: { token: decodedText } });
+            const r: any = await verify({ data: { token: decodedText } });
             const name = r.member?.display_name ?? r.member?.email ?? "Member";
-            setRecent((cur) => [{ at: now, ok: true, message: `Checked in ${name}` }, ...cur].slice(0, 10));
-            toast.success(`Checked in ${name}`);
+            const msg = r.alreadyCheckedIn ? `${name} already checked in today` : `Checked in ${name}`;
+            setRecent((cur) => [{ at: now, ok: true, message: msg }, ...cur].slice(0, 10));
+            toast.success(msg);
+
           } catch (e: any) {
             setRecent((cur) => [{ at: now, ok: false, message: e?.message ?? "Invalid code" }, ...cur].slice(0, 10));
             toast.error("Check-in failed", { description: e?.message });
