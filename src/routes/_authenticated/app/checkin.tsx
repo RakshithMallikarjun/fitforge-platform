@@ -15,9 +15,10 @@ function CheckinPage() {
 
   const mutation = useMutation({
     mutationFn: (locationType: "gym" | "home") => checkin({ data: { locationType } }),
-    onSuccess: () => {
-      toast.success("Check-in recorded ✓");
+    onSuccess: (res: any) => {
+      toast.success(res?.alreadyCheckedIn ? "You're already checked in today ✓" : "Check-in recorded ✓");
       navigate({ to: "/app" });
+
     },
     onError: (e: any) => toast.error("Check-in failed", { description: e?.message }),
   });
