@@ -11,6 +11,13 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const TOKEN_TTL_SECONDS = 5 * 60;
 
+/** Unique index attendance_logs_member_day_uidx allows one check-in per member per day. */
+function isDuplicateCheckin(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  return error.code === "23505" || /duplicate key|already exists/i.test(error.message ?? "");
+}
+
+
 function b64url(input: Buffer | string): string {
   const buf = typeof input === "string" ? Buffer.from(input) : input;
   return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -81,11 +88,12 @@ export const verifyAndCheckin = createServerFn({ method: "POST" })
     if (age > TOKEN_TTL_SECONDS || age < -60) throw new Error("Token expired");
     if (body.g !== me.gym_id) throw new Error("Wrong gym");
 
-    // Insert attendance
+    // Insert attendance (one per member per day)
     const { error } = await supabase
       .from("attendance_logs")
       .insert({ gym_id: body.g, member_id: body.u, check_in_at: new Date().toISOString() });
-    if (error) throw new Error(error.message);
+    const duplicate = isDuplicateCheckin(error as any);
+    if (error && !duplicate) throw new Error(error.message);
 
     const { data: member } = await supabase
       .from("users")
@@ -93,7 +101,7 @@ export const verifyAndCheckin = createServerFn({ method: "POST" })
       .eq("id", body.u)
       .maybeSingle();
 
-    return { ok: true as const, member };
+    return { ok: true as const, member, alreadyCheckedIn: duplicate };
   });
 
 /** Manual check-in from Member 360 (admin/trainer front desk). */
@@ -110,13 +118,24 @@ export const logAttendanceManual = createServerFn({ method: "POST" })
     if (!rs.has("admin") && !rs.has("trainer")) throw new Error("Forbidden");
     if (!me?.gym_id) throw new Error("No gym");
 
+    // The target member must belong to the caller's gym.
+    const { data: member } = await supabase
+      .from("users")
+      .select("id, gym_id")
+      .eq("id", data.memberId)
+      .maybeSingle();
+    if (!member || member.gym_id !== me.gym_id) {
+      throw new Error("Member not found in your gym");
+    }
+
     const { error } = await supabase.from("attendance_logs").insert({
       gym_id: me.gym_id,
       member_id: data.memberId,
       check_in_at: new Date().toISOString(),
     });
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    const duplicate = isDuplicateCheckin(error as any);
+    if (error && !duplicate) throw new Error(error.message);
+    return { ok: true as const, alreadyCheckedIn: duplicate };
   });
 
 /** Member-initiated self check-in (At Home / At Gym). */
@@ -143,6 +162,8 @@ export const selfCheckin = createServerFn({ method: "POST" })
       check_in_at: new Date().toISOString(),
       location_type: data.locationType,
     });
-    if (error) throw new Error(error.message);
-    return { ok: true as const, locationType: data.locationType };
+    const duplicate = isDuplicateCheckin(error as any);
+    if (error && !duplicate) throw new Error(error.message);
+    return { ok: true as const, locationType: data.locationType, alreadyCheckedIn: duplicate };
+
   });

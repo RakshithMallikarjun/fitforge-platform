@@ -181,11 +181,23 @@ function SignUpForm() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [gymSlug, setGymSlug] = useState("fitforge");
+  const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    // Gym membership requires the gym's private join code, so a slug alone
+    // can't be guessed to enter someone else's tenant.
+    const { data: valid, error: codeErr } = await supabase.rpc("verify_join_code", {
+      _slug: gymSlug.trim(),
+      _code: joinCode.trim(),
+    });
+    if (codeErr || !valid) {
+      setLoading(false);
+      toast.error("That gym code and join code don't match.");
+      return;
+    }
     // SECURITY: role is HARDCODED to "member". Public self-service sign-up must
     // never grant admin/trainer — that would be a privilege-escalation vector.
     // Legitimate paths to create staff:
@@ -196,13 +208,14 @@ function SignUpForm() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: { display_name: displayName, gym_slug: gymSlug, role: "member" },
+        data: { display_name: displayName, gym_slug: gymSlug.trim(), role: "member" },
       },
     });
     setLoading(false);
     if (error) toast.error(error.message);
     else toast.success("Account created — you're in.");
   }
+
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -223,6 +236,11 @@ function SignUpForm() {
         <Input id="su-gym" required value={gymSlug} onChange={(e) => setGymSlug(e.target.value)} placeholder="fitforge" />
         <p className="text-xs text-muted-foreground">Use the code your gym gave you. The demo gym is <code>fitforge</code>.</p>
       </div>
+      <div className="space-y-2">
+        <Label htmlFor="su-join">Join code</Label>
+        <Input id="su-join" required value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="Provided by your gym" />
+      </div>
+
       <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl">
         {loading ? "Creating account…" : "Create account"}
       </Button>

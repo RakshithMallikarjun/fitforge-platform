@@ -38,8 +38,9 @@ function MemberProfile() {
 
   const manualCheckin = useMutation({
     mutationFn: () => logManual({ data: { memberId } }),
-    onSuccess: () => {
-      toast.success("Check-in logged");
+    onSuccess: (res: any) => {
+      toast.success(res?.alreadyCheckedIn ? "Already checked in today" : "Check-in logged");
+
       qc.invalidateQueries({ queryKey: ["member", memberId] });
     },
     onError: (e: any) => toast.error("Could not log check-in", { description: e?.message }),
