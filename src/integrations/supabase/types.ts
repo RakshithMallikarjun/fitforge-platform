@@ -327,33 +327,48 @@ export type Database = {
           custom_domain: string | null
           font_family: string | null
           id: string
+          join_code: string | null
           logo_url: string | null
           name: string
           primary_color: string | null
+          secondary_color: string | null
           slug: string
           subscription_plan: Database["public"]["Enums"]["subscription_plan"]
+          support_email: string | null
+          support_phone: string | null
+          timezone: string
         }
         Insert: {
           created_at?: string
           custom_domain?: string | null
           font_family?: string | null
           id?: string
+          join_code?: string | null
           logo_url?: string | null
           name: string
           primary_color?: string | null
+          secondary_color?: string | null
           slug: string
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          support_email?: string | null
+          support_phone?: string | null
+          timezone?: string
         }
         Update: {
           created_at?: string
           custom_domain?: string | null
           font_family?: string | null
           id?: string
+          join_code?: string | null
           logo_url?: string | null
           name?: string
           primary_color?: string | null
+          secondary_color?: string | null
           slug?: string
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          support_email?: string | null
+          support_phone?: string | null
+          timezone?: string
         }
         Relationships: []
       }
@@ -1103,6 +1118,10 @@ export type Database = {
         Returns: boolean
       }
       is_trainer_of: { Args: { _member_id: string }; Returns: boolean }
+      verify_join_code: {
+        Args: { _code: string; _slug: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "trainer" | "member"
