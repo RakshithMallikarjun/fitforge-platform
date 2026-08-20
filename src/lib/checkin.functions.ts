@@ -11,6 +11,13 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const TOKEN_TTL_SECONDS = 5 * 60;
 
+/** Unique index attendance_logs_member_day_uidx allows one check-in per member per day. */
+function isDuplicateCheckin(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  return error.code === "23505" || /duplicate key|already exists/i.test(error.message ?? "");
+}
+
+
 function b64url(input: Buffer | string): string {
   const buf = typeof input === "string" ? Buffer.from(input) : input;
   return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
