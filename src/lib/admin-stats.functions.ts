@@ -140,39 +140,35 @@ export const getAttendanceReport = createServerFn({ method: "GET" })
   .inputValidator((d: { startDate: string; endDate: string }) => d)
   .handler(async ({ data, context }): Promise<AttendanceReport> => {
     const { supabase, userId } = context;
-    const { data: me } = await supabase.from("users").select("gym_id").eq("id", userId).maybeSingle();
-    const gymId = (me as any)?.gym_id as string | null;
+    const { gymId } = await resolveGymTimezone(supabase, userId);
     const empty: AttendanceReport = { totalCheckIns: 0, uniqueMembers: 0, avgPerDay: 0, daily: [], peakHours: [] };
     if (!gymId) return empty;
 
-    const startIso = new Date(data.startDate + "T00:00:00").toISOString();
-    const endIso = new Date(data.endDate + "T23:59:59").toISOString();
-    const { data: logs } = await supabase
-      .from("attendance_logs")
-      .select("member_id, check_in_at")
-      .eq("gym_id", gymId)
-      .gte("check_in_at", startIso)
-      .lte("check_in_at", endIso)
-      .limit(10000);
+    // Day and hour-of-day buckets are computed in SQL using the gym's timezone,
+    // so an 18:00 local check-in lands in the 18:00 bucket regardless of server region.
+    const { data: buckets, error } = await supabase.rpc("attendance_buckets", {
+      _gym_id: gymId,
+      _start: data.startDate,
+      _end: data.endDate,
+    });
+    if (error) throw new Error(error.message);
 
     const dayMap = new Map<string, number>();
     const hourMap = new Map<number, number>();
     const memberSet = new Set<string>();
-    for (const l of logs ?? []) {
-      const dt = new Date(l.check_in_at);
-      const day = dt.toISOString().slice(0, 10);
-      dayMap.set(day, (dayMap.get(day) ?? 0) + 1);
-      hourMap.set(dt.getHours(), (hourMap.get(dt.getHours()) ?? 0) + 1);
-      memberSet.add(l.member_id);
+    let total = 0;
+    for (const b of (buckets ?? []) as any[]) {
+      const c = Number(b.cnt ?? 0);
+      total += c;
+      dayMap.set(b.day, (dayMap.get(b.day) ?? 0) + c);
+      hourMap.set(Number(b.hour), (hourMap.get(Number(b.hour)) ?? 0) + c);
+      if (b.member_id) memberSet.add(b.member_id);
     }
 
     // Fill missing days
     const daily: { date: string; count: number; rolling7: number }[] = [];
-    const start = new Date(data.startDate);
-    const end = new Date(data.endDate);
     const counts: number[] = [];
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const key = d.toISOString().slice(0, 10);
+    for (const key of dateStringRange(data.startDate, data.endDate)) {
       const c = dayMap.get(key) ?? 0;
       counts.push(c);
       const window = counts.slice(Math.max(0, counts.length - 7));
@@ -180,7 +176,6 @@ export const getAttendanceReport = createServerFn({ method: "GET" })
       daily.push({ date: key, count: c, rolling7: roll });
     }
 
-    const total = logs?.length ?? 0;
     const peakHours = Array.from(hourMap.entries())
       .map(([hour, count]) => ({ hour, count }))
       .sort((a, b) => a.hour - b.hour);
@@ -192,6 +187,7 @@ export const getAttendanceReport = createServerFn({ method: "GET" })
       daily,
       peakHours,
     };
+
   });
 
 // ---------- Engagement report ----------
