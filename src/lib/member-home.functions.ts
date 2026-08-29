@@ -31,7 +31,7 @@ export const getMemberHome = createServerFn({ method: "GET" })
     const [{ data: userRow }, { data: logs }, { data: plans }, { data: notes }] = await Promise.all([
       supabase
         .from("users")
-        .select("display_name, gym_id, gyms(name, primary_color, logo_url)")
+        .select("display_name, gym_id, gyms(name, primary_color, logo_url, timezone)")
         .eq("id", userId)
         .maybeSingle(),
       supabase
