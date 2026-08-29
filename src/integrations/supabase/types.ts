@@ -1109,6 +1109,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      attendance_buckets: {
+        Args: { _end: string; _gym_id: string; _start: string }
+        Returns: {
+          cnt: number
+          day: string
+          hour: number
+          member_id: string
+        }[]
+      }
       current_gym_id: { Args: never; Returns: string }
       has_role: {
         Args: {
