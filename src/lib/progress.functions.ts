@@ -188,21 +188,20 @@ export const getFitnessScore = createServerFn({ method: "GET" })
         .limit(60),
     ]);
 
-    // streak calc (same logic as member-home)
+    // streak calc (same logic as member-home), in the gym's timezone
+    const { timeZone } = await resolveGymTimezone(supabase, userId);
     const completedDates = new Set((logsRes.data ?? []).map((l: any) => l.date as string));
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().slice(0, 10);
-    const yest = new Date(today); yest.setDate(yest.getDate() - 1);
-    const yestStr = yest.toISOString().slice(0, 10);
+    const todayStr = dateStringInZone(timeZone);
+    const yestStr = shiftDateString(todayStr, -1);
     let streak = 0;
-    let cursor = new Date(today);
     if (completedDates.has(todayStr) || completedDates.has(yestStr)) {
-      if (!completedDates.has(todayStr)) cursor = yest;
-      while (completedDates.has(cursor.toISOString().slice(0, 10))) {
+      let cursor = completedDates.has(todayStr) ? todayStr : yestStr;
+      while (completedDates.has(cursor)) {
         streak++;
-        cursor.setDate(cursor.getDate() - 1);
+        cursor = shiftDateString(cursor, -1);
       }
     }
+
 
     const rows = assessRes.data ?? [];
     if (rows.length === 0) {
