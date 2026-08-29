@@ -8,6 +8,13 @@
       "when": 1788017355930,
       "tag": "0000_attendance_buckets_gym_timezone",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788019571057,
+      "tag": "0001_restore_staff_only_plan_writes_and_attendance_buckets",
+      "breakpoints": true
     }
   ]
 }
