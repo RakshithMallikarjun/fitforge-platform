@@ -20,7 +20,7 @@ function PlansPageShell() {
   const matchRoute = useMatchRoute();
   const isIndex = !!matchRoute({ to: "/admin/plans", fuzzy: false });
   return isIndex ? <PlansPage /> : <Outlet />;
-});
+}
 
 function PlansPage() {
   const navigate = useNavigate();

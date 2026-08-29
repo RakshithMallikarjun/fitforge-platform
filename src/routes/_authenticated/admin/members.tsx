@@ -31,7 +31,7 @@ function MembersPageShell() {
   const matchRoute = useMatchRoute();
   const isIndex = !!matchRoute({ to: "/admin/members", fuzzy: false });
   return isIndex ? <MembersPage /> : <Outlet />;
-});
+}
 
 type SortKey = "name" | "joined" | "last_login" | "status";
 
