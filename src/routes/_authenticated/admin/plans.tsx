@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, ClipboardList } from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
@@ -9,7 +9,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { listPlans } from "@/lib/plans.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/plans")({
-  component: PlansPage,
+  component: PlansPageShell,
+});
+
+/**
+ * Detail routes (/admin/plans/$id, /new) are nested under this one, so the parent must
+ * render an <Outlet /> for them; the list only renders at the index path.
+ */
+function PlansPageShell() {
+  const matchRoute = useMatchRoute();
+  const isIndex = !!matchRoute({ to: "/admin/plans", fuzzy: false });
+  return isIndex ? <PlansPage /> : <Outlet />;
 });
 
 function PlansPage() {
