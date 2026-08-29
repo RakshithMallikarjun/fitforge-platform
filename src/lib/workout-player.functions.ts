@@ -142,7 +142,9 @@ export const startWorkoutLog = createServerFn({ method: "POST" })
       .maybeSingle();
     if (uErr || !user?.gym_id) throw new Error("Could not resolve gym");
 
-    const today = new Date().toISOString().slice(0, 10);
+    // Stamp the row with the gym-local calendar day so streak/consistency reads agree.
+    const { timeZone } = await resolveGymTimezone(supabase, userId);
+    const today = dateStringInZone(timeZone);
     // Reuse an in-progress log for the same day if present
     const { data: existing } = await supabase
       .from("workout_logs")
