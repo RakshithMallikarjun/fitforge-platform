@@ -369,7 +369,9 @@ export const uploadProgressPhoto = createServerFn({ method: "POST" })
         gym_id: memberRow.gym_id,
         assessment_id: data.assessment_id ?? null,
         photo_url: key,
-        taken_at: data.taken_at ?? new Date().toISOString().slice(0, 10),
+        taken_at:
+          data.taken_at ??
+          dateStringInZone((await resolveGymTimezone(supabase, userId)).timeZone),
       })
       .select()
       .single();
