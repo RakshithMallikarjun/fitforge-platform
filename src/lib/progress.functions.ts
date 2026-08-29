@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { dateStringInZone, resolveGymTimezone, shiftDateString } from "@/lib/gym-date";
 
 export type ProgressAssessment = {
   date: string;
