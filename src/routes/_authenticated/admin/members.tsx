@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Plus, Search, Upload, Users as UsersIcon, ArrowUpDown, MoreHorizontal, UserCog, UserX, UserCheck } from "lucide-react";
@@ -20,8 +20,18 @@ import { AssignTrainersDialog } from "@/components/members/assign-trainers-dialo
 import { StatusBadge, getMembershipStatus, type MembershipStatus } from "@/components/members/status-badge";
 
 export const Route = createFileRoute("/_authenticated/admin/members")({
-  component: MembersPage,
+  component: MembersPageShell,
 });
+
+/**
+ * Detail routes (/admin/members/$id, /new) are nested under this one, so the parent must
+ * render an <Outlet /> for them; the list only renders at the index path.
+ */
+function MembersPageShell() {
+  const matchRoute = useMatchRoute();
+  const isIndex = !!matchRoute({ to: "/admin/members", fuzzy: false });
+  return isIndex ? <MembersPage /> : <Outlet />;
+}
 
 type SortKey = "name" | "joined" | "last_login" | "status";
 

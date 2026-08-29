@@ -26,6 +26,15 @@ const NAV: NavItem[] = [
 
 
 export function AdminSidebar() {
+  return (
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-sidebar md:flex">
+      <SidebarBody />
+    </aside>
+  );
+}
+
+/** Sidebar contents, shared by the desktop rail and the mobile drawer. */
+export function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -42,7 +51,7 @@ export function AdminSidebar() {
   }
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-sidebar md:flex">
+    <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex h-18 items-center gap-2 px-6 py-4">
         <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-primary-foreground">
           <Dumbbell className="h-5 w-5" />
@@ -50,7 +59,7 @@ export function AdminSidebar() {
         <span className="font-display text-base font-bold tracking-tight">{theme.name}</span>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3">
         {(() => {
           const items = NAV.filter((i) => !i.adminOnly || isAdmin);
           const out: React.ReactNode[] = [];
@@ -72,6 +81,7 @@ export function AdminSidebar() {
               <Link
                 key={`${item.label}-${item.to}`}
                 to={item.to as any}
+                onClick={onNavigate}
                 className={[
                   "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                   active
@@ -106,6 +116,6 @@ export function AdminSidebar() {
           Log out
         </button>
       </div>
-    </aside>
+    </div>
   );
 }

@@ -474,7 +474,7 @@ function WorkoutPlayer() {
   const prev = prevMap.get(ex.exercise.id) ?? [];
 
   return (
-    <div className="space-y-5 pb-8">
+    <div className="w-full max-w-full space-y-5 overflow-x-hidden pb-8">
       {offlineFallback && (
         <div className="flex items-center gap-2 rounded-2xl border border-secondary/30 bg-secondary-soft px-3 py-2 text-xs text-secondary">
           <CloudOff className="h-3.5 w-3.5" />
@@ -624,8 +624,9 @@ function WorkoutPlayer() {
                     </span>
                   )}
                 </div>
-                <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
-                  <div>
+                {/* Below 400px the two steppers stack so nothing pushes off-canvas. */}
+                <div className="grid grid-cols-1 items-end gap-3 min-[400px]:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] min-[400px]:gap-2">
+                  <div className="min-w-0">
                     <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Weight (kg)</p>
                     <Stepper
                       value={row.weight}
@@ -638,7 +639,7 @@ function WorkoutPlayer() {
                       ariaLabel="weight"
                     />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Reps</p>
                     <Stepper
                       value={row.reps}
@@ -655,7 +656,7 @@ function WorkoutPlayer() {
                     onClick={() => toggleSetDone(ex, idx)}
                     aria-label={row.done ? "Mark set undone" : "Mark set done"}
                     className={[
-                      "grid h-11 w-11 shrink-0 place-items-center rounded-xl border transition-colors",
+                      "grid h-11 w-full shrink-0 place-items-center rounded-xl border transition-colors min-[400px]:w-11",
                       row.done
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-input bg-background text-muted-foreground hover:bg-muted",
@@ -664,6 +665,7 @@ function WorkoutPlayer() {
                     <Check className="h-4 w-4" />
                   </button>
                 </div>
+
               </div>
             );
           })}

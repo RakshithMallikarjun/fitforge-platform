@@ -31,10 +31,11 @@ export const Route = createFileRoute("/_authenticated/app/progress")({
 function ProgressPage() {
   const fetchFn = useServerFn(getProgressData);
   const fetchScoreFn = useServerFn(getFitnessScore);
-  const { data, isLoading } = useQuery({
+  const { data, error, refetch, isFetching } = useQuery({
     queryKey: ["progress-data"],
     queryFn: () => fetchFn(),
   });
+
   const { data: fitnessScore } = useQuery({
     queryKey: ["fitness-score"],
     queryFn: () => fetchScoreFn(),
@@ -61,17 +62,18 @@ function ProgressPage() {
         </TabsList>
 
         <TabsContent value="body" className="mt-4">
-          {isLoading ? <SkeletonCard /> : <BodyTab data={data!} />}
+          {data ? <BodyTab data={data} /> : <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />}
         </TabsContent>
         <TabsContent value="strength" className="mt-4">
-          {isLoading ? <SkeletonCard /> : <StrengthTab data={data!} />}
+          {data ? <StrengthTab data={data} /> : <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />}
         </TabsContent>
         <TabsContent value="history" className="mt-4">
-          {isLoading ? <SkeletonCard /> : <HistoryTab data={data!} />}
+          {data ? <HistoryTab data={data} /> : <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />}
         </TabsContent>
         <TabsContent value="goals" className="mt-4">
-          {isLoading ? <SkeletonCard /> : <GoalsTab data={data!} />}
+          {data ? <GoalsTab data={data} /> : <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />}
         </TabsContent>
+
         <TabsContent value="photos" className="mt-4">
           <PhotosTab />
         </TabsContent>
@@ -79,6 +81,24 @@ function ProgressPage() {
     </div>
   );
 }
+
+/** Shown whenever progress data is unavailable — loading, or a failed query. */
+function TabFallback({ error, onRetry, busy }: { error: unknown; onRetry: () => void; busy: boolean }) {
+  if (!error) return <SkeletonCard />;
+  return (
+    <div className="rounded-[2rem] border border-destructive/30 bg-destructive/5 p-6 text-center">
+      <p className="text-sm font-semibold">We couldn't load your progress</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {(error as Error)?.message ?? "Something went wrong."}
+      </p>
+      <Button variant="outline" size="sm" className="mt-4 rounded-xl" onClick={onRetry} disabled={busy}>
+        {busy ? "Retrying…" : "Try again"}
+      </Button>
+    </div>
+  );
+}
+
+
 
 /* ---------------- FITNESS SCORE CARD ---------------- */
 
