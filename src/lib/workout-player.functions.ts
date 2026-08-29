@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { dateStringInZone, resolveGymTimezone } from "@/lib/gym-date";
 
 export type WorkoutDayExercise = {
   id: string; // workout_exercises.id
