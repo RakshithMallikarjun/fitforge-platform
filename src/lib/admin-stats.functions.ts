@@ -13,12 +13,7 @@ export const getAdminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AdminStats> => {
     const { supabase, userId } = context;
-    const { data: me } = await supabase
-      .from("users")
-      .select("gym_id")
-      .eq("id", userId)
-      .maybeSingle();
-    const gymId = (me as any)?.gym_id as string | null;
+    const { timeZone, gymId } = await resolveGymTimezone(supabase, userId);
     if (!gymId) {
       return { activeMembers: 0, newThisMonth: 0, sessionsToday: 0, avgCheckIns7d: 0 };
     }
@@ -30,10 +25,12 @@ export const getAdminStats = createServerFn({ method: "GET" })
       .eq("role", "member");
     const memberIds = (memberRoles ?? []).map((r: any) => r.user_id as string);
 
-    const today = new Date();
-    const todayStr = today.toISOString().slice(0, 10);
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-    const sevenDaysAgo = new Date(today.getTime() - 7 * 86400_000).toISOString();
+    const now = new Date();
+    // "Today" is the gym's calendar day, matching how workout_logs.date is stamped.
+    const todayStr = dateStringInZone(timeZone, now);
+    const monthStart = `${todayStr.slice(0, 7)}-01T00:00:00.000Z`;
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 86400_000).toISOString();
+
 
     let activeMembers = 0;
     let newThisMonth = 0;
