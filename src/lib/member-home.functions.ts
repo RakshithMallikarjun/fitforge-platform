@@ -58,46 +58,42 @@ export const getMemberHome = createServerFn({ method: "GET" })
     const gym = (userRow as any)?.gyms ?? null;
     const displayName = (userRow as any)?.display_name ?? null;
 
+    // All calendar-day math happens in the gym's timezone so that a workout
+    // logged at 23:50 local time counts for the member's "today".
+    const timeZone = (gym?.timezone as string | null) || "UTC";
+
     // streak: consecutive days with a completed log ending today or yesterday
     const completedDates = new Set(
       (logs ?? [])
         .filter((l: any) => l.completed_at)
         .map((l: any) => l.date as string),
     );
+    const todayStr = dateStringInZone(timeZone);
+    const yestStr = shiftDateString(todayStr, -1);
     let streakDays = 0;
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    let cursor = new Date(today);
-    // allow streak if last workout was today or yesterday
-    const todayStr = today.toISOString().slice(0, 10);
-    const yest = new Date(today); yest.setDate(yest.getDate() - 1);
-    const yestStr = yest.toISOString().slice(0, 10);
-    if (!completedDates.has(todayStr) && !completedDates.has(yestStr)) {
-      streakDays = 0;
-    } else {
-      if (!completedDates.has(todayStr)) cursor = yest;
-      while (completedDates.has(cursor.toISOString().slice(0, 10))) {
+    if (completedDates.has(todayStr) || completedDates.has(yestStr)) {
+      let cursor = completedDates.has(todayStr) ? todayStr : yestStr;
+      while (completedDates.has(cursor)) {
         streakDays++;
-        cursor.setDate(cursor.getDate() - 1);
+        cursor = shiftDateString(cursor, -1);
+      }
     }
-  }
 
-  // Weekly consistency: percentage of the last 7 days (rolling) with a completed workout
-  let weekHitDays = 0;
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    if (completedDates.has(d.toISOString().slice(0, 10))) weekHitDays++;
-  }
-  const weeklyConsistency = Math.round((weekHitDays / 7) * 100);
+    // Weekly consistency: percentage of the last 7 days (rolling) with a completed workout
+    let weekHitDays = 0;
+    for (let i = 0; i < 7; i++) {
+      if (completedDates.has(shiftDateString(todayStr, -i))) weekHitDays++;
+    }
+    const weeklyConsistency = Math.round((weekHitDays / 7) * 100);
 
-  const lastWorkoutDate =
-      (logs ?? []).find((l: any) => l.completed_at)?.date ?? null;
+    const lastWorkoutDate = (logs ?? []).find((l: any) => l.completed_at)?.date ?? null;
 
-    // weekly progress (Mon–Sun)
-    const wkStart = startOfWeek(today);
+    // weekly progress (Mon–Sun) in the gym's timezone
+    const wkStart = startOfWeekString(todayStr);
     const weekCompleted = (logs ?? []).filter(
-      (l: any) => l.completed_at && daysBetween(today, new Date(l.date)) <= 6 && new Date(l.date) >= wkStart,
+      (l: any) => l.completed_at && l.date >= wkStart && l.date <= todayStr,
     ).length;
+
 
     const activePlan = plans?.[0]
       ? { id: plans[0].id as string, name: plans[0].name as string }
