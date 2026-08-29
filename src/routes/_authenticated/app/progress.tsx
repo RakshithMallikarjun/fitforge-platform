@@ -62,17 +62,18 @@ function ProgressPage() {
         </TabsList>
 
         <TabsContent value="body" className="mt-4">
-          {isLoading ? <SkeletonCard /> : <BodyTab data={data!} />}
+          {data ? <BodyTab data={data} /> : <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />}
         </TabsContent>
         <TabsContent value="strength" className="mt-4">
-          {isLoading ? <SkeletonCard /> : <StrengthTab data={data!} />}
+          {data ? <StrengthTab data={data} /> : <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />}
         </TabsContent>
         <TabsContent value="history" className="mt-4">
-          {isLoading ? <SkeletonCard /> : <HistoryTab data={data!} />}
+          {data ? <HistoryTab data={data} /> : <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />}
         </TabsContent>
         <TabsContent value="goals" className="mt-4">
-          {isLoading ? <SkeletonCard /> : <GoalsTab data={data!} />}
+          {data ? <GoalsTab data={data} /> : <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />}
         </TabsContent>
+
         <TabsContent value="photos" className="mt-4">
           <PhotosTab />
         </TabsContent>
