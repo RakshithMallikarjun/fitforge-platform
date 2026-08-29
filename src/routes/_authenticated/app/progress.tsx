@@ -31,10 +31,11 @@ export const Route = createFileRoute("/_authenticated/app/progress")({
 function ProgressPage() {
   const fetchFn = useServerFn(getProgressData);
   const fetchScoreFn = useServerFn(getFitnessScore);
-  const { data, isLoading } = useQuery({
+  const { data, error, refetch, isFetching } = useQuery({
     queryKey: ["progress-data"],
     queryFn: () => fetchFn(),
   });
+
   const { data: fitnessScore } = useQuery({
     queryKey: ["fitness-score"],
     queryFn: () => fetchScoreFn(),
