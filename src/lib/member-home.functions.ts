@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { dateStringInZone, shiftDateString, startOfWeekString } from "@/lib/gym-date";
 
 export type MemberHomeData = {
   gym: { name: string; primary_color: string | null; logo_url: string | null } | null;
@@ -21,19 +22,6 @@ export type MemberHomeData = {
   latestNote: { body: string; created_at: string; author: string | null } | null;
 };
 
-function startOfWeek(d: Date): Date {
-  const x = new Date(d);
-  const day = x.getDay(); // 0=Sun
-  const diff = (day + 6) % 7; // Monday as start
-  x.setHours(0, 0, 0, 0);
-  x.setDate(x.getDate() - diff);
-  return x;
-}
-
-function daysBetween(a: Date, b: Date) {
-  const ms = 86400_000;
-  return Math.floor((a.getTime() - b.getTime()) / ms);
-}
 
 export const getMemberHome = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
