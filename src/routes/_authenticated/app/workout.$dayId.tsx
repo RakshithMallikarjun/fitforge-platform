@@ -10,6 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   CloudOff,
+  Dumbbell,
+
   Minus,
   PartyPopper,
   Play,
