@@ -29,7 +29,42 @@ export const suggestOverload = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ context, data }): Promise<ExerciseSuggestion[]> => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+
+    // --- Explicit authorization: caller is the member, or staff in that gym ---
+    if (data.memberId !== userId) {
+      const [{ data: me }, { data: them }, { data: roles }] = await Promise.all([
+        supabase.from("users").select("gym_id").eq("id", userId).maybeSingle(),
+        supabase.from("users").select("gym_id").eq("id", data.memberId).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", userId),
+      ]);
+      const staff = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "trainer");
+      if (!staff || !me?.gym_id || me.gym_id !== them?.gym_id) throw new Error("Forbidden");
+    }
+
+    // --- Cache: one AI answer per (member, exercise set) per day ---
+    const today = new Date().toISOString().slice(0, 10);
+    const cacheKey = `${today}:${[...data.exerciseIds].sort().join(",")}`;
+    const { data: cached } = await supabase
+      .from("ai_overload_cache")
+      .select("payload")
+      .eq("member_id", data.memberId)
+      .eq("cache_key", cacheKey)
+      .maybeSingle();
+    if (cached?.payload) return (cached.payload as unknown) as ExerciseSuggestion[];
+
+    // --- Per-user daily call ceiling ---
+    const dayStart = new Date();
+    dayStart.setUTCHours(0, 0, 0, 0);
+    const { count: callsToday } = await supabase
+      .from("ai_overload_cache")
+      .select("id", { count: "exact", head: true })
+      .eq("requested_by", userId)
+      .gte("created_at", dayStart.toISOString());
+    if ((callsToday ?? 0) >= DAILY_CALL_CEILING) {
+      throw new Error("Daily AI suggestion limit reached — try again tomorrow.");
+    }
+
     const since = new Date(Date.now() - FOUR_WEEKS_MS).toISOString();
 
     const [{ data: exRows }, { data: logs }] = await Promise.all([
