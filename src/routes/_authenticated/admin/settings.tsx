@@ -38,6 +38,8 @@ function SettingsPage() {
   const [primaryColor, setPrimaryColor] = useState("#059669");
   const [logoUrl, setLogoUrl] = useState("");
   const [fontFamily, setFontFamily] = useState<string>("Satoshi");
+  const [supportEmail, setSupportEmail] = useState("");
+  const [supportPhone, setSupportPhone] = useState("");
 
   const { data: me } = useCurrentUser();
   const isAdmin = !!me?.roles.includes("admin");
@@ -70,6 +72,8 @@ function SettingsPage() {
     setPrimaryColor(gym.primary_color ?? "#059669");
     setLogoUrl(gym.logo_url ?? "");
     setFontFamily(gym.font_family ?? "Satoshi");
+    setSupportEmail(gym.support_email ?? "");
+    setSupportPhone(gym.support_phone ?? "");
   }, [gym]);
 
   const mutation = useMutation({
@@ -78,6 +82,8 @@ function SettingsPage() {
       primaryColor: string;
       logoUrl?: string | null;
       fontFamily?: string | null;
+      supportEmail?: string | null;
+      supportPhone?: string | null;
     }) => saveSettings({ data: vars }),
     onSuccess: () => {
       toast.success("Gym branding updated");
@@ -172,6 +178,34 @@ function SettingsPage() {
                 </Select>
               </div>
 
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="support-email">Support email</Label>
+                  <Input
+                    id="support-email"
+                    type="email"
+                    value={supportEmail}
+                    onChange={(e) => setSupportEmail(e.target.value)}
+                    placeholder="help@yourgym.com"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Shown to members. Leave blank to hide the support link.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="support-phone">Support WhatsApp number</Label>
+                  <Input
+                    id="support-phone"
+                    value={supportPhone}
+                    onChange={(e) => setSupportPhone(e.target.value)}
+                    placeholder="+91 98765 43210"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Include the country code. Leave blank to hide the chat link.
+                  </p>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label>Live preview</Label>
                 <div className="rounded-2xl border border-border bg-muted/40 p-6">
@@ -202,6 +236,8 @@ function SettingsPage() {
                       primaryColor,
                       logoUrl: logoUrl || null,
                       fontFamily,
+                      supportEmail: supportEmail || null,
+                      supportPhone: supportPhone || null,
                     })
                   }
                   disabled={!validHex || !name.trim() || mutation.isPending}

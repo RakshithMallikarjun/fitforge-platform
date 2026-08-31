@@ -5,6 +5,8 @@ export type GymTheme = {
   logoUrl: string | null;
   fontFamily: string;       // CSS font family
   name: string;
+  supportEmail: string | null;
+  supportPhone: string | null;
 };
 
 const DEFAULT_THEME: GymTheme = {
@@ -12,6 +14,8 @@ const DEFAULT_THEME: GymTheme = {
   logoUrl: null,
   fontFamily: "Satoshi",
   name: "FitForge",
+  supportEmail: null,
+  supportPhone: null,
 };
 
 type Ctx = {

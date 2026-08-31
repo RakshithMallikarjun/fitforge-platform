@@ -597,11 +597,6 @@ function WorkoutPlayer() {
             {ex.notes}
           </p>
         )}
-        {ex.exercise.video_url && (
-          <p className="mt-2 break-all text-[11px] text-muted-foreground">
-            Video: {ex.exercise.video_url}
-          </p>
-        )}
       </div>
 
       {/* Set logger */}

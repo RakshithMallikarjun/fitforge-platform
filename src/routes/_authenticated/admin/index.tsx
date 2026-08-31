@@ -1,17 +1,22 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpDown, ArrowUpRight, Calendar, LifeBuoy } from "lucide-react";
+import { AlertTriangle, ArrowUpDown, ArrowUpRight, LifeBuoy } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { GlassHeader } from "@/components/glass-header";
 import { BentoStatCard } from "@/components/bento-stat-card";
-import { TimelineItem } from "@/components/timeline-item";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { getAdminStats, getTrainerStats, type TrainerStat } from "@/lib/admin-stats.functions";
+import {
+  getAdminStats, getTrainerStats, getRecentPayments, getEngagementReport,
+  type TrainerStat, type PaymentRow, type EngagementRow,
+} from "@/lib/admin-stats.functions";
+import { useTheme } from "@/lib/theme-provider";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminDashboard,
@@ -19,6 +24,8 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 
 function AdminDashboard() {
   const { data: user } = useCurrentUser();
+  const { theme } = useTheme();
+  const isAdmin = !!user?.roles.includes("admin");
   const initials = (user?.displayName ?? user?.email ?? "FF").slice(0, 2).toUpperCase();
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["admin-stats"],
@@ -70,132 +77,43 @@ function AdminDashboard() {
         {/* Two-column main */}
         <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
           <div className="space-y-6">
-            {/* Engagement requests */}
-            <div className="rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)]">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h2 className="text-base font-bold tracking-tight">Engagement requests</h2>
-                  <p className="text-xs text-muted-foreground">New members and unanswered messages</p>
-                </div>
-                <Button variant="ghost" size="sm" className="rounded-lg">View all</Button>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { name: "Alex Rivera", note: "Wants a strength plan", tag: "New patient" },
-                  { name: "Jordan Lee", note: "Asked about nutrition coaching", tag: "Follow-up" },
-                  { name: "Priya Shah", note: "Onboarding pending", tag: "New patient" },
-                ].map((r) => (
-                  <div key={r.name} className="card-lift flex items-center gap-4 rounded-2xl border border-border p-4">
-                    <div className="grid h-10 w-10 place-items-center rounded-full bg-accent text-sm font-semibold text-primary">
-                      {r.name.split(" ").map((p) => p[0]).join("")}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold">{r.name}</p>
-                        <span className="rounded-full bg-secondary-soft px-2 py-0.5 text-[10px] font-semibold text-secondary">
-                          {r.tag}
-                        </span>
-                      </div>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{r.note}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="rounded-lg">Skip</Button>
-                      <Button size="sm" className="rounded-lg">Open</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Payment history */}
-            <div className="rounded-[2rem] border border-border bg-card shadow-[var(--shadow-card)]">
-              <div className="flex items-center justify-between p-6 pb-4">
-                <div>
-                  <h2 className="text-base font-bold tracking-tight">Payment history</h2>
-                  <p className="text-xs text-muted-foreground">Last 5 transactions</p>
-                </div>
-              </div>
-              <table className="w-full text-left text-sm">
-                <thead className="bg-background text-xs uppercase tracking-wider text-muted-foreground">
-                  <tr>
-                    <th className="py-4 pl-6 font-medium">Member</th>
-                    <th className="py-4 font-medium">Plan</th>
-                    <th className="py-4 font-medium">Amount</th>
-                    <th className="py-4 pr-6 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {[
-                    ["Alex Rivera", "Monthly", "$89", "Disbursed"],
-                    ["Jordan Lee", "Annual", "$899", "Disbursed"],
-                    ["Priya Shah", "Monthly", "$89", "Pending"],
-                    ["Sam Chen", "PT pack", "$240", "Disbursed"],
-                    ["Maya Park", "Monthly", "$89", "Disbursed"],
-                  ].map(([name, plan, amount, status]) => (
-                    <tr key={name as string}>
-                      <td className="py-4 pl-6 font-medium">{name}</td>
-                      <td className="py-4 text-muted-foreground">{plan}</td>
-                      <td className="py-4 font-numeric font-semibold">{amount}</td>
-                      <td className="py-4 pr-6">
-                        <span
-                          className={[
-                            "rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                            status === "Disbursed"
-                              ? "bg-primary-soft text-primary"
-                              : "bg-secondary-soft text-secondary",
-                          ].join(" ")}
-                        >
-                          {status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <AtRiskMembers />
+            {isAdmin && <PaymentHistory />}
           </div>
 
           {/* Side widgets */}
           <div className="space-y-6">
-            <div className="rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)]">
-              <div className="mb-4 flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-bold tracking-tight">Today's schedule</h3>
+            {(theme.supportEmail || theme.supportPhone) && (
+              <div className="relative overflow-hidden rounded-[2rem] bg-[oklch(0.28_0.07_232)] p-6 text-primary-foreground">
+                <LifeBuoy className="absolute -right-4 -bottom-4 h-32 w-32 text-white/5" />
+                <h3 className="text-base font-bold tracking-tight">Need a hand?</h3>
+                <p className="mt-1 text-xs text-white/80">
+                  Reach your {theme.name} support contacts.
+                </p>
+                {theme.supportEmail && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-4 rounded-lg"
+                    onClick={() => {
+                      window.location.href = `mailto:${theme.supportEmail}?subject=${encodeURIComponent(`Support request — ${theme.name}`)}&body=${encodeURIComponent(`User: ${user?.email ?? ""}\n\nPlease describe your issue:`)}`;
+                    }}
+                  >
+                    Email support
+                  </Button>
+                )}
+                {theme.supportPhone && (
+                  <a
+                    href={`https://wa.me/${theme.supportPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hi ${theme.name}, I need help.`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 block text-xs font-medium text-white/90 underline underline-offset-4 hover:text-white"
+                  >
+                    Chat on WhatsApp
+                  </a>
+                )}
               </div>
-              <div className="space-y-1">
-                <TimelineItem timestamp="08:00 AM" title="Strength · Alex Rivera" subtitle="With Coach Maya" />
-                <TimelineItem timestamp="10:30 AM" title="Assessment · Jordan Lee" subtitle="Body comp + VO₂" variant="sky" />
-                <TimelineItem timestamp="12:00 PM" title="Open block" subtitle="No sessions booked" variant="muted" />
-                <TimelineItem timestamp="04:00 PM" title="Conditioning · Priya Shah" />
-              </div>
-            </div>
-
-            <div className="relative overflow-hidden rounded-[2rem] bg-[oklch(0.28_0.07_232)] p-6 text-primary-foreground">
-              <LifeBuoy className="absolute -right-4 -bottom-4 h-32 w-32 text-white/5" />
-              <h3 className="text-base font-bold tracking-tight">Need a hand?</h3>
-              <p className="mt-1 text-xs text-white/80">
-                Our team is on call 9–6 to help you launch your member app.
-              </p>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="mt-4 rounded-lg"
-                onClick={() => {
-                  const email = user?.email ?? "";
-                  window.location.href = `mailto:support@fitforge.app?subject=${encodeURIComponent("FitForge Support Request")}&body=${encodeURIComponent(`User: ${email}\n\nPlease describe your issue:`)}`;
-                }}
-              >
-                Talk to support
-              </Button>
-              <a
-                href="https://wa.me/919999999999?text=Hi,%20I%20need%20help%20with%20FitForge"
-                target="_blank"
-                rel="noreferrer"
-                className="mt-2 inline-block text-xs font-medium text-white/90 underline underline-offset-4 hover:text-white"
-              >
-                Chat on WhatsApp
-              </a>
-            </div>
+            )}
           </div>
         </section>
       </main>
@@ -281,3 +199,128 @@ function Sort({ children, onClick }: { children: React.ReactNode; onClick: () =>
   );
 }
 
+
+/** Members whose 30-day engagement has dropped — same signal as the engagement report. */
+function AtRiskMembers() {
+  const fetchEngagement = useServerFn(getEngagementReport);
+  const { data, isLoading } = useQuery({
+    queryKey: ["engagement-report"],
+    queryFn: () => fetchEngagement(),
+  });
+
+  const rows = useMemo(() => {
+    return [...(data ?? [])]
+      .filter((r) => r.workouts30d === 0 || r.score < 30)
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 5);
+  }, [data]);
+
+  return (
+    <div className="rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)]">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-bold tracking-tight">Members needing attention</h2>
+          <p className="text-xs text-muted-foreground">Lowest 30-day engagement in your gym</p>
+        </div>
+        <Button asChild variant="ghost" size="sm" className="rounded-lg">
+          <Link to="/admin/reports/engagement">View all</Link>
+        </Button>
+      </div>
+      {isLoading ? (
+        <div className="space-y-2"><Skeleton className="h-16 rounded-2xl" /><Skeleton className="h-16 rounded-2xl" /></div>
+      ) : !rows.length ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          Everyone is engaged right now — nothing to chase.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {rows.map((r: EngagementRow) => {
+            const name = r.displayName ?? r.email;
+            return (
+              <div key={r.memberId} className="card-lift flex items-center gap-4 rounded-2xl border border-border p-4">
+                <div className="grid h-10 w-10 place-items-center rounded-full bg-accent text-sm font-semibold text-primary">
+                  {name.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-semibold">{name}</p>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-secondary-soft px-2 py-0.5 text-[10px] font-semibold text-secondary">
+                      <AlertTriangle className="h-3 w-3" /> Score {r.score}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {r.workouts30d} workouts · {r.checkIns30d} check-ins · {r.messages30d} messages (30d)
+                  </p>
+                </div>
+                <Button asChild size="sm" className="rounded-lg">
+                  <Link to="/admin/members/$memberId" params={{ memberId: r.memberId }}>Open</Link>
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Real recorded membership payments. Admin-only. */
+function PaymentHistory() {
+  const fetchPayments = useServerFn(getRecentPayments);
+  const { data, isLoading } = useQuery({
+    queryKey: ["recent-payments"],
+    queryFn: () => fetchPayments(),
+  });
+
+  return (
+    <div className="rounded-[2rem] border border-border bg-card shadow-[var(--shadow-card)]">
+      <div className="flex items-center justify-between p-6 pb-4">
+        <div>
+          <h2 className="text-base font-bold tracking-tight">Payment history</h2>
+          <p className="text-xs text-muted-foreground">Last 5 recorded payments</p>
+        </div>
+      </div>
+      {isLoading ? (
+        <div className="space-y-2 px-6 pb-6"><Skeleton className="h-8" /><Skeleton className="h-8" /></div>
+      ) : !(data ?? []).length ? (
+        <p className="px-6 pb-6 text-sm text-muted-foreground">No payments recorded yet.</p>
+      ) : (
+        <table className="w-full text-left text-sm">
+          <thead className="bg-background text-xs uppercase tracking-wider text-muted-foreground">
+            <tr>
+              <th className="py-4 pl-6 font-medium">Member</th>
+              <th className="py-4 font-medium">Cycle</th>
+              <th className="py-4 font-medium">Amount</th>
+              <th className="py-4 font-medium">Date</th>
+              <th className="py-4 pr-6 font-medium">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {(data ?? []).map((p: PaymentRow) => (
+              <tr key={p.memberId}>
+                <td className="py-4 pl-6 font-medium">{p.name}</td>
+                <td className="py-4 capitalize text-muted-foreground">{p.billingCycle ?? "—"}</td>
+                <td className="py-4 font-numeric font-semibold">
+                  {p.amount === null ? "—" : p.amount.toLocaleString()}
+                </td>
+                <td className="py-4 text-muted-foreground">
+                  {p.date ? new Date(p.date).toLocaleDateString() : "—"}
+                </td>
+                <td className="py-4 pr-6">
+                  <span
+                    className={[
+                      "rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                      p.confirmed ? "bg-primary-soft text-primary" : "bg-secondary-soft text-secondary",
+                    ].join(" ")}
+                  >
+                    {p.confirmed ? "Paid" : "Pending"}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}

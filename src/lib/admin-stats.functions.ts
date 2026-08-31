@@ -35,19 +35,22 @@ export const getAdminStats = createServerFn({ method: "GET" })
     let activeMembers = 0;
     let newThisMonth = 0;
     if (memberIds.length) {
-      const [{ count: ac }, { count: nm }] = await Promise.all([
-        supabase
-          .from("users")
-          .select("id", { count: "exact", head: true })
-          .in("id", memberIds)
-          .eq("active", true),
+      const [{ data: activeRows }, { count: nm }, { data: profiles }] = await Promise.all([
+        supabase.from("users").select("id").in("id", memberIds).eq("active", true),
         supabase
           .from("users")
           .select("id", { count: "exact", head: true })
           .in("id", memberIds)
           .gte("created_at", monthStart),
+        supabase.from("member_profiles").select("user_id, membership_expires_at").in("user_id", memberIds),
       ]);
-      activeMembers = ac ?? 0;
+      // A lapsed membership is not an active member, even if the login is enabled.
+      const expired = new Set(
+        (profiles ?? [])
+          .filter((p: any) => p.membership_expires_at && p.membership_expires_at < todayStr)
+          .map((p: any) => p.user_id as string),
+      );
+      activeMembers = (activeRows ?? []).filter((u: any) => !expired.has(u.id)).length;
       newThisMonth = nm ?? 0;
     }
 
@@ -319,3 +322,51 @@ export const getEngagementReport = createServerFn({ method: "GET" })
     }
   });
 
+
+// ---------- Recent payments (admin only) ----------
+export type PaymentRow = {
+  memberId: string;
+  name: string;
+  billingCycle: string | null;
+  amount: number | null;
+  date: string | null;
+  confirmed: boolean;
+};
+
+/** Last 5 recorded membership payments for the gym. Admins only — trainers never see billing. */
+export const getRecentPayments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<PaymentRow[]> => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { data: me } = await supabase.from("users").select("gym_id").eq("id", userId).maybeSingle();
+    const gymId = (me as any)?.gym_id as string | null;
+    if (!gymId) return [];
+
+    const { data: gymUsers } = await supabase
+      .from("users")
+      .select("id, display_name, email")
+      .eq("gym_id", gymId);
+    const ids = (gymUsers ?? []).map((u: any) => u.id as string);
+    if (!ids.length) return [];
+
+    const { data: profiles } = await supabase
+      .from("member_profiles")
+      .select("user_id, billing_cycle, last_payment_amount, last_payment_date, payment_confirmed")
+      .in("user_id", ids)
+      .not("last_payment_date", "is", null)
+      .order("last_payment_date", { ascending: false })
+      .limit(5);
+
+    const uMap = new Map((gymUsers ?? []).map((u: any) => [u.id, u.display_name ?? u.email]));
+    return (profiles ?? []).map((p: any) => ({
+      memberId: p.user_id,
+      name: uMap.get(p.user_id) ?? "Unknown",
+      billingCycle: p.billing_cycle ?? null,
+      amount: p.last_payment_amount === null ? null : Number(p.last_payment_amount),
+      date: p.last_payment_date ?? null,
+      confirmed: !!p.payment_confirmed,
+    }));
+  });
