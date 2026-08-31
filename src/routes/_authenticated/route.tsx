@@ -12,11 +12,9 @@ export const Route = createFileRoute("/_authenticated")({
       .eq("id", data.user.id)
       .maybeSingle();
     if (profile && profile.active === false) {
+      // Backstop for accounts deactivated mid-session; sign-in itself also checks.
       await supabase.auth.signOut();
-      if (typeof window !== "undefined") {
-        window.sessionStorage.setItem("ff_deactivated", "1");
-      }
-      throw redirect({ to: "/auth" });
+      throw redirect({ to: "/auth", search: { deactivated: true } });
     }
     return { user: data.user };
   },

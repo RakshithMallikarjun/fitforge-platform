@@ -491,3 +491,37 @@ export const assignTrainers = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+/**
+ * Re-sends the one-time invite email for a member who has never signed in, so a
+ * lost or expired invite doesn't require a console operation. Admin only.
+ */
+export const resendMemberInvite = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { memberId: string }) => z.object({ memberId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const gymId = await assertAdmin(context.supabase, context.userId);
+
+    // Must belong to this gym — never invite across tenants.
+    const { data: member } = await context.supabase
+      .from("users")
+      .select("id, email, display_name, gym_id")
+      .eq("id", data.memberId)
+      .maybeSingle();
+    if (!member || member.gym_id !== gymId) throw new Error("Member not found");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: gym } = await supabaseAdmin.from("gyms").select("slug").eq("id", gymId).maybeSingle();
+    if (!gym) throw new Error("Gym not found");
+
+    const { data: existing } = await supabaseAdmin.auth.admin.getUserById(data.memberId);
+    if (existing?.user?.last_sign_in_at) {
+      throw new Error("This member has already signed in — send them a password reset instead.");
+    }
+
+    const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(member.email, {
+      data: { gym_slug: gym.slug, role: "member", display_name: member.display_name ?? undefined },
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true, email: member.email };
+  });
