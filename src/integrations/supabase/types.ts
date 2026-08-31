@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_overload_cache: {
+        Row: {
+          cache_key: string
+          created_at: string
+          id: string
+          member_id: string
+          payload: Json
+          requested_by: string
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          id?: string
+          member_id: string
+          payload: Json
+          requested_by: string
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          id?: string
+          member_id?: string
+          payload?: Json
+          requested_by?: string
+        }
+        Relationships: []
+      }
       attendance_logs: {
         Row: {
           check_in_at: string
@@ -798,6 +825,7 @@ export type Database = {
           email: string
           gym_id: string | null
           id: string
+          last_sign_in_at: string | null
           phone: string | null
           photo_url: string | null
           push_subscription: Json | null
@@ -809,6 +837,7 @@ export type Database = {
           email: string
           gym_id?: string | null
           id: string
+          last_sign_in_at?: string | null
           phone?: string | null
           photo_url?: string | null
           push_subscription?: Json | null
@@ -820,6 +849,7 @@ export type Database = {
           email?: string
           gym_id?: string | null
           id?: string
+          last_sign_in_at?: string | null
           phone?: string | null
           photo_url?: string | null
           push_subscription?: Json | null
@@ -1127,6 +1157,7 @@ export type Database = {
         Returns: boolean
       }
       is_trainer_of: { Args: { _member_id: string }; Returns: boolean }
+      touch_last_sign_in: { Args: never; Returns: undefined }
       verify_join_code: {
         Args: { _code: string; _slug: string }
         Returns: boolean
