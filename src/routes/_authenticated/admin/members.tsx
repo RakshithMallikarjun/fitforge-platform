@@ -143,6 +143,7 @@ function MembersPage() {
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="expiring">Expiring soon</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
               <SelectItem value="inactive">Inactive</SelectItem>
             </SelectContent>
           </Select>
