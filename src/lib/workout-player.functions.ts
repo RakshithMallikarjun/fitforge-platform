@@ -230,7 +230,7 @@ export type NewPR = { exerciseName: string; weight: number; reps: number };
 export const completeWorkout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (d: { logId: string; notes: string | null; effortRating: number | null }) => d,
+    (d: { logId: string; notes: string | null; effortRating: number | null; syncedOffline?: boolean }) => d,
   )
   .handler(async ({ data, context }): Promise<{ ok: true; newPRs: NewPR[] }> => {
     const { supabase, userId } = context;
@@ -247,7 +247,9 @@ export const completeWorkout = createServerFn({ method: "POST" })
         completed_at: new Date().toISOString(),
         notes: data.notes,
         effort_rating: data.effortRating,
+        synced_offline: data.syncedOffline ?? false,
       })
+
       .eq("id", data.logId);
     if (error) throw new Error(error.message);
 
