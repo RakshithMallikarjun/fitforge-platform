@@ -1,5 +1,5 @@
 /** Rank muscle groups by how many exercises hit them, keep 4, add a "+N more" chip. */
-function rankMuscleGroups(all: string[]): string[] {
+export function rankMuscleGroups(all: string[]): string[] {
   const counts = new Map<string, number>();
   for (const m of all) counts.set(m, (counts.get(m) ?? 0) + 1);
   const ranked = Array.from(counts.entries())
