@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, MessageSquare } from "lucide-react";
 import { z } from "zod";
-import { listThreads } from "@/lib/messages.functions";
+import { listThreads, listMyTrainers } from "@/lib/messages.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { ThreadView } from "@/components/messages/thread-view";
@@ -23,9 +23,15 @@ function MessagesPage() {
   const fetchThreads = useServerFn(listThreads);
   const qc = useQueryClient();
 
+  const fetchTrainers = useServerFn(listMyTrainers);
+
   const { data: threads, isLoading } = useQuery({
     queryKey: ["threads"],
     queryFn: () => fetchThreads(),
+  });
+  const { data: myTrainers } = useQuery({
+    queryKey: ["my-trainers"],
+    queryFn: () => fetchTrainers(),
   });
 
   // Realtime: refresh threads list on new inbound messages
@@ -49,7 +55,9 @@ function MessagesPage() {
 
   if (withUser) {
     const t = threads?.find((x) => x.otherUserId === withUser);
-    const name = t?.otherUser?.display_name ?? t?.otherUser?.email ?? "Conversation";
+    const contact = myTrainers?.find((c) => c.id === withUser);
+    const name =
+      t?.otherUser?.display_name ?? t?.otherUser?.email ?? contact?.display_name ?? contact?.email ?? "Conversation";
     return (
       <div className="space-y-4">
         <button
@@ -77,7 +85,44 @@ function MessagesPage() {
       {!isLoading && (threads?.length ?? 0) === 0 && (
         <div className="grid place-items-center gap-2 rounded-2xl border border-dashed border-border py-12 text-sm text-muted-foreground">
           <MessageSquare className="h-6 w-6" />
-          No conversations yet. Your trainer will message you here.
+          No conversations yet.
+          {(myTrainers?.length ?? 0) > 0
+            ? " Start one with your trainer below."
+            : " Your trainer will message you here once you're assigned one."}
+        </div>
+      )}
+
+      {/* Members can open a thread with any of their assigned trainers. */}
+      {(myTrainers ?? []).filter((c) => !(threads ?? []).some((t) => t.otherUserId === c.id)).length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+            Start a conversation
+          </p>
+          {(myTrainers ?? [])
+            .filter((c) => !(threads ?? []).some((t) => t.otherUserId === c.id))
+            .map((c) => {
+              const cname = c.display_name ?? c.email;
+              return (
+                <Link
+                  key={c.id}
+                  to="/app/messages"
+                  search={{ with: c.id }}
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-[var(--shadow-card)] hover:bg-muted/40"
+                >
+                  <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-primary">
+                    {c.photo_url ? (
+                      <img src={c.photo_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      cname.slice(0, 2).toUpperCase()
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{cname}</p>
+                    <p className="truncate text-xs text-muted-foreground">Your trainer · tap to message</p>
+                  </div>
+                </Link>
+              );
+            })}
         </div>
       )}
       <ul className="space-y-2">
