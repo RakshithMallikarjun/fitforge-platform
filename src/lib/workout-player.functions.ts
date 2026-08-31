@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { rankMuscleGroups } from "./muscle-groups";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { dateStringInZone, resolveGymTimezone } from "@/lib/gym-date";
 
@@ -230,7 +231,7 @@ export type NewPR = { exerciseName: string; weight: number; reps: number };
 export const completeWorkout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (d: { logId: string; notes: string | null; effortRating: number | null }) => d,
+    (d: { logId: string; notes: string | null; effortRating: number | null; syncedOffline?: boolean }) => d,
   )
   .handler(async ({ data, context }): Promise<{ ok: true; newPRs: NewPR[] }> => {
     const { supabase, userId } = context;
@@ -247,7 +248,9 @@ export const completeWorkout = createServerFn({ method: "POST" })
         completed_at: new Date().toISOString(),
         notes: data.notes,
         effort_rating: data.effortRating,
+        synced_offline: data.syncedOffline ?? false,
       })
+
       .eq("id", data.logId);
     if (error) throw new Error(error.message);
 
@@ -372,11 +375,9 @@ export const getWorkoutsBrowser = createServerFn({ method: "GET" })
               ),
             ),
           );
-          const muscleGroups = Array.from(
-            new Set(
-              exs.flatMap((e: any) => (e.exercises?.muscle_groups ?? []) as string[]),
-            ),
-          ).slice(0, 4) as string[];
+          const muscleGroups = rankMuscleGroups(
+            exs.flatMap((e: any) => (e.exercises?.muscle_groups ?? []) as string[]),
+          );
           return {
             id: d.id,
             day_label: d.day_label,

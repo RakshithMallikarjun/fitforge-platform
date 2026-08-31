@@ -10,6 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   CloudOff,
+  Dumbbell,
+
   Minus,
   PartyPopper,
   Play,
@@ -203,6 +205,68 @@ function Stepper({
 
 
 type SetState = { weight: string; reps: string; done: boolean };
+
+/** Video with poster, degrading to a poster image and then an icon placeholder. */
+function ExerciseMedia({
+  name,
+  videoUrl,
+  posterUrl,
+}: {
+  name: string;
+  videoUrl: string | null;
+  posterUrl: string | null;
+}) {
+  const [videoFailed, setVideoFailed] = useState(false);
+  const [posterFailed, setPosterFailed] = useState(false);
+  const isFile = !!videoUrl && /\.(mp4|webm|mov|m4v)(\?|$)/i.test(videoUrl);
+
+  if (isFile && !videoFailed) {
+    return (
+      <div className="relative aspect-video overflow-hidden rounded-2xl bg-muted">
+        <video
+          src={videoUrl!}
+          poster={posterFailed || !posterUrl ? undefined : posterUrl}
+          controls
+          playsInline
+          preload="metadata"
+          className="h-full w-full object-cover"
+          onError={() => setVideoFailed(true)}
+        >
+          <track kind="captions" />
+        </video>
+      </div>
+    );
+  }
+
+  if (posterUrl && !posterFailed) {
+    return (
+      <div className="relative aspect-video overflow-hidden rounded-2xl bg-muted">
+        <img
+          src={posterUrl}
+          alt={name}
+          loading="lazy"
+          className="h-full w-full object-cover"
+          onError={() => setPosterFailed(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex aspect-video flex-col items-center justify-center gap-2 rounded-2xl bg-accent text-accent-foreground">
+      <Dumbbell className="h-8 w-8" />
+      <p className="text-xs font-medium">No demo video yet</p>
+      <a
+        href={`https://www.youtube.com/results?search_query=${encodeURIComponent(name + " exercise tutorial")}`}
+        target="_blank"
+        rel="noreferrer"
+        className="text-xs font-semibold underline"
+      >
+        Search on YouTube
+      </a>
+    </div>
+  );
+}
 
 function WorkoutPlayer() {
   const { dayId } = Route.useParams();
@@ -528,39 +592,12 @@ function WorkoutPlayer() {
               </div>
             );
           }
-          if (ex.exercise.thumbnail_url) {
-            return (
-              <a
-                href={ex.exercise.video_url ?? "#"}
-                target="_blank"
-                rel="noreferrer"
-                className="relative block aspect-video overflow-hidden rounded-2xl bg-muted"
-              >
-                <img
-                  src={ex.exercise.thumbnail_url}
-                  alt={ex.exercise.name}
-                  className="h-full w-full object-cover"
-                />
-                {ex.exercise.video_url && (
-                  <span className="absolute inset-0 grid place-items-center bg-black/30 text-white">
-                    <Play className="h-8 w-8" />
-                  </span>
-                )}
-              </a>
-            );
-          }
           return (
-            <div className="flex flex-col items-center gap-2 rounded-2xl bg-accent p-6 text-primary">
-              <Sparkles className="h-8 w-8" />
-              <a
-                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(ex.exercise.name + " exercise tutorial")}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs font-semibold underline"
-              >
-                Search on YouTube
-              </a>
-            </div>
+            <ExerciseMedia
+              name={ex.exercise.name}
+              videoUrl={ex.exercise.video_url}
+              posterUrl={ex.exercise.thumbnail_url}
+            />
           );
         })()}
         {(() => {

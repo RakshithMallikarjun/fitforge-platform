@@ -217,8 +217,16 @@ function SignInForm() {
       return;
     }
 
+    // Record the sign-in on the profile row so the members page never has to
+    // page through platform-wide auth users to show "last active".
+    await supabase.rpc("touch_last_sign_in").then(
+      () => undefined,
+      () => undefined,
+    );
+
     setLoading(false);
     toast.success("Welcome back");
+
   }
 
   async function onForgot(e: React.FormEvent) {

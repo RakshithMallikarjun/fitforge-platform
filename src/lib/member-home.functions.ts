@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { rankMuscleGroups } from "./muscle-groups";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { dateStringInZone, shiftDateString, startOfWeekString } from "@/lib/gym-date";
 
@@ -131,11 +132,9 @@ export const getMemberHome = createServerFn({ method: "GET" })
             ),
           ),
         );
-        const muscleGroups = Array.from(
-          new Set(
-            exercises.flatMap((e: any) => (e.exercises?.muscle_groups ?? []) as string[]),
-          ),
-        ).slice(0, 4);
+        const muscleGroups = rankMuscleGroups(
+          exercises.flatMap((e: any) => (e.exercises?.muscle_groups ?? []) as string[]),
+        );
         nextWorkout = {
           dayId: day.id as string,
           dayLabel: day.day_label as string,

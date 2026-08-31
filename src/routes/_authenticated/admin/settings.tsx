@@ -36,6 +36,7 @@ function SettingsPage() {
 
   const [name, setName] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#059669");
+  const [secondaryColor, setSecondaryColor] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [fontFamily, setFontFamily] = useState<string>("Satoshi");
   const [supportEmail, setSupportEmail] = useState("");
@@ -43,6 +44,38 @@ function SettingsPage() {
 
   const { data: me } = useCurrentUser();
   const isAdmin = !!me?.roles.includes("admin");
+
+  useEffect(() => {
+    if (!gym) return;
+    setName(gym.name ?? "");
+    setPrimaryColor(gym.primary_color ?? "#059669");
+    setSecondaryColor(gym.secondary_color ?? "");
+    setLogoUrl(gym.logo_url ?? "");
+    setFontFamily(gym.font_family ?? "Satoshi");
+    setSupportEmail(gym.support_email ?? "");
+    setSupportPhone(gym.support_phone ?? "");
+  }, [gym]);
+
+  const mutation = useMutation({
+    mutationFn: (vars: {
+      name: string;
+      primaryColor: string;
+      secondaryColor?: string | null;
+      logoUrl?: string | null;
+      fontFamily?: string | null;
+      supportEmail?: string | null;
+      supportPhone?: string | null;
+    }) => saveSettings({ data: vars }),
+    onSuccess: () => {
+      toast.success("Gym branding updated");
+      qc.invalidateQueries({ queryKey: ["gym-theme"] });
+      qc.invalidateQueries({ queryKey: ["gym-settings"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed to save"),
+  });
+
+  const validHex = /^#[0-9a-fA-F]{6}$/.test(primaryColor);
+  const logoValid = logoUrl && /^https?:\/\//i.test(logoUrl);
 
   if (!isAdmin) {
     return (
@@ -66,35 +99,6 @@ function SettingsPage() {
     );
   }
 
-  useEffect(() => {
-    if (!gym) return;
-    setName(gym.name ?? "");
-    setPrimaryColor(gym.primary_color ?? "#059669");
-    setLogoUrl(gym.logo_url ?? "");
-    setFontFamily(gym.font_family ?? "Satoshi");
-    setSupportEmail(gym.support_email ?? "");
-    setSupportPhone(gym.support_phone ?? "");
-  }, [gym]);
-
-  const mutation = useMutation({
-    mutationFn: (vars: {
-      name: string;
-      primaryColor: string;
-      logoUrl?: string | null;
-      fontFamily?: string | null;
-      supportEmail?: string | null;
-      supportPhone?: string | null;
-    }) => saveSettings({ data: vars }),
-    onSuccess: () => {
-      toast.success("Gym branding updated");
-      qc.invalidateQueries({ queryKey: ["gym-theme"] });
-      qc.invalidateQueries({ queryKey: ["gym-settings"] });
-    },
-    onError: (e: any) => toast.error(e?.message ?? "Failed to save"),
-  });
-
-  const validHex = /^#[0-9a-fA-F]{6}$/.test(primaryColor);
-  const logoValid = logoUrl && /^https?:\/\//i.test(logoUrl);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
@@ -139,6 +143,25 @@ function SettingsPage() {
                   {!validHex && (
                     <span className="text-xs text-destructive">Use #RRGGBB</span>
                   )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="secondary-color">Secondary colour (optional)</Label>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="secondary-color"
+                    type="color"
+                    value={/^#[0-9a-fA-F]{6}$/.test(secondaryColor) ? secondaryColor : "#475569"}
+                    onChange={(e) => setSecondaryColor(e.target.value)}
+                    className="h-10 w-14 cursor-pointer rounded-md border border-border bg-transparent"
+                  />
+                  <Input
+                    value={secondaryColor}
+                    onChange={(e) => setSecondaryColor(e.target.value)}
+                    placeholder="Leave blank for neutral"
+                    className="max-w-[180px] font-mono"
+                  />
                 </div>
               </div>
 
@@ -234,6 +257,7 @@ function SettingsPage() {
                     mutation.mutate({
                       name,
                       primaryColor,
+                      secondaryColor: secondaryColor || null,
                       logoUrl: logoUrl || null,
                       fontFamily,
                       supportEmail: supportEmail || null,

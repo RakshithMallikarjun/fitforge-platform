@@ -24,6 +24,29 @@ const DIFF_COLOR: Record<string, string> = {
   advanced: "bg-rose-100 text-rose-700",
 };
 
+/** Thumbnail with a graceful icon placeholder when the asset is missing. */
+function ExerciseThumb({ src, name }: { src: string | null; name: string }) {
+  const [failed, setFailed] = useState(false);
+  const showImg = !!src && !failed;
+  return (
+    <div className="aspect-video bg-muted">
+      {showImg ? (
+        <img
+          src={src!}
+          alt={name}
+          loading="lazy"
+          className="h-full w-full object-cover"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div className="grid h-full w-full place-items-center gap-1 text-muted-foreground">
+          <Dumbbell className="h-8 w-8" />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ExercisesPage() {
   const { data: me } = useCurrentUser();
   const canManage = me?.roles.includes("admin") || me?.roles.includes("trainer");
@@ -130,14 +153,7 @@ function ExercisesPage() {
               const isGlobal = e.gym_id === null;
               return (
                 <div key={e.id} className="group relative overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-[var(--shadow-card)]">
-                  <div className="aspect-video bg-muted">
-                    {e.thumbnail_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={e.thumbnail_url} alt={e.name} className="h-full w-full object-cover" onError={(ev) => { (ev.target as HTMLImageElement).style.display = "none"; }} />
-                    ) : (
-                      <div className="grid h-full w-full place-items-center text-muted-foreground"><Dumbbell className="h-8 w-8" /></div>
-                    )}
-                  </div>
+                  <ExerciseThumb src={e.thumbnail_url} name={e.name} />
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">

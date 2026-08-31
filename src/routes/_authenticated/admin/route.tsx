@@ -12,6 +12,13 @@ import { useTheme } from "@/lib/theme-provider";
 import { getGymTheme } from "@/lib/gym-theme.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
+  head: () => ({
+    meta: [
+      { title: "Gym console · FitForge" },
+      { name: "description", content: "Manage members, plans, check-ins and reports for your gym." },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   component: AdminShell,
 });
 

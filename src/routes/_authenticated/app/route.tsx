@@ -12,6 +12,13 @@ import { unreadCount } from "@/lib/messages.functions";
 import { getGymTheme } from "@/lib/gym-theme.functions";
 
 export const Route = createFileRoute("/_authenticated/app")({
+  head: () => ({
+    meta: [
+      { title: "My training · FitForge" },
+      { name: "description", content: "Your workouts, progress and messages with your trainer." },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   component: MemberShell,
 });
 

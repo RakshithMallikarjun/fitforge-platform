@@ -12,6 +12,34 @@ export type ExerciseSuggestion = {
 };
 
 const FOUR_WEEKS_MS = 28 * 24 * 60 * 60 * 1000;
+const DAILY_CALL_CEILING = 40;
+
+/** Model replies are untrusted input — validate before anything reaches the UI. */
+const aiResponseSchema = z.object({
+  suggestions: z
+    .array(
+      z.object({
+        exerciseId: z.string(),
+        suggestedWeight: z.number().finite().nonnegative().optional().nullable(),
+        suggestedReps: z.number().finite().positive().optional().nullable(),
+        reasoning: z.string().max(400).optional(),
+      }),
+    )
+    .default([]),
+});
+
+/** Clamp a model number to +/-10% of the athlete's own recent average. */
+function clampToDelta(value: number | null | undefined, baseline: number | null, maxDeltaPct = 0.1): number | null {
+  if (baseline == null || baseline <= 0) return null;
+  if (value == null || !Number.isFinite(value) || value <= 0) return null;
+  const min = baseline * (1 - maxDeltaPct);
+  const max = baseline * (1 + maxDeltaPct);
+  return Math.min(max, Math.max(min, value));
+}
+
+function roundWeight(n: number | null): number | null {
+  return n == null ? null : Math.round(n / 2.5) * 2.5;
+}
 
 /**
  * Analyze the last ~4 weeks of exercise logs for a member across given exercises
@@ -29,7 +57,42 @@ export const suggestOverload = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ context, data }): Promise<ExerciseSuggestion[]> => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+
+    // --- Explicit authorization: caller is the member, or staff in that gym ---
+    if (data.memberId !== userId) {
+      const [{ data: me }, { data: them }, { data: roles }] = await Promise.all([
+        supabase.from("users").select("gym_id").eq("id", userId).maybeSingle(),
+        supabase.from("users").select("gym_id").eq("id", data.memberId).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", userId),
+      ]);
+      const staff = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "trainer");
+      if (!staff || !me?.gym_id || me.gym_id !== them?.gym_id) throw new Error("Forbidden");
+    }
+
+    // --- Cache: one AI answer per (member, exercise set) per day ---
+    const today = new Date().toISOString().slice(0, 10);
+    const cacheKey = `${today}:${[...data.exerciseIds].sort().join(",")}`;
+    const { data: cached } = await supabase
+      .from("ai_overload_cache")
+      .select("payload")
+      .eq("member_id", data.memberId)
+      .eq("cache_key", cacheKey)
+      .maybeSingle();
+    if (cached?.payload) return (cached.payload as unknown) as ExerciseSuggestion[];
+
+    // --- Per-user daily call ceiling ---
+    const dayStart = new Date();
+    dayStart.setUTCHours(0, 0, 0, 0);
+    const { count: callsToday } = await supabase
+      .from("ai_overload_cache")
+      .select("id", { count: "exact", head: true })
+      .eq("requested_by", userId)
+      .gte("created_at", dayStart.toISOString());
+    if ((callsToday ?? 0) >= DAILY_CALL_CEILING) {
+      throw new Error("Daily AI suggestion limit reached — try again tomorrow.");
+    }
+
     const since = new Date(Date.now() - FOUR_WEEKS_MS).toISOString();
 
     const [{ data: exRows }, { data: logs }] = await Promise.all([
@@ -114,7 +177,7 @@ Return JSON:
   ]
 }`;
 
-    let parsed: { suggestions?: Array<{ exerciseId: string; suggestedWeight: number; suggestedReps: number; reasoning: string }> } = {};
+    let parsed: z.infer<typeof aiResponseSchema> = { suggestions: [] };
     try {
       const text = await chatCompletion({
         model: "google/gemini-2.5-flash",
@@ -124,7 +187,7 @@ Return JSON:
         ],
         responseFormat: "json_object",
       });
-      parsed = JSON.parse(text);
+      parsed = aiResponseSchema.parse(JSON.parse(text));
     } catch (e: any) {
       // Fall back to a heuristic +2.5% bump so the UI still works.
       return summaries.map((s) => {
@@ -144,17 +207,30 @@ Return JSON:
       (parsed.suggestions ?? []).map((x) => [x.exerciseId, x]),
     );
 
-    return summaries.map((s) => {
+    const result: ExerciseSuggestion[] = summaries.map((s) => {
       const ai = map.get(s.exerciseId);
+      const heuristicWeight = roundWeight(s.avgWeight ? s.avgWeight * 1.025 : null);
+      const clampedWeight = roundWeight(clampToDelta(ai?.suggestedWeight, s.avgWeight));
+      const clampedReps = clampToDelta(ai?.suggestedReps, s.avgReps, 0.25);
+      const usedAi = clampedWeight != null || clampedReps != null;
       return {
         exerciseId: s.exerciseId,
         exerciseName: s.exerciseName,
         currentAvg: { weight: s.avgWeight, reps: s.avgReps, sets: s.sessionCount },
-        suggestedWeight: ai?.suggestedWeight ?? s.avgWeight,
-        suggestedReps: ai?.suggestedReps ?? (s.avgReps ? Math.round(s.avgReps) : null),
-        reasoning: ai?.reasoning ?? "Maintain current load.",
+        suggestedWeight: clampedWeight ?? heuristicWeight ?? s.avgWeight,
+        suggestedReps: clampedReps != null ? Math.round(clampedReps) : s.avgReps ? Math.round(s.avgReps) : null,
+        reasoning: usedAi
+          ? (ai?.reasoning?.slice(0, 300) ?? "Progressive increase based on recent sessions.")
+          : "Suggestion out of safe range — using a conservative +2.5% instead.",
       };
     });
+
+    // Cache so repeat views of the same day cost nothing.
+    await supabase
+      .from("ai_overload_cache")
+      .insert({ requested_by: userId, member_id: data.memberId, cache_key: cacheKey, payload: result as any });
+
+    return result;
   });
 
 /** Persist an approved suggestion so it surfaces on the member's home. */
