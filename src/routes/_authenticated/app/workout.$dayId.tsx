@@ -204,6 +204,68 @@ function Stepper({
 
 type SetState = { weight: string; reps: string; done: boolean };
 
+/** Video with poster, degrading to a poster image and then an icon placeholder. */
+function ExerciseMedia({
+  name,
+  videoUrl,
+  posterUrl,
+}: {
+  name: string;
+  videoUrl: string | null;
+  posterUrl: string | null;
+}) {
+  const [videoFailed, setVideoFailed] = useState(false);
+  const [posterFailed, setPosterFailed] = useState(false);
+  const isFile = !!videoUrl && /\.(mp4|webm|mov|m4v)(\?|$)/i.test(videoUrl);
+
+  if (isFile && !videoFailed) {
+    return (
+      <div className="relative aspect-video overflow-hidden rounded-2xl bg-muted">
+        <video
+          src={videoUrl!}
+          poster={posterFailed || !posterUrl ? undefined : posterUrl}
+          controls
+          playsInline
+          preload="metadata"
+          className="h-full w-full object-cover"
+          onError={() => setVideoFailed(true)}
+        >
+          <track kind="captions" />
+        </video>
+      </div>
+    );
+  }
+
+  if (posterUrl && !posterFailed) {
+    return (
+      <div className="relative aspect-video overflow-hidden rounded-2xl bg-muted">
+        <img
+          src={posterUrl}
+          alt={name}
+          loading="lazy"
+          className="h-full w-full object-cover"
+          onError={() => setPosterFailed(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex aspect-video flex-col items-center justify-center gap-2 rounded-2xl bg-accent text-accent-foreground">
+      <Dumbbell className="h-8 w-8" />
+      <p className="text-xs font-medium">No demo video yet</p>
+      <a
+        href={`https://www.youtube.com/results?search_query=${encodeURIComponent(name + " exercise tutorial")}`}
+        target="_blank"
+        rel="noreferrer"
+        className="text-xs font-semibold underline"
+      >
+        Search on YouTube
+      </a>
+    </div>
+  );
+}
+
 function WorkoutPlayer() {
   const { dayId } = Route.useParams();
   const navigate = useNavigate();
