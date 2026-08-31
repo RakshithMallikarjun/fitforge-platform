@@ -88,7 +88,11 @@ function MemberHome() {
           </span>
         </div>
         <p className="mt-2 text-base font-semibold tracking-tight">
-          {data?.lastWorkoutDate ? "Logged and counted toward your streak." : "No workouts logged yet — your journey starts here."}
+          {!data?.lastWorkoutDate
+            ? "No workouts logged yet — your journey starts here."
+            : (data?.currentStreak ?? 0) > 0
+              ? "Counted toward your streak."
+              : "Your streak reset — start a new one today."}
         </p>
       </div>
 
