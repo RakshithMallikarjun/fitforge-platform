@@ -59,11 +59,12 @@ async function readQueue(): Promise<QueuedItem[]> {
   const raw = (await get<QueuedItem[]>(QUEUE_KEY)) ?? [];
   // Tolerate items written by an older version without attempt bookkeeping.
   return raw.map((i) => ({
-    attempts: 0,
-    nextAttemptAt: 0,
     ...i,
+    attempts: i.attempts ?? 0,
+    nextAttemptAt: i.nextAttemptAt ?? 0,
   }));
 }
+
 
 async function writeQueue(items: QueuedItem[]) {
   if (items.length === 0) await del(QUEUE_KEY);
