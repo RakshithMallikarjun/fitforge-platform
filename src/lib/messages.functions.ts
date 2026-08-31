@@ -128,3 +128,25 @@ export const unreadCount = createServerFn({ method: "GET" })
       .is("read_at", null);
     return { count: count ?? 0 };
   });
+
+export type Contact = { id: string; display_name: string | null; email: string; photo_url: string | null };
+
+/** Staff the current member can start a conversation with (their active assigned trainers). */
+export const listMyTrainers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<Contact[]> => {
+    const { supabase, userId } = context;
+    const { data: assigns } = await supabase
+      .from("trainer_assignments")
+      .select("trainer_id")
+      .eq("member_id", userId)
+      .eq("active", true);
+    const ids = Array.from(new Set((assigns ?? []).map((a: any) => a.trainer_id as string)));
+    if (!ids.length) return [];
+    const { data: users } = await supabase
+      .from("users")
+      .select("id, display_name, email, photo_url")
+      .in("id", ids);
+    const { signPhotoField } = await import("./photo-signing");
+    return (await signPhotoField(supabase, (users ?? []) as any[], "photo_url")) as Contact[];
+  });
