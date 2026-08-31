@@ -528,39 +528,12 @@ function WorkoutPlayer() {
               </div>
             );
           }
-          if (ex.exercise.thumbnail_url) {
-            return (
-              <a
-                href={ex.exercise.video_url ?? "#"}
-                target="_blank"
-                rel="noreferrer"
-                className="relative block aspect-video overflow-hidden rounded-2xl bg-muted"
-              >
-                <img
-                  src={ex.exercise.thumbnail_url}
-                  alt={ex.exercise.name}
-                  className="h-full w-full object-cover"
-                />
-                {ex.exercise.video_url && (
-                  <span className="absolute inset-0 grid place-items-center bg-black/30 text-white">
-                    <Play className="h-8 w-8" />
-                  </span>
-                )}
-              </a>
-            );
-          }
           return (
-            <div className="flex flex-col items-center gap-2 rounded-2xl bg-accent p-6 text-primary">
-              <Sparkles className="h-8 w-8" />
-              <a
-                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(ex.exercise.name + " exercise tutorial")}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs font-semibold underline"
-              >
-                Search on YouTube
-              </a>
-            </div>
+            <ExerciseMedia
+              name={ex.exercise.name}
+              videoUrl={ex.exercise.video_url}
+              posterUrl={ex.exercise.thumbnail_url}
+            />
           );
         })()}
         {(() => {
