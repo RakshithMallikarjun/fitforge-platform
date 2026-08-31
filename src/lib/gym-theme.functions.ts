@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export type GymThemePayload = {
   name: string;
   primaryColor: string;
+  secondaryColor: string | null;
   logoUrl: string | null;
   fontFamily: string;
   supportEmail: string | null;
@@ -15,6 +16,7 @@ export type GymSettingsRow = {
   name: string;
   slug: string;
   primary_color: string | null;
+  secondary_color: string | null;
   logo_url: string | null;
   font_family: string | null;
   support_email: string | null;
@@ -28,7 +30,7 @@ export const getGymTheme = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data: user } = await supabase
       .from("users")
-      .select("gym_id, gyms(name, primary_color, logo_url, font_family, support_email, support_phone)")
+      .select("gym_id, gyms(name, primary_color, secondary_color, logo_url, font_family, support_email, support_phone)")
       .eq("id", userId)
       .maybeSingle();
     const gym = (user as any)?.gyms;
@@ -36,6 +38,7 @@ export const getGymTheme = createServerFn({ method: "GET" })
     return {
       name: gym.name,
       primaryColor: gym.primary_color ?? "#059669",
+      secondaryColor: gym.secondary_color ?? null,
       logoUrl: gym.logo_url ?? null,
       fontFamily: gym.font_family ?? "Satoshi",
       supportEmail: gym.support_email ?? null,
@@ -61,7 +64,7 @@ export const getGymSettings = createServerFn({ method: "GET" })
     if (!user?.gym_id) return null;
     const { data: gym, error } = await supabase
       .from("gyms")
-      .select("id, name, slug, primary_color, logo_url, font_family, support_email, support_phone")
+      .select("id, name, slug, primary_color, secondary_color, logo_url, font_family, support_email, support_phone")
       .eq("id", user.gym_id)
       .maybeSingle();
     if (error) throw error;
@@ -75,6 +78,7 @@ export const updateGymSettings = createServerFn({ method: "POST" })
     (data: {
       name: string;
       primaryColor: string;
+      secondaryColor?: string | null;
       logoUrl?: string | null;
       fontFamily?: string | null;
       supportEmail?: string | null;
@@ -83,6 +87,8 @@ export const updateGymSettings = createServerFn({ method: "POST" })
       if (!data.name?.trim()) throw new Error("Name is required");
       if (!/^#[0-9a-fA-F]{6}$/.test(data.primaryColor))
         throw new Error("Primary colour must be a 6-digit hex like #059669");
+      if (data.secondaryColor && !/^#[0-9a-fA-F]{6}$/.test(data.secondaryColor))
+        throw new Error("Secondary colour must be a 6-digit hex like #0284c7");
       return data;
     },
   )
@@ -104,13 +110,14 @@ export const updateGymSettings = createServerFn({ method: "POST" })
       .update({
         name: data.name.trim(),
         primary_color: data.primaryColor,
+        secondary_color: data.secondaryColor?.trim() || null,
         logo_url: data.logoUrl?.trim() || null,
         font_family: data.fontFamily?.trim() || "Satoshi",
         support_email: data.supportEmail?.trim() || null,
         support_phone: data.supportPhone?.trim() || null,
       })
       .eq("id", user.gym_id)
-      .select("id, name, slug, primary_color, logo_url, font_family, support_email, support_phone")
+      .select("id, name, slug, primary_color, secondary_color, logo_url, font_family, support_email, support_phone")
       .single();
     if (error) throw error;
     return gym as GymSettingsRow;
