@@ -10,18 +10,38 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { claimGymAdmin, gymHasAdmin } from "@/lib/bootstrap.functions";
 import { useQueryClient } from "@tanstack/react-query";
+import { PasswordStrength } from "@/components/auth/password-strength";
+import { friendlyAuthError, scorePassword } from "@/lib/auth-errors";
+
+type AuthSearch = { deactivated?: boolean };
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): AuthSearch => ({
+    deactivated: search.deactivated === true || search.deactivated === "true" ? true : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign in · FitForge" },
       { name: "description", content: "Sign in to FitForge or create a member account." },
+      { property: "og:title", content: "Sign in to FitForge" },
+      { property: "og:description", content: "Sign in to FitForge or create a member account." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuthPage,
 });
 
+function ErrorBanner({ children }: { children: React.ReactNode }) {
+  return (
+    <p role="alert" className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
+      {children}
+    </p>
+  );
+}
+
 function AuthPage() {
+  const { deactivated } = Route.useSearch();
   const { data: user, sessionLoading, refetch } = useCurrentUser();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -29,16 +49,15 @@ function AuthPage() {
   const [claimToken, setClaimToken] = useState("");
   const [checking, setChecking] = useState(false);
   const [claiming, setClaiming] = useState(false);
+  const [pageError, setPageError] = useState<string | null>(null);
 
+  // Explicit, durable error state from the route guard (account deactivated
+  // mid-session) instead of a one-shot toast that gets lost behind others.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.sessionStorage.getItem("ff_deactivated") === "1") {
-      window.sessionStorage.removeItem("ff_deactivated");
-      toast.error("Your account has been deactivated", {
-        description: "Please contact your gym.",
-      });
+    if (deactivated) {
+      setPageError("This account has been deactivated. Please contact your gym to regain access.");
     }
-  }, []);
+  }, [deactivated]);
 
   // After a signed-in user lands here, check if their gym is unclaimed.
   // If so, offer the claim banner BEFORE redirecting — even if they already
@@ -52,7 +71,13 @@ function AuthPage() {
     }
     const slug = (user.session.user.user_metadata as any)?.gym_slug as string | undefined;
     if (!slug) {
-      if (user.primaryRole === "member") navigate({ to: "/app", replace: true });
+      if (user.primaryRole === "member") {
+        navigate({ to: "/app", replace: true });
+      } else {
+        setPageError(
+          "Your account isn't linked to a gym yet, so there's nothing to open. Ask your gym to add you, then sign in again.",
+        );
+      }
       return;
     }
     let cancelled = false;
@@ -64,7 +89,15 @@ function AuthPage() {
           setClaimSlug(slug);
         } else if (user.primaryRole === "member") {
           navigate({ to: "/app", replace: true });
+        } else {
+          // Terminal branch: signed in, but we can't resolve a gym or a role.
+          setPageError(
+            `We couldn't match your account to the gym "${slug}". Please contact your gym so they can finish setting up your membership.`,
+          );
         }
+      })
+      .catch((e) => {
+        if (!cancelled) setPageError(friendlyAuthError(e, "We couldn't check your gym. Please try again."));
       })
       .finally(() => !cancelled && setChecking(false));
     return () => {
@@ -86,7 +119,7 @@ function AuthPage() {
       await refetch();
       navigate({ to: "/admin", replace: true });
     } catch (e: any) {
-      toast.error(e?.message ?? "Could not claim admin");
+      toast.error(friendlyAuthError(e, "Could not claim admin"));
     } finally {
       setClaiming(false);
     }
@@ -101,6 +134,12 @@ function AuthPage() {
           </div>
           <span className="font-display text-lg font-bold">FitForge</span>
         </Link>
+
+        {pageError && (
+          <div className="mb-4">
+            <ErrorBanner>{pageError}</ErrorBanner>
+          </div>
+        )}
 
         {claimSlug && (
           <div className="mb-4 rounded-2xl border border-primary/30 bg-accent p-4">
@@ -146,17 +185,85 @@ function AuthPage() {
 }
 
 function SignInForm() {
+  const [mode, setMode] = useState<"signin" | "forgot">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInErr || !data.user) {
+      setLoading(false);
+      setError(friendlyAuthError(signInErr, "We couldn't sign you in. Please try again."));
+      return;
+    }
+
+    // Deactivated accounts must fail HERE — before any success feedback. The
+    // _authenticated route guard stays as the backstop for mid-session changes.
+    const { data: profile } = await supabase
+      .from("users")
+      .select("active")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    if (profile && profile.active === false) {
+      await supabase.auth.signOut();
+      setLoading(false);
+      setError("This account has been deactivated. Please contact your gym to regain access.");
+      return;
+    }
+
     setLoading(false);
-    if (error) toast.error(error.message);
-    else toast.success("Welcome back");
+    toast.success("Welcome back");
+  }
+
+  async function onForgot(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (err) {
+      setError(friendlyAuthError(err, "We couldn't send the reset email."));
+      return;
+    }
+    setSent(true);
+  }
+
+  if (mode === "forgot") {
+    return (
+      <form onSubmit={onForgot} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="fp-email">Email</Label>
+          <Input id="fp-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <p className="text-xs text-muted-foreground">
+            We'll email you a link to choose a new password.
+          </p>
+        </div>
+        {error && <ErrorBanner>{error}</ErrorBanner>}
+        {sent && (
+          <p className="rounded-xl bg-primary-soft px-3 py-2 text-sm text-primary">
+            If an account exists for {email}, a reset link is on its way. Check your inbox and spam folder.
+          </p>
+        )}
+        <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl">
+          {loading ? "Sending…" : "Send reset link"}
+        </Button>
+        <button
+          type="button"
+          onClick={() => { setMode("signin"); setError(null); setSent(false); }}
+          className="w-full text-center text-xs font-medium text-muted-foreground hover:text-foreground"
+        >
+          Back to sign in
+        </button>
+      </form>
+    );
   }
 
   return (
@@ -166,9 +273,19 @@ function SignInForm() {
         <Input id="signin-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="signin-password">Password</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="signin-password">Password</Label>
+          <button
+            type="button"
+            onClick={() => { setMode("forgot"); setError(null); }}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            Forgot password?
+          </button>
+        </div>
         <Input id="signin-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
       </div>
+      {error && <ErrorBanner>{error}</ErrorBanner>}
       <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl">
         {loading ? "Signing in…" : "Sign in"}
       </Button>
@@ -179,23 +296,36 @@ function SignInForm() {
 function SignUpForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [gymSlug, setGymSlug] = useState("fitforge");
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError(null);
+    if (password !== confirm) {
+      setError("Those passwords don't match.");
+      return;
+    }
+    if (scorePassword(password).score < 2) {
+      setError("Please choose a stronger password (at least 8 characters, with a mix of cases).");
+      return;
+    }
     setLoading(true);
     // Gym membership requires the gym's private join code, so a slug alone
-    // can't be guessed to enter someone else's tenant.
+    // can't be guessed to enter someone else's tenant. Validated BEFORE signUp,
+    // so a wrong code never creates an account.
     const { data: valid, error: codeErr } = await supabase.rpc("verify_join_code", {
       _slug: gymSlug.trim(),
       _code: joinCode.trim(),
     });
     if (codeErr || !valid) {
       setLoading(false);
-      toast.error("That gym code and join code don't match.");
+      setError("We couldn't find that gym code — check the gym code and join code with your gym.");
+      if (codeErr) console.error("[auth] verify_join_code", codeErr);
       return;
     }
     // SECURITY: role is HARDCODED to "member". Public self-service sign-up must
@@ -203,7 +333,7 @@ function SignUpForm() {
     // Legitimate paths to create staff:
     //   - claimGymAdmin (src/lib/bootstrap.functions.ts) for the very first admin of a fresh gym
     //   - inviteStaffMember (src/lib/staff.functions.ts) called from the admin-only Staff page
-    const { error } = await supabase.auth.signUp({
+    const { error: signUpErr } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -212,10 +342,12 @@ function SignUpForm() {
       },
     });
     setLoading(false);
-    if (error) toast.error(error.message);
-    else toast.success("Account created — you're in.");
+    if (signUpErr) {
+      setError(friendlyAuthError(signUpErr, "We couldn't create your account."));
+      return;
+    }
+    toast.success("Account created — check your email if we ask you to confirm it.");
   }
-
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -229,7 +361,30 @@ function SignUpForm() {
       </div>
       <div className="space-y-2">
         <Label htmlFor="su-password">Password</Label>
-        <Input id="su-password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Input
+          id="su-password"
+          type="password"
+          required
+          minLength={8}
+          autoComplete="new-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <PasswordStrength password={password} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="su-confirm">Confirm password</Label>
+        <Input
+          id="su-confirm"
+          type="password"
+          required
+          autoComplete="new-password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+        />
+        {confirm.length > 0 && confirm !== password && (
+          <p className="text-xs text-destructive">Those passwords don't match.</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="su-gym">Gym code</Label>
@@ -240,6 +395,8 @@ function SignUpForm() {
         <Label htmlFor="su-join">Join code</Label>
         <Input id="su-join" required value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="Provided by your gym" />
       </div>
+
+      {error && <ErrorBanner>{error}</ErrorBanner>}
 
       <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl">
         {loading ? "Creating account…" : "Create account"}
