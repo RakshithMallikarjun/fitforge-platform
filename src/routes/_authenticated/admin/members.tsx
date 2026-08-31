@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Plus, Search, Upload, Users as UsersIcon, ArrowUpDown, MoreHorizontal, UserCog, UserX, UserCheck } from "lucide-react";
+import { Plus, Search, Upload, Users as UsersIcon, ArrowUpDown, MoreHorizontal, UserCog, UserX, UserCheck, MailPlus } from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { listMembers, listTrainers, setMemberActive } from "@/lib/members.functions";
+import { listMembers, listTrainers, setMemberActive, resendMemberInvite } from "@/lib/members.functions";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -67,6 +67,12 @@ function MembersPage() {
       qc.invalidateQueries({ queryKey: ["members"] });
     },
     onError: (e: any) => toast.error("Action failed", { description: e?.message }),
+  });
+
+  const resendInvite = useMutation({
+    mutationFn: (memberId: string) => resendMemberInvite({ data: { memberId } }),
+    onSuccess: (res: any) => toast.success(`Invite re-sent to ${res?.email ?? "member"}`),
+    onError: (e: any) => toast.error("Couldn't re-send the invite", { description: e?.message }),
   });
 
   const rows = useMemo(() => {
@@ -258,6 +264,14 @@ function MembersPage() {
                               <DropdownMenuItem onClick={() => setAssignFor({ id: m.id, name: m.display_name ?? m.email, trainerIds: m.trainers.map((t: any) => t.id) })}>
                                 <UserCog className="mr-2 h-4 w-4" /> Assign trainers
                               </DropdownMenuItem>
+                              {!m.last_sign_in_at && (
+                                <DropdownMenuItem
+                                  disabled={resendInvite.isPending}
+                                  onClick={() => resendInvite.mutate(m.id)}
+                                >
+                                  <MailPlus className="mr-2 h-4 w-4" /> Resend invite
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuSeparator />
                               {m.active ? (
                                 <DropdownMenuItem
