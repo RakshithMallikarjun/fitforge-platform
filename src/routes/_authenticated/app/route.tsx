@@ -89,27 +89,29 @@ function MemberShell() {
 
       <main className="mx-auto max-w-md px-5 py-6">
         <Outlet />
-        <div className="mt-10 flex flex-col items-center gap-2 border-t border-border pt-6 text-xs text-muted-foreground">
-          <button
-            type="button"
-            onClick={() => {
-              const email = user?.email ?? "";
-              const gymName = theme.name ?? "";
-              window.location.href = `mailto:support@fitforge.app?subject=${encodeURIComponent("FitForge Support Request")}&body=${encodeURIComponent(`User: ${email}\nGym: ${gymName}\n\nPlease describe your issue:`)}`;
-            }}
-            className="font-medium text-primary hover:underline"
-          >
-            Need a hand? Talk to support
-          </button>
-          <a
-            href="https://wa.me/919999999999?text=Hi,%20I%20need%20help%20with%20FitForge"
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium text-primary hover:underline"
-          >
-            Chat on WhatsApp
-          </a>
-        </div>
+        {(theme.supportEmail || theme.supportPhone) && (
+          <div className="mt-10 flex flex-col items-center gap-2 border-t border-border pt-6 text-xs text-muted-foreground">
+            <p>Questions about your membership or training?</p>
+            {theme.supportEmail && (
+              <a
+                href={`mailto:${theme.supportEmail}?subject=${encodeURIComponent(`Help request — ${theme.name}`)}&body=${encodeURIComponent(`Member: ${user?.email ?? ""}\n\nHow can we help?`)}`}
+                className="font-medium text-primary hover:underline"
+              >
+                Email {theme.name}
+              </a>
+            )}
+            {theme.supportPhone && (
+              <a
+                href={`https://wa.me/${theme.supportPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hi ${theme.name}, I need help with my membership.`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-primary hover:underline"
+              >
+                WhatsApp {theme.name}
+              </a>
+            )}
+          </div>
+        )}
       </main>
 
       <InstallPrompt />
