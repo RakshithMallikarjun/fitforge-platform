@@ -17,6 +17,8 @@ export type GymSettingsRow = {
   primary_color: string | null;
   logo_url: string | null;
   font_family: string | null;
+  support_email: string | null;
+  support_phone: string | null;
 };
 
 /** Fetch the current user's gym theme (member or staff). */
@@ -59,7 +61,7 @@ export const getGymSettings = createServerFn({ method: "GET" })
     if (!user?.gym_id) return null;
     const { data: gym, error } = await supabase
       .from("gyms")
-      .select("id, name, slug, primary_color, logo_url, font_family")
+      .select("id, name, slug, primary_color, logo_url, font_family, support_email, support_phone")
       .eq("id", user.gym_id)
       .maybeSingle();
     if (error) throw error;
@@ -75,6 +77,8 @@ export const updateGymSettings = createServerFn({ method: "POST" })
       primaryColor: string;
       logoUrl?: string | null;
       fontFamily?: string | null;
+      supportEmail?: string | null;
+      supportPhone?: string | null;
     }) => {
       if (!data.name?.trim()) throw new Error("Name is required");
       if (!/^#[0-9a-fA-F]{6}$/.test(data.primaryColor))
@@ -102,9 +106,11 @@ export const updateGymSettings = createServerFn({ method: "POST" })
         primary_color: data.primaryColor,
         logo_url: data.logoUrl?.trim() || null,
         font_family: data.fontFamily?.trim() || "Satoshi",
+        support_email: data.supportEmail?.trim() || null,
+        support_phone: data.supportPhone?.trim() || null,
       })
       .eq("id", user.gym_id)
-      .select("id, name, slug, primary_color, logo_url, font_family")
+      .select("id, name, slug, primary_color, logo_url, font_family, support_email, support_phone")
       .single();
     if (error) throw error;
     return gym as GymSettingsRow;
