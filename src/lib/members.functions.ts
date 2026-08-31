@@ -50,7 +50,7 @@ export const listMembers = createServerFn({ method: "GET" })
     const [{ data: users }, { data: profiles }, { data: assignments }] = await Promise.all([
       supabase
         .from("users")
-        .select("id, display_name, email, phone, photo_url, active, created_at")
+        .select("id, display_name, email, phone, photo_url, active, created_at, last_sign_in_at")
         .in("id", memberIds),
       supabase
         .from("member_profiles")
@@ -69,22 +69,8 @@ export const listMembers = createServerFn({ method: "GET" })
       : { data: [] as any[] };
     const trainerMap = new Map((trainers ?? []).map((t: any) => [t.id, t]));
 
-    // Last sign-in via admin (best-effort, only for admins)
-    let lastSignInMap = new Map<string, string | null>();
-    if (isAdmin) {
-      try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        let page = 1;
-        // page through up to ~5 pages of 1000 to cover most gyms
-        for (let i = 0; i < 5; i++) {
-          const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
-          if (error) break;
-          for (const u of data.users) lastSignInMap.set(u.id, u.last_sign_in_at ?? null);
-          if (data.users.length < 1000) break;
-          page++;
-        }
-      } catch { /* ignore */ }
-    }
+    void isAdmin;
+
 
     const profileMap = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
     const assignMap = new Map<string, any[]>();
