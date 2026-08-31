@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 export type GymTheme = {
   primaryColor: string;     // hex
+  secondaryColor: string | null; // hex
   logoUrl: string | null;
   fontFamily: string;       // CSS font family
   name: string;
@@ -11,6 +12,7 @@ export type GymTheme = {
 
 const DEFAULT_THEME: GymTheme = {
   primaryColor: "#059669",
+  secondaryColor: null,
   logoUrl: null,
   fontFamily: "Satoshi",
   name: "FitForge",
@@ -25,8 +27,8 @@ type Ctx = {
 
 const ThemeCtx = createContext<Ctx>({ theme: DEFAULT_THEME, setTheme: () => {} });
 
-/** Convert "#RRGGBB" to oklch CSS string. Falls back to the hex if anything fails. */
-function hexToOklch(hex: string): string {
+/** Convert "#RRGGBB" to oklch components. */
+function hexToOklchParts(hex: string): { L: number; C: number; H: number } | null {
   try {
     const h = hex.replace("#", "");
     const r = parseInt(h.substring(0, 2), 16) / 255;
@@ -44,11 +46,48 @@ function hexToOklch(hex: string): string {
     const bb = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
     const C = Math.sqrt(a * a + bb * bb);
     const H = ((Math.atan2(bb, a) * 180) / Math.PI + 360) % 360;
-    return `oklch(${L.toFixed(3)} ${C.toFixed(3)} ${H.toFixed(1)})`;
+    return { L, C, H };
   } catch {
-    return hex;
+    return null;
   }
 }
+
+const fmt = (L: number, C: number, H: number) =>
+  `oklch(${L.toFixed(3)} ${C.toFixed(3)} ${H.toFixed(1)})`;
+
+/** Full token set derived from a single brand hex (same hue, shifted L/C). */
+function deriveTokens(hex: string, prefix: "primary" | "secondary"): Record<string, string> {
+  const c = hexToOklchParts(hex);
+  if (!c) return {};
+  const { L, C, H } = c;
+  const out: Record<string, string> = {
+    [`--${prefix}`]: fmt(L, C, H),
+    [`--${prefix}-foreground`]: L > 0.7 ? fmt(0.2, 0.03, H) : fmt(0.99, 0.005, H),
+    [`--${prefix}-soft`]: fmt(0.96, Math.min(C, 0.05), H),
+  };
+  if (prefix === "primary") {
+    out["--primary-deep"] = fmt(0.32, Math.min(C * 0.6, 0.09), H);
+    out["--accent"] = out["--primary-soft"];
+    out["--accent-foreground"] = out["--primary-deep"];
+    out["--ring"] = out["--primary"];
+    out["--success"] = out["--primary"];
+    out["--sidebar-primary"] = out["--primary"];
+    out["--sidebar-primary-foreground"] = out["--primary-foreground"];
+    out["--sidebar-accent"] = out["--primary-soft"];
+    out["--sidebar-accent-foreground"] = out["--primary"];
+  } else {
+    out["--info"] = out["--secondary"];
+  }
+  return out;
+}
+
+/** Neutral secondary set used when a gym hasn't picked one (never sky blue). */
+const NEUTRAL_SECONDARY: Record<string, string> = {
+  "--secondary": "oklch(0.45 0.01 260)",
+  "--secondary-foreground": "oklch(0.99 0.002 260)",
+  "--secondary-soft": "oklch(0.96 0.005 260)",
+  "--info": "oklch(0.45 0.01 260)",
+};
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<GymTheme>(DEFAULT_THEME);
@@ -56,9 +95,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
-    root.style.setProperty("--primary", hexToOklch(theme.primaryColor));
-    root.style.setProperty("--ring", hexToOklch(theme.primaryColor));
-    root.style.setProperty("--font-body", `"${theme.fontFamily}", ui-sans-serif, system-ui, sans-serif`);
+    const tokens: Record<string, string> = {
+      ...deriveTokens(theme.primaryColor, "primary"),
+      ...(theme.secondaryColor ? deriveTokens(theme.secondaryColor, "secondary") : NEUTRAL_SECONDARY),
+    };
+    for (const [k, v] of Object.entries(tokens)) root.style.setProperty(k, v);
+    const stack = `"${theme.fontFamily}", ui-sans-serif, system-ui, sans-serif`;
+    root.style.setProperty("--font-body", stack);
+    root.style.setProperty("--font-heading", stack);
   }, [theme]);
 
   const setTheme = useCallback((t: Partial<GymTheme>) => {
