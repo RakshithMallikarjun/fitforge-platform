@@ -321,4 +321,6 @@ function PaymentHistory() {
           </tbody>
         </table>
       )}
+    </div>
+  );
 }
