@@ -102,7 +102,7 @@ export const listMembers = createServerFn({ method: "GET" })
       ...u,
       profile: profileMap.get(u.id) ?? null,
       trainers: signedAssignMap.get(u.id) ?? [],
-      last_sign_in_at: lastSignInMap.get(u.id) ?? null,
+      last_sign_in_at: u.last_sign_in_at ?? null,
     }));
   });
 
