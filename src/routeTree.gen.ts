@@ -17,6 +17,7 @@ import { Route as ManifestDotwebmanifestRouteImport } from './routes/manifest[.]
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedPlatformRouteRouteImport } from './routes/_authenticated/platform/route'
 import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticated/app/route'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
@@ -79,6 +80,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPlatformRouteRoute =
+  AuthenticatedPlatformRouteRouteImport.update({
+    id: '/platform',
+    path: '/platform',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppRouteRoute = AuthenticatedAppRouteRouteImport.update({
   id: '/app',
   path: '/app',
@@ -214,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/app': typeof AuthenticatedAppRouteRouteWithChildren
+  '/platform': typeof AuthenticatedPlatformRouteRoute
   '/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
@@ -243,6 +251,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/platform': typeof AuthenticatedPlatformRouteRoute
   '/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
@@ -276,6 +285,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteRouteWithChildren
+  '/_authenticated/platform': typeof AuthenticatedPlatformRouteRoute
   '/_authenticated/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/_authenticated/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
@@ -309,6 +319,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin'
     | '/app'
+    | '/platform'
     | '/admin/checkin'
     | '/admin/exercises'
     | '/admin/members'
@@ -338,6 +349,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/terms'
+    | '/platform'
     | '/admin/checkin'
     | '/admin/exercises'
     | '/admin/members'
@@ -370,6 +382,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_authenticated/admin'
     | '/_authenticated/app'
+    | '/_authenticated/platform'
     | '/_authenticated/admin/checkin'
     | '/_authenticated/admin/exercises'
     | '/_authenticated/admin/members'
@@ -460,6 +473,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/platform': {
+      id: '/_authenticated/platform'
+      path: '/platform'
+      fullPath: '/platform'
+      preLoaderRoute: typeof AuthenticatedPlatformRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app': {
       id: '/_authenticated/app'
@@ -711,11 +731,13 @@ const AuthenticatedAppRouteRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedAppRouteRoute: typeof AuthenticatedAppRouteRouteWithChildren
+  AuthenticatedPlatformRouteRoute: typeof AuthenticatedPlatformRouteRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedAppRouteRoute: AuthenticatedAppRouteRouteWithChildren,
+  AuthenticatedPlatformRouteRoute: AuthenticatedPlatformRouteRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
