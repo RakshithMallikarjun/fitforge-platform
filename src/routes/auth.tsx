@@ -13,11 +13,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { friendlyAuthError, scorePassword } from "@/lib/auth-errors";
 
-type AuthSearch = { deactivated?: boolean };
+type AuthSearch = { deactivated?: boolean; gymDisabled?: boolean };
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): AuthSearch => ({
     deactivated: search.deactivated === true || search.deactivated === "true" ? true : undefined,
+    gymDisabled: search.gymDisabled === true || search.gymDisabled === "true" ? true : undefined,
   }),
   head: () => ({
     meta: [
@@ -41,7 +42,7 @@ function ErrorBanner({ children }: { children: React.ReactNode }) {
 }
 
 function AuthPage() {
-  const { deactivated } = Route.useSearch();
+  const { deactivated, gymDisabled } = Route.useSearch();
   const { data: user, sessionLoading, refetch } = useCurrentUser();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -54,10 +55,13 @@ function AuthPage() {
   // Explicit, durable error state from the route guard (account deactivated
   // mid-session) instead of a one-shot toast that gets lost behind others.
   useEffect(() => {
-    if (deactivated) {
+    if (gymDisabled) {
+      setPageError("This gym's account is currently disabled — please contact your gym.");
+    } else if (deactivated) {
       setPageError("This account has been deactivated. Please contact your gym to regain access.");
     }
-  }, [deactivated]);
+  }, [deactivated, gymDisabled]);
+
 
   // After a signed-in user lands here, check if their gym is unclaimed.
   // If so, offer the claim banner BEFORE redirecting — even if they already
