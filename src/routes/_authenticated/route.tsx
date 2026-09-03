@@ -16,7 +16,15 @@ export const Route = createFileRoute("/_authenticated")({
       await supabase.auth.signOut();
       throw redirect({ to: "/auth", search: { deactivated: true } });
     }
+    // Gym-level kill switch, set by the platform console. Platform admins have
+    // no gym (gym_id IS NULL) and my_gym_enabled() returns true for them.
+    const { data: gymEnabled } = await supabase.rpc("my_gym_enabled");
+    if (gymEnabled === false) {
+      await supabase.auth.signOut();
+      throw redirect({ to: "/auth", search: { gymDisabled: true } });
+    }
     return { user: data.user };
+
   },
   component: () => <Outlet />,
 });
