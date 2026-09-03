@@ -350,13 +350,23 @@ export type Database = {
       }
       gyms: {
         Row: {
+          billing_email: string | null
           created_at: string
+          currency: string
           custom_domain: string | null
+          disabled_at: string | null
+          disabled_reason: string | null
           font_family: string | null
           id: string
+          internal_note: string | null
+          is_enabled: boolean
           join_code: string | null
+          last_payment_at: string | null
           logo_url: string | null
+          monthly_amount: number | null
           name: string
+          next_due_at: string | null
+          payment_status: Database["public"]["Enums"]["gym_payment_status"]
           primary_color: string | null
           secondary_color: string | null
           slug: string
@@ -366,13 +376,23 @@ export type Database = {
           timezone: string
         }
         Insert: {
+          billing_email?: string | null
           created_at?: string
+          currency?: string
           custom_domain?: string | null
+          disabled_at?: string | null
+          disabled_reason?: string | null
           font_family?: string | null
           id?: string
+          internal_note?: string | null
+          is_enabled?: boolean
           join_code?: string | null
+          last_payment_at?: string | null
           logo_url?: string | null
+          monthly_amount?: number | null
           name: string
+          next_due_at?: string | null
+          payment_status?: Database["public"]["Enums"]["gym_payment_status"]
           primary_color?: string | null
           secondary_color?: string | null
           slug: string
@@ -382,13 +402,23 @@ export type Database = {
           timezone?: string
         }
         Update: {
+          billing_email?: string | null
           created_at?: string
+          currency?: string
           custom_domain?: string | null
+          disabled_at?: string | null
+          disabled_reason?: string | null
           font_family?: string | null
           id?: string
+          internal_note?: string | null
+          is_enabled?: boolean
           join_code?: string | null
+          last_payment_at?: string | null
           logo_url?: string | null
+          monthly_amount?: number | null
           name?: string
+          next_due_at?: string | null
+          payment_status?: Database["public"]["Enums"]["gym_payment_status"]
           primary_color?: string | null
           secondary_color?: string | null
           slug?: string
@@ -680,6 +710,59 @@ export type Database = {
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_admins: {
+        Row: {
+          created_at: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      platform_audit_log: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          detail: Json | null
+          gym_id: string | null
+          id: number
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          detail?: Json | null
+          gym_id?: string | null
+          id?: number
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          detail?: Json | null
+          gym_id?: string | null
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_audit_log_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
             referencedColumns: ["id"]
           },
         ]
@@ -1136,7 +1219,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      platform_activity_days: {
+        Row: {
+          day: string | null
+          gym_id: string | null
+          is_checkin: number | null
+          is_workout: number | null
+          member_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       attendance_buckets: {
@@ -1156,7 +1248,137 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_platform_admin: { Args: never; Returns: boolean }
       is_trainer_of: { Args: { _member_id: string }; Returns: boolean }
+      my_gym_enabled: { Args: never; Returns: boolean }
+      platform_activity_trend: {
+        Args: { _days?: number }
+        Returns: {
+          active_members: number
+          checkins: number
+          day: string
+          workouts: number
+        }[]
+      }
+      platform_audit_recent: {
+        Args: { _gym_id?: string; _limit?: number }
+        Returns: {
+          action: string
+          actor_email: string
+          actor_id: string
+          created_at: string
+          detail: Json
+          gym_id: string
+          gym_name: string
+          id: number
+        }[]
+      }
+      platform_feature_adoption: { Args: never; Returns: Json }
+      platform_gym_activity_trend: {
+        Args: { _days?: number; _gym_id: string }
+        Returns: {
+          checkins: number
+          day: string
+          workouts: number
+        }[]
+      }
+      platform_gym_admins: {
+        Args: never
+        Returns: {
+          active: boolean
+          display_name: string
+          email: string
+          gym_id: string
+          gym_name: string
+          gym_slug: string
+          is_enabled: boolean
+          last_sign_in_at: string
+          phone: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }[]
+      }
+      platform_gym_detail: { Args: { _gym_id: string }; Returns: Json }
+      platform_gyms: {
+        Args: never
+        Returns: {
+          active_member_count: number
+          active_member_ratio: number
+          admin_count: number
+          assessed_90d_ratio: number
+          assessments_30d: number
+          checkin_rate_30d: number
+          checkins_30d: number
+          checkins_7d: number
+          created_at: string
+          currency: string
+          custom_domain: string
+          days_since_activity: number
+          disabled_at: string
+          health_score: number
+          id: string
+          is_enabled: boolean
+          last_activity_at: string
+          last_payment_at: string
+          member_count: number
+          members_per_trainer: number
+          monthly_amount: number
+          name: string
+          next_due_at: string
+          payment_status: Database["public"]["Enums"]["gym_payment_status"]
+          plan_coverage: number
+          plans_30d: number
+          slug: string
+          subscription_plan: Database["public"]["Enums"]["subscription_plan"]
+          timezone: string
+          trainer_count: number
+          workouts_30d: number
+          workouts_7d: number
+          workouts_per_active_member_30d: number
+        }[]
+      }
+      platform_overview: { Args: never; Returns: Json }
+      platform_retention_cohorts: {
+        Args: { _months?: number }
+        Returns: {
+          active_m1: number
+          active_m2: number
+          active_m3: number
+          cohort_month: string
+          cohort_size: number
+        }[]
+      }
+      platform_set_gym_enabled: {
+        Args: { _enabled: boolean; _gym_id: string; _reason?: string }
+        Returns: undefined
+      }
+      platform_set_gym_plan: {
+        Args: {
+          _gym_id: string
+          _plan: Database["public"]["Enums"]["subscription_plan"]
+        }
+        Returns: undefined
+      }
+      platform_set_payment_status: {
+        Args: {
+          _currency?: string
+          _gym_id: string
+          _last_payment_at?: string
+          _monthly_amount?: number
+          _next_due_at?: string
+          _note?: string
+          _status: Database["public"]["Enums"]["gym_payment_status"]
+        }
+        Returns: undefined
+      }
+      platform_signup_trend: {
+        Args: { _days?: number }
+        Returns: {
+          day: string
+          gyms_created: number
+          members_created: number
+        }[]
+      }
       touch_last_sign_in: { Args: never; Returns: undefined }
       verify_join_code: {
         Args: { _code: string; _slug: string }
@@ -1165,6 +1387,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "trainer" | "member"
+      gym_payment_status:
+        | "trialing"
+        | "paid"
+        | "pending"
+        | "overdue"
+        | "failed"
+        | "cancelled"
       plan_status: "active" | "archived"
       subscription_plan: "starter" | "growth" | "pro" | "chain"
     }
@@ -1182,12 +1411,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1211,11 +1440,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1236,11 +1465,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1261,11 +1490,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1278,11 +1507,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1295,6 +1524,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "trainer", "member"],
+      gym_payment_status: [
+        "trialing",
+        "paid",
+        "pending",
+        "overdue",
+        "failed",
+        "cancelled",
+      ],
       plan_status: ["active", "archived"],
       subscription_plan: ["starter", "growth", "pro", "chain"],
     },
