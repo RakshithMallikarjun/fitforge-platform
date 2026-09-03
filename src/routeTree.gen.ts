@@ -20,6 +20,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedPlatformRouteRouteImport } from './routes/_authenticated/platform/route'
 import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticated/app/route'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform/index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAppWorkoutsRouteImport } from './routes/_authenticated/app/workouts'
@@ -96,6 +97,12 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlatformIndexRoute =
+  AuthenticatedPlatformIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedPlatformRouteRoute,
+  } as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -221,7 +228,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/app': typeof AuthenticatedAppRouteRouteWithChildren
-  '/platform': typeof AuthenticatedPlatformRouteRoute
+  '/platform': typeof AuthenticatedPlatformRouteRouteWithChildren
   '/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
@@ -236,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/app/workouts': typeof AuthenticatedAppWorkoutsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
   '/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
   '/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
@@ -251,7 +259,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
-  '/platform': typeof AuthenticatedPlatformRouteRoute
   '/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
@@ -266,6 +273,7 @@ export interface FileRoutesByTo {
   '/app/workouts': typeof AuthenticatedAppWorkoutsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/platform': typeof AuthenticatedPlatformIndexRoute
   '/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
   '/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
   '/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
@@ -285,7 +293,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteRouteWithChildren
-  '/_authenticated/platform': typeof AuthenticatedPlatformRouteRoute
+  '/_authenticated/platform': typeof AuthenticatedPlatformRouteRouteWithChildren
   '/_authenticated/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/_authenticated/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
@@ -300,6 +308,7 @@ export interface FileRoutesById {
   '/_authenticated/app/workouts': typeof AuthenticatedAppWorkoutsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/_authenticated/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
   '/_authenticated/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
   '/_authenticated/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
@@ -334,6 +343,7 @@ export interface FileRouteTypes {
     | '/app/workouts'
     | '/admin/'
     | '/app/'
+    | '/platform/'
     | '/admin/members/$memberId'
     | '/admin/plans/$planId'
     | '/admin/plans/new'
@@ -349,7 +359,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/terms'
-    | '/platform'
     | '/admin/checkin'
     | '/admin/exercises'
     | '/admin/members'
@@ -364,6 +373,7 @@ export interface FileRouteTypes {
     | '/app/workouts'
     | '/admin'
     | '/app'
+    | '/platform'
     | '/admin/members/$memberId'
     | '/admin/plans/$planId'
     | '/admin/plans/new'
@@ -397,6 +407,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/workouts'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
+    | '/_authenticated/platform/'
     | '/_authenticated/admin/members/$memberId'
     | '/_authenticated/admin/plans/$planId'
     | '/_authenticated/admin/plans/new'
@@ -494,6 +505,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/': {
+      id: '/_authenticated/platform/'
+      path: '/'
+      fullPath: '/platform/'
+      preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
+      parentRoute: typeof AuthenticatedPlatformRouteRoute
     }
     '/_authenticated/app/': {
       id: '/_authenticated/app/'
@@ -728,16 +746,30 @@ const AuthenticatedAppRouteRouteWithChildren =
     AuthenticatedAppRouteRouteChildren,
   )
 
+interface AuthenticatedPlatformRouteRouteChildren {
+  AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
+}
+
+const AuthenticatedPlatformRouteRouteChildren: AuthenticatedPlatformRouteRouteChildren =
+  {
+    AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
+  }
+
+const AuthenticatedPlatformRouteRouteWithChildren =
+  AuthenticatedPlatformRouteRoute._addFileChildren(
+    AuthenticatedPlatformRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedAppRouteRoute: typeof AuthenticatedAppRouteRouteWithChildren
-  AuthenticatedPlatformRouteRoute: typeof AuthenticatedPlatformRouteRoute
+  AuthenticatedPlatformRouteRoute: typeof AuthenticatedPlatformRouteRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedAppRouteRoute: AuthenticatedAppRouteRouteWithChildren,
-  AuthenticatedPlatformRouteRoute: AuthenticatedPlatformRouteRoute,
+  AuthenticatedPlatformRouteRoute: AuthenticatedPlatformRouteRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
