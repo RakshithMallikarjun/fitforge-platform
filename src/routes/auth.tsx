@@ -42,7 +42,7 @@ function ErrorBanner({ children }: { children: React.ReactNode }) {
 }
 
 function AuthPage() {
-  const { deactivated } = Route.useSearch();
+  const { deactivated, gymDisabled } = Route.useSearch();
   const { data: user, sessionLoading, refetch } = useCurrentUser();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -55,10 +55,13 @@ function AuthPage() {
   // Explicit, durable error state from the route guard (account deactivated
   // mid-session) instead of a one-shot toast that gets lost behind others.
   useEffect(() => {
-    if (deactivated) {
+    if (gymDisabled) {
+      setPageError("This gym's account is currently disabled — please contact your gym.");
+    } else if (deactivated) {
       setPageError("This account has been deactivated. Please contact your gym to regain access.");
     }
-  }, [deactivated]);
+  }, [deactivated, gymDisabled]);
+
 
   // After a signed-in user lands here, check if their gym is unclaimed.
   // If so, offer the claim banner BEFORE redirecting — even if they already
