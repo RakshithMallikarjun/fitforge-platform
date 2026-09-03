@@ -13,11 +13,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { friendlyAuthError, scorePassword } from "@/lib/auth-errors";
 
-type AuthSearch = { deactivated?: boolean };
+type AuthSearch = { deactivated?: boolean; gymDisabled?: boolean };
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): AuthSearch => ({
     deactivated: search.deactivated === true || search.deactivated === "true" ? true : undefined,
+    gymDisabled: search.gymDisabled === true || search.gymDisabled === "true" ? true : undefined,
   }),
   head: () => ({
     meta: [
