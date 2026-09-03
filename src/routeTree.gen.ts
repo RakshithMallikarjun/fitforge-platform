@@ -36,6 +36,7 @@ import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminExercisesRouteImport } from './routes/_authenticated/admin/exercises'
 import { Route as AuthenticatedAdminCheckinRouteImport } from './routes/_authenticated/admin/checkin'
 import { Route as AuthenticatedPlatformGymsRouteRouteImport } from './routes/_authenticated/platform/gyms.route'
+import { Route as AuthenticatedPlatformGymsIndexRouteImport } from './routes/_authenticated/platform/gyms.index'
 import { Route as AuthenticatedAppWorkoutDayIdRouteImport } from './routes/_authenticated/app/workout.$dayId'
 import { Route as AuthenticatedAdminReportsEngagementRouteImport } from './routes/_authenticated/admin/reports.engagement'
 import { Route as AuthenticatedAdminReportsAttendanceRouteImport } from './routes/_authenticated/admin/reports.attendance'
@@ -188,6 +189,12 @@ const AuthenticatedPlatformGymsRouteRoute =
     path: '/gyms',
     getParentRoute: () => AuthenticatedPlatformRouteRoute,
   } as any)
+const AuthenticatedPlatformGymsIndexRoute =
+  AuthenticatedPlatformGymsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedPlatformGymsRouteRoute,
+  } as any)
 const AuthenticatedAppWorkoutDayIdRoute =
   AuthenticatedAppWorkoutDayIdRouteImport.update({
     id: '/workout/$dayId',
@@ -236,7 +243,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/app': typeof AuthenticatedAppRouteRouteWithChildren
   '/platform': typeof AuthenticatedPlatformRouteRouteWithChildren
-  '/platform/gyms': typeof AuthenticatedPlatformGymsRouteRoute
+  '/platform/gyms': typeof AuthenticatedPlatformGymsRouteRouteWithChildren
   '/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
@@ -258,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/admin/reports/attendance': typeof AuthenticatedAdminReportsAttendanceRoute
   '/admin/reports/engagement': typeof AuthenticatedAdminReportsEngagementRoute
   '/app/workout/$dayId': typeof AuthenticatedAppWorkoutDayIdRoute
+  '/platform/gyms/': typeof AuthenticatedPlatformGymsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -267,7 +275,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
-  '/platform/gyms': typeof AuthenticatedPlatformGymsRouteRoute
   '/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
@@ -289,6 +296,7 @@ export interface FileRoutesByTo {
   '/admin/reports/attendance': typeof AuthenticatedAdminReportsAttendanceRoute
   '/admin/reports/engagement': typeof AuthenticatedAdminReportsEngagementRoute
   '/app/workout/$dayId': typeof AuthenticatedAppWorkoutDayIdRoute
+  '/platform/gyms': typeof AuthenticatedPlatformGymsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -303,7 +311,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteRouteWithChildren
   '/_authenticated/platform': typeof AuthenticatedPlatformRouteRouteWithChildren
-  '/_authenticated/platform/gyms': typeof AuthenticatedPlatformGymsRouteRoute
+  '/_authenticated/platform/gyms': typeof AuthenticatedPlatformGymsRouteRouteWithChildren
   '/_authenticated/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/_authenticated/admin/exercises': typeof AuthenticatedAdminExercisesRoute
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
@@ -325,6 +333,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/reports/attendance': typeof AuthenticatedAdminReportsAttendanceRoute
   '/_authenticated/admin/reports/engagement': typeof AuthenticatedAdminReportsEngagementRoute
   '/_authenticated/app/workout/$dayId': typeof AuthenticatedAppWorkoutDayIdRoute
+  '/_authenticated/platform/gyms/': typeof AuthenticatedPlatformGymsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -361,6 +370,7 @@ export interface FileRouteTypes {
     | '/admin/reports/attendance'
     | '/admin/reports/engagement'
     | '/app/workout/$dayId'
+    | '/platform/gyms/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -370,7 +380,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/terms'
-    | '/platform/gyms'
     | '/admin/checkin'
     | '/admin/exercises'
     | '/admin/members'
@@ -392,6 +401,7 @@ export interface FileRouteTypes {
     | '/admin/reports/attendance'
     | '/admin/reports/engagement'
     | '/app/workout/$dayId'
+    | '/platform/gyms'
   id:
     | '__root__'
     | '/'
@@ -427,6 +437,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/reports/attendance'
     | '/_authenticated/admin/reports/engagement'
     | '/_authenticated/app/workout/$dayId'
+    | '/_authenticated/platform/gyms/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -631,6 +642,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformGymsRouteRouteImport
       parentRoute: typeof AuthenticatedPlatformRouteRoute
     }
+    '/_authenticated/platform/gyms/': {
+      id: '/_authenticated/platform/gyms/'
+      path: '/'
+      fullPath: '/platform/gyms/'
+      preLoaderRoute: typeof AuthenticatedPlatformGymsIndexRouteImport
+      parentRoute: typeof AuthenticatedPlatformGymsRouteRoute
+    }
     '/_authenticated/app/workout/$dayId': {
       id: '/_authenticated/app/workout/$dayId'
       path: '/workout/$dayId'
@@ -766,14 +784,29 @@ const AuthenticatedAppRouteRouteWithChildren =
     AuthenticatedAppRouteRouteChildren,
   )
 
+interface AuthenticatedPlatformGymsRouteRouteChildren {
+  AuthenticatedPlatformGymsIndexRoute: typeof AuthenticatedPlatformGymsIndexRoute
+}
+
+const AuthenticatedPlatformGymsRouteRouteChildren: AuthenticatedPlatformGymsRouteRouteChildren =
+  {
+    AuthenticatedPlatformGymsIndexRoute: AuthenticatedPlatformGymsIndexRoute,
+  }
+
+const AuthenticatedPlatformGymsRouteRouteWithChildren =
+  AuthenticatedPlatformGymsRouteRoute._addFileChildren(
+    AuthenticatedPlatformGymsRouteRouteChildren,
+  )
+
 interface AuthenticatedPlatformRouteRouteChildren {
-  AuthenticatedPlatformGymsRouteRoute: typeof AuthenticatedPlatformGymsRouteRoute
+  AuthenticatedPlatformGymsRouteRoute: typeof AuthenticatedPlatformGymsRouteRouteWithChildren
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
 }
 
 const AuthenticatedPlatformRouteRouteChildren: AuthenticatedPlatformRouteRouteChildren =
   {
-    AuthenticatedPlatformGymsRouteRoute: AuthenticatedPlatformGymsRouteRoute,
+    AuthenticatedPlatformGymsRouteRoute:
+      AuthenticatedPlatformGymsRouteRouteWithChildren,
     AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
   }
 
