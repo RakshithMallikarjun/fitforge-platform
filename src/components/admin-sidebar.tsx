@@ -42,6 +42,13 @@ export function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
   const { theme } = useTheme();
   const { data: me } = useCurrentUser();
   const isAdmin = !!me?.roles.includes("admin");
+  const { data: isPlatformAdminUser } = useQuery({
+    queryKey: ["is-platform-admin"],
+    queryFn: () => isPlatformAdmin(),
+    enabled: !!me,
+    staleTime: 5 * 60_000,
+  });
+
 
 
   async function signOut() {
