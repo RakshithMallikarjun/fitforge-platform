@@ -35,6 +35,13 @@ function AdminShell() {
     enabled: !!user,
     staleTime: 5 * 60_000,
   });
+  const { data: platformAdmin } = useQuery({
+    queryKey: ["is-platform-admin"],
+    queryFn: () => isPlatformAdmin(),
+    enabled: !!user,
+    staleTime: 5 * 60_000,
+  });
+
 
   useEffect(() => {
     if (gymTheme) setTheme(gymTheme);
