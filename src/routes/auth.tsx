@@ -54,10 +54,19 @@ function AuthPage() {
 
   // Explicit, durable error state from the route guard (account deactivated
   // mid-session) instead of a one-shot toast that gets lost behind others.
+  // The guard also stashes a sessionStorage notice, because signing the user
+  // out triggers a competing navigation that can drop the search params.
   useEffect(() => {
-    if (gymDisabled) {
+    let notice: string | null = null;
+    try {
+      notice = sessionStorage.getItem("auth-notice");
+      if (notice) sessionStorage.removeItem("auth-notice");
+    } catch {
+      /* storage unavailable */
+    }
+    if (gymDisabled || notice === "gymDisabled") {
       setPageError("This gym's account is currently disabled — please contact your gym.");
-    } else if (deactivated) {
+    } else if (deactivated || notice === "deactivated") {
       setPageError("This account has been deactivated. Please contact your gym to regain access.");
     }
   }, [deactivated, gymDisabled]);
