@@ -13,6 +13,7 @@ export const Route = createFileRoute("/_authenticated")({
       .maybeSingle();
     if (profile && profile.active === false) {
       // Backstop for accounts deactivated mid-session; sign-in itself also checks.
+      noteAuthReason("deactivated");
       await supabase.auth.signOut();
       throw redirect({ to: "/auth", search: { deactivated: true } });
     }
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/_authenticated")({
     // no gym (gym_id IS NULL) and my_gym_enabled() returns true for them.
     const { data: gymEnabled } = await supabase.rpc("my_gym_enabled");
     if (gymEnabled === false) {
+      noteAuthReason("gymDisabled");
       await supabase.auth.signOut();
       throw redirect({ to: "/auth", search: { gymDisabled: true } });
     }
