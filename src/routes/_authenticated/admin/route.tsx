@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme-provider";
 import { getGymTheme } from "@/lib/gym-theme.functions";
+import { isPlatformAdmin } from "@/lib/platform.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
