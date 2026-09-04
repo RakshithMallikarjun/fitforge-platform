@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 function NotFoundComponent() {
   useEffect(() => {
@@ -134,9 +135,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthListener />
-        <Outlet />
-        <Toaster position="top-right" />
+        <TooltipProvider delayDuration={150}>
+          <AuthListener />
+          <Outlet />
+          <Toaster position="top-right" />
+        </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
