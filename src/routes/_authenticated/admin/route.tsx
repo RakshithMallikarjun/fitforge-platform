@@ -47,12 +47,17 @@ function AdminShell() {
     navigate({ to: "/auth", replace: true });
   }
 
-  if (isLoading) {
+  if (isLoading || (user && !user.primaryRole && platformAdmin === undefined)) {
     return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Loading…</div>;
+  }
+  // Site owners have no gym role; send them to their own console.
+  if (user && !user.primaryRole && platformAdmin) {
+    return <Navigate to="/platform" replace />;
   }
   if (user && user.primaryRole !== "admin" && user.primaryRole !== "trainer") {
     return <Navigate to="/app" replace />;
   }
+
 
   return (
     <div className="min-h-screen bg-background">
