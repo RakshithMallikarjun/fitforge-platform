@@ -1,6 +1,17 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 
+/** Survives the sign-out navigation race so /auth can explain what happened. */
+function noteAuthReason(reason: "deactivated" | "gymDisabled") {
+  try {
+    sessionStorage.setItem("auth-notice", reason);
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+
+
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
