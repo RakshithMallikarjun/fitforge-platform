@@ -2,12 +2,14 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Dumbbell, ClipboardList,
   Settings, LogOut, ShieldCheck, UserCog, ScanLine,
-  CalendarClock, Activity,
+  CalendarClock, Activity, Globe2,
 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme-provider";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { isPlatformAdmin } from "@/lib/platform.functions";
+
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; adminOnly?: boolean; group?: string };
 const NAV: NavItem[] = [
