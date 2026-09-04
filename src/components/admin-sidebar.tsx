@@ -59,6 +59,17 @@ export function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3">
+        {isPlatformAdminUser && (
+          <Link
+            to="/platform"
+            onClick={onNavigate}
+            className="group flex items-center gap-3 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-semibold text-primary"
+          >
+            <Globe2 className="h-4 w-4" />
+            Platform console
+          </Link>
+        )}
+
         {(() => {
           const items = NAV.filter((i) => !i.adminOnly || isAdmin);
           const out: React.ReactNode[] = [];
