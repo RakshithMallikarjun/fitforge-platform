@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme-provider";
 import { getGymTheme } from "@/lib/gym-theme.functions";
+import { isPlatformAdmin } from "@/lib/platform.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -35,6 +37,13 @@ function AdminShell() {
     enabled: !!user,
     staleTime: 5 * 60_000,
   });
+  const { data: platformAdmin } = useQuery({
+    queryKey: ["is-platform-admin"],
+    queryFn: () => isPlatformAdmin(),
+    enabled: !!user,
+    staleTime: 5 * 60_000,
+  });
+
 
   useEffect(() => {
     if (gymTheme) setTheme(gymTheme);
@@ -47,12 +56,17 @@ function AdminShell() {
     navigate({ to: "/auth", replace: true });
   }
 
-  if (isLoading) {
+  if (isLoading || (user && !user.primaryRole && platformAdmin === undefined)) {
     return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Loading…</div>;
+  }
+  // Site owners have no gym role; send them to their own console.
+  if (user && !user.primaryRole && platformAdmin) {
+    return <Navigate to="/platform" replace />;
   }
   if (user && user.primaryRole !== "admin" && user.primaryRole !== "trainer") {
     return <Navigate to="/app" replace />;
   }
+
 
   return (
     <div className="min-h-screen bg-background">

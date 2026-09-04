@@ -155,7 +155,7 @@ export type AuditEntry = {
   action: string;
   gym_id: string | null;
   gym_name: string | null;
-  detail: Record<string, unknown> | null;
+  detail: Record<string, string | number | boolean | null> | null;
   created_at: string;
 };
 
