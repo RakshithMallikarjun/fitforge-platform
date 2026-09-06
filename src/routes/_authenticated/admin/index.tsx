@@ -27,9 +27,12 @@ function AdminDashboard() {
   const { theme } = useTheme();
   const isAdmin = !!user?.roles.includes("admin");
   const initials = (user?.displayName ?? user?.email ?? "FF").slice(0, 2).toUpperCase();
+  // useServerFn wires up the client middleware that attaches the auth token.
+  const fetchStats = useServerFn(getAdminStats);
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["admin-stats"],
-    queryFn: () => getAdminStats(),
+    queryFn: () => fetchStats(),
+    enabled: !!user,
   });
 
 
