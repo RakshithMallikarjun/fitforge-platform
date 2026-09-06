@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Bar,
   BarChart,
@@ -50,22 +51,28 @@ function Panel({ title, subtitle, children }: { title: string; subtitle?: string
 
 function PlatformAnalyticsPage() {
   const [days, setDays] = useState(90);
+  const fetchOverview = useServerFn(getPlatformOverview);
+  const fetchSignups = useServerFn(getPlatformSignupTrend);
+  const fetchActivity = useServerFn(getPlatformActivityTrend);
+  const fetchAdoption = useServerFn(getFeatureAdoption);
+  const fetchRetention = useServerFn(getRetentionCohorts);
+  const fetchGyms = useServerFn(listPlatformGyms);
 
-  const overview = useQuery({ queryKey: ["platform-overview"], queryFn: () => getPlatformOverview() });
+  const overview = useQuery({ queryKey: ["platform-overview"], queryFn: () => fetchOverview() });
   const signups = useQuery({
     queryKey: ["platform-signups", days],
-    queryFn: () => getPlatformSignupTrend({ data: { days } }),
+    queryFn: () => fetchSignups({ data: { days } }),
   });
   const activity = useQuery({
     queryKey: ["platform-activity", days],
-    queryFn: () => getPlatformActivityTrend({ data: { days } }),
+    queryFn: () => fetchActivity({ data: { days } }),
   });
-  const adoption = useQuery({ queryKey: ["platform-adoption"], queryFn: () => getFeatureAdoption() });
+  const adoption = useQuery({ queryKey: ["platform-adoption"], queryFn: () => fetchAdoption() });
   const retention = useQuery({
     queryKey: ["platform-retention", 6],
-    queryFn: () => getRetentionCohorts({ data: { months: 6 } }),
+    queryFn: () => fetchRetention({ data: { months: 6 } }),
   });
-  const gyms = useQuery({ queryKey: ["platform-gyms"], queryFn: () => listPlatformGyms() });
+  const gyms = useQuery({ queryKey: ["platform-gyms"], queryFn: () => fetchGyms() });
 
   const o = overview.data;
   const signupData = signups.data ?? [];

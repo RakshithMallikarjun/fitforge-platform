@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Area,
   AreaChart,
@@ -45,16 +46,20 @@ function Card({ title, subtitle, children }: { title: string; subtitle?: string;
 }
 
 function PlatformOverviewPage() {
-  const overview = useQuery({ queryKey: ["platform-overview"], queryFn: () => getPlatformOverview() });
+  const fetchOverview = useServerFn(getPlatformOverview);
+  const fetchSignups = useServerFn(getPlatformSignupTrend);
+  const fetchActivity = useServerFn(getPlatformActivityTrend);
+  const fetchGyms = useServerFn(listPlatformGyms);
+  const overview = useQuery({ queryKey: ["platform-overview"], queryFn: () => fetchOverview() });
   const signups = useQuery({
     queryKey: ["platform-signups", 90],
-    queryFn: () => getPlatformSignupTrend({ data: { days: 90 } }),
+    queryFn: () => fetchSignups({ data: { days: 90 } }),
   });
   const activity = useQuery({
     queryKey: ["platform-activity", 30],
-    queryFn: () => getPlatformActivityTrend({ data: { days: 30 } }),
+    queryFn: () => fetchActivity({ data: { days: 30 } }),
   });
-  const gyms = useQuery({ queryKey: ["platform-gyms"], queryFn: () => listPlatformGyms() });
+  const gyms = useQuery({ queryKey: ["platform-gyms"], queryFn: () => fetchGyms() });
 
   const o = overview.data;
   const gymRows = gyms.data ?? [];
