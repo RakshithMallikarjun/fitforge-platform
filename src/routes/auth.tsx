@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { claimGymAdmin, gymHasAdmin } from "@/lib/bootstrap.functions";
+import { isPlatformAdmin } from "@/lib/platform.functions";
 import { useQueryClient } from "@tanstack/react-query";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { friendlyAuthError, scorePassword } from "@/lib/auth-errors";
@@ -83,14 +84,38 @@ function AuthPage() {
       return;
     }
     const slug = (user.session.user.user_metadata as any)?.gym_slug as string | undefined;
+    // Site owners have no gym and no gym role — send them to the platform console.
+    if (!user.primaryRole) {
+      let cancelledPlatform = false;
+      setChecking(true);
+      isPlatformAdmin()
+        .then((allowed) => {
+          if (cancelledPlatform) return;
+          if (allowed) {
+            navigate({ to: "/platform", replace: true });
+          } else if (!slug) {
+            setPageError(
+              "Your account isn't linked to a gym yet, so there's nothing to open. Ask your gym to add you, then sign in again.",
+            );
+          } else {
+            setPageError(
+              `We couldn't match your account to the gym "${slug}". Please contact your gym so they can finish setting up your membership.`,
+            );
+          }
+        })
+        .catch(() =>
+          !cancelledPlatform &&
+          setPageError(
+            "Your account isn't linked to a gym yet, so there's nothing to open. Ask your gym to add you, then sign in again.",
+          ),
+        )
+        .finally(() => !cancelledPlatform && setChecking(false));
+      return () => {
+        cancelledPlatform = true;
+      };
+    }
     if (!slug) {
-      if (user.primaryRole === "member") {
-        navigate({ to: "/app", replace: true });
-      } else {
-        setPageError(
-          "Your account isn't linked to a gym yet, so there's nothing to open. Ask your gym to add you, then sign in again.",
-        );
-      }
+      navigate({ to: "/app", replace: true });
       return;
     }
     let cancelled = false;
