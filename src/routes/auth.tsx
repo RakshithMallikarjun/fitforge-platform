@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { Dumbbell, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -10,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { claimGymAdmin, gymHasAdmin } from "@/lib/bootstrap.functions";
 import { isPlatformAdmin } from "@/lib/platform.functions";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { friendlyAuthError, scorePassword } from "@/lib/auth-errors";
 
@@ -47,11 +48,24 @@ function AuthPage() {
   const { data: user, sessionLoading, refetch } = useCurrentUser();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const checkPlatformAdmin = useServerFn(isPlatformAdmin);
   const [claimSlug, setClaimSlug] = useState<string | null>(null);
   const [claimToken, setClaimToken] = useState("");
   const [checking, setChecking] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
+  const { data: platformAdmin, isLoading: platformAdminLoading } = useQuery({
+    queryKey: ["is-platform-admin", user?.userId],
+    queryFn: async () => {
+      try {
+        return await checkPlatformAdmin();
+      } catch {
+        return false;
+      }
+    },
+    enabled: !!user,
+    staleTime: 5 * 60_000,
+  });
 
   // Explicit, durable error state from the route guard (account deactivated
   // mid-session) instead of a one-shot toast that gets lost behind others.
@@ -77,42 +91,26 @@ function AuthPage() {
   // If so, offer the claim banner BEFORE redirecting — even if they already
   // have a member role (common case: first user signed up as member by default).
   useEffect(() => {
-    if (sessionLoading || !user) return;
+    if (sessionLoading || !user || platformAdminLoading || platformAdmin === undefined) return;
+    // Platform access sits above gym roles. A platform admin may also retain
+    // a gym role, but must still land in the site-owner console after sign-in.
+    if (platformAdmin) {
+      navigate({ to: "/platform", replace: true });
+      return;
+    }
     const isStaff = user.roles.includes("admin") || user.roles.includes("trainer");
     if (isStaff) {
       navigate({ to: "/admin", replace: true });
       return;
     }
     const slug = (user.session.user.user_metadata as any)?.gym_slug as string | undefined;
-    // Site owners have no gym and no gym role — send them to the platform console.
     if (!user.primaryRole) {
-      let cancelledPlatform = false;
-      setChecking(true);
-      isPlatformAdmin()
-        .then((allowed) => {
-          if (cancelledPlatform) return;
-          if (allowed) {
-            navigate({ to: "/platform", replace: true });
-          } else if (!slug) {
-            setPageError(
-              "Your account isn't linked to a gym yet, so there's nothing to open. Ask your gym to add you, then sign in again.",
-            );
-          } else {
-            setPageError(
-              `We couldn't match your account to the gym "${slug}". Please contact your gym so they can finish setting up your membership.`,
-            );
-          }
-        })
-        .catch(() =>
-          !cancelledPlatform &&
-          setPageError(
-            "Your account isn't linked to a gym yet, so there's nothing to open. Ask your gym to add you, then sign in again.",
-          ),
-        )
-        .finally(() => !cancelledPlatform && setChecking(false));
-      return () => {
-        cancelledPlatform = true;
-      };
+      setPageError(
+        slug
+          ? `We couldn't match your account to the gym "${slug}". Please contact your gym so they can finish setting up your membership.`
+          : "Your account isn't linked to a gym yet, so there's nothing to open. Ask your gym to add you, then sign in again.",
+      );
+      return;
     }
     if (!slug) {
       navigate({ to: "/app", replace: true });
@@ -141,7 +139,7 @@ function AuthPage() {
     return () => {
       cancelled = true;
     };
-  }, [user, sessionLoading, navigate]);
+  }, [user, sessionLoading, platformAdmin, platformAdminLoading, navigate]);
 
   async function onClaim() {
     if (!claimSlug) return;
