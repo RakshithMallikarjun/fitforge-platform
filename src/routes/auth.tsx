@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { claimGymAdmin, gymHasAdmin } from "@/lib/bootstrap.functions";
+import { isPlatformAdmin } from "@/lib/platform.functions";
 import { useQueryClient } from "@tanstack/react-query";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { friendlyAuthError, scorePassword } from "@/lib/auth-errors";
