@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeft,
   CalendarClock,
@@ -94,18 +95,24 @@ function Section({ title, children, action }: { title: string; children: React.R
 function PlatformGymDetailPage() {
   const { gymId } = Route.useParams();
   const qc = useQueryClient();
+  const fetchGymDetail = useServerFn(getPlatformGymDetail);
+  const fetchGymActivity = useServerFn(getPlatformGymActivityTrend);
+  const fetchAuditLog = useServerFn(getAuditLog);
+  const updateGymEnabled = useServerFn(setGymEnabled);
+  const updatePaymentStatus = useServerFn(setPaymentStatus);
+  const updateGymPlan = useServerFn(setGymPlan);
 
   const detail = useQuery({
     queryKey: ["platform-gym", gymId],
-    queryFn: () => getPlatformGymDetail({ data: { gymId } }),
+    queryFn: () => fetchGymDetail({ data: { gymId } }),
   });
   const trend = useQuery({
     queryKey: ["platform-gym-activity", gymId],
-    queryFn: () => getPlatformGymActivityTrend({ data: { gymId, days: 30 } }),
+    queryFn: () => fetchGymActivity({ data: { gymId, days: 30 } }),
   });
   const audit = useQuery({
     queryKey: ["platform-audit", gymId],
-    queryFn: () => getAuditLog({ data: { gymId, limit: 25 } }),
+    queryFn: () => fetchAuditLog({ data: { gymId, limit: 25 } }),
   });
 
   const g = detail.data;
@@ -138,7 +145,7 @@ function PlatformGymDetailPage() {
 
   const toggleMutation = useMutation({
     mutationFn: (v: { enabled: boolean; reason?: string }) =>
-      setGymEnabled({ data: { gymId, ...v } }),
+      updateGymEnabled({ data: { gymId, ...v } }),
     onSuccess: (_r, v) => {
       toast.success(v.enabled ? "Gym enabled" : "Gym disabled");
       invalidate();
@@ -148,7 +155,7 @@ function PlatformGymDetailPage() {
 
   const billingMutation = useMutation({
     mutationFn: () =>
-      setPaymentStatus({
+      updatePaymentStatus({
         data: {
           gymId,
           status,
@@ -169,7 +176,7 @@ function PlatformGymDetailPage() {
   });
 
   const planMutation = useMutation({
-    mutationFn: (plan: SubscriptionPlan) => setGymPlan({ data: { gymId, plan } }),
+    mutationFn: (plan: SubscriptionPlan) => updateGymPlan({ data: { gymId, plan } }),
     onSuccess: () => {
       toast.success("Plan updated");
       invalidate();

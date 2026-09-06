@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Navigate, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Building2, LayoutDashboard, LineChart, LogOut, Users2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -30,9 +31,10 @@ function PlatformShell() {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const checkPlatformAdmin = useServerFn(isPlatformAdmin);
   const { data: allowed, isLoading } = useQuery({
     queryKey: ["is-platform-admin"],
-    queryFn: () => isPlatformAdmin(),
+    queryFn: () => checkPlatformAdmin(),
     staleTime: 5 * 60_000,
   });
 

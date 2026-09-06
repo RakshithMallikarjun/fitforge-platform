@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -57,9 +58,11 @@ function todayStr() {
 
 function PlatformGymsPage() {
   const qc = useQueryClient();
+  const fetchGyms = useServerFn(listPlatformGyms);
+  const updateGymEnabled = useServerFn(setGymEnabled);
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["platform-gyms"],
-    queryFn: () => listPlatformGyms(),
+    queryFn: () => fetchGyms(),
   });
 
   const [search, setSearch] = useState("");
@@ -73,7 +76,7 @@ function PlatformGymsPage() {
 
   const mutation = useMutation({
     mutationFn: (v: { gymId: string; enabled: boolean; reason?: string }) =>
-      setGymEnabled({ data: v }),
+      updateGymEnabled({ data: v }),
     onMutate: async (v) => {
       await qc.cancelQueries({ queryKey: ["platform-gyms"] });
       const prev = qc.getQueryData<PlatformGymRow[]>(["platform-gyms"]);

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,9 +21,10 @@ export const Route = createFileRoute("/_authenticated/platform/contacts")({
 });
 
 function PlatformContactsPage() {
+  const fetchGymAdmins = useServerFn(listPlatformGymAdmins);
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["platform-gym-admins"],
-    queryFn: () => listPlatformGymAdmins(),
+    queryFn: () => fetchGymAdmins(),
   });
 
   const [search, setSearch] = useState("");
