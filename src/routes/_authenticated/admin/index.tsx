@@ -127,9 +127,10 @@ function AdminDashboard() {
 type SortKey = "name" | "assignedMembers" | "plansThisMonth" | "assessmentsThisMonth";
 
 function TrainerPerformance() {
+  const fetchTrainerStats = useServerFn(getTrainerStats);
   const { data, isLoading } = useQuery({
     queryKey: ["trainer-stats"],
-    queryFn: () => getTrainerStats(),
+    queryFn: () => fetchTrainerStats(),
   });
   const [sort, setSort] = useState<SortKey>("assignedMembers");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
