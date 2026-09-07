@@ -85,11 +85,12 @@ function ProgressPage() {
 /** Shown whenever progress data is unavailable — loading, or a failed query. */
 function TabFallback({ error, onRetry, busy }: { error: unknown; onRetry: () => void; busy: boolean }) {
   if (!error) return <SkeletonCard />;
+  console.error("[progress] failed to load progress data:", error);
   return (
     <div className="rounded-[2rem] border border-destructive/30 bg-destructive/5 p-6 text-center">
       <p className="text-sm font-semibold">We couldn't load your progress</p>
       <p className="mt-1 text-xs text-muted-foreground">
-        {(error as Error)?.message ?? "Something went wrong."}
+        We couldn&apos;t load your progress right now. Please try again in a moment.
       </p>
       <Button variant="outline" size="sm" className="mt-4 rounded-xl" onClick={onRetry} disabled={busy}>
         {busy ? "Retrying…" : "Try again"}

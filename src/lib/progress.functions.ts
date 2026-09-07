@@ -134,7 +134,7 @@ export const getProgressData = createServerFn({ method: "GET" })
       date: r.workout_logs?.date ?? "",
     }));
 
-    const history: ProgressWorkoutHistory[] = (workoutRes.data ?? []).map((r: any) => ({
+    const history: ProgressWorkoutHistory[] = workoutRows.map((r: any) => ({
       id: r.id,
       date: r.date,
       completed_at: r.completed_at,
@@ -146,10 +146,10 @@ export const getProgressData = createServerFn({ method: "GET" })
     }));
 
     return {
-      assessments: (assessRes.data ?? []) as ProgressAssessment[],
+      assessments: assessRows as ProgressAssessment[],
       exerciseLogs,
       history,
-      goals: (goalsRes.data ?? []) as Goal[],
+      goals: goalRows as Goal[],
     };
   });
 
