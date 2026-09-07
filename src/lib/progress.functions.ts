@@ -19,7 +19,7 @@ export type ProgressAssessment = {
 
 export type ProgressExerciseLog = {
   id: string;
-  workout_log_id: string;
+  log_id: string;
   exercise_id: string;
   exercise_name: string;
   set_number: number;
@@ -63,47 +63,68 @@ export const getProgressData = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<ProgressData> => {
     const { supabase, userId } = context;
 
-    const [assessRes, logsRes, workoutRes, goalsRes] = await Promise.all([
-      supabase
-        .from("fitness_assessments")
-        .select(
-          "date, weight, body_fat_pct, muscle_mass, chest, waist, hips, bench_1rm, squat_1rm, deadlift_1rm, unit_system",
-        )
-        .eq("member_id", userId)
-        .order("date", { ascending: true }),
-      supabase
-        .from("exercise_logs")
-        .select(
-          "id, workout_log_id, exercise_id, set_number, weight, reps, completed, exercises(name), workout_logs!inner(date, member_id)",
-        )
-        .eq("workout_logs.member_id", userId)
-        .eq("completed", true)
-        .order("id", { ascending: false })
-        .limit(2000),
-      supabase
-        .from("workout_logs")
-        .select(
-          "id, date, completed_at, effort_rating, notes, workout_days(day_label, workout_plans(name)), exercise_logs(id)",
-        )
-        .eq("member_id", userId)
-        .not("completed_at", "is", null)
-        .order("date", { ascending: false })
-        .limit(200),
-      supabase
-        .from("goals")
-        .select("*")
-        .eq("member_id", userId)
-        .order("created_at", { ascending: false }),
+    const safe = async <T,>(label: string, q: PromiseLike<{ data: T[] | null; error: any }>): Promise<T[]> => {
+      try {
+        const { data, error } = await q;
+        if (error) {
+          console.error(`[progress] ${label} query failed:`, error.message ?? error);
+          return [];
+        }
+        return (data ?? []) as T[];
+      } catch (e: any) {
+        console.error(`[progress] ${label} query threw:`, e?.message ?? e);
+        return [];
+      }
+    };
+
+    const [assessRows, logRows, workoutRows, goalRows] = await Promise.all([
+      safe<any>(
+        "assessments",
+        supabase
+          .from("fitness_assessments")
+          .select(
+            "date, weight, body_fat_pct, muscle_mass, chest, waist, hips, bench_1rm, squat_1rm, deadlift_1rm, unit_system",
+          )
+          .eq("member_id", userId)
+          .order("date", { ascending: true }),
+      ),
+      safe<any>(
+        "exercise_logs",
+        supabase
+          .from("exercise_logs")
+          .select(
+            "id, log_id, exercise_id, set_number, weight, reps, completed, created_at, exercises(name), workout_logs!inner(date, member_id)",
+          )
+          .eq("workout_logs.member_id", userId)
+          .eq("completed", true)
+          .order("created_at", { ascending: false })
+          .limit(2000),
+      ),
+      safe<any>(
+        "workout_logs",
+        supabase
+          .from("workout_logs")
+          .select(
+            "id, date, completed_at, effort_rating, notes, workout_days(day_label, workout_plans(name)), exercise_logs(id)",
+          )
+          .eq("member_id", userId)
+          .not("completed_at", "is", null)
+          .order("date", { ascending: false })
+          .limit(200),
+      ),
+      safe<any>(
+        "goals",
+        supabase
+          .from("goals")
+          .select("*")
+          .eq("member_id", userId)
+          .order("created_at", { ascending: false }),
+      ),
     ]);
 
-    if (assessRes.error) throw new Error(assessRes.error.message);
-    if (logsRes.error) throw new Error(logsRes.error.message);
-    if (workoutRes.error) throw new Error(workoutRes.error.message);
-    if (goalsRes.error) throw new Error(goalsRes.error.message);
-
-    const exerciseLogs: ProgressExerciseLog[] = (logsRes.data ?? []).map((r: any) => ({
+    const exerciseLogs: ProgressExerciseLog[] = logRows.map((r: any) => ({
       id: r.id,
-      workout_log_id: r.workout_log_id,
+      log_id: r.log_id,
       exercise_id: r.exercise_id,
       exercise_name: r.exercises?.name ?? "Exercise",
       set_number: r.set_number,
