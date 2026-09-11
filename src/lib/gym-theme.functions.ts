@@ -21,7 +21,31 @@ export type GymSettingsRow = {
   font_family: string | null;
   support_email: string | null;
   support_phone: string | null;
+  timezone: string | null;
+  custom_domain: string | null;
+  subscription_plan: string | null;
+  payment_status: string | null;
 };
+
+const SETTINGS_COLUMNS =
+  "id, name, slug, primary_color, secondary_color, logo_url, font_family, support_email, support_phone, timezone, custom_domain, subscription_plan, payment_status";
+
+/** Resolve the caller's gym, refusing anyone who is not an admin of it. */
+async function requireAdminGym(supabase: any, userId: string): Promise<string> {
+  const { data: isAdmin } = await supabase.rpc("has_role", {
+    _user_id: userId,
+    _role: "admin",
+  });
+  if (!isAdmin) throw new Error("Forbidden");
+  const { data: user } = await supabase
+    .from("users")
+    .select("gym_id")
+    .eq("id", userId)
+    .maybeSingle();
+  if (!user?.gym_id) throw new Error("No gym linked to this user");
+  return user.gym_id as string;
+}
+
 
 /** Fetch the current user's gym theme (member or staff). */
 export const getGymTheme = createServerFn({ method: "GET" })
