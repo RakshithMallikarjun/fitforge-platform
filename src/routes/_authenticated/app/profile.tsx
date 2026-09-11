@@ -129,9 +129,7 @@ function ProfilePage() {
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold tracking-tight">Latest assessment</p>
           {assessment && (
-            <p className="text-xs text-muted-foreground">
-              {formatShortDate(assessment.date)}
-            </p>
+            <p className="text-xs text-muted-foreground">{formatShortDate(assessment.date)}</p>
           )}
         </div>
         {assessment ? (

@@ -118,8 +118,7 @@ function MemberProfile() {
                 </span>
               )}
               <span className="inline-flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5" /> Joined{" "}
-                {formatShortDate(user.created_at)}
+                <Calendar className="h-3.5 w-3.5" /> Joined {formatShortDate(user.created_at)}
               </span>
             </div>
           </div>
@@ -151,24 +150,24 @@ function MemberProfile() {
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent" />
             <TabsList className="flex w-full justify-start overflow-x-auto rounded-xl">
-            <TabsTrigger value="overview">
-              <User className="mr-1.5 h-4 w-4" /> Overview
-            </TabsTrigger>
-            <TabsTrigger value="assessments">
-              <FileText className="mr-1.5 h-4 w-4" /> Assessments
-            </TabsTrigger>
-            <TabsTrigger value="plans">
-              <ClipboardList className="mr-1.5 h-4 w-4" /> Workout plans
-            </TabsTrigger>
-            <TabsTrigger value="attendance">
-              <Calendar className="mr-1.5 h-4 w-4" /> Attendance
-            </TabsTrigger>
-            <TabsTrigger value="messages">
-              <MessageSquare className="mr-1.5 h-4 w-4" /> Messages
-            </TabsTrigger>
-            <TabsTrigger value="notes">
-              <StickyNote className="mr-1.5 h-4 w-4" /> Notes
-            </TabsTrigger>
+              <TabsTrigger value="overview">
+                <User className="mr-1.5 h-4 w-4" /> Overview
+              </TabsTrigger>
+              <TabsTrigger value="assessments">
+                <FileText className="mr-1.5 h-4 w-4" /> Assessments
+              </TabsTrigger>
+              <TabsTrigger value="plans">
+                <ClipboardList className="mr-1.5 h-4 w-4" /> Workout plans
+              </TabsTrigger>
+              <TabsTrigger value="attendance">
+                <Calendar className="mr-1.5 h-4 w-4" /> Attendance
+              </TabsTrigger>
+              <TabsTrigger value="messages">
+                <MessageSquare className="mr-1.5 h-4 w-4" /> Messages
+              </TabsTrigger>
+              <TabsTrigger value="notes">
+                <StickyNote className="mr-1.5 h-4 w-4" /> Notes
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -178,10 +177,7 @@ function MemberProfile() {
               <InfoCard
                 title="Demographics"
                 rows={[
-                  [
-                    "Date of birth",
-                    profile?.dob ? formatShortDate(profile.dob) : "—",
-                  ],
+                  ["Date of birth", profile?.dob ? formatShortDate(profile.dob) : "—"],
                   ["Gender", profile?.gender ?? "—"],
                   ["Experience", profile?.experience_level ?? "—"],
                 ]}
@@ -265,9 +261,7 @@ function MemberProfile() {
                       <div>
                         <dt className="text-muted-foreground text-xs">Last payment</dt>
                         <dd className="mt-0.5 font-medium">
-                          {p.last_payment_date
-                            ? formatShortDate(p.last_payment_date)
-                            : "—"}
+                          {p.last_payment_date ? formatShortDate(p.last_payment_date) : "—"}
                         </dd>
                       </div>
                       <div>
@@ -421,9 +415,7 @@ function MemberProfile() {
                     className="flex items-center justify-between rounded-2xl border border-border bg-card p-4"
                   >
                     <div>
-                      <p className="text-sm font-semibold">
-                        {formatDateTime(a.check_in_at)}
-                      </p>
+                      <p className="text-sm font-semibold">{formatDateTime(a.check_in_at)}</p>
                       {a.check_out_at && (
                         <p className="text-xs text-muted-foreground">
                           Checked out {formatTime(a.check_out_at)}

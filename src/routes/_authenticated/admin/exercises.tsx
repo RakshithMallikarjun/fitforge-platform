@@ -84,9 +84,7 @@ function ExercisesPage() {
   /** Normalised names of global rows, used to flag gym-local duplicates. */
   const globalNames = useMemo(
     () =>
-      new Set(
-        exercises.filter((e) => e.gym_id === null).map((e) => normaliseExerciseName(e.name)),
-      ),
+      new Set(exercises.filter((e) => e.gym_id === null).map((e) => normaliseExerciseName(e.name))),
     [exercises],
   );
 

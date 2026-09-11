@@ -455,32 +455,30 @@ export type PastWorkoutRow = {
 export const listPastWorkouts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { offset?: number; limit?: number }) => d)
-  .handler(
-    async ({ data, context }): Promise<{ rows: PastWorkoutRow[]; hasMore: boolean }> => {
-      const { supabase, userId } = context;
-      const limit = Math.min(Math.max(data.limit ?? 10, 1), 50);
-      const offset = Math.max(data.offset ?? 0, 0);
-      const { data: logs, error } = await supabase
-        .from("workout_logs")
-        .select("id, date, effort_rating, workout_days:workout_day_id(day_label)")
-        .eq("member_id", userId)
-        .not("completed_at", "is", null)
-        .order("date", { ascending: false })
-        .range(offset, offset + limit); // one extra row tells us whether more exist
-      if (error) throw new Error(error.message);
-      const all = (logs ?? []) as any[];
-      const hasMore = all.length > limit;
-      return {
-        rows: all.slice(0, limit).map((l) => ({
-          id: l.id,
-          date: l.date,
-          day_label: l.workout_days?.day_label ?? null,
-          effort_rating: l.effort_rating,
-        })),
-        hasMore,
-      };
-    },
-  );
+  .handler(async ({ data, context }): Promise<{ rows: PastWorkoutRow[]; hasMore: boolean }> => {
+    const { supabase, userId } = context;
+    const limit = Math.min(Math.max(data.limit ?? 10, 1), 50);
+    const offset = Math.max(data.offset ?? 0, 0);
+    const { data: logs, error } = await supabase
+      .from("workout_logs")
+      .select("id, date, effort_rating, workout_days:workout_day_id(day_label)")
+      .eq("member_id", userId)
+      .not("completed_at", "is", null)
+      .order("date", { ascending: false })
+      .range(offset, offset + limit); // one extra row tells us whether more exist
+    if (error) throw new Error(error.message);
+    const all = (logs ?? []) as any[];
+    const hasMore = all.length > limit;
+    return {
+      rows: all.slice(0, limit).map((l) => ({
+        id: l.id,
+        date: l.date,
+        day_label: l.workout_days?.day_label ?? null,
+        effort_rating: l.effort_rating,
+      })),
+      hasMore,
+    };
+  });
 
 export type SessionSummary = {
   id: string;

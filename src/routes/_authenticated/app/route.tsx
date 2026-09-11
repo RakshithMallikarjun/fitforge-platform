@@ -138,10 +138,8 @@ function MemberShell() {
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
             <p className="text-foreground">
               Your membership expired on{" "}
-              <span className="font-semibold">
-                {formatShortDate(membership.expiresAt)}
-              </span>
-              . Contact {membership.gymName ?? theme.name} to renew.
+              <span className="font-semibold">{formatShortDate(membership.expiresAt)}</span>.
+              Contact {membership.gymName ?? theme.name} to renew.
             </p>
           </div>
         )}
