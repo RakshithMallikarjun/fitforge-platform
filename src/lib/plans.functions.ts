@@ -220,6 +220,34 @@ export const createPlan = createServerFn({ method: "POST" })
     return { id: plan.id };
   });
 
+/** Copies the source plan's days/exercises onto a freshly created plan. */
+async function copyPlanContents(supabase: any, planId: string, sortedDays: any[]) {
+  for (let i = 0; i < sortedDays.length; i++) {
+    const d = sortedDays[i] as any;
+    const { data: newDay, error: dErr } = await supabase
+      .from("workout_days")
+      .insert({ plan_id: planId, day_label: d.day_label, block_type: d.block_type ?? "main", order: i })
+      .select("id")
+      .single();
+    if (dErr) throw new Error(dErr.message);
+    const exs = (d.workout_exercises ?? []).slice().sort((a: any, b: any) => a.order - b.order);
+    if (exs.length) {
+      const rows = exs.map((e: any, idx: number) => ({
+        day_id: newDay.id,
+        exercise_id: e.exercise_id,
+        sets: e.sets,
+        reps: e.reps,
+        rest_seconds: e.rest_seconds,
+        tempo: e.tempo,
+        notes: e.notes,
+        order: idx,
+      }));
+      const { error: exErr } = await supabase.from("workout_exercises").insert(rows);
+      if (exErr) throw new Error(exErr.message);
+    }
+  }
+}
+
 export const assignPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
@@ -235,6 +263,7 @@ export const assignPlan = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { gymId, isAdmin, isTrainer } = await getRolesAndGym(supabase, userId);
     if (!gymId || (!isAdmin && !isTrainer)) throw new Error("Forbidden");
+    await assertMembersInGym(supabase, gymId, [data.memberId]);
 
     const { data: src, error: srcErr } = await supabase
       .from("workout_plans")
@@ -244,6 +273,9 @@ export const assignPlan = createServerFn({ method: "POST" })
       .eq("id", data.planId)
       .maybeSingle();
     if (srcErr || !src) throw new Error(srcErr?.message ?? "Plan not found");
+
+    // Retire the member's current plan first: never leave two active plans.
+    await archiveActivePlans(supabase, data.memberId);
 
     const { data: plan, error: planErr } = await supabase
       .from("workout_plans")
@@ -261,33 +293,16 @@ export const assignPlan = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (planErr) throw new Error(planErr.message);
-    await notifyPlanAssigned(data.memberId, plan.id, src.name);
 
     const days = (src.workout_days ?? []).slice().sort((a: any, b: any) => a.order - b.order);
-    for (let i = 0; i < days.length; i++) {
-      const d = days[i] as any;
-      const { data: newDay, error: dErr } = await supabase
-        .from("workout_days")
-        .insert({ plan_id: plan.id, day_label: d.day_label, block_type: d.block_type ?? "main", order: i })
-        .select("id")
-        .single();
-      if (dErr) throw new Error(dErr.message);
-      const exs = (d.workout_exercises ?? []).slice().sort((a: any, b: any) => a.order - b.order);
-      if (exs.length) {
-        const rows = exs.map((e: any, idx: number) => ({
-          day_id: newDay.id,
-          exercise_id: e.exercise_id,
-          sets: e.sets,
-          reps: e.reps,
-          rest_seconds: e.rest_seconds,
-          tempo: e.tempo,
-          notes: e.notes,
-          order: idx,
-        }));
-        const { error: exErr } = await supabase.from("workout_exercises").insert(rows);
-        if (exErr) throw new Error(exErr.message);
-      }
+    try {
+      await copyPlanContents(supabase, plan.id, days);
+    } catch (e) {
+      await supabase.from("workout_plans").delete().eq("id", plan.id);
+      throw e;
     }
+
+    await notifyPlanAssigned(data.memberId, plan.id, src.name);
     return { id: plan.id };
   });
 
@@ -295,7 +310,17 @@ export const archivePlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ planId: z.string().uuid() }).parse(data))
   .handler(async ({ context, data }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    const { gymId, isAdmin, isTrainer } = await getRolesAndGym(supabase, userId);
+    if (!gymId || (!isAdmin && !isTrainer)) throw new Error("Forbidden");
+
+    const { data: plan } = await supabase
+      .from("workout_plans")
+      .select("id, gym_id")
+      .eq("id", data.planId)
+      .maybeSingle();
+    if (!plan || (plan as any).gym_id !== gymId) throw new Error("Plan not found in your gym");
+
     const { error } = await supabase
       .from("workout_plans")
       .update({ status: "archived" })
@@ -335,10 +360,13 @@ export const bulkAssignPlan = createServerFn({ method: "POST" })
     const { gymId, isAdmin, isTrainer } = await getRolesAndGym(supabase, userId);
     if (!gymId || (!isAdmin && !isTrainer)) throw new Error("Forbidden");
 
+    // One lookup for every target: validates gym membership and gives us labels.
+    const memberById = await assertMembersInGym(supabase, gymId, data.memberIds);
+
     const { data: src, error: srcErr } = await supabase
       .from("workout_plans")
       .select(
-        "name, duration_weeks, notes, users:member_id(display_name, email), workout_days(id, day_label, block_type, order, workout_exercises(exercise_id, sets, reps, rest_seconds, tempo, notes, order))",
+        "name, duration_weeks, notes, workout_days(id, day_label, block_type, order, workout_exercises(exercise_id, sets, reps, rest_seconds, tempo, notes, order))",
       )
       .eq("id", data.planId)
       .maybeSingle();
@@ -352,16 +380,12 @@ export const bulkAssignPlan = createServerFn({ method: "POST" })
     const errors: string[] = [];
 
     for (const memberId of data.memberIds) {
-      // Get member name for error reporting
-      let memberLabel = memberId.slice(0, 8);
-      const { data: mu } = await supabase
-        .from("users")
-        .select("display_name, email")
-        .eq("id", memberId)
-        .maybeSingle();
-      if (mu) memberLabel = (mu as any).display_name ?? (mu as any).email ?? memberLabel;
-
+      const mu = memberById.get(memberId);
+      const memberLabel = mu?.display_name ?? mu?.email ?? memberId.slice(0, 8);
+      let createdPlanId: string | null = null;
       try {
+        await archiveActivePlans(supabase, memberId);
+
         const { data: plan, error: planErr } = await supabase
           .from("workout_plans")
           .insert({
@@ -378,45 +402,19 @@ export const bulkAssignPlan = createServerFn({ method: "POST" })
           .select("id")
           .single();
         if (planErr) throw new Error(planErr.message);
+        createdPlanId = plan.id;
 
-        for (let i = 0; i < sortedDays.length; i++) {
-          const d = sortedDays[i] as any;
-          const { data: newDay, error: dErr } = await supabase
-            .from("workout_days")
-            .insert({
-              plan_id: plan.id,
-              day_label: d.day_label,
-              block_type: d.block_type ?? "main",
-              order: i,
-            })
-            .select("id")
-            .single();
-          if (dErr) throw new Error(dErr.message);
-          const exs = (d.workout_exercises ?? [])
-            .slice()
-            .sort((a: any, b: any) => a.order - b.order);
-          if (exs.length) {
-            const rows = exs.map((e: any, idx: number) => ({
-              day_id: newDay.id,
-              exercise_id: e.exercise_id,
-              sets: e.sets,
-              reps: e.reps,
-              rest_seconds: e.rest_seconds,
-              tempo: e.tempo,
-              notes: e.notes,
-              order: idx,
-            }));
-            const { error: exErr } = await supabase.from("workout_exercises").insert(rows);
-            if (exErr) throw new Error(exErr.message);
-          }
-        }
+        await copyPlanContents(supabase, plan.id, sortedDays);
         assigned++;
         await notifyPlanAssigned(memberId, plan.id, (src as any).name);
       } catch (e: any) {
+        // Never leave a half-built plan behind.
+        if (createdPlanId) await supabase.from("workout_plans").delete().eq("id", createdPlanId);
         errors.push(`${memberLabel}: ${e?.message ?? "unknown error"}`);
       }
     }
 
     return { assigned, errors };
   });
+
 
