@@ -350,6 +350,7 @@ export const bulkAssignPlan = createServerFn({ method: "POST" })
           }
         }
         assigned++;
+        await notifyPlanAssigned(memberId, plan.id, (src as any).name);
       } catch (e: any) {
         errors.push(`${memberLabel}: ${e?.message ?? "unknown error"}`);
       }
