@@ -168,7 +168,8 @@ function MemberProfile() {
             <TabsTrigger value="notes">
               <StickyNote className="mr-1.5 h-4 w-4" /> Notes
             </TabsTrigger>
-          </TabsList>
+            </TabsList>
+          </div>
 
           {/* OVERVIEW */}
           <TabsContent value="overview" className="space-y-4">
