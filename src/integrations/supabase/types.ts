@@ -1160,7 +1160,7 @@ export type Database = {
           gym_id: string
           id: string
           is_template: boolean
-          member_id: string
+          member_id: string | null
           name: string
           notes: string | null
           start_date: string | null
@@ -1173,7 +1173,7 @@ export type Database = {
           gym_id: string
           id?: string
           is_template?: boolean
-          member_id: string
+          member_id?: string | null
           name: string
           notes?: string | null
           start_date?: string | null
@@ -1186,7 +1186,7 @@ export type Database = {
           gym_id?: string
           id?: string
           is_template?: boolean
-          member_id?: string
+          member_id?: string | null
           name?: string
           notes?: string | null
           start_date?: string | null
