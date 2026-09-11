@@ -25,6 +25,7 @@ import {
   createExercise,
   updateExercise,
   getYoutubeThumbnail,
+  normaliseExerciseName,
   type ExerciseRow,
 } from "@/lib/exercises.functions";
 
@@ -32,6 +33,8 @@ type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   initial?: ExerciseRow | null;
+  /** Normalised names of global exercises, so we can warn before duplicating one. */
+  globalNames?: Set<string>;
 };
 
 function TagInput({
@@ -79,7 +82,7 @@ function TagInput({
   );
 }
 
-export function ExerciseFormDialog({ open, onOpenChange, initial }: Props) {
+export function ExerciseFormDialog({ open, onOpenChange, initial, globalNames }: Props) {
   const qc = useQueryClient();
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -88,6 +91,9 @@ export function ExerciseFormDialog({ open, onOpenChange, initial }: Props) {
   const [muscleGroups, setMuscleGroups] = useState<string[]>(initial?.muscle_groups ?? []);
   const [equipment, setEquipment] = useState<string[]>(initial?.equipment ?? []);
   const [difficulty, setDifficulty] = useState<string>(initial?.difficulty ?? "beginner");
+
+  const duplicatesGlobal =
+    !initial?.id && !!name.trim() && !!globalNames?.has(normaliseExerciseName(name));
 
   const save = useMutation({
     mutationFn: async () => {
@@ -125,6 +131,12 @@ export function ExerciseFormDialog({ open, onOpenChange, initial }: Props) {
           <div>
             <Label>Name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
+            {duplicatesGlobal && (
+              <p className="mt-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                “{name.trim()}” already exists in the global library. Saving creates a duplicate for
+                your gym — consider using the global exercise instead.
+              </p>
+            )}
           </div>
           <div>
             <Label>Description</Label>

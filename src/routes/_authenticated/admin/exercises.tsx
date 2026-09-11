@@ -22,7 +22,12 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { listExercises, deleteExercise, type ExerciseRow } from "@/lib/exercises.functions";
+import {
+  listExercises,
+  deleteExercise,
+  normaliseExerciseName,
+  type ExerciseRow,
+} from "@/lib/exercises.functions";
 import { ExerciseFormDialog } from "@/components/exercises/exercise-form-dialog";
 
 export const Route = createFileRoute("/_authenticated/admin/exercises")({
@@ -75,6 +80,15 @@ function ExercisesPage() {
     queryKey: ["exercises"],
     queryFn: () => listExercises({ data: {} }),
   });
+
+  /** Normalised names of global rows, used to flag gym-local duplicates. */
+  const globalNames = useMemo(
+    () =>
+      new Set(
+        exercises.filter((e) => e.gym_id === null).map((e) => normaliseExerciseName(e.name)),
+      ),
+    [exercises],
+  );
 
   const muscleOptions = useMemo(
     () => Array.from(new Set(exercises.flatMap((e) => e.muscle_groups ?? []))).sort(),
@@ -191,6 +205,7 @@ function ExercisesPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((e) => {
               const isGlobal = e.gym_id === null;
+              const isDuplicate = !isGlobal && globalNames.has(normaliseExerciseName(e.name));
               return (
                 <div
                   key={e.id}
@@ -201,6 +216,14 @@ function ExercisesPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <h3 className="truncate text-sm font-semibold">{e.name}</h3>
+                        {isDuplicate && (
+                          <Badge
+                            variant="outline"
+                            className="mt-1 border-amber-400/60 text-[10px] text-amber-600 dark:text-amber-400"
+                          >
+                            Duplicate of a global exercise
+                          </Badge>
+                        )}
                         <div className="mt-1 flex flex-wrap gap-1">
                           {(e.muscle_groups ?? []).slice(0, 3).map((m) => (
                             <Badge key={m} variant="outline" className="text-[10px]">
@@ -268,7 +291,12 @@ function ExercisesPage() {
         )}
       </main>
 
-      <ExerciseFormDialog open={formOpen} onOpenChange={setFormOpen} initial={editing} />
+      <ExerciseFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        initial={editing}
+        globalNames={globalNames}
+      />
     </>
   );
 }
