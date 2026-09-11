@@ -44,6 +44,9 @@ function AdminDashboard() {
     queryFn: () => fetchStats(),
     enabled: !!user,
   });
+  // Trainers only get data for their own members; say so on every tile.
+  const scopeLabel = stats?.activityScope === "assigned" ? "Your members" : "Gym-wide";
+
 
   return (
     <>
