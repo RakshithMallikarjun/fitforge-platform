@@ -1248,6 +1248,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_gym_staff_user: { Args: { _user_id: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
       is_trainer_of: { Args: { _member_id: string }; Returns: boolean }
       my_gym_enabled: { Args: never; Returns: boolean }
