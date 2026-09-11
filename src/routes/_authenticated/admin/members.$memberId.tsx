@@ -146,7 +146,10 @@ function MemberProfile() {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="rounded-xl">
+          {/* Six tabs overflow below ~900px — scroll instead of clipping silently. */}
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent" />
+            <TabsList className="flex w-full justify-start overflow-x-auto rounded-xl">
             <TabsTrigger value="overview">
               <User className="mr-1.5 h-4 w-4" /> Overview
             </TabsTrigger>
