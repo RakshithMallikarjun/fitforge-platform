@@ -341,12 +341,12 @@ function PlatformGymDetailPage() {
         ) : (
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="day" tick={{ fontSize: 10 }} tickFormatter={(d) => String(d).slice(5)} />
-              <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="day" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickFormatter={(d) => String(d).slice(5)} />
+              <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} allowDecimals={false} />
               <RTooltip />
-              <Line type="monotone" dataKey="workouts" name="Workouts" stroke="hsl(var(--primary))" dot={false} />
-              <Line type="monotone" dataKey="checkins" name="Check-ins" stroke="hsl(var(--secondary))" dot={false} />
+              <Line type="monotone" dataKey="workouts" name="Workouts" stroke="var(--primary)" dot={false} />
+              <Line type="monotone" dataKey="checkins" name="Check-ins" stroke="var(--secondary)" dot={false} />
             </LineChart>
           </ResponsiveContainer>
         )}

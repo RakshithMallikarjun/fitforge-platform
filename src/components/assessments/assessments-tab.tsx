@@ -155,27 +155,27 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
         <div className="grid gap-4 md:grid-cols-2">
           <ChartCard title="Weight">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="date" fontSize={11} />
-              <YAxis fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+              <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
               <Tooltip />
-              <Line type="monotone" dataKey="weight" stroke="hsl(var(--primary))" strokeWidth={2} dot />
+              <Line type="monotone" dataKey="weight" stroke="var(--primary)" strokeWidth={2} dot />
             </LineChart>
           </ChartCard>
           <ChartCard title="Body fat %">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="date" fontSize={11} />
-              <YAxis fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+              <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
               <Tooltip />
-              <Line type="monotone" dataKey="body_fat_pct" stroke="hsl(var(--secondary))" strokeWidth={2} dot />
+              <Line type="monotone" dataKey="body_fat_pct" stroke="var(--secondary)" strokeWidth={2} dot />
             </LineChart>
           </ChartCard>
           <ChartCard title="Strength 1RM" className="md:col-span-2">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="date" fontSize={11} />
-              <YAxis fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+              <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
               <Tooltip />
               <Legend />
               <Line type="monotone" dataKey="bench" stroke="#059669" strokeWidth={2} dot />

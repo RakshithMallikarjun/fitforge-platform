@@ -203,8 +203,8 @@ function BodyTab({ data }: { data: ProgressData }) {
         </div>
       </div>
 
-      <ChartCard title="Weight" dataKey="weight" data={chartData} color="hsl(var(--primary))" />
-      <ChartCard title="Body fat %" dataKey="body_fat_pct" data={chartData} color="hsl(var(--secondary))" />
+      <ChartCard title="Weight" dataKey="weight" data={chartData} color="var(--primary)" />
+      <ChartCard title="Body fat %" dataKey="body_fat_pct" data={chartData} color="var(--secondary)" />
 
       <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-between">
@@ -226,11 +226,11 @@ function BodyTab({ data }: { data: ProgressData }) {
         <div className="mt-3 h-48">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-              <XAxis dataKey="date" fontSize={11} />
-              <YAxis fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+              <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
               <Tooltip />
-              <Line type="monotone" dataKey={measure} stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey={measure} stroke="var(--primary)" strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -258,9 +258,9 @@ function ChartCard({ title, dataKey, data, color }: any) {
       <div className="mt-3 h-48">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-            <XAxis dataKey="date" fontSize={11} />
-            <YAxis fontSize={11} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+            <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
             <Tooltip />
             <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} dot={{ r: 3 }} />
           </LineChart>
@@ -369,11 +369,11 @@ function StrengthTab({ data }: { data: ProgressData }) {
           <div className="mt-3 h-48">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={oneRmData}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis dataKey="date" fontSize={11} />
-                <YAxis fontSize={11} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+                <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
                 <Tooltip />
-                <Line type="monotone" dataKey="oneRm" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="oneRm" stroke="var(--primary)" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>

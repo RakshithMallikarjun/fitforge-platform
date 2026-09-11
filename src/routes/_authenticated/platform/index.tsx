@@ -139,12 +139,12 @@ function PlatformOverviewPage() {
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
                   <AreaChart data={signupData}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                    <XAxis dataKey="day" tick={{ fontSize: 10 }} tickFormatter={(d) => String(d).slice(5)} />
-                    <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="day" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickFormatter={(d) => String(d).slice(5)} />
+                    <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} allowDecimals={false} />
                     <RTooltip />
-                    <Area type="monotone" dataKey="members_created" name="Members" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.2} />
-                    <Area type="monotone" dataKey="gyms_created" name="Gyms" stroke="hsl(var(--secondary))" fill="hsl(var(--secondary))" fillOpacity={0.2} />
+                    <Area type="monotone" dataKey="members_created" name="Members" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.2} />
+                    <Area type="monotone" dataKey="gyms_created" name="Gyms" stroke="var(--secondary)" fill="var(--secondary)" fillOpacity={0.2} />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
@@ -160,13 +160,13 @@ function PlatformOverviewPage() {
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={activityData}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                    <XAxis dataKey="day" tick={{ fontSize: 10 }} tickFormatter={(d) => String(d).slice(5)} />
-                    <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="day" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickFormatter={(d) => String(d).slice(5)} />
+                    <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} allowDecimals={false} />
                     <RTooltip />
-                    <Line type="monotone" dataKey="workouts" name="Workouts" stroke="hsl(var(--primary))" dot={false} />
-                    <Line type="monotone" dataKey="checkins" name="Check-ins" stroke="hsl(var(--secondary))" dot={false} />
-                    <Line type="monotone" dataKey="active_members" name="Active members" stroke="hsl(var(--muted-foreground))" dot={false} />
+                    <Line type="monotone" dataKey="workouts" name="Workouts" stroke="var(--primary)" dot={false} />
+                    <Line type="monotone" dataKey="checkins" name="Check-ins" stroke="var(--secondary)" dot={false} />
+                    <Line type="monotone" dataKey="active_members" name="Active members" stroke="var(--muted-foreground)" dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -180,11 +180,11 @@ function PlatformOverviewPage() {
                   <BarChart
                     data={Object.entries(o.gyms_by_payment_status).map(([k, v]) => ({ name: k, gyms: v }))}
                   >
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                    <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                    <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                    <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} allowDecimals={false} />
                     <RTooltip />
-                    <Bar dataKey="gyms" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="gyms" fill="var(--primary)" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -196,11 +196,11 @@ function PlatformOverviewPage() {
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={Object.entries(o.gyms_by_plan).map(([k, v]) => ({ name: k, gyms: v }))}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                    <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                    <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+                    <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} allowDecimals={false} />
                     <RTooltip />
-                    <Bar dataKey="gyms" fill="hsl(var(--secondary))" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="gyms" fill="var(--secondary)" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
