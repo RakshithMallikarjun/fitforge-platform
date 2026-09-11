@@ -2,6 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+/** Compare exercise names ignoring case, punctuation and extra spaces. */
+export function normaliseExerciseName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 export function getYoutubeVideoId(url: string | null | undefined): string | null {
   if (!url) return null;
   try {
