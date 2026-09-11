@@ -93,27 +93,45 @@ export const getAdminStats = createServerFn({ method: "GET" })
       newThisMonth = nm ?? 0;
     }
 
-    const [{ count: sessions }, { count: weekCheckIns }] = await Promise.all([
-      supabase
+    let sessionsToday = 0;
+    let avgCheckIns7d = 0;
+    if (assignedIds && !assignedIds.length) {
+      // Trainer with nobody assigned: genuinely zero, not a hidden gym number.
+      sessionsToday = 0;
+      avgCheckIns7d = 0;
+    } else {
+      let sessionsQ = supabase
         .from("workout_logs")
         .select("id", { count: "exact", head: true })
         .eq("gym_id", gymId)
-        .eq("date", todayStr),
-      supabase
+        .eq("date", todayStr);
+      let checkInsQ = supabase
         .from("attendance_logs")
         .select("id", { count: "exact", head: true })
         .eq("gym_id", gymId)
-        .gte("check_in_at", sevenDaysAgo),
-    ]);
+        .gte("check_in_at", sevenDaysAgo);
+      if (assignedIds) {
+        sessionsQ = sessionsQ.in("member_id", assignedIds);
+        checkInsQ = checkInsQ.in("member_id", assignedIds);
+      }
+      const [{ count: sessions }, { count: weekCheckIns }] = await Promise.all([
+        sessionsQ,
+        checkInsQ,
+      ]);
+      sessionsToday = sessions ?? 0;
+      avgCheckIns7d = Math.round(((weekCheckIns ?? 0) / 7) * 10) / 10;
+    }
 
     return {
       activeMemberships,
       activeAccounts,
       newThisMonth,
-      sessionsToday: sessions ?? 0,
-      avgCheckIns7d: Math.round(((weekCheckIns ?? 0) / 7) * 10) / 10,
+      sessionsToday,
+      avgCheckIns7d,
+      activityScope: assignedIds ? "assigned" : "gym",
     };
   });
+
 
 // ---------- Trainer performance ----------
 export type TrainerStat = {
