@@ -346,6 +346,8 @@ function SignUpForm() {
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const verifyJoinCode = useServerFn(verifyGymJoinCode);
+
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
