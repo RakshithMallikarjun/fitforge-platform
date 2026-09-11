@@ -27,6 +27,7 @@ import {
   type EngagementRow,
 } from "@/lib/admin-stats.functions";
 import { useTheme } from "@/lib/theme-provider";
+import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminDashboard,
@@ -36,7 +37,6 @@ function AdminDashboard() {
   const { data: user } = useCurrentUser();
   const { theme } = useTheme();
   const isAdmin = !!user?.roles.includes("admin");
-  const initials = (user?.displayName ?? user?.email ?? "FF").slice(0, 2).toUpperCase();
   // useServerFn wires up the client middleware that attaches the auth token.
   const fetchStats = useServerFn(getAdminStats);
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -52,7 +52,6 @@ function AdminDashboard() {
       <GlassHeader
         title={`Welcome back, ${user?.displayName ?? "Coach"}`}
         subtitle="Here's what's happening across your gym today"
-        initials={initials}
       />
 
       <main className="mx-auto max-w-[1280px] space-y-8 px-8 py-8">
@@ -374,7 +373,7 @@ function PaymentHistory() {
                   {p.amount === null ? "—" : p.amount.toLocaleString()}
                 </td>
                 <td className="py-4 text-muted-foreground">
-                  {p.date ? new Date(p.date).toLocaleDateString() : "—"}
+                  {p.date ? formatShortDate(p.date) : "—"}
                 </td>
                 <td className="py-4 pr-6">
                   <span

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ClipboardList, Copy, Loader2, Search } from "lucide-react";
+import { ClipboardList, Copy, Eye, Loader2, Search } from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -135,17 +135,28 @@ function TemplatesPage() {
                     Created by: {t.trainer_name}
                   </p>
                 )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="mt-3"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openAssign(t.id);
-                  }}
-                >
-                  <Copy className="mr-1.5 h-4 w-4" /> Bulk assign
-                </Button>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate({ to: "/admin/plans/$planId", params: { planId: t.id } });
+                    }}
+                  >
+                    <Eye className="mr-1.5 h-4 w-4" /> Preview
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openAssign(t.id);
+                    }}
+                  >
+                    <Copy className="mr-1.5 h-4 w-4" /> Bulk assign
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>

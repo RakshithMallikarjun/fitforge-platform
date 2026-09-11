@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listPlans } from "@/lib/plans.functions";
+import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/plans")({
   component: PlansPageShell,
@@ -92,9 +93,7 @@ function PlansPage() {
                         {p.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      {p.start_date ? new Date(p.start_date).toLocaleDateString() : "—"}
-                    </TableCell>
+                    <TableCell>{p.start_date ? formatShortDate(p.start_date) : "—"}</TableCell>
                     <TableCell>{p.duration_weeks ? `${p.duration_weeks} wk` : "—"}</TableCell>
                     <TableCell className="text-right">{p.day_count}</TableCell>
                   </TableRow>

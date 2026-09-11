@@ -5,6 +5,7 @@ import { GlassHeader } from "@/components/glass-header";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPlan } from "@/lib/plans.functions";
+import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/plans/$planId")({
   component: PlanView,
@@ -72,7 +73,7 @@ function PlanView() {
           {plan.is_template && <Badge variant="outline">Template</Badge>}
           {plan.start_date && (
             <span className="text-sm text-muted-foreground">
-              Starts {new Date(plan.start_date).toLocaleDateString()}
+              Starts {formatShortDate(plan.start_date)}
             </span>
           )}
           {plan.duration_weeks && (

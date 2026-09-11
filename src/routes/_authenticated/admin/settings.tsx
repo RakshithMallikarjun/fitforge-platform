@@ -151,7 +151,6 @@ function SettingsPage() {
     setCustomDomain(gym.custom_domain ?? "");
   }, [gym]);
 
-
   const mutation = useMutation({
     mutationFn: (vars: {
       name: string;
@@ -214,7 +213,6 @@ See you at the gym!`;
 
   const validHex = /^#[0-9a-fA-F]{6}$/.test(primaryColor);
   const logoValid = logoUrl && /^https?:\/\//i.test(logoUrl);
-
 
   if (!isAdmin) {
     return (
@@ -487,7 +485,6 @@ See you at the gym!`;
             {revealCode || !joinCode
               ? signupMessage
               : signupMessage.replace(joinCode, "••••••••••••")}
-
           </pre>
         </CardContent>
       </Card>
@@ -497,8 +494,8 @@ See you at the gym!`;
           <AlertDialogHeader>
             <AlertDialogTitle>Regenerate the join code?</AlertDialogTitle>
             <AlertDialogDescription>
-              Any invite message or join code you have already shared will stop working
-              immediately. Members who have already signed up are not affected.
+              Any invite message or join code you have already shared will stop working immediately.
+              Members who have already signed up are not affected.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -546,10 +543,10 @@ See you at the gym!`;
             <div className="rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
               <p className="mb-2 font-semibold text-foreground">DNS setup</p>
               <p className="mb-2">
-                Subdomain option: add a wildcard <code>CNAME</code> for{" "}
-                <code>*.fitforge.app</code> pointing at your published FitForge URL. Members
-                visiting <code>{slug || "yourgym"}.fitforge.app</code> get your theme, logo and
-                app icon automatically.
+                Subdomain option: add a wildcard <code>CNAME</code> for <code>*.fitforge.app</code>{" "}
+                pointing at your published FitForge URL. Members visiting{" "}
+                <code>{slug || "yourgym"}.fitforge.app</code> get your theme, logo and app icon
+                automatically.
               </p>
               <p>
                 Fully custom domain: save it here, add a <code>CNAME</code> from{" "}
@@ -576,9 +573,7 @@ See you at the gym!`;
 
           <div className="flex justify-end">
             <Button
-              onClick={() =>
-                opsMutation.mutate({ timezone, customDomain: customDomain || null })
-              }
+              onClick={() => opsMutation.mutate({ timezone, customDomain: customDomain || null })}
               disabled={opsMutation.isPending || !timezone}
             >
               {opsMutation.isPending ? "Saving…" : "Save operations"}
@@ -588,5 +583,4 @@ See you at the gym!`;
       </Card>
     </div>
   );
-
 }

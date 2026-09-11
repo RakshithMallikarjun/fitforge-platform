@@ -20,6 +20,7 @@ import { getGymTheme } from "@/lib/gym-theme.functions";
 import { getMembershipStatus } from "@/lib/membership.functions";
 import { MembershipProvider } from "@/lib/membership-context";
 import { AlertTriangle } from "lucide-react";
+import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/app")({
   head: () => ({
@@ -137,14 +138,8 @@ function MemberShell() {
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
             <p className="text-foreground">
               Your membership expired on{" "}
-              <span className="font-semibold">
-                {new Date(`${membership.expiresAt}T00:00:00`).toLocaleDateString(undefined, {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </span>
-              . Contact {membership.gymName ?? theme.name} to renew.
+              <span className="font-semibold">{formatShortDate(membership.expiresAt)}</span>.
+              Contact {membership.gymName ?? theme.name} to renew.
             </p>
           </div>
         )}

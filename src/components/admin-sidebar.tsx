@@ -14,10 +14,12 @@ import {
   Globe2,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme-provider";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { isPlatformAdmin } from "@/lib/platform.functions";
+import { getGymSettings } from "@/lib/gym-theme.functions";
 
 type NavItem = {
   to: string;
@@ -56,6 +58,19 @@ export function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
   const { theme } = useTheme();
   const { data: me } = useCurrentUser();
   const isAdmin = !!me?.roles.includes("admin");
+  // Reuse the settings query the settings page already caches — no extra round trip.
+  const fetchSettings = useServerFn(getGymSettings);
+  const { data: gymSettings } = useQuery({
+    queryKey: ["gym-settings"],
+    queryFn: () => fetchSettings(),
+    enabled: isAdmin,
+    staleTime: 5 * 60_000,
+  });
+  const planLabel = (() => {
+    const p = gymSettings?.subscription_plan;
+    if (!p) return null;
+    return p.charAt(0).toUpperCase() + p.slice(1);
+  })();
   const { data: isPlatformAdminUser } = useQuery({
     queryKey: ["is-platform-admin"],
     queryFn: () => isPlatformAdmin(),
@@ -139,7 +154,7 @@ export function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
             <span className="text-xs font-semibold uppercase tracking-wider">Verified gym</span>
           </div>
           <p className="mt-1 text-xs text-accent-foreground/80">
-            Your account is active on the {theme.name} plan.
+            {planLabel ? `You're on the ${planLabel} plan.` : "Active"}
           </p>
         </div>
         <button

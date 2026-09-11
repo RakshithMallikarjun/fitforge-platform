@@ -443,3 +443,101 @@ export const listPersonalRecords = createServerFn({ method: "GET" })
       achieved_at: r.achieved_at,
     }));
   });
+
+export type PastWorkoutRow = {
+  id: string;
+  date: string;
+  day_label: string | null;
+  effort_rating: number | null;
+};
+
+/** Paged history of completed sessions, newest first. */
+export const listPastWorkouts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { offset?: number; limit?: number }) => d)
+  .handler(async ({ data, context }): Promise<{ rows: PastWorkoutRow[]; hasMore: boolean }> => {
+    const { supabase, userId } = context;
+    const limit = Math.min(Math.max(data.limit ?? 10, 1), 50);
+    const offset = Math.max(data.offset ?? 0, 0);
+    const { data: logs, error } = await supabase
+      .from("workout_logs")
+      .select("id, date, effort_rating, workout_days:workout_day_id(day_label)")
+      .eq("member_id", userId)
+      .not("completed_at", "is", null)
+      .order("date", { ascending: false })
+      .range(offset, offset + limit); // one extra row tells us whether more exist
+    if (error) throw new Error(error.message);
+    const all = (logs ?? []) as any[];
+    const hasMore = all.length > limit;
+    return {
+      rows: all.slice(0, limit).map((l) => ({
+        id: l.id,
+        date: l.date,
+        day_label: l.workout_days?.day_label ?? null,
+        effort_rating: l.effort_rating,
+      })),
+      hasMore,
+    };
+  });
+
+export type SessionSummary = {
+  id: string;
+  date: string;
+  day_label: string | null;
+  effort_rating: number | null;
+  notes: string | null;
+  exercises: {
+    exercise_id: string;
+    name: string;
+    sets: { set_number: number; weight: number | null; reps: number | null; completed: boolean }[];
+  }[];
+};
+
+/** Read-only recap of one completed session (own sessions only). */
+export const getSessionSummary = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { logId: string }) => d)
+  .handler(async ({ data, context }): Promise<SessionSummary | null> => {
+    const { supabase, userId } = context;
+    const { data: log, error } = await supabase
+      .from("workout_logs")
+      .select("id, date, effort_rating, notes, member_id, workout_days:workout_day_id(day_label)")
+      .eq("id", data.logId)
+      .eq("member_id", userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!log) return null;
+
+    const { data: sets } = await supabase
+      .from("exercise_logs")
+      .select("exercise_id, set_number, weight, reps, completed, exercises:exercise_id(name)")
+      .eq("log_id", data.logId)
+      .order("set_number", { ascending: true });
+
+    const byExercise = new Map<string, SessionSummary["exercises"][number]>();
+    for (const s of (sets ?? []) as any[]) {
+      const key = s.exercise_id as string;
+      if (!byExercise.has(key)) {
+        byExercise.set(key, {
+          exercise_id: key,
+          name: s.exercises?.name ?? "Exercise",
+          sets: [],
+        });
+      }
+      byExercise.get(key)!.sets.push({
+        set_number: s.set_number,
+        weight: s.weight,
+        reps: s.reps,
+        completed: !!s.completed,
+      });
+    }
+
+    return {
+      id: (log as any).id,
+      date: (log as any).date,
+      day_label: (log as any).workout_days?.day_label ?? null,
+      effort_rating: (log as any).effort_rating,
+      notes: (log as any).notes,
+      exercises: Array.from(byExercise.values()),
+    };
+  });

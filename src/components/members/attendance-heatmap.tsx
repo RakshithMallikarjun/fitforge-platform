@@ -1,3 +1,4 @@
+import { formatShortDate } from "@/lib/format-date";
 /**
  * GitHub-style 12-week attendance heatmap for the Member 360 Attendance tab.
  */
@@ -58,7 +59,7 @@ export function AttendanceHeatmap({ entries }: { entries: Entry[] }) {
               {col.map((cell) => (
                 <div
                   key={cell.key}
-                  title={`${cell.date.toLocaleDateString()} — ${cell.count} check-in${cell.count === 1 ? "" : "s"}`}
+                  title={`${formatShortDate(cell.date)} — ${cell.count} check-in${cell.count === 1 ? "" : "s"}`}
                   className={["h-3 w-3 rounded-sm", shade(cell.count, cell.inRange)].join(" ")}
                 />
               ))}

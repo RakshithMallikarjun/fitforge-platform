@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
 import { verifyAndCheckin } from "@/lib/checkin.functions";
+import { formatTime } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/checkin")({
   component: AdminCheckin,
@@ -101,7 +102,7 @@ function AdminCheckin() {
 
   return (
     <>
-      <GlassHeader title="Front desk check-in" subtitle="Scan a member's QR code" initials="QR" />
+      <GlassHeader title="Front desk check-in" subtitle="Scan a member's QR code" />
       <main className="mx-auto max-w-3xl space-y-6 px-8 py-8">
         <div className="rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)]">
           <div
@@ -139,9 +140,7 @@ function AdminCheckin() {
                   ) : (
                     <XCircle className="h-4 w-4 text-destructive" />
                   )}
-                  <span className="text-muted-foreground">
-                    {new Date(r.at).toLocaleTimeString()}
-                  </span>
+                  <span className="text-muted-foreground">{formatTime(r.at)}</span>
                   <span>{r.message}</span>
                   <span className="ml-auto inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
                     Gym

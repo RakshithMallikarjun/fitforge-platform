@@ -1,27 +1,27 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Clock, Dumbbell, MessageSquareQuote, Play, QrCode, Sparkles } from "lucide-react";
+import {
+  CalendarDays,
+  Clock,
+  Dumbbell,
+  Flame,
+  MessageSquareQuote,
+  Play,
+  QrCode,
+  Sparkles,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BentoStatCard } from "@/components/bento-stat-card";
 import { Button } from "@/components/ui/button";
 import { getMemberHome } from "@/lib/member-home.functions";
 import { getMemberTip } from "@/lib/overload.functions";
 import { useMembershipExpired } from "@/lib/membership-context";
+import { formatDayDate, formatRelativeDay } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: MemberHome,
 });
-
-function formatRelative(iso: string | null): string {
-  if (!iso) return "Never";
-  const d = new Date(iso);
-  const diffDays = Math.floor((Date.now() - d.getTime()) / 86400_000);
-  if (diffDays <= 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
 
 function MemberHome() {
   const membershipExpired = useMembershipExpired();
@@ -44,11 +44,7 @@ function MemberHome() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
-            {new Date().toLocaleDateString(undefined, {
-              weekday: "long",
-              month: "short",
-              day: "numeric",
-            })}
+            {formatDayDate(new Date())}
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">
             Hey {name} — ready to train?
@@ -79,13 +75,25 @@ function MemberHome() {
 
       <div className="grid grid-cols-2 gap-3">
         <BentoStatCard
-          label="Streak"
-          value={isLoading ? "—" : `🔥 ${data?.currentStreak ?? 0}-day streak`}
-          footer={(data?.currentStreak ?? 0) === 0 ? "Start your streak today" : "Keep it going"}
+          label={
+            <span className="inline-flex items-center gap-1.5">
+              <Flame className="h-3 w-3" /> Streak
+            </span>
+          }
+          value={isLoading ? "—" : `${data?.currentStreak ?? 0}`}
+          footer={
+            (data?.currentStreak ?? 0) === 0
+              ? "Start your streak today"
+              : `${data?.currentStreak} day${(data?.currentStreak ?? 0) === 1 ? "" : "s"} — keep it going`
+          }
         />
         <BentoStatCard
-          label="Consistency"
-          value={isLoading ? "—" : `📅 ${data?.weeklyConsistency ?? 0}% this week`}
+          label={
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarDays className="h-3 w-3" /> Consistency
+            </span>
+          }
+          value={isLoading ? "—" : `${data?.weeklyConsistency ?? 0}%`}
           footer={
             (data?.weeklyConsistency ?? 0) >= 80 ? (
               <Badge className="border-success/30 bg-success/15 text-success">On track!</Badge>
@@ -101,7 +109,7 @@ function MemberHome() {
         <div className="flex items-center justify-between">
           <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Last session</p>
           <span className="text-xs font-medium text-foreground">
-            {formatRelative(data?.lastWorkoutDate ?? null)}
+            {formatRelativeDay(data?.lastWorkoutDate ?? null)}
           </span>
         </div>
         <p className="mt-2 text-base font-semibold tracking-tight">
@@ -141,7 +149,7 @@ function MemberHome() {
           </div>
           <p className="mt-2 text-sm leading-relaxed text-foreground">{data.latestNote.body}</p>
           <p className="mt-2 text-[11px] text-muted-foreground">
-            {formatRelative(data.latestNote.created_at)}
+            {formatRelativeDay(data.latestNote.created_at)}
           </p>
         </div>
       )}
@@ -208,10 +216,9 @@ function WorkoutOfTheDay({
         </span>
       </div>
       <Button
-        variant="secondary"
         size="sm"
         disabled={disabled}
-        className="mt-5 rounded-lg"
+        className="mt-5 rounded-lg bg-white font-semibold text-[color:var(--primary)] shadow-sm hover:bg-white/90 disabled:opacity-60"
         onClick={() => navigate({ to: "/app/workout/$dayId", params: { dayId: next.dayId } })}
       >
         <Play className="mr-1.5 h-3.5 w-3.5" />

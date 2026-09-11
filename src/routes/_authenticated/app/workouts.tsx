@@ -1,20 +1,40 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Clock, Dumbbell, ChevronRight, History } from "lucide-react";
+import { Clock, Dumbbell, ChevronRight, History, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getWorkoutsBrowser } from "@/lib/workout-player.functions";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { formatDayDate } from "@/lib/format-date";
+import {
+  getWorkoutsBrowser,
+  getSessionSummary,
+  listPastWorkouts,
+} from "@/lib/workout-player.functions";
 
 export const Route = createFileRoute("/_authenticated/app/workouts")({
   component: WorkoutsPage,
 });
 
+const PAGE_SIZE = 10;
+
 function WorkoutsPage() {
   const fn = useServerFn(getWorkoutsBrowser);
+  const fetchPast = useServerFn(listPastWorkouts);
+  const [openSession, setOpenSession] = useState<string | null>(null);
   const { data, isLoading } = useQuery({
     queryKey: ["workouts-browser"],
     queryFn: () => fn(),
   });
+  const past = useInfiniteQuery({
+    queryKey: ["past-workouts"],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      fetchPast({ data: { offset: pageParam as number, limit: PAGE_SIZE } }),
+    getNextPageParam: (last, pages) => (last.hasMore ? pages.length * PAGE_SIZE : undefined),
+  });
+  const pastRows = past.data?.pages.flatMap((p) => p.rows) ?? [];
 
   return (
     <div className="space-y-6">
@@ -116,45 +136,134 @@ function WorkoutsPage() {
 
       <section className="space-y-3">
         <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Past workouts</p>
-        {isLoading ? (
+        {past.isLoading ? (
           <Skeleton className="h-20 rounded-2xl" />
-        ) : data && data.pastWorkouts.length > 0 ? (
-          <div className="overflow-hidden rounded-2xl border border-border bg-card">
-            {data.pastWorkouts.map((p, i) => (
-              <div
-                key={p.id}
-                className={[
-                  "flex items-center gap-3 px-4 py-3",
-                  i > 0 ? "border-t border-border" : "",
-                ].join(" ")}
+        ) : pastRows.length > 0 ? (
+          <>
+            <div className="overflow-hidden rounded-2xl border border-border bg-card">
+              {pastRows.map((p, i) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setOpenSession(p.id)}
+                  className={[
+                    "flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted/50",
+                    i > 0 ? "border-t border-border" : "",
+                  ].join(" ")}
+                >
+                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-accent text-primary">
+                    <History className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold tracking-tight">
+                      {p.day_label ?? "Workout"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{formatDayDate(p.date)}</p>
+                  </div>
+                  {p.effort_rating != null && (
+                    <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-primary">
+                      {p.effort_rating}/10
+                    </span>
+                  )}
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </button>
+              ))}
+            </div>
+            {past.hasNextPage && (
+              <Button
+                variant="outline"
+                className="w-full rounded-xl"
+                disabled={past.isFetchingNextPage}
+                onClick={() => past.fetchNextPage()}
               >
-                <div className="grid h-9 w-9 place-items-center rounded-xl bg-accent text-primary">
-                  <History className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold tracking-tight truncate">
-                    {p.day_label ?? "Workout"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(p.date).toLocaleDateString(undefined, {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </p>
-                </div>
-                {p.effort_rating != null && (
-                  <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-primary">
-                    {p.effort_rating}/10
-                  </span>
+                {past.isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Loading…
+                  </>
+                ) : (
+                  "Show more"
                 )}
-              </div>
-            ))}
-          </div>
+              </Button>
+            )}
+          </>
         ) : (
           <p className="text-xs text-muted-foreground">No completed sessions yet.</p>
         )}
       </section>
+
+      <SessionSummaryDialog logId={openSession} onClose={() => setOpenSession(null)} />
     </div>
+  );
+}
+
+function SessionSummaryDialog({ logId, onClose }: { logId: string | null; onClose: () => void }) {
+  const fetchSummary = useServerFn(getSessionSummary);
+  const { data, isLoading } = useQuery({
+    queryKey: ["session-summary", logId],
+    queryFn: () => fetchSummary({ data: { logId: logId! } }),
+    enabled: !!logId,
+  });
+
+  return (
+    <Dialog open={!!logId} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {data?.day_label ?? "Session"}
+            {data?.date ? ` — ${formatDayDate(data.date)}` : ""}
+          </DialogTitle>
+        </DialogHeader>
+        {isLoading ? (
+          <Skeleton className="h-32 rounded-xl" />
+        ) : !data ? (
+          <p className="text-sm text-muted-foreground">We couldn't find that session.</p>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2 text-xs">
+              {data.effort_rating != null && (
+                <span className="rounded-full bg-accent px-2 py-0.5 font-semibold text-primary">
+                  Effort {data.effort_rating}/10
+                </span>
+              )}
+              <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                {data.exercises.length} exercise{data.exercises.length === 1 ? "" : "s"}
+              </span>
+            </div>
+            {data.exercises.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No sets were logged in this session.</p>
+            ) : (
+              <ul className="space-y-3">
+                {data.exercises.map((ex) => (
+                  <li key={ex.exercise_id} className="rounded-xl border border-border p-3">
+                    <p className="text-sm font-semibold tracking-tight">{ex.name}</p>
+                    <ul className="mt-1.5 space-y-0.5">
+                      {ex.sets.map((st) => (
+                        <li
+                          key={st.set_number}
+                          className="flex items-center justify-between text-xs text-muted-foreground"
+                        >
+                          <span>Set {st.set_number}</span>
+                          <span className={st.completed ? "text-foreground" : ""}>
+                            {st.weight != null ? `${st.weight} kg` : "—"} ×{" "}
+                            {st.reps != null ? st.reps : "—"}
+                            {!st.completed ? " (skipped)" : ""}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {data.notes && (
+              <div>
+                <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Notes</p>
+                <p className="mt-1 text-sm">{data.notes}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

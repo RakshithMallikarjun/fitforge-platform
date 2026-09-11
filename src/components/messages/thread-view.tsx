@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { getThread, markRead, sendMessage } from "@/lib/messages.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { formatTime } from "@/lib/format-date";
 
 type Msg = {
   id: string;
@@ -131,10 +132,7 @@ export function ThreadView({
                     mine ? "text-primary-foreground/70" : "text-muted-foreground",
                   ].join(" ")}
                 >
-                  {new Date(m.created_at).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {formatTime(m.created_at)}
                 </p>
               </div>
             </div>

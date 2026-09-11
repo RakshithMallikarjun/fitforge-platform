@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { inviteStaffMember, listStaff, setStaffActive } from "@/lib/staff.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/staff")({
   component: StaffPage,
@@ -107,7 +108,6 @@ function StaffPage() {
       <GlassHeader
         title="Staff"
         subtitle={`${(staff as any[]).length} ${(staff as any[]).length === 1 ? "person" : "people"} on your team`}
-        initials={(me?.displayName ?? "FF").slice(0, 2).toUpperCase()}
         rightExtra={
           <Button size="sm" className="rounded-lg" onClick={() => setOpen(true)}>
             <Plus className="mr-1.5 h-4 w-4" /> Invite staff
@@ -166,7 +166,7 @@ function StaffPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
+                        {u.created_at ? formatShortDate(u.created_at) : "—"}
                       </TableCell>
                       <TableCell>
                         {!isSelf && (

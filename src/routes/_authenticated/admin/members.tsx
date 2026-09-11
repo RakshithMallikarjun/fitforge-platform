@@ -66,6 +66,7 @@ import {
   getMembershipStatus,
   type MembershipStatus,
 } from "@/components/members/status-badge";
+import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/members")({
   component: MembersPageShell,
@@ -182,7 +183,6 @@ function MembersPage() {
       <GlassHeader
         title="Members"
         subtitle={`${(members as any[]).length} ${(members as any[]).length === 1 ? "member" : "members"} in your gym`}
-        initials={(me?.displayName ?? "FF").slice(0, 2).toUpperCase()}
         rightExtra={
           isAdmin ? (
             <div className="flex gap-2">
@@ -360,14 +360,14 @@ function MembersPage() {
                       <TableCell className="text-xs">
                         {m.profile?.membership_expires_at ? (
                           <span className="text-foreground">
-                            {new Date(m.profile.membership_expires_at).toLocaleDateString()}
+                            {formatShortDate(m.profile.membership_expires_at)}
                           </span>
                         ) : (
                           <span className="text-muted-foreground">No expiry</span>
                         )}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}
+                        {m.created_at ? formatShortDate(m.created_at) : "—"}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {m.last_sign_in_at

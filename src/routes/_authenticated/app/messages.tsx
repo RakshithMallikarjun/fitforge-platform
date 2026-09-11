@@ -8,6 +8,7 @@ import { listThreads, listMyTrainers } from "@/lib/messages.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { ThreadView } from "@/components/messages/thread-view";
+import { formatRelativeDay } from "@/lib/format-date";
 
 const search = z.object({ with: z.string().optional() });
 
@@ -164,7 +165,7 @@ function MessagesPage() {
                     <p className="truncate text-sm font-semibold">{name}</p>
                     {t.lastMessage && (
                       <span className="shrink-0 text-[10px] text-muted-foreground">
-                        {new Date(t.lastMessage.created_at).toLocaleDateString()}
+                        {formatRelativeDay(t.lastMessage.created_at)}
                       </span>
                     )}
                   </div>
