@@ -1,15 +1,32 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
-import { createExercise, updateExercise, getYoutubeThumbnail, type ExerciseRow } from "@/lib/exercises.functions";
+import {
+  createExercise,
+  updateExercise,
+  getYoutubeThumbnail,
+  type ExerciseRow,
+} from "@/lib/exercises.functions";
 
 type Props = {
   open: boolean;
@@ -17,7 +34,15 @@ type Props = {
   initial?: ExerciseRow | null;
 };
 
-function TagInput({ value, onChange, placeholder }: { value: string[]; onChange: (v: string[]) => void; placeholder: string }) {
+function TagInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string[];
+  onChange: (v: string[]) => void;
+  placeholder: string;
+}) {
   const [text, setText] = useState("");
   const add = () => {
     const t = text.trim().toLowerCase();
@@ -66,7 +91,8 @@ export function ExerciseFormDialog({ open, onOpenChange, initial }: Props) {
 
   const save = useMutation({
     mutationFn: async () => {
-      const finalThumb = thumbnailUrl?.trim() || (videoUrl ? getYoutubeThumbnail(videoUrl) : "") || null;
+      const finalThumb =
+        thumbnailUrl?.trim() || (videoUrl ? getYoutubeThumbnail(videoUrl) : "") || null;
       const payload = {
         name,
         description: description || null,
@@ -107,13 +133,22 @@ export function ExerciseFormDialog({ open, onOpenChange, initial }: Props) {
           <div className="grid grid-cols-1 gap-3">
             <div>
               <Label>YouTube Video URL (optional)</Label>
-              <Input value={videoUrl ?? ""} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
-              <p className="mt-1 text-[11px] text-muted-foreground">Paste a YouTube video URL for the exercise demonstration, e.g. https://www.youtube.com/watch?v=… — leave blank to use auto-search.</p>
+              <Input
+                value={videoUrl ?? ""}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Paste a YouTube video URL for the exercise demonstration, e.g.
+                https://www.youtube.com/watch?v=… — leave blank to use auto-search.
+              </p>
             </div>
             <div>
               <Label>Thumbnail URL (optional)</Label>
               <Input value={thumbnailUrl ?? ""} onChange={(e) => setThumbnailUrl(e.target.value)} />
-              <p className="mt-1 text-[11px] text-muted-foreground">Leave blank to auto-generate from YouTube URL.</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Leave blank to auto-generate from YouTube URL.
+              </p>
             </div>
           </div>
           <div>
@@ -127,7 +162,9 @@ export function ExerciseFormDialog({ open, onOpenChange, initial }: Props) {
           <div>
             <Label>Difficulty</Label>
             <Select value={difficulty} onValueChange={setDifficulty}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="beginner">Beginner</SelectItem>
                 <SelectItem value="intermediate">Intermediate</SelectItem>
@@ -137,7 +174,9 @@ export function ExerciseFormDialog({ open, onOpenChange, initial }: Props) {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button onClick={() => save.mutate()} disabled={!name || save.isPending}>
             {save.isPending ? "Saving…" : "Save"}
           </Button>

@@ -68,7 +68,11 @@ export function MemberNotes({ memberId }: { memberId: string }) {
               Share with member
             </Label>
           </div>
-          <Button size="sm" disabled={!body.trim() || create.isPending} onClick={() => create.mutate()}>
+          <Button
+            size="sm"
+            disabled={!body.trim() || create.isPending}
+            onClick={() => create.mutate()}
+          >
             {create.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Add note
           </Button>

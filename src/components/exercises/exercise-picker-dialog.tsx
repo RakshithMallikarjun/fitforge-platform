@@ -33,14 +33,23 @@ export function ExercisePickerDialog({ open, onOpenChange, onPick }: Props) {
         </DialogHeader>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input
+            className="pl-9"
+            placeholder="Search…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
         <div className="max-h-[400px] overflow-y-auto rounded-xl border border-border">
           <ul className="divide-y divide-border">
             {filtered.map((e) => (
               <li key={e.id} className="flex items-center gap-3 p-3">
                 {e.thumbnail_url ? (
-                  <img src={e.thumbnail_url} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+                  <img
+                    src={e.thumbnail_url}
+                    alt=""
+                    className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                  />
                 ) : (
                   <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-muted text-[10px] font-semibold uppercase text-muted-foreground">
                     {(e.muscle_groups?.[0] ?? "ex").slice(0, 3)}
@@ -50,7 +59,9 @@ export function ExercisePickerDialog({ open, onOpenChange, onPick }: Props) {
                   <p className="truncate text-sm font-semibold">{e.name}</p>
                   <div className="mt-0.5 flex flex-wrap gap-1">
                     {(e.muscle_groups ?? []).slice(0, 3).map((m) => (
-                      <Badge key={m} variant="outline" className="text-[10px]">{m}</Badge>
+                      <Badge key={m} variant="outline" className="text-[10px]">
+                        {m}
+                      </Badge>
                     ))}
                   </div>
                 </div>

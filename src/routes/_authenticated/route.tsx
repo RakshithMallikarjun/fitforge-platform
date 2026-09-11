@@ -10,8 +10,6 @@ function noteAuthReason(reason: "deactivated" | "gymDisabled") {
   }
 }
 
-
-
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
@@ -37,7 +35,6 @@ export const Route = createFileRoute("/_authenticated")({
       throw redirect({ to: "/auth", search: { gymDisabled: true } });
     }
     return { user: data.user };
-
   },
   component: () => <Outlet />,
 });

@@ -12,12 +12,14 @@ import { useTheme } from "@/lib/theme-provider";
 import { getGymTheme } from "@/lib/gym-theme.functions";
 import { isPlatformAdmin } from "@/lib/platform.functions";
 
-
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
       { title: "Gym console · FitForge" },
-      { name: "description", content: "Manage members, plans, check-ins and reports for your gym." },
+      {
+        name: "description",
+        content: "Manage members, plans, check-ins and reports for your gym.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -44,7 +46,6 @@ function AdminShell() {
     staleTime: 5 * 60_000,
   });
 
-
   useEffect(() => {
     if (gymTheme) setTheme(gymTheme);
   }, [gymTheme, setTheme]);
@@ -57,7 +58,11 @@ function AdminShell() {
   }
 
   if (isLoading || (user && !user.primaryRole && platformAdmin === undefined)) {
-    return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Loading…</div>;
+    return (
+      <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">
+        Loading…
+      </div>
+    );
   }
   // Site owners have no gym role; send them to their own console.
   if (user && !user.primaryRole && platformAdmin) {
@@ -67,7 +72,6 @@ function AdminShell() {
     return <Navigate to="/app" replace />;
   }
 
-
   return (
     <div className="min-h-screen bg-background">
       <AdminSidebar />
@@ -76,7 +80,12 @@ function AdminShell() {
         <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2 md:justify-end">
           <Sheet open={navOpen} onOpenChange={setNavOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open navigation">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                aria-label="Open navigation"
+              >
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>

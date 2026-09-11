@@ -16,8 +16,8 @@ test("landing page renders with legal links and no broken images", async ({ page
   await expect(page.getByRole("link", { name: "Privacy Policy" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Terms of Service" })).toBeVisible();
 
-  const broken = await page.evaluate(() =>
-    Array.from(document.images).filter((i) => i.complete && i.naturalWidth === 0).length,
+  const broken = await page.evaluate(
+    () => Array.from(document.images).filter((i) => i.complete && i.naturalWidth === 0).length,
   );
   expect(broken).toBe(0);
 });
@@ -32,7 +32,10 @@ test("member signs in, completes a workout and the streak increments", async ({ 
 
   await page.waitForURL(/\/app/, { timeout: 30_000 });
 
-  const streakText = await page.getByText(/day streak/i).first().textContent();
+  const streakText = await page
+    .getByText(/day streak/i)
+    .first()
+    .textContent();
   const before = Number(streakText?.match(/\d+/)?.[0] ?? "0");
 
   await page.getByRole("link", { name: /workouts/i }).click();
@@ -53,7 +56,10 @@ test("member signs in, completes a workout and the streak increments", async ({ 
 
   await page.goto("/app");
   await expect(page.getByText(/day streak/i).first()).toBeVisible();
-  const afterText = await page.getByText(/day streak/i).first().textContent();
+  const afterText = await page
+    .getByText(/day streak/i)
+    .first()
+    .textContent();
   const after = Number(afterText?.match(/\d+/)?.[0] ?? "0");
   expect(after).toBeGreaterThanOrEqual(Math.max(before, 1));
 });

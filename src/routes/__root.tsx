@@ -57,7 +57,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         </p>
         <div className="mt-6 flex justify-center gap-2">
           <button
-            onClick={() => { router.invalidate(); reset(); }}
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
             className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
           >
             Try again
@@ -77,7 +80,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "FitForge — White-label fitness platform for gyms & trainers" },
-      { name: "description", content: "FitForge is the all-in-one platform for modern gyms: branded member app, trainer tools, workout plans, and analytics." },
+      {
+        name: "description",
+        content:
+          "FitForge is the all-in-one platform for modern gyms: branded member app, trainer tools, workout plans, and analytics.",
+      },
       { name: "author", content: "FitForge" },
       { property: "og:title", content: "FitForge" },
       { property: "og:description", content: "White-label fitness platform for gyms & trainers." },
@@ -107,7 +114,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <head><HeadContent /></head>
+      <head>
+        <HeadContent />
+      </head>
       <body>
         {children}
         <Scripts />

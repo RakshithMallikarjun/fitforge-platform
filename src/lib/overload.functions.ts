@@ -29,7 +29,11 @@ const aiResponseSchema = z.object({
 });
 
 /** Clamp a model number to +/-10% of the athlete's own recent average. */
-function clampToDelta(value: number | null | undefined, baseline: number | null, maxDeltaPct = 0.1): number | null {
+function clampToDelta(
+  value: number | null | undefined,
+  baseline: number | null,
+  maxDeltaPct = 0.1,
+): number | null {
   if (baseline == null || baseline <= 0) return null;
   if (value == null || !Number.isFinite(value) || value <= 0) return null;
   const min = baseline * (1 - maxDeltaPct);
@@ -79,7 +83,7 @@ export const suggestOverload = createServerFn({ method: "POST" })
       .eq("member_id", data.memberId)
       .eq("cache_key", cacheKey)
       .maybeSingle();
-    if (cached?.payload) return (cached.payload as unknown) as ExerciseSuggestion[];
+    if (cached?.payload) return cached.payload as unknown as ExerciseSuggestion[];
 
     // --- Per-user daily call ceiling ---
     const dayStart = new Date();
@@ -99,7 +103,9 @@ export const suggestOverload = createServerFn({ method: "POST" })
       supabase.from("exercises").select("id, name").in("id", data.exerciseIds),
       supabase
         .from("exercise_logs")
-        .select("exercise_id, set_number, weight, reps, completed, workout_logs!inner(member_id, date)")
+        .select(
+          "exercise_id, set_number, weight, reps, completed, workout_logs!inner(member_id, date)",
+        )
         .eq("workout_logs.member_id", data.memberId)
         .in("exercise_id", data.exerciseIds)
         .gte("workout_logs.date", since.slice(0, 10)),
@@ -127,7 +133,8 @@ export const suggestOverload = createServerFn({ method: "POST" })
       for (const r of rows) {
         const d = (r.workout_logs as any)?.date as string | undefined;
         if (!d) continue;
-        const w = Number(r.weight ?? 0), rp = Number(r.reps ?? 0);
+        const w = Number(r.weight ?? 0),
+          rp = Number(r.reps ?? 0);
         const cur = byDate.get(d);
         if (!cur || w * rp > cur.w * cur.r) byDate.set(d, { w, r: rp });
       }
@@ -203,9 +210,7 @@ Return JSON:
       });
     }
 
-    const map = new Map(
-      (parsed.suggestions ?? []).map((x) => [x.exerciseId, x]),
-    );
+    const map = new Map((parsed.suggestions ?? []).map((x) => [x.exerciseId, x]));
 
     const result: ExerciseSuggestion[] = summaries.map((s) => {
       const ai = map.get(s.exerciseId);
@@ -218,7 +223,8 @@ Return JSON:
         exerciseName: s.exerciseName,
         currentAvg: { weight: s.avgWeight, reps: s.avgReps, sets: s.sessionCount },
         suggestedWeight: clampedWeight ?? heuristicWeight ?? s.avgWeight,
-        suggestedReps: clampedReps != null ? Math.round(clampedReps) : s.avgReps ? Math.round(s.avgReps) : null,
+        suggestedReps:
+          clampedReps != null ? Math.round(clampedReps) : s.avgReps ? Math.round(s.avgReps) : null,
         reasoning: usedAi
           ? (ai?.reasoning?.slice(0, 300) ?? "Progressive increase based on recent sessions.")
           : "Suggestion out of safe range — using a conservative +2.5% instead.",
@@ -226,9 +232,12 @@ Return JSON:
     });
 
     // Cache so repeat views of the same day cost nothing.
-    await supabase
-      .from("ai_overload_cache")
-      .insert({ requested_by: userId, member_id: data.memberId, cache_key: cacheKey, payload: result as any });
+    await supabase.from("ai_overload_cache").insert({
+      requested_by: userId,
+      member_id: data.memberId,
+      cache_key: cacheKey,
+      payload: result as any,
+    });
 
     return result;
   });

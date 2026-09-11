@@ -18,7 +18,13 @@ type Msg = {
   created_at: string;
 };
 
-export function ThreadView({ otherUserId, className }: { otherUserId: string; className?: string }) {
+export function ThreadView({
+  otherUserId,
+  className,
+}: {
+  otherUserId: string;
+  className?: string;
+}) {
   const { data: me } = useCurrentUser();
   const meId = me?.userId;
   const qc = useQueryClient();
@@ -50,7 +56,9 @@ export function ThreadView({ otherUserId, className }: { otherUserId: string; cl
             (m.sender_id === otherUserId && m.recipient_id === meId);
           if (!relevant) return;
           qc.setQueryData<any>(["thread", otherUserId], (cur: any) =>
-            cur ? { ...cur, messages: [...cur.messages.filter((x: Msg) => x.id !== m.id), m] } : cur,
+            cur
+              ? { ...cur, messages: [...cur.messages.filter((x: Msg) => x.id !== m.id), m] }
+              : cur,
           );
         },
       )
@@ -80,7 +88,9 @@ export function ThreadView({ otherUserId, className }: { otherUserId: string; cl
     mutationFn: () => sendFn({ data: { recipientId: otherUserId, body: text.trim() } }),
     onSuccess: (msg: any) => {
       qc.setQueryData<any>(["thread", otherUserId], (cur: any) =>
-        cur ? { ...cur, messages: [...cur.messages.filter((x: Msg) => x.id !== msg.id), msg] } : cur,
+        cur
+          ? { ...cur, messages: [...cur.messages.filter((x: Msg) => x.id !== msg.id), msg] }
+          : cur,
       );
       setText("");
       qc.invalidateQueries({ queryKey: ["threads"] });
@@ -91,7 +101,12 @@ export function ThreadView({ otherUserId, className }: { otherUserId: string; cl
   const grouped = useMemo(() => (data?.messages ?? []) as Msg[], [data]);
 
   return (
-    <div className={["flex flex-col overflow-hidden rounded-2xl border border-border bg-card", className ?? "h-[520px]"].join(" ")}>
+    <div
+      className={[
+        "flex flex-col overflow-hidden rounded-2xl border border-border bg-card",
+        className ?? "h-[520px]",
+      ].join(" ")}
+    >
       <div ref={listRef} className="flex-1 space-y-2 overflow-y-auto p-4">
         {isLoading && <p className="text-center text-xs text-muted-foreground">Loading…</p>}
         {!isLoading && grouped.length === 0 && (
@@ -110,8 +125,16 @@ export function ThreadView({ otherUserId, className }: { otherUserId: string; cl
                 ].join(" ")}
               >
                 <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                <p className={["mt-1 text-[10px]", mine ? "text-primary-foreground/70" : "text-muted-foreground"].join(" ")}>
-                  {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                <p
+                  className={[
+                    "mt-1 text-[10px]",
+                    mine ? "text-primary-foreground/70" : "text-muted-foreground",
+                  ].join(" ")}
+                >
+                  {new Date(m.created_at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </p>
               </div>
             </div>
@@ -132,7 +155,12 @@ export function ThreadView({ otherUserId, className }: { otherUserId: string; cl
           placeholder="Type a message…"
           className="rounded-xl"
         />
-        <Button type="submit" size="icon" className="rounded-xl" disabled={!text.trim() || send.isPending}>
+        <Button
+          type="submit"
+          size="icon"
+          className="rounded-xl"
+          disabled={!text.trim() || send.isPending}
+        >
           <Send className="h-4 w-4" />
         </Button>
       </form>

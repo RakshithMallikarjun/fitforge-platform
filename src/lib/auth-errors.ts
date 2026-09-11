@@ -2,16 +2,18 @@
  * Maps raw Supabase auth errors to friendly, user-facing copy.
  * The verbatim message stays in the console for debugging.
  */
-export function friendlyAuthError(error: unknown, fallback = "Something went wrong. Please try again."): string {
+export function friendlyAuthError(
+  error: unknown,
+  fallback = "Something went wrong. Please try again.",
+): string {
   const raw =
-    typeof error === "string"
-      ? error
-      : ((error as any)?.message as string | undefined) ?? "";
+    typeof error === "string" ? error : (((error as any)?.message as string | undefined) ?? "");
   if (raw) console.error("[auth]", raw, error);
   const m = raw.toLowerCase();
 
   if (m.includes("invalid login credentials")) return "That email or password isn't right.";
-  if (m.includes("email not confirmed")) return "Please confirm your email first — check your inbox for the link.";
+  if (m.includes("email not confirmed"))
+    return "Please confirm your email first — check your inbox for the link.";
   if (m.includes("user already registered") || m.includes("already been registered"))
     return "An account already exists for that email. Try signing in instead.";
   if (m.includes("password should be at least") || m.includes("password is too short"))

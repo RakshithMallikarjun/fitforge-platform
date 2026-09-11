@@ -5,7 +5,13 @@ import { toast } from "sonner";
 import { ClipboardList, Copy, Loader2, Search } from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -91,7 +97,9 @@ function TemplatesPage() {
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl font-bold tracking-tight">Plan templates</h2>
-          <Button onClick={() => navigate({ to: "/admin/plans/new", search: { isTemplate: true } })}>
+          <Button
+            onClick={() => navigate({ to: "/admin/plans/new", search: { isTemplate: true } })}
+          >
             + New template
           </Button>
         </div>
@@ -119,16 +127,22 @@ function TemplatesPage() {
                   {t.name}
                 </Link>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {t.day_count} days · {t.exercise_count ?? 0} exercises{t.duration_weeks ? ` · ${t.duration_weeks} wk` : ""}
+                  {t.day_count} days · {t.exercise_count ?? 0} exercises
+                  {t.duration_weeks ? ` · ${t.duration_weeks} wk` : ""}
                 </p>
                 {t.trainer_name && (
-                  <p className="mt-0.5 text-xs text-muted-foreground">Created by: {t.trainer_name}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Created by: {t.trainer_name}
+                  </p>
                 )}
                 <Button
                   size="sm"
                   variant="outline"
                   className="mt-3"
-                  onClick={(e) => { e.stopPropagation(); openAssign(t.id); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openAssign(t.id);
+                  }}
                 >
                   <Copy className="mr-1.5 h-4 w-4" /> Bulk assign
                 </Button>
@@ -146,7 +160,11 @@ function TemplatesPage() {
           <div className="space-y-4">
             <div>
               <Label>Start date</Label>
-              <Input type="date" value={assignDate} onChange={(e) => setAssignDate(e.target.value)} />
+              <Input
+                type="date"
+                value={assignDate}
+                onChange={(e) => setAssignDate(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -178,7 +196,9 @@ function TemplatesPage() {
                             {m.display_name ?? m.email}
                           </span>
                           {m.display_name && m.email && (
-                            <span className="truncate text-xs text-muted-foreground">{m.email}</span>
+                            <span className="truncate text-xs text-muted-foreground">
+                              {m.email}
+                            </span>
                           )}
                         </label>
                       </li>
@@ -198,7 +218,9 @@ function TemplatesPage() {
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Assigning…
                 </>
               ) : (
-                <>Assign to {selected.size} member{selected.size === 1 ? "" : "s"}</>
+                <>
+                  Assign to {selected.size} member{selected.size === 1 ? "" : "s"}
+                </>
               )}
             </Button>
           </DialogFooter>

@@ -41,13 +41,7 @@ export type PlatformOverview = {
   overdue_gyms: number;
 };
 
-export type PaymentStatus =
-  | "trialing"
-  | "paid"
-  | "pending"
-  | "overdue"
-  | "failed"
-  | "cancelled";
+export type PaymentStatus = "trialing" | "paid" | "pending" | "overdue" | "failed" | "cancelled";
 
 export type SubscriptionPlan = "starter" | "growth" | "pro" | "chain";
 

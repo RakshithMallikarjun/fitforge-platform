@@ -24,7 +24,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   EmptyState,
   ErrorState,
@@ -165,7 +172,9 @@ function PlatformGymsPage() {
           className="w-56"
         />
         <Select value={enabledFilter} onValueChange={setEnabledFilter}>
-          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All states</SelectItem>
             <SelectItem value="enabled">Enabled</SelectItem>
@@ -173,7 +182,9 @@ function PlatformGymsPage() {
           </SelectContent>
         </Select>
         <Select value={payment} onValueChange={setPayment}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             {PAYMENT_OPTIONS.map((p) => (
               <SelectItem key={p} value={p} className="capitalize">
@@ -183,7 +194,9 @@ function PlatformGymsPage() {
           </SelectContent>
         </Select>
         <Select value={plan} onValueChange={setPlan}>
-          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             {PLAN_OPTIONS.map((p) => (
               <SelectItem key={p} value={p} className="capitalize">
@@ -195,7 +208,10 @@ function PlatformGymsPage() {
       </div>
 
       {isError ? (
-        <ErrorState message={(error as Error)?.message ?? "Failed to load gyms"} onRetry={() => refetch()} />
+        <ErrorState
+          message={(error as Error)?.message ?? "Failed to load gyms"}
+          onRetry={() => refetch()}
+        />
       ) : isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -213,9 +229,15 @@ function PlatformGymsPage() {
                 <TableHead>Enabled</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead>Plan</TableHead>
-                <Th k="member_count" right>Members</Th>
-                <Th k="workouts_30d" right>Workouts 30d</Th>
-                <Th k="checkins_30d" right>Check-ins 30d</Th>
+                <Th k="member_count" right>
+                  Members
+                </Th>
+                <Th k="workouts_30d" right>
+                  Workouts 30d
+                </Th>
+                <Th k="checkins_30d" right>
+                  Check-ins 30d
+                </Th>
                 <Th k="health_score">Health</Th>
                 <Th k="last_activity_at">Last activity</Th>
                 <Th k="next_due_at">Next due</Th>
@@ -244,14 +266,22 @@ function PlatformGymsPage() {
                       }}
                     />
                   </TableCell>
-                  <TableCell><PaymentChip status={g.payment_status} /></TableCell>
+                  <TableCell>
+                    <PaymentChip status={g.payment_status} />
+                  </TableCell>
                   <TableCell className="capitalize text-sm">{g.subscription_plan}</TableCell>
                   <TableCell className="font-numeric text-right text-sm">
                     {g.active_member_count}/{g.member_count}
                   </TableCell>
-                  <TableCell className="font-numeric text-right text-sm">{g.workouts_30d}</TableCell>
-                  <TableCell className="font-numeric text-right text-sm">{g.checkins_30d}</TableCell>
-                  <TableCell><HealthBar score={g.health_score} memberCount={g.member_count} /></TableCell>
+                  <TableCell className="font-numeric text-right text-sm">
+                    {g.workouts_30d}
+                  </TableCell>
+                  <TableCell className="font-numeric text-right text-sm">
+                    {g.checkins_30d}
+                  </TableCell>
+                  <TableCell>
+                    <HealthBar score={g.health_score} memberCount={g.member_count} />
+                  </TableCell>
                   <TableCell className={`text-xs ${activityClass(g.days_since_activity)}`}>
                     {g.last_activity_at ? relTime(g.last_activity_at) : "never"}
                   </TableCell>

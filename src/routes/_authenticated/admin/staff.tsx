@@ -7,12 +7,45 @@ import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { inviteStaffMember, listStaff, setStaffActive } from "@/lib/staff.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
@@ -48,7 +81,9 @@ function StaffPage() {
     onError: (e: any) => toast.error("Invite failed", { description: e?.message }),
   });
 
-  const [deactivateTarget, setDeactivateTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deactivateTarget, setDeactivateTarget] = useState<{ id: string; name: string } | null>(
+    null,
+  );
   const setActive = useMutation({
     mutationFn: (vars: { userId: string; active: boolean }) => setStaffActive({ data: vars }),
     onSuccess: (_d, vars) => {
@@ -82,7 +117,9 @@ function StaffPage() {
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--shadow-card)]">
           {isLoading ? (
-            <div className="grid place-items-center py-20 text-sm text-muted-foreground">Loading…</div>
+            <div className="grid place-items-center py-20 text-sm text-muted-foreground">
+              Loading…
+            </div>
           ) : (staff as any[]).length === 0 ? (
             <div className="grid place-items-center gap-2 py-20 text-sm text-muted-foreground">
               <UserCog className="h-6 w-6" /> No staff yet — invite your first trainer.
@@ -118,7 +155,12 @@ function StaffPage() {
                       </TableCell>
                       <TableCell>
                         {u.active === false ? (
-                          <Badge variant="outline" className="border-destructive/40 text-destructive">Inactive</Badge>
+                          <Badge
+                            variant="outline"
+                            className="border-destructive/40 text-destructive"
+                          >
+                            Inactive
+                          </Badge>
                         ) : (
                           <Badge variant="secondary">Active</Badge>
                         )}
@@ -134,13 +176,20 @@ function StaffPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               {u.active === false ? (
-                                <DropdownMenuItem onClick={() => setActive.mutate({ userId: u.id, active: true })}>
+                                <DropdownMenuItem
+                                  onClick={() => setActive.mutate({ userId: u.id, active: true })}
+                                >
                                   <UserCheck className="mr-2 h-4 w-4" /> Reactivate
                                 </DropdownMenuItem>
                               ) : (
                                 <DropdownMenuItem
                                   className="text-destructive focus:text-destructive"
-                                  onClick={() => setDeactivateTarget({ id: u.id, name: u.display_name ?? u.email })}
+                                  onClick={() =>
+                                    setDeactivateTarget({
+                                      id: u.id,
+                                      name: u.display_name ?? u.email,
+                                    })
+                                  }
                                 >
                                   <UserX className="mr-2 h-4 w-4" /> Deactivate
                                 </DropdownMenuItem>
@@ -166,16 +215,27 @@ function StaffPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="staff-name">Full name</Label>
-              <Input id="staff-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+              <Input
+                id="staff-name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="staff-email">Email</Label>
-              <Input id="staff-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input
+                id="staff-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>Role</Label>
               <Select value={role} onValueChange={(v) => setRole(v as any)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="trainer">Trainer</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
@@ -184,7 +244,9 @@ function StaffPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
             <Button
               onClick={() => invite.mutate()}
               disabled={invite.isPending || !email || !displayName}
@@ -206,7 +268,9 @@ function StaffPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deactivateTarget && setActive.mutate({ userId: deactivateTarget.id, active: false })}
+              onClick={() =>
+                deactivateTarget && setActive.mutate({ userId: deactivateTarget.id, active: false })
+              }
             >
               Confirm
             </AlertDialogAction>

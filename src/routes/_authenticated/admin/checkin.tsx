@@ -62,9 +62,10 @@ function AdminCheckin() {
                 : `Checked in ${name}`;
             setRecent((cur) => [{ at: now, ok: true, message: msg }, ...cur].slice(0, 10));
             toast.success(msg);
-
           } catch (e: any) {
-            setRecent((cur) => [{ at: now, ok: false, message: e?.message ?? "Invalid code" }, ...cur].slice(0, 10));
+            setRecent((cur) =>
+              [{ at: now, ok: false, message: e?.message ?? "Invalid code" }, ...cur].slice(0, 10),
+            );
             toast.error("Check-in failed", { description: e?.message });
           } finally {
             busyRef.current = false;
@@ -84,22 +85,34 @@ function AdminCheckin() {
     try {
       await s.stop();
       await s.clear();
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     scannerRef.current = null;
     setScanning(false);
   }
 
-  useEffect(() => () => { void stop(); }, []);
+  useEffect(
+    () => () => {
+      void stop();
+    },
+    [],
+  );
 
   return (
     <>
       <GlassHeader title="Front desk check-in" subtitle="Scan a member's QR code" initials="QR" />
       <main className="mx-auto max-w-3xl space-y-6 px-8 py-8">
         <div className="rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)]">
-          <div ref={containerRef} className="mx-auto aspect-square w-full max-w-md overflow-hidden rounded-2xl bg-black/90" />
+          <div
+            ref={containerRef}
+            className="mx-auto aspect-square w-full max-w-md overflow-hidden rounded-2xl bg-black/90"
+          />
           <div className="mt-4 flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
-              {scanning ? "Point the camera at a member's QR code." : "Tap start to activate the camera."}
+              {scanning
+                ? "Point the camera at a member's QR code."
+                : "Tap start to activate the camera."}
             </p>
             {scanning ? (
               <Button variant="outline" size="sm" className="rounded-xl" onClick={stop}>
@@ -118,7 +131,7 @@ function AdminCheckin() {
           {recent.length === 0 ? (
             <p className="mt-3 text-sm text-muted-foreground">No scans yet.</p>
           ) : (
-          <ul className="mt-3 space-y-2 text-sm">
+            <ul className="mt-3 space-y-2 text-sm">
               {recent.map((r) => (
                 <li key={r.at} className="flex items-center gap-2">
                   {r.ok ? (
@@ -126,7 +139,9 @@ function AdminCheckin() {
                   ) : (
                     <XCircle className="h-4 w-4 text-destructive" />
                   )}
-                  <span className="text-muted-foreground">{new Date(r.at).toLocaleTimeString()}</span>
+                  <span className="text-muted-foreground">
+                    {new Date(r.at).toLocaleTimeString()}
+                  </span>
                   <span>{r.message}</span>
                   <span className="ml-auto inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
                     Gym

@@ -23,39 +23,40 @@ export type MemberHomeData = {
   latestNote: { body: string; created_at: string; author: string | null } | null;
 };
 
-
 export const getMemberHome = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<MemberHomeData> => {
     const { supabase, userId } = context;
 
-    const [{ data: userRow }, { data: logs }, { data: plans }, { data: notes }] = await Promise.all([
-      supabase
-        .from("users")
-        .select("display_name, gym_id, gyms(name, primary_color, logo_url, timezone)")
-        .eq("id", userId)
-        .maybeSingle(),
-      supabase
-        .from("workout_logs")
-        .select("id, date, completed_at, workout_day_id, plan_id")
-        .eq("member_id", userId)
-        .order("date", { ascending: false })
-        .limit(60),
-      supabase
-        .from("workout_plans")
-        .select("id, name, status, created_at")
-        .eq("member_id", userId)
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(1),
-      supabase
-        .from("member_notes")
-        .select("body, created_at, author_id, users:author_id(display_name)")
-        .eq("member_id", userId)
-        .eq("shared_with_member", true)
-        .order("created_at", { ascending: false })
-        .limit(1),
-    ]);
+    const [{ data: userRow }, { data: logs }, { data: plans }, { data: notes }] = await Promise.all(
+      [
+        supabase
+          .from("users")
+          .select("display_name, gym_id, gyms(name, primary_color, logo_url, timezone)")
+          .eq("id", userId)
+          .maybeSingle(),
+        supabase
+          .from("workout_logs")
+          .select("id, date, completed_at, workout_day_id, plan_id")
+          .eq("member_id", userId)
+          .order("date", { ascending: false })
+          .limit(60),
+        supabase
+          .from("workout_plans")
+          .select("id, name, status, created_at")
+          .eq("member_id", userId)
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
+          .limit(1),
+        supabase
+          .from("member_notes")
+          .select("body, created_at, author_id, users:author_id(display_name)")
+          .eq("member_id", userId)
+          .eq("shared_with_member", true)
+          .order("created_at", { ascending: false })
+          .limit(1),
+      ],
+    );
 
     const gym = (userRow as any)?.gyms ?? null;
     const displayName = (userRow as any)?.display_name ?? null;
@@ -66,9 +67,7 @@ export const getMemberHome = createServerFn({ method: "GET" })
 
     // streak: consecutive days with a completed log ending today or yesterday
     const completedDates = new Set(
-      (logs ?? [])
-        .filter((l: any) => l.completed_at)
-        .map((l: any) => l.date as string),
+      (logs ?? []).filter((l: any) => l.completed_at).map((l: any) => l.date as string),
     );
     const todayStr = dateStringInZone(timeZone);
     const yestStr = shiftDateString(todayStr, -1);
@@ -96,7 +95,6 @@ export const getMemberHome = createServerFn({ method: "GET" })
       (l: any) => l.completed_at && l.date >= wkStart && l.date <= todayStr,
     ).length;
 
-
     const activePlan = plans?.[0]
       ? { id: plans[0].id as string, name: plans[0].name as string }
       : null;
@@ -111,7 +109,9 @@ export const getMemberHome = createServerFn({ method: "GET" })
       const dayList = days ?? [];
       if (dayList.length) {
         // pick the next day after the most recently logged day, else first
-        const lastLog = (logs ?? []).find((l: any) => l.plan_id === activePlan.id && l.workout_day_id);
+        const lastLog = (logs ?? []).find(
+          (l: any) => l.plan_id === activePlan.id && l.workout_day_id,
+        );
         let nextIdx = 0;
         if (lastLog) {
           const i = dayList.findIndex((d: any) => d.id === lastLog.workout_day_id);
@@ -127,8 +127,7 @@ export const getMemberHome = createServerFn({ method: "GET" })
           15,
           Math.round(
             exercises.reduce(
-              (acc: number, e: any) =>
-                acc + ((e.sets ?? 3) * (45 + (e.rest_seconds ?? 60))) / 60,
+              (acc: number, e: any) => acc + ((e.sets ?? 3) * (45 + (e.rest_seconds ?? 60))) / 60,
               0,
             ),
           ),

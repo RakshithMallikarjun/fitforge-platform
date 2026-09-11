@@ -30,7 +30,9 @@ export const getGymTheme = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data: user } = await supabase
       .from("users")
-      .select("gym_id, gyms(name, primary_color, secondary_color, logo_url, font_family, support_email, support_phone)")
+      .select(
+        "gym_id, gyms(name, primary_color, secondary_color, logo_url, font_family, support_email, support_phone)",
+      )
       .eq("id", userId)
       .maybeSingle();
     const gym = (user as any)?.gyms;
@@ -64,7 +66,9 @@ export const getGymSettings = createServerFn({ method: "GET" })
     if (!user?.gym_id) return null;
     const { data: gym, error } = await supabase
       .from("gyms")
-      .select("id, name, slug, primary_color, secondary_color, logo_url, font_family, support_email, support_phone")
+      .select(
+        "id, name, slug, primary_color, secondary_color, logo_url, font_family, support_email, support_phone",
+      )
       .eq("id", user.gym_id)
       .maybeSingle();
     if (error) throw error;
@@ -117,7 +121,9 @@ export const updateGymSettings = createServerFn({ method: "POST" })
         support_phone: data.supportPhone?.trim() || null,
       })
       .eq("id", user.gym_id)
-      .select("id, name, slug, primary_color, secondary_color, logo_url, font_family, support_email, support_phone")
+      .select(
+        "id, name, slug, primary_color, secondary_color, logo_url, font_family, support_email, support_phone",
+      )
       .single();
     if (error) throw error;
     return gym as GymSettingsRow;

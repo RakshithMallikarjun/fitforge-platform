@@ -4,7 +4,14 @@ import { Plus, ClipboardList } from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listPlans } from "@/lib/plans.functions";
 
@@ -63,13 +70,31 @@ function PlansPage() {
               </TableHeader>
               <TableBody>
                 {nonTemplate.map((p) => (
-                  <TableRow key={p.id} className="cursor-pointer" onClick={() => navigate({ to: "/admin/plans/$planId", params: { planId: p.id } })}>
+                  <TableRow
+                    key={p.id}
+                    className="cursor-pointer"
+                    onClick={() =>
+                      navigate({ to: "/admin/plans/$planId", params: { planId: p.id } })
+                    }
+                  >
                     <TableCell>
-                      <Link to="/admin/plans/$planId" params={{ planId: p.id }} className="font-medium text-primary hover:underline">{p.name}</Link>
+                      <Link
+                        to="/admin/plans/$planId"
+                        params={{ planId: p.id }}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {p.name}
+                      </Link>
                     </TableCell>
                     <TableCell>{p.member_name ?? "—"}</TableCell>
-                    <TableCell><Badge variant="secondary" className="capitalize">{p.status}</Badge></TableCell>
-                    <TableCell>{p.start_date ? new Date(p.start_date).toLocaleDateString() : "—"}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="capitalize">
+                        {p.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {p.start_date ? new Date(p.start_date).toLocaleDateString() : "—"}
+                    </TableCell>
                     <TableCell>{p.duration_weeks ? `${p.duration_weeks} wk` : "—"}</TableCell>
                     <TableCell className="text-right">{p.day_count}</TableCell>
                   </TableRow>

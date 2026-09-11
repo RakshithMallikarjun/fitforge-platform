@@ -87,7 +87,6 @@ function AuthPage() {
     }
   }, [deactivated, gymDisabled]);
 
-
   // After a signed-in user lands here, check if their gym is unclaimed.
   // If so, offer the claim banner BEFORE redirecting — even if they already
   // have a member role (common case: first user signed up as member by default).
@@ -134,7 +133,8 @@ function AuthPage() {
         }
       })
       .catch((e) => {
-        if (!cancelled) setPageError(friendlyAuthError(e, "We couldn't check your gym. Please try again."));
+        if (!cancelled)
+          setPageError(friendlyAuthError(e, "We couldn't check your gym. Please try again."));
       })
       .finally(() => !cancelled && setChecking(false));
     return () => {
@@ -185,7 +185,8 @@ function AuthPage() {
               <span className="text-xs font-semibold uppercase tracking-wider">Bootstrap</span>
             </div>
             <p className="mt-2 text-sm">
-              No admin exists for <strong>{claimSlug}</strong> yet — enter your bootstrap token to claim Admin access.
+              No admin exists for <strong>{claimSlug}</strong> yet — enter your bootstrap token to
+              claim Admin access.
             </p>
             <Input
               type="password"
@@ -214,7 +215,9 @@ function AuthPage() {
               <SignUpForm />
             </TabsContent>
           </Tabs>
-          {checking && <p className="mt-3 text-center text-xs text-muted-foreground">Checking gym…</p>}
+          {checking && (
+            <p className="mt-3 text-center text-xs text-muted-foreground">Checking gym…</p>
+          )}
         </div>
       </div>
     </main>
@@ -263,7 +266,6 @@ function SignInForm() {
 
     setLoading(false);
     toast.success("Welcome back");
-
   }
 
   async function onForgot(e: React.FormEvent) {
@@ -286,7 +288,13 @@ function SignInForm() {
       <form onSubmit={onForgot} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="fp-email">Email</Label>
-          <Input id="fp-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input
+            id="fp-email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
           <p className="text-xs text-muted-foreground">
             We'll email you a link to choose a new password.
           </p>
@@ -294,7 +302,8 @@ function SignInForm() {
         {error && <ErrorBanner>{error}</ErrorBanner>}
         {sent && (
           <p className="rounded-xl bg-primary-soft px-3 py-2 text-sm text-primary">
-            If an account exists for {email}, a reset link is on its way. Check your inbox and spam folder.
+            If an account exists for {email}, a reset link is on its way. Check your inbox and spam
+            folder.
           </p>
         )}
         <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl">
@@ -302,7 +311,11 @@ function SignInForm() {
         </Button>
         <button
           type="button"
-          onClick={() => { setMode("signin"); setError(null); setSent(false); }}
+          onClick={() => {
+            setMode("signin");
+            setError(null);
+            setSent(false);
+          }}
           className="w-full text-center text-xs font-medium text-muted-foreground hover:text-foreground"
         >
           Back to sign in
@@ -315,20 +328,35 @@ function SignInForm() {
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="signin-email">Email</Label>
-        <Input id="signin-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Input
+          id="signin-email"
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
       </div>
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="signin-password">Password</Label>
           <button
             type="button"
-            onClick={() => { setMode("forgot"); setError(null); }}
+            onClick={() => {
+              setMode("forgot");
+              setError(null);
+            }}
             className="text-xs font-medium text-primary hover:underline"
           >
             Forgot password?
           </button>
         </div>
-        <Input id="signin-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Input
+          id="signin-password"
+          type="password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
       </div>
       {error && <ErrorBanner>{error}</ErrorBanner>}
       <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl">
@@ -349,7 +377,6 @@ function SignUpForm() {
   const [error, setError] = useState<string | null>(null);
   const verifyJoinCode = useServerFn(verifyGymJoinCode);
 
-
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -368,7 +395,8 @@ function SignUpForm() {
     // the database routine is not callable by the anon/authenticated roles.
     let valid = false;
     try {
-      valid = (await verifyJoinCode({ data: { slug: gymSlug.trim(), code: joinCode.trim() } })).valid;
+      valid = (await verifyJoinCode({ data: { slug: gymSlug.trim(), code: joinCode.trim() } }))
+        .valid;
     } catch (err) {
       console.error("[auth] join code verification failed", err);
     }
@@ -402,11 +430,22 @@ function SignUpForm() {
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="su-name">Name</Label>
-        <Input id="su-name" required value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+        <Input
+          id="su-name"
+          required
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+        />
       </div>
       <div className="space-y-2">
         <Label htmlFor="su-email">Email</Label>
-        <Input id="su-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Input
+          id="su-email"
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
       </div>
       <div className="space-y-2">
         <Label htmlFor="su-password">Password</Label>
@@ -437,12 +476,26 @@ function SignUpForm() {
       </div>
       <div className="space-y-2">
         <Label htmlFor="su-gym">Gym code</Label>
-        <Input id="su-gym" required value={gymSlug} onChange={(e) => setGymSlug(e.target.value)} placeholder="fitforge" />
-        <p className="text-xs text-muted-foreground">Use the code your gym gave you. The demo gym is <code>fitforge</code>.</p>
+        <Input
+          id="su-gym"
+          required
+          value={gymSlug}
+          onChange={(e) => setGymSlug(e.target.value)}
+          placeholder="fitforge"
+        />
+        <p className="text-xs text-muted-foreground">
+          Use the code your gym gave you. The demo gym is <code>fitforge</code>.
+        </p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="su-join">Join code</Label>
-        <Input id="su-join" required value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="Provided by your gym" />
+        <Input
+          id="su-join"
+          required
+          value={joinCode}
+          onChange={(e) => setJoinCode(e.target.value)}
+          placeholder="Provided by your gym"
+        />
       </div>
 
       {error && <ErrorBanner>{error}</ErrorBanner>}

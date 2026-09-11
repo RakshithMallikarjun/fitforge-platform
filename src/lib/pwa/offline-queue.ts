@@ -65,7 +65,6 @@ async function readQueue(): Promise<QueuedItem[]> {
   }));
 }
 
-
 async function writeQueue(items: QueuedItem[]) {
   if (items.length === 0) await del(QUEUE_KEY);
   else await set(QUEUE_KEY, items);
@@ -116,9 +115,7 @@ export async function enqueueLog<T extends QueuedItem["type"]>(
   q.push(item);
   if (q.length > MAX_QUEUE_SIZE) {
     const overflow = q.splice(0, q.length - MAX_QUEUE_SIZE);
-    await addDeadLetter(
-      overflow.map((i) => ({ ...i, deadAt: Date.now(), reason: "Queue full" })),
-    );
+    await addDeadLetter(overflow.map((i) => ({ ...i, deadAt: Date.now(), reason: "Queue full" })));
   }
   await writeQueue(q);
 }
@@ -133,12 +130,15 @@ export async function getDeadLetterSize(): Promise<number> {
 
 /** A 4xx-style failure is permanent — retrying it will never succeed. */
 function isPermanentFailure(err: unknown): boolean {
-  const status = (err as { status?: number; statusCode?: number })?.status ??
+  const status =
+    (err as { status?: number; statusCode?: number })?.status ??
     (err as { statusCode?: number })?.statusCode;
-  if (typeof status === "number") return status >= 400 && status < 500 && status !== 408 && status !== 429;
+  if (typeof status === "number")
+    return status >= 400 && status < 500 && status !== 408 && status !== 429;
   const msg = String((err as Error)?.message ?? err ?? "").toLowerCase();
   if (!msg) return false;
-  if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("timeout")) return false;
+  if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("timeout"))
+    return false;
   return (
     msg.includes("forbidden") ||
     msg.includes("unauthorized") ||
@@ -222,7 +222,9 @@ export async function flushQueue(): Promise<{ ok: number; failed: number; dead: 
               attempts,
               lastError: message,
               deadAt: Date.now(),
-              reason: isPermanentFailure(err) ? `Rejected: ${message}` : `Gave up after ${attempts} attempts`,
+              reason: isPermanentFailure(err)
+                ? `Rejected: ${message}`
+                : `Gave up after ${attempts} attempts`,
             });
           } else {
             remaining.push({

@@ -17,14 +17,25 @@ function PlanView() {
     queryFn: () => getPlan({ data: { planId } }),
   });
 
-  if (isLoading) return <main className="p-8"><Skeleton className="h-64 rounded-2xl" /></main>;
+  if (isLoading)
+    return (
+      <main className="p-8">
+        <Skeleton className="h-64 rounded-2xl" />
+      </main>
+    );
   if (!plan) return <main className="p-8 text-sm text-muted-foreground">Plan not found.</main>;
 
   return (
     <>
-      <GlassHeader title={plan.name} subtitle={plan.users?.display_name ?? plan.users?.email ?? "Template"} />
+      <GlassHeader
+        title={plan.name}
+        subtitle={plan.users?.display_name ?? plan.users?.email ?? "Template"}
+      />
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
-        <Link to="/admin/plans" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          to="/admin/plans"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-4 w-4" /> Back to Plans
         </Link>
 
@@ -35,14 +46,19 @@ function PlanView() {
             className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 hover:bg-muted/40"
           >
             <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-primary">
-              {plan.users?.photo_url
-                ? <img src={plan.users.photo_url} alt="" className="h-full w-full object-cover" />
-                : (plan.users?.display_name ?? plan.users?.email ?? "??").slice(0, 2).toUpperCase()}
+              {plan.users?.photo_url ? (
+                <img src={plan.users.photo_url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                (plan.users?.display_name ?? plan.users?.email ?? "??").slice(0, 2).toUpperCase()
+              )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{plan.users?.display_name ?? plan.users?.email ?? "Member"}</p>
+              <p className="truncate text-sm font-semibold">
+                {plan.users?.display_name ?? plan.users?.email ?? "Member"}
+              </p>
               <p className="truncate text-xs text-muted-foreground">
-                {plan.users?.email}{plan.membership_type ? ` · ${plan.membership_type}` : ""}
+                {plan.users?.email}
+                {plan.membership_type ? ` · ${plan.membership_type}` : ""}
               </p>
             </div>
             <span className="text-xs text-primary">View profile →</span>
@@ -50,10 +66,18 @@ function PlanView() {
         )}
 
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-5">
-          <Badge variant="secondary" className="capitalize">{plan.status}</Badge>
+          <Badge variant="secondary" className="capitalize">
+            {plan.status}
+          </Badge>
           {plan.is_template && <Badge variant="outline">Template</Badge>}
-          {plan.start_date && <span className="text-sm text-muted-foreground">Starts {new Date(plan.start_date).toLocaleDateString()}</span>}
-          {plan.duration_weeks && <span className="text-sm text-muted-foreground">{plan.duration_weeks} weeks</span>}
+          {plan.start_date && (
+            <span className="text-sm text-muted-foreground">
+              Starts {new Date(plan.start_date).toLocaleDateString()}
+            </span>
+          )}
+          {plan.duration_weeks && (
+            <span className="text-sm text-muted-foreground">{plan.duration_weeks} weeks</span>
+          )}
         </div>
 
         {plan.notes && (
@@ -72,20 +96,34 @@ function PlanView() {
               <div key={d.id} className="rounded-2xl border border-border bg-card">
                 <div className="border-b border-border p-4">
                   <h3 className="text-base font-semibold">{d.day_label}</h3>
-                  <p className="text-xs text-muted-foreground">{d.workout_exercises.length} exercises</p>
+                  <p className="text-xs text-muted-foreground">
+                    {d.workout_exercises.length} exercises
+                  </p>
                 </div>
                 <ul className="divide-y divide-border">
                   {d.workout_exercises.map((e: any) => (
                     <li key={e.id} className="flex items-center gap-3 p-3">
                       <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
-                        {e.exercises?.thumbnail_url && <img src={e.exercises.thumbnail_url} alt="" className="h-full w-full object-cover" />}
+                        {e.exercises?.thumbnail_url && (
+                          <img
+                            src={e.exercises.thumbnail_url}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">{e.exercises?.name ?? "Exercise"}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {e.sets ?? "?"} × {e.reps ?? "?"}{e.rest_seconds ? ` · ${e.rest_seconds}s rest` : ""}{e.tempo ? ` · tempo ${e.tempo}` : ""}
+                        <p className="truncate text-sm font-semibold">
+                          {e.exercises?.name ?? "Exercise"}
                         </p>
-                        {e.notes && <p className="text-xs italic text-muted-foreground">{e.notes}</p>}
+                        <p className="text-xs text-muted-foreground">
+                          {e.sets ?? "?"} × {e.reps ?? "?"}
+                          {e.rest_seconds ? ` · ${e.rest_seconds}s rest` : ""}
+                          {e.tempo ? ` · tempo ${e.tempo}` : ""}
+                        </p>
+                        {e.notes && (
+                          <p className="text-xs italic text-muted-foreground">{e.notes}</p>
+                        )}
                       </div>
                     </li>
                   ))}

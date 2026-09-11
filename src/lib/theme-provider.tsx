@@ -1,10 +1,18 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
 export type GymTheme = {
-  primaryColor: string;     // hex
+  primaryColor: string; // hex
   secondaryColor: string | null; // hex
   logoUrl: string | null;
-  fontFamily: string;       // CSS font family
+  fontFamily: string; // CSS font family
   name: string;
   supportEmail: string | null;
   supportPhone: string | null;
@@ -36,7 +44,9 @@ function hexToOklchParts(hex: string): { L: number; C: number; H: number } | nul
     const b = parseInt(h.substring(4, 6), 16) / 255;
     // sRGB -> linear
     const f = (c: number) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
-    const lr = f(r), lg = f(g), lb = f(b);
+    const lr = f(r),
+      lg = f(g),
+      lb = f(b);
     // linear -> oklab
     const l = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
     const m = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
@@ -97,7 +107,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     const tokens: Record<string, string> = {
       ...deriveTokens(theme.primaryColor, "primary"),
-      ...(theme.secondaryColor ? deriveTokens(theme.secondaryColor, "secondary") : NEUTRAL_SECONDARY),
+      ...(theme.secondaryColor
+        ? deriveTokens(theme.secondaryColor, "secondary")
+        : NEUTRAL_SECONDARY),
     };
     for (const [k, v] of Object.entries(tokens)) root.style.setProperty(k, v);
     const stack = `"${theme.fontFamily}", ui-sans-serif, system-ui, sans-serif`;

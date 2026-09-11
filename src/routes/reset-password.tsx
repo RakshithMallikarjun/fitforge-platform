@@ -16,7 +16,10 @@ export const Route = createFileRoute("/reset-password")({
       { title: "Choose a new password · FitForge" },
       { name: "description", content: "Set a new password for your FitForge member account." },
       { property: "og:title", content: "Reset your FitForge password" },
-      { property: "og:description", content: "Set a new password for your FitForge member account." },
+      {
+        property: "og:description",
+        content: "Set a new password for your FitForge member account.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -131,7 +134,9 @@ function ResetPasswordPage() {
                 />
               </div>
               {error && (
-                <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+                <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {error}
+                </p>
               )}
               <Button type="submit" disabled={saving} className="h-11 w-full rounded-xl">
                 {saving ? "Saving…" : "Update password"}

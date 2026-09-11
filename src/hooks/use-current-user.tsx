@@ -43,12 +43,21 @@ export function useCurrentUser() {
     queryFn: async (): Promise<CurrentUser | null> => {
       if (!session?.user) return null;
       const [{ data: userRow }, { data: rolesRows }] = await Promise.all([
-        supabase.from("users").select("gym_id, display_name, email").eq("id", session.user.id).maybeSingle(),
+        supabase
+          .from("users")
+          .select("gym_id, display_name, email")
+          .eq("id", session.user.id)
+          .maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", session.user.id),
       ]);
       const roles = (rolesRows ?? []).map((r) => r.role as AppRole);
-      const primaryRole: AppRole | null =
-        roles.includes("admin") ? "admin" : roles.includes("trainer") ? "trainer" : roles.includes("member") ? "member" : null;
+      const primaryRole: AppRole | null = roles.includes("admin")
+        ? "admin"
+        : roles.includes("trainer")
+          ? "trainer"
+          : roles.includes("member")
+            ? "member"
+            : null;
       return {
         session,
         userId: session.user.id,

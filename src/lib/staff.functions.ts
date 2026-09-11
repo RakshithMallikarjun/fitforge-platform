@@ -33,13 +33,16 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
       .maybeSingle();
     if (gErr || !gym) throw new Error("Gym not found");
 
-    const { data: invited, error: invErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, {
-      data: {
-        gym_slug: gym.slug,
-        role: data.role,
-        display_name: data.displayName,
+    const { data: invited, error: invErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+      data.email,
+      {
+        data: {
+          gym_slug: gym.slug,
+          role: data.role,
+          display_name: data.displayName,
+        },
       },
-    });
+    );
     if (invErr || !invited.user) throw new Error(invErr?.message ?? "Invite failed");
 
     // The handle_new_user trigger reads role from metadata, but enforce display_name

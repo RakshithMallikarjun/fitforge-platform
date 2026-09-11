@@ -9,12 +9,22 @@ import { BentoStatCard } from "@/components/bento-stat-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
-  getAdminStats, getTrainerStats, getRecentPayments, getEngagementReport,
-  type TrainerStat, type PaymentRow, type EngagementRow,
+  getAdminStats,
+  getTrainerStats,
+  getRecentPayments,
+  getEngagementReport,
+  type TrainerStat,
+  type PaymentRow,
+  type EngagementRow,
 } from "@/lib/admin-stats.functions";
 import { useTheme } from "@/lib/theme-provider";
 
@@ -34,7 +44,6 @@ function AdminDashboard() {
     queryFn: () => fetchStats(),
     enabled: !!user,
   });
-
 
   return (
     <>
@@ -66,16 +75,26 @@ function AdminDashboard() {
                   </span>
                 }
               />
-              <BentoStatCard label="New this month" value={stats.newThisMonth.toLocaleString()} footer="Members joined" />
-              <BentoStatCard label="Sessions today" value={stats.sessionsToday.toLocaleString()} footer="Workouts logged" />
-              <BentoStatCard label="Avg check-ins / day" value={stats.avgCheckIns7d.toString()} footer="Last 7 days" />
+              <BentoStatCard
+                label="New this month"
+                value={stats.newThisMonth.toLocaleString()}
+                footer="Members joined"
+              />
+              <BentoStatCard
+                label="Sessions today"
+                value={stats.sessionsToday.toLocaleString()}
+                footer="Workouts logged"
+              />
+              <BentoStatCard
+                label="Avg check-ins / day"
+                value={stats.avgCheckIns7d.toString()}
+                footer="Last 7 days"
+              />
             </>
           )}
         </section>
 
         <TrainerPerformance />
-
-
 
         {/* Two-column main */}
         <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -148,7 +167,10 @@ function TrainerPerformance() {
 
   function toggle(k: SortKey) {
     if (sort === k) setDir(dir === "asc" ? "desc" : "asc");
-    else { setSort(k); setDir(k === "name" ? "asc" : "desc"); }
+    else {
+      setSort(k);
+      setDir(k === "name" ? "asc" : "desc");
+    }
   }
 
   return (
@@ -166,10 +188,18 @@ function TrainerPerformance() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead><Sort onClick={() => toggle("name")}>Trainer</Sort></TableHead>
-              <TableHead><Sort onClick={() => toggle("assignedMembers")}>Members</Sort></TableHead>
-              <TableHead><Sort onClick={() => toggle("plansThisMonth")}>Plans this month</Sort></TableHead>
-              <TableHead><Sort onClick={() => toggle("assessmentsThisMonth")}>Assessments this month</Sort></TableHead>
+              <TableHead>
+                <Sort onClick={() => toggle("name")}>Trainer</Sort>
+              </TableHead>
+              <TableHead>
+                <Sort onClick={() => toggle("assignedMembers")}>Members</Sort>
+              </TableHead>
+              <TableHead>
+                <Sort onClick={() => toggle("plansThisMonth")}>Plans this month</Sort>
+              </TableHead>
+              <TableHead>
+                <Sort onClick={() => toggle("assessmentsThisMonth")}>Assessments this month</Sort>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -203,7 +233,6 @@ function Sort({ children, onClick }: { children: React.ReactNode; onClick: () =>
   );
 }
 
-
 /** Members whose 30-day engagement has dropped — same signal as the engagement report. */
 function AtRiskMembers() {
   const fetchEngagement = useServerFn(getEngagementReport);
@@ -231,7 +260,10 @@ function AtRiskMembers() {
         </Button>
       </div>
       {isLoading ? (
-        <div className="space-y-2"><Skeleton className="h-16 rounded-2xl" /><Skeleton className="h-16 rounded-2xl" /></div>
+        <div className="space-y-2">
+          <Skeleton className="h-16 rounded-2xl" />
+          <Skeleton className="h-16 rounded-2xl" />
+        </div>
       ) : !rows.length ? (
         <p className="py-6 text-center text-sm text-muted-foreground">
           Everyone is engaged right now — nothing to chase.
@@ -241,7 +273,10 @@ function AtRiskMembers() {
           {rows.map((r: EngagementRow) => {
             const name = r.displayName ?? r.email;
             return (
-              <div key={r.memberId} className="card-lift flex items-center gap-4 rounded-2xl border border-border p-4">
+              <div
+                key={r.memberId}
+                className="card-lift flex items-center gap-4 rounded-2xl border border-border p-4"
+              >
                 <div className="grid h-10 w-10 place-items-center rounded-full bg-accent text-sm font-semibold text-primary">
                   {name.slice(0, 2).toUpperCase()}
                 </div>
@@ -253,11 +288,14 @@ function AtRiskMembers() {
                     </span>
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {r.workouts30d} workouts · {r.checkIns30d} check-ins · {r.messages30d} messages (30d)
+                    {r.workouts30d} workouts · {r.checkIns30d} check-ins · {r.messages30d} messages
+                    (30d)
                   </p>
                 </div>
                 <Button asChild size="sm" className="rounded-lg">
-                  <Link to="/admin/members/$memberId" params={{ memberId: r.memberId }}>Open</Link>
+                  <Link to="/admin/members/$memberId" params={{ memberId: r.memberId }}>
+                    Open
+                  </Link>
                 </Button>
               </div>
             );
@@ -285,7 +323,10 @@ function PaymentHistory() {
         </div>
       </div>
       {isLoading ? (
-        <div className="space-y-2 px-6 pb-6"><Skeleton className="h-8" /><Skeleton className="h-8" /></div>
+        <div className="space-y-2 px-6 pb-6">
+          <Skeleton className="h-8" />
+          <Skeleton className="h-8" />
+        </div>
       ) : !(data ?? []).length ? (
         <p className="px-6 pb-6 text-sm text-muted-foreground">No payments recorded yet.</p>
       ) : (
@@ -314,7 +355,9 @@ function PaymentHistory() {
                   <span
                     className={[
                       "rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                      p.confirmed ? "bg-primary-soft text-primary" : "bg-secondary-soft text-secondary",
+                      p.confirmed
+                        ? "bg-primary-soft text-primary"
+                        : "bg-secondary-soft text-secondary",
                     ].join(" ")}
                   >
                     {p.confirmed ? "Paid" : "Pending"}

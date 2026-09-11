@@ -2,22 +2,70 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Plus, Search, Upload, Users as UsersIcon, ArrowUpDown, MoreHorizontal, UserCog, UserX, UserCheck, MailPlus } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Upload,
+  Users as UsersIcon,
+  ArrowUpDown,
+  MoreHorizontal,
+  UserCog,
+  UserX,
+  UserCheck,
+  MailPlus,
+} from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { listMembers, listTrainers, setMemberActive, resendMemberInvite } from "@/lib/members.functions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  listMembers,
+  listTrainers,
+  setMemberActive,
+  resendMemberInvite,
+} from "@/lib/members.functions";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { AddMemberDialog } from "@/components/members/add-member-dialog";
 import { BulkImportDialog } from "@/components/members/bulk-import-dialog";
 import { AssignTrainersDialog } from "@/components/members/assign-trainers-dialog";
-import { StatusBadge, getMembershipStatus, type MembershipStatus } from "@/components/members/status-badge";
+import {
+  StatusBadge,
+  getMembershipStatus,
+  type MembershipStatus,
+} from "@/components/members/status-badge";
 
 export const Route = createFileRoute("/_authenticated/admin/members")({
   component: MembersPageShell,
@@ -48,8 +96,14 @@ function MembersPage() {
 
   const [addOpen, setAddOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
-  const [assignFor, setAssignFor] = useState<{ id: string; name: string; trainerIds: string[] } | null>(null);
-  const [deactivateTarget, setDeactivateTarget] = useState<{ id: string; name: string } | null>(null);
+  const [assignFor, setAssignFor] = useState<{
+    id: string;
+    name: string;
+    trainerIds: string[];
+  } | null>(null);
+  const [deactivateTarget, setDeactivateTarget] = useState<{ id: string; name: string } | null>(
+    null,
+  );
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["members"],
@@ -84,17 +138,29 @@ function MembersPage() {
       if (statusFilter !== "all" && status !== statusFilter) return false;
       if (trainerFilter !== "all") {
         if (trainerFilter === "none" && m.trainers.length) return false;
-        if (trainerFilter !== "none" && !m.trainers.some((t: any) => t.id === trainerFilter)) return false;
+        if (trainerFilter !== "none" && !m.trainers.some((t: any) => t.id === trainerFilter))
+          return false;
       }
       return true;
     });
     const cmp = (a: any, b: any) => {
       let av: any, bv: any;
       switch (sortKey) {
-        case "joined": av = a.created_at; bv = b.created_at; break;
-        case "last_login": av = a.last_sign_in_at ?? ""; bv = b.last_sign_in_at ?? ""; break;
-        case "status": av = getMembershipStatus(a.active, a.profile?.membership_expires_at); bv = getMembershipStatus(b.active, b.profile?.membership_expires_at); break;
-        default: av = (a.display_name ?? a.email ?? "").toLowerCase(); bv = (b.display_name ?? b.email ?? "").toLowerCase();
+        case "joined":
+          av = a.created_at;
+          bv = b.created_at;
+          break;
+        case "last_login":
+          av = a.last_sign_in_at ?? "";
+          bv = b.last_sign_in_at ?? "";
+          break;
+        case "status":
+          av = getMembershipStatus(a.active, a.profile?.membership_expires_at);
+          bv = getMembershipStatus(b.active, b.profile?.membership_expires_at);
+          break;
+        default:
+          av = (a.display_name ?? a.email ?? "").toLowerCase();
+          bv = (b.display_name ?? b.email ?? "").toLowerCase();
       }
       if (av < bv) return sortAsc ? -1 : 1;
       if (av > bv) return sortAsc ? 1 : -1;
@@ -105,7 +171,10 @@ function MembersPage() {
 
   function toggleSort(k: SortKey) {
     if (sortKey === k) setSortAsc((s) => !s);
-    else { setSortKey(k); setSortAsc(true); }
+    else {
+      setSortKey(k);
+      setSortAsc(true);
+    }
   }
 
   return (
@@ -114,16 +183,23 @@ function MembersPage() {
         title="Members"
         subtitle={`${(members as any[]).length} ${(members as any[]).length === 1 ? "member" : "members"} in your gym`}
         initials={(me?.displayName ?? "FF").slice(0, 2).toUpperCase()}
-        rightExtra={isAdmin ? (
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setBulkOpen(true)}>
-              <Upload className="mr-1.5 h-4 w-4" /> Import CSV
-            </Button>
-            <Button size="sm" className="rounded-lg" onClick={() => setAddOpen(true)}>
-              <Plus className="mr-1.5 h-4 w-4" /> Add member
-            </Button>
-          </div>
-        ) : null}
+        rightExtra={
+          isAdmin ? (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-lg"
+                onClick={() => setBulkOpen(true)}
+              >
+                <Upload className="mr-1.5 h-4 w-4" /> Import CSV
+              </Button>
+              <Button size="sm" className="rounded-lg" onClick={() => setAddOpen(true)}>
+                <Plus className="mr-1.5 h-4 w-4" /> Add member
+              </Button>
+            </div>
+          ) : null
+        }
       />
 
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
@@ -144,7 +220,9 @@ function MembersPage() {
             />
           </div>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
-            <SelectTrigger className="w-[170px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger className="w-[170px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="active">Active</SelectItem>
@@ -155,12 +233,16 @@ function MembersPage() {
           </Select>
           {isAdmin && (
             <Select value={trainerFilter} onValueChange={setTrainerFilter}>
-              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Trainer" /></SelectTrigger>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Trainer" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All trainers</SelectItem>
                 <SelectItem value="none">Unassigned</SelectItem>
                 {(trainers as any[]).map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.display_name ?? t.email}</SelectItem>
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.display_name ?? t.email}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -170,7 +252,9 @@ function MembersPage() {
         {/* Table */}
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--shadow-card)]">
           {isLoading ? (
-            <div className="grid place-items-center py-20 text-sm text-muted-foreground">Loading members…</div>
+            <div className="grid place-items-center py-20 text-sm text-muted-foreground">
+              Loading members…
+            </div>
           ) : rows.length === 0 ? (
             <div className="grid place-items-center gap-2 py-20 text-sm text-muted-foreground">
               <UsersIcon className="h-6 w-6" />
@@ -181,24 +265,36 @@ function MembersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>
-                    <button className="inline-flex items-center gap-1" onClick={() => toggleSort("name")}>
+                    <button
+                      className="inline-flex items-center gap-1"
+                      onClick={() => toggleSort("name")}
+                    >
                       Member <ArrowUpDown className="h-3 w-3" />
                     </button>
                   </TableHead>
                   <TableHead>
-                    <button className="inline-flex items-center gap-1" onClick={() => toggleSort("status")}>
+                    <button
+                      className="inline-flex items-center gap-1"
+                      onClick={() => toggleSort("status")}
+                    >
                       Status <ArrowUpDown className="h-3 w-3" />
                     </button>
                   </TableHead>
                   <TableHead>Trainers</TableHead>
                   <TableHead>Expiry</TableHead>
                   <TableHead>
-                    <button className="inline-flex items-center gap-1" onClick={() => toggleSort("joined")}>
+                    <button
+                      className="inline-flex items-center gap-1"
+                      onClick={() => toggleSort("joined")}
+                    >
                       Joined <ArrowUpDown className="h-3 w-3" />
                     </button>
                   </TableHead>
                   <TableHead>
-                    <button className="inline-flex items-center gap-1" onClick={() => toggleSort("last_login")}>
+                    <button
+                      className="inline-flex items-center gap-1"
+                      onClick={() => toggleSort("last_login")}
+                    >
                       Last login <ArrowUpDown className="h-3 w-3" />
                     </button>
                   </TableHead>
@@ -212,24 +308,44 @@ function MembersPage() {
                   return (
                     <TableRow key={m.id}>
                       <TableCell>
-                        <Link to="/admin/members/$memberId" params={{ memberId: m.id }} className="group flex items-center gap-3">
+                        <Link
+                          to="/admin/members/$memberId"
+                          params={{ memberId: m.id }}
+                          className="group flex items-center gap-3"
+                        >
                           <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-accent text-xs font-semibold text-primary">
-                            {m.photo_url ? <img src={m.photo_url} alt="" className="h-full w-full object-cover" /> : initials}
+                            {m.photo_url ? (
+                              <img
+                                src={m.photo_url}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              initials
+                            )}
                           </div>
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold group-hover:text-primary">{m.display_name ?? "—"}</p>
+                            <p className="truncate text-sm font-semibold group-hover:text-primary">
+                              {m.display_name ?? "—"}
+                            </p>
                             <p className="truncate text-xs text-muted-foreground">{m.email}</p>
                           </div>
                         </Link>
                       </TableCell>
-                      <TableCell><StatusBadge status={status} /></TableCell>
+                      <TableCell>
+                        <StatusBadge status={status} />
+                      </TableCell>
                       <TableCell>
                         {m.trainers.length === 0 ? (
                           <span className="text-xs text-muted-foreground">Unassigned</span>
                         ) : (
                           <div className="flex -space-x-2">
                             {m.trainers.slice(0, 3).map((t: any) => (
-                              <div key={t.id} title={t.display_name ?? t.email} className="grid h-7 w-7 place-items-center rounded-full border-2 border-card bg-accent text-[10px] font-semibold text-primary">
+                              <div
+                                key={t.id}
+                                title={t.display_name ?? t.email}
+                                className="grid h-7 w-7 place-items-center rounded-full border-2 border-card bg-accent text-[10px] font-semibold text-primary"
+                              >
                                 {(t.display_name ?? t.email).slice(0, 2).toUpperCase()}
                               </div>
                             ))}
@@ -243,7 +359,9 @@ function MembersPage() {
                       </TableCell>
                       <TableCell className="text-xs">
                         {m.profile?.membership_expires_at ? (
-                          <span className="text-foreground">{new Date(m.profile.membership_expires_at).toLocaleDateString()}</span>
+                          <span className="text-foreground">
+                            {new Date(m.profile.membership_expires_at).toLocaleDateString()}
+                          </span>
                         ) : (
                           <span className="text-muted-foreground">No expiry</span>
                         )}
@@ -252,7 +370,9 @@ function MembersPage() {
                         {m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {m.last_sign_in_at ? formatDistanceToNow(new Date(m.last_sign_in_at), { addSuffix: true }) : "Never"}
+                        {m.last_sign_in_at
+                          ? formatDistanceToNow(new Date(m.last_sign_in_at), { addSuffix: true })
+                          : "Never"}
                       </TableCell>
                       <TableCell>
                         {isAdmin && (
@@ -261,7 +381,15 @@ function MembersPage() {
                               <MoreHorizontal className="h-4 w-4" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setAssignFor({ id: m.id, name: m.display_name ?? m.email, trainerIds: m.trainers.map((t: any) => t.id) })}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setAssignFor({
+                                    id: m.id,
+                                    name: m.display_name ?? m.email,
+                                    trainerIds: m.trainers.map((t: any) => t.id),
+                                  })
+                                }
+                              >
                                 <UserCog className="mr-2 h-4 w-4" /> Assign trainers
                               </DropdownMenuItem>
                               {!m.last_sign_in_at && (
@@ -276,12 +404,19 @@ function MembersPage() {
                               {m.active ? (
                                 <DropdownMenuItem
                                   className="text-destructive focus:text-destructive"
-                                  onClick={() => setDeactivateTarget({ id: m.id, name: m.display_name ?? m.email })}
+                                  onClick={() =>
+                                    setDeactivateTarget({
+                                      id: m.id,
+                                      name: m.display_name ?? m.email,
+                                    })
+                                  }
                                 >
                                   <UserX className="mr-2 h-4 w-4" /> Deactivate
                                 </DropdownMenuItem>
                               ) : (
-                                <DropdownMenuItem onClick={() => setActive.mutate({ memberId: m.id, active: true })}>
+                                <DropdownMenuItem
+                                  onClick={() => setActive.mutate({ memberId: m.id, active: true })}
+                                >
                                   <UserCheck className="mr-2 h-4 w-4" /> Reactivate
                                 </DropdownMenuItem>
                               )}
@@ -303,7 +438,9 @@ function MembersPage() {
       {assignFor && (
         <AssignTrainersDialog
           open={!!assignFor}
-          onOpenChange={(v) => { if (!v) setAssignFor(null); }}
+          onOpenChange={(v) => {
+            if (!v) setAssignFor(null);
+          }}
           memberId={assignFor.id}
           memberName={assignFor.name}
           initialTrainerIds={assignFor.trainerIds}

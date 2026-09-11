@@ -17,7 +17,6 @@ function isDuplicateCheckin(error: { code?: string; message?: string } | null): 
   return error.code === "23505" || /duplicate key|already exists/i.test(error.message ?? "");
 }
 
-
 function b64url(input: Buffer | string): string {
   const buf = typeof input === "string" ? Buffer.from(input) : input;
   return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -90,14 +89,12 @@ export const verifyAndCheckin = createServerFn({ method: "POST" })
 
     // Insert attendance (one per member per UTC day, per attendance_logs_member_day_uidx)
     const now = new Date();
-    const { error } = await supabase
-      .from("attendance_logs")
-      .insert({
-        gym_id: body.g,
-        member_id: body.u,
-        check_in_at: now.toISOString(),
-        location_type: "gym",
-      });
+    const { error } = await supabase.from("attendance_logs").insert({
+      gym_id: body.g,
+      member_id: body.u,
+      check_in_at: now.toISOString(),
+      location_type: "gym",
+    });
     const duplicate = isDuplicateCheckin(error as any);
     if (error && !duplicate) throw new Error(error.message);
 
@@ -126,7 +123,6 @@ export const verifyAndCheckin = createServerFn({ method: "POST" })
           .eq("id", existing.id);
       }
     }
-
 
     const { data: member } = await supabase
       .from("users")
@@ -198,5 +194,4 @@ export const selfCheckin = createServerFn({ method: "POST" })
     const duplicate = isDuplicateCheckin(error as any);
     if (error && !duplicate) throw new Error(error.message);
     return { ok: true as const, locationType: data.locationType, alreadyCheckedIn: duplicate };
-
   });
