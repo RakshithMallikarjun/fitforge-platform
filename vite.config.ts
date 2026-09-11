@@ -34,10 +34,18 @@ export default defineConfig({
             { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
           ],
         },
+        // Nitro emits the browser-served files to dist/client (served at "/"),
+        // so both the precache manifest and sw.js must target that folder.
+        outDir: "dist/client",
         workbox: {
+          // Generate the manifest against the actually-served directory so URLs
+          // are root-relative ("assets/...", "offline.html") — not "client/...".
+          globDirectory: "dist/client",
+          swDest: "dist/client/sw.js",
+          modifyURLPrefix: { "client/": "", "server/": "" },
           navigateFallback: "/offline.html",
           navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//, /^\/admin/, /^\/auth/],
-          globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest}"],
+          globPatterns: ["offline.html", "**/*.{js,css,html,svg,png,ico,webmanifest}"],
           // Custom bootstrap script hooked into the generated SW — enables
           // Background Sync fan-out to open clients for offline queue flush.
           importScripts: ["/sw-sync.js"],
