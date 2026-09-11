@@ -107,7 +107,6 @@ function StaffPage() {
       <GlassHeader
         title="Staff"
         subtitle={`${(staff as any[]).length} ${(staff as any[]).length === 1 ? "person" : "people"} on your team`}
-        initials={(me?.displayName ?? "FF").slice(0, 2).toUpperCase()}
         rightExtra={
           <Button size="sm" className="rounded-lg" onClick={() => setOpen(true)}>
             <Plus className="mr-1.5 h-4 w-4" /> Invite staff

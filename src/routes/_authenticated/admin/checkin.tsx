@@ -101,7 +101,7 @@ function AdminCheckin() {
 
   return (
     <>
-      <GlassHeader title="Front desk check-in" subtitle="Scan a member's QR code" initials="QR" />
+      <GlassHeader title="Front desk check-in" subtitle="Scan a member's QR code" />
       <main className="mx-auto max-w-3xl space-y-6 px-8 py-8">
         <div className="rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)]">
           <div

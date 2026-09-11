@@ -83,11 +83,7 @@ function MemberProfile() {
 
   return (
     <>
-      <GlassHeader
-        title={user.display_name ?? user.email}
-        subtitle={user.email}
-        initials={initials}
-      />
+      <GlassHeader title={user.display_name ?? user.email} subtitle={user.email} />
 
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
         <Link

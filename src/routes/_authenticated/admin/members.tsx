@@ -182,7 +182,6 @@ function MembersPage() {
       <GlassHeader
         title="Members"
         subtitle={`${(members as any[]).length} ${(members as any[]).length === 1 ? "member" : "members"} in your gym`}
-        initials={(me?.displayName ?? "FF").slice(0, 2).toUpperCase()}
         rightExtra={
           isAdmin ? (
             <div className="flex gap-2">
