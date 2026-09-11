@@ -211,7 +211,7 @@ export const listMemberNotes = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data: notes } = await supabase
       .from("member_notes")
-      .select("id, body, created_at, author_id")
+      .select("id, body, created_at, author_id, shared_with_member")
       .eq("member_id", data.memberId)
       .order("created_at", { ascending: false });
     const ids = Array.from(new Set((notes ?? []).map((n: any) => n.author_id)));
@@ -224,7 +224,7 @@ export const listMemberNotes = createServerFn({ method: "GET" })
 
 export const createMemberNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { memberId: string; body: string }) => d)
+  .inputValidator((d: { memberId: string; body: string; sharedWithMember?: boolean }) => d)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { gymId } = await getRolesAndGym(supabase, userId);
@@ -234,7 +234,22 @@ export const createMemberNote = createServerFn({ method: "POST" })
       member_id: data.memberId,
       author_id: userId,
       body: data.body,
+      // Notes are internal unless the author explicitly shares them.
+      shared_with_member: data.sharedWithMember === true,
     });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const setMemberNoteShared = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string; shared: boolean }) => d)
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { error } = await supabase
+      .from("member_notes")
+      .update({ shared_with_member: data.shared })
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
