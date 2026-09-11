@@ -358,7 +358,6 @@ function WorkoutPlayer() {
   const exercises = useMemo(() => dayData?.exercises ?? [], [dayData]);
   const current = exercises[currentIdx];
 
-
   // Fetch previous set values per exercise (parallel).
   const prevQueries = useQueries({
     queries: exercises.map((ex) => ({
@@ -545,7 +544,6 @@ function WorkoutPlayer() {
       document.removeEventListener("visibilitychange", check);
     };
   }, [timerRunning, endsAt]);
-
 
   if (isLoading || !dayData) {
     return (
