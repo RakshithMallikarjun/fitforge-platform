@@ -43,6 +43,13 @@
       "when": 1789121234461,
       "tag": "0005_tighten_user_pii_gym_billing_and_definer_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789121990119,
+      "tag": "0006_fix_messages_policy_noop_drops",
+      "breakpoints": true
     }
   ]
 }
