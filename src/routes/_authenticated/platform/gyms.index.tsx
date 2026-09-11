@@ -24,6 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ACTIVE_MEMBERSHIP_DEFINITION } from "@/lib/membership";
 import {
   Table,
   TableBody,
@@ -229,8 +231,17 @@ function PlatformGymsPage() {
                 <TableHead>Enabled</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead>Plan</TableHead>
-                <Th k="member_count" right>
-                  Members
+                <Th k="active_member_count" right>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="underline decoration-dotted underline-offset-4">
+                        Members
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      {ACTIVE_MEMBERSHIP_DEFINITION}
+                    </TooltipContent>
+                  </Tooltip>
                 </Th>
                 <Th k="workouts_30d" right>
                   Workouts 30d
@@ -271,7 +282,9 @@ function PlatformGymsPage() {
                   </TableCell>
                   <TableCell className="capitalize text-sm">{g.subscription_plan}</TableCell>
                   <TableCell className="font-numeric text-right text-sm">
-                    {g.active_member_count}/{g.member_count}
+                    <span title="Active memberships / total members">
+                      {g.active_member_count}/{g.member_count}
+                    </span>
                   </TableCell>
                   <TableCell className="font-numeric text-right text-sm">
                     {g.workouts_30d}
