@@ -32,6 +32,21 @@ export default tseslint.config(
           ],
         },
       ],
+      // Design tokens in src/styles.css are OKLCH values. Wrapping them in
+      // hsl() yields `hsl(oklch(...))`, an invalid colour that SVG renders black.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Literal[value=/hsl\\(\\s*var\\(--/]",
+          message:
+            "Design tokens are OKLCH: reference them as var(--token), never hsl(var(--token)).",
+        },
+        {
+          selector: "TemplateElement[value.raw=/hsl\\(\\s*var\\(--/]",
+          message:
+            "Design tokens are OKLCH: reference them as var(--token), never hsl(var(--token)).",
+        },
+      ],
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
     },

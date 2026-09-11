@@ -107,19 +107,39 @@ function AttendanceReportPage() {
         ) : (
           <>
             <section className="grid gap-4 md:grid-cols-3">
-              <BentoStatCard variant="dark" label="Total check-ins" value={data.totalCheckIns.toLocaleString()} footer="In selected range" />
-              <BentoStatCard label="Unique members" value={data.uniqueMembers.toLocaleString()} footer="Distinct visitors" />
-              <BentoStatCard label="Avg per day" value={data.avgPerDay.toString()} footer="Across range" />
+              <BentoStatCard
+                variant="dark"
+                label="Total check-ins"
+                value={data.totalCheckIns.toLocaleString()}
+                footer="In selected range"
+              />
+              <BentoStatCard
+                label="Unique members"
+                value={data.uniqueMembers.toLocaleString()}
+                footer="Distinct visitors"
+              />
+              <BentoStatCard
+                label="Avg per day"
+                value={data.avgPerDay.toString()}
+                footer="Across range"
+              />
             </section>
 
             <ChartCard title="Daily check-ins">
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={data.daily}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(v) => format(new Date(v), "MMM d")} />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    tickFormatter={(v) => format(new Date(v), "MMM d")}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    allowDecimals={false}
+                  />
                   <Tooltip />
-                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="count" fill="var(--primary)" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -127,11 +147,21 @@ function AttendanceReportPage() {
             <ChartCard title="Rolling 7-day average">
               <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={data.daily}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(v) => format(new Date(v), "MMM d")} />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    tickFormatter={(v) => format(new Date(v), "MMM d")}
+                  />
+                  <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="rolling7" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                  <Line
+                    type="monotone"
+                    dataKey="rolling7"
+                    stroke="var(--primary)"
+                    strokeWidth={2}
+                    dot={false}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -139,16 +169,20 @@ function AttendanceReportPage() {
             <ChartCard title="Check-ins by hour of day">
               <ResponsiveContainer width="100%" height={Math.max(240, data.peakHours.length * 24)}>
                 <BarChart data={data.peakHours} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis
+                    type="number"
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    allowDecimals={false}
+                  />
                   <YAxis
                     dataKey="hour"
                     type="category"
-                    tick={{ fontSize: 11 }}
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
                     tickFormatter={(h) => `${String(h).padStart(2, "0")}:00`}
                   />
                   <Tooltip />
-                  <Bar dataKey="count" fill="hsl(var(--secondary))" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="count" fill="var(--secondary)" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
