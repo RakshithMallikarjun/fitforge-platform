@@ -50,6 +50,13 @@
       "when": 1789121990119,
       "tag": "0006_fix_messages_policy_noop_drops",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789122279926,
+      "tag": "0007_workout_plans_member_id_nullable",
+      "breakpoints": true
     }
   ]
 }
