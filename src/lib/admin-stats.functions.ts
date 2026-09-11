@@ -31,8 +31,27 @@ export const getAdminStats = createServerFn({ method: "GET" })
         newThisMonth: 0,
         sessionsToday: 0,
         avgCheckIns7d: 0,
+        activityScope: "gym",
       };
     }
+
+    // Trainers only see activity for the members they coach; admins see the gym.
+    const { data: myRoles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const isAdmin = (myRoles ?? []).some((r: any) => r.role === "admin");
+    let assignedIds: string[] | null = null;
+    if (!isAdmin) {
+      const { data: myAssigned } = await supabase
+        .from("trainer_assignments")
+        .select("member_id")
+        .eq("gym_id", gymId)
+        .eq("trainer_id", userId)
+        .eq("active", true);
+      assignedIds = Array.from(new Set((myAssigned ?? []).map((a: any) => a.member_id as string)));
+    }
+
 
     const { data: memberRoles } = await supabase
       .from("user_roles")
