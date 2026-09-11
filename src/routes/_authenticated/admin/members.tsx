@@ -62,6 +62,7 @@ import { AddMemberDialog } from "@/components/members/add-member-dialog";
 import { BulkImportDialog } from "@/components/members/bulk-import-dialog";
 import { AssignTrainersDialog } from "@/components/members/assign-trainers-dialog";
 import {
+import { formatShortDate } from "@/lib/format-date";
   StatusBadge,
   getMembershipStatus,
   type MembershipStatus,
@@ -359,14 +360,14 @@ function MembersPage() {
                       <TableCell className="text-xs">
                         {m.profile?.membership_expires_at ? (
                           <span className="text-foreground">
-                            {new Date(m.profile.membership_expires_at).toLocaleDateString()}
+                            {formatShortDate(m.profile.membership_expires_at)}
                           </span>
                         ) : (
                           <span className="text-muted-foreground">No expiry</span>
                         )}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}
+                        {m.created_at ? formatShortDate(m.created_at) : "—"}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {m.last_sign_in_at

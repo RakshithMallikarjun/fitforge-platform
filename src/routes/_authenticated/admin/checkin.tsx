@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
 import { verifyAndCheckin } from "@/lib/checkin.functions";
+import { formatTime } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/checkin")({
   component: AdminCheckin,
@@ -140,7 +141,7 @@ function AdminCheckin() {
                     <XCircle className="h-4 w-4 text-destructive" />
                   )}
                   <span className="text-muted-foreground">
-                    {new Date(r.at).toLocaleTimeString()}
+                    {formatTime(r.at)}
                   </span>
                   <span>{r.message}</span>
                   <span className="ml-auto inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">

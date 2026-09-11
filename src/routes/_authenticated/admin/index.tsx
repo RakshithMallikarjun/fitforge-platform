@@ -27,6 +27,7 @@ import {
   type EngagementRow,
 } from "@/lib/admin-stats.functions";
 import { useTheme } from "@/lib/theme-provider";
+import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminDashboard,
@@ -372,7 +373,7 @@ function PaymentHistory() {
                   {p.amount === null ? "—" : p.amount.toLocaleString()}
                 </td>
                 <td className="py-4 text-muted-foreground">
-                  {p.date ? new Date(p.date).toLocaleDateString() : "—"}
+                  {p.date ? formatShortDate(p.date) : "—"}
                 </td>
                 <td className="py-4 pr-6">
                   <span

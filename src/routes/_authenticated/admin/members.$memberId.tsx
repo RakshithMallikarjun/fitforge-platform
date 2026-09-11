@@ -30,6 +30,7 @@ import { MemberNotes } from "@/components/members/member-notes";
 import { AssessmentsTab } from "@/components/assessments/assessments-tab";
 import { AttendanceHeatmap } from "@/components/members/attendance-heatmap";
 import { ThreadView } from "@/components/messages/thread-view";
+import { formatDateTime, formatShortDate, formatTime } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/members/$memberId")({
   component: MemberProfile,
@@ -118,7 +119,7 @@ function MemberProfile() {
               )}
               <span className="inline-flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5" /> Joined{" "}
-                {new Date(user.created_at).toLocaleDateString()}
+                {formatShortDate(user.created_at)}
               </span>
             </div>
           </div>
@@ -179,7 +180,7 @@ function MemberProfile() {
                 rows={[
                   [
                     "Date of birth",
-                    profile?.dob ? new Date(profile.dob).toLocaleDateString() : "—",
+                    profile?.dob ? formatShortDate(profile.dob) : "—",
                   ],
                   ["Gender", profile?.gender ?? "—"],
                   ["Experience", profile?.experience_level ?? "—"],
@@ -192,7 +193,7 @@ function MemberProfile() {
                   [
                     "Expires",
                     profile?.membership_expires_at
-                      ? new Date(profile.membership_expires_at).toLocaleDateString()
+                      ? formatShortDate(profile.membership_expires_at)
                       : "—",
                   ],
                   ["Status", <StatusBadge key="s" status={status} />],
@@ -265,7 +266,7 @@ function MemberProfile() {
                         <dt className="text-muted-foreground text-xs">Last payment</dt>
                         <dd className="mt-0.5 font-medium">
                           {p.last_payment_date
-                            ? new Date(p.last_payment_date).toLocaleDateString()
+                            ? formatShortDate(p.last_payment_date)
                             : "—"}
                         </dd>
                       </div>
@@ -364,7 +365,7 @@ function MemberProfile() {
                               </div>
                               <p className="mt-1 text-xs text-muted-foreground">
                                 {p.start_date
-                                  ? `Starts ${new Date(p.start_date).toLocaleDateString()}`
+                                  ? `Starts ${formatShortDate(p.start_date)}`
                                   : "No start date"}
                                 {p.duration_weeks
                                   ? ` · ${p.duration_weeks} ${p.duration_weeks === 1 ? "week" : "weeks"}`
@@ -421,11 +422,11 @@ function MemberProfile() {
                   >
                     <div>
                       <p className="text-sm font-semibold">
-                        {new Date(a.check_in_at).toLocaleString()}
+                        {formatDateTime(a.check_in_at)}
                       </p>
                       {a.check_out_at && (
                         <p className="text-xs text-muted-foreground">
-                          Checked out {new Date(a.check_out_at).toLocaleTimeString()}
+                          Checked out {formatTime(a.check_out_at)}
                         </p>
                       )}
                     </div>

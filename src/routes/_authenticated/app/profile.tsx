@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { getMemberProfile, updateMyDisplayName } from "@/lib/profile.functions";
 import { subscribePush, unsubscribePush, getPushStatus } from "@/lib/push.functions";
+import { formatShortDate } from "@/lib/format-date";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -129,7 +130,7 @@ function ProfilePage() {
           <p className="text-sm font-semibold tracking-tight">Latest assessment</p>
           {assessment && (
             <p className="text-xs text-muted-foreground">
-              {new Date(assessment.date).toLocaleDateString()}
+              {formatShortDate(assessment.date)}
             </p>
           )}
         </div>
