@@ -18,7 +18,6 @@ export type AdminStats = {
   activityScope: "gym" | "assigned";
 };
 
-
 export const getAdminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AdminStats> => {
@@ -51,7 +50,6 @@ export const getAdminStats = createServerFn({ method: "GET" })
         .eq("active", true);
       assignedIds = Array.from(new Set((myAssigned ?? []).map((a: any) => a.member_id as string)));
     }
-
 
     const { data: memberRoles } = await supabase
       .from("user_roles")
@@ -132,7 +130,6 @@ export const getAdminStats = createServerFn({ method: "GET" })
     };
   });
 
-
 // ---------- Trainer performance ----------
 export type TrainerStat = {
   trainerId: string;
@@ -176,7 +173,6 @@ export const getTrainerStats = createServerFn({ method: "GET" })
       trainerIds = [userId];
     }
     if (!trainerIds.length) return [];
-
 
     const { data: trainers } = await supabase
       .from("users")

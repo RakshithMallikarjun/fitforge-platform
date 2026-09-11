@@ -47,7 +47,6 @@ function AdminDashboard() {
   // Trainers only get data for their own members; say so on every tile.
   const scopeLabel = stats?.activityScope === "assigned" ? "Your members" : "Gym-wide";
 
-
   return (
     <>
       <GlassHeader
@@ -102,7 +101,6 @@ function AdminDashboard() {
         </section>
 
         <TrainerPerformance isAdmin={isAdmin} />
-
 
         {/* Two-column main */}
         <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -233,7 +231,10 @@ function TrainerPerformance({ isAdmin }: { isAdmin: boolean }) {
             ))}
             {!rows.length && (
               <TableRow>
-                <TableCell colSpan={cols} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell
+                  colSpan={cols}
+                  className="py-6 text-center text-sm text-muted-foreground"
+                >
                   {isAdmin ? "No trainers yet." : "Nothing recorded yet."}
                 </TableCell>
               </TableRow>
@@ -244,7 +245,6 @@ function TrainerPerformance({ isAdmin }: { isAdmin: boolean }) {
     </section>
   );
 }
-
 
 function Sort({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return (
@@ -279,7 +279,6 @@ function AtRiskMembers({ isAdmin }: { isAdmin: boolean }) {
               ? "Gym-wide · lowest 30-day engagement"
               : "Your members · lowest 30-day engagement"}
           </p>
-
         </div>
         <Button asChild variant="ghost" size="sm" className="rounded-lg">
           <Link to="/admin/reports/engagement">View all</Link>
