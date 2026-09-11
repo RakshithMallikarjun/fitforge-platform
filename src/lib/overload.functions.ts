@@ -232,14 +232,12 @@ Return JSON:
     });
 
     // Cache so repeat views of the same day cost nothing.
-    await supabase
-      .from("ai_overload_cache")
-      .insert({
-        requested_by: userId,
-        member_id: data.memberId,
-        cache_key: cacheKey,
-        payload: result as any,
-      });
+    await supabase.from("ai_overload_cache").insert({
+      requested_by: userId,
+      member_id: data.memberId,
+      cache_key: cacheKey,
+      payload: result as any,
+    });
 
     return result;
   });
