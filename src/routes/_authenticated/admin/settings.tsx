@@ -403,6 +403,187 @@ See you at the gym!`;
           )}
         </CardContent>
       </Card>
+
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Member sign-up</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="gym-code">Gym code — members enter this when signing up</Label>
+            <div className="flex items-center gap-3">
+              <Input id="gym-code" readOnly value={slug} className="max-w-[240px] font-mono" />
+              <CopyButton value={slug} label="Copy code" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="join-code">Join code</Label>
+            <div className="flex flex-wrap items-center gap-3">
+              <Input
+                id="join-code"
+                readOnly
+                value={
+                  joinLoading
+                    ? "Loading…"
+                    : !joinCode
+                      ? "Not set"
+                      : revealCode
+                        ? joinCode
+                        : "•".repeat(joinCode.length)
+                }
+                className="max-w-[240px] font-mono tracking-widest"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setRevealCode((v) => !v)}
+                disabled={!joinCode}
+              >
+                {revealCode ? (
+                  <EyeOff className="mr-2 h-4 w-4" />
+                ) : (
+                  <Eye className="mr-2 h-4 w-4" />
+                )}
+                {revealCode ? "Hide" : "Reveal"}
+              </Button>
+              <CopyButton value={joinCode} label="Copy join code" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Keep this private — anyone with the gym code and join code can create a member
+              account.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmRotate(true)}
+              disabled={rotateMutation.isPending}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              {rotateMutation.isPending ? "Regenerating…" : "Regenerate join code"}
+            </Button>
+            <Button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(signupMessage);
+                  toast.success("Sign-up instructions copied — paste them into WhatsApp");
+                } catch {
+                  toast.error("Your browser blocked clipboard access.");
+                }
+              }}
+              disabled={!joinCode || !slug}
+            >
+              <Share2 className="mr-2 h-4 w-4" />
+              Copy sign-up instructions
+            </Button>
+          </div>
+
+          <pre className="whitespace-pre-wrap rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
+            {revealCode ? signupMessage : signupMessage.replace(joinCode, "••••••••••••")}
+          </pre>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={confirmRotate} onOpenChange={setConfirmRotate}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Regenerate the join code?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Any invite message or join code you have already shared will stop working
+              immediately. Members who have already signed up are not affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => rotateMutation.mutate()}>
+              Regenerate code
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Operations</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label>Timezone</Label>
+            <Select value={timezone} onValueChange={setTimezone}>
+              <SelectTrigger className="max-w-[280px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIMEZONES.map((tz) => (
+                  <SelectItem key={tz} value={tz}>
+                    {tz.replace(/_/g, " ")}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Streaks, attendance and daily reports are calculated in this timezone.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="custom-domain">Custom domain</Label>
+            <Input
+              id="custom-domain"
+              value={customDomain}
+              onChange={(e) => setCustomDomain(e.target.value)}
+              placeholder="app.yourgym.com"
+              className="max-w-[320px]"
+            />
+            <div className="rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
+              <p className="mb-2 font-semibold text-foreground">DNS setup</p>
+              <p className="mb-2">
+                Subdomain option: add a wildcard <code>CNAME</code> for{" "}
+                <code>*.fitforge.app</code> pointing at your published FitForge URL. Members
+                visiting <code>{slug || "yourgym"}.fitforge.app</code> get your theme, logo and
+                app icon automatically.
+              </p>
+              <p>
+                Fully custom domain: save it here, add a <code>CNAME</code> from{" "}
+                <code>{customDomain || "app.yourgym.com"}</code> to your published FitForge URL,
+                then ask FitForge support to attach the domain to your project.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Subscription</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className="capitalize">
+                {gym?.subscription_plan ?? "—"} plan
+              </Badge>
+              <Badge variant="outline" className="capitalize">
+                Payment: {gym?.payment_status ?? "—"}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Managed by FitForge — contact support to change.
+            </p>
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              onClick={() =>
+                opsMutation.mutate({ timezone, customDomain: customDomain || null })
+              }
+              disabled={opsMutation.isPending || !timezone}
+            >
+              {opsMutation.isPending ? "Saving…" : "Save operations"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
+
 }
