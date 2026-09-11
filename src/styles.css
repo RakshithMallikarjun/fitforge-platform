@@ -7,7 +7,10 @@
    - Tokens are oklch.
    - --primary, --font-sans, etc. can be overridden at runtime
      by ThemeProvider for per-gym white-labelling.
-   - DO NOT hardcode hex/color utilities in components. */
+   - DO NOT hardcode hex/color utilities in components.
+   - Tokens are OKLCH, so in JS/SVG props (Recharts fill/stroke) reference them
+     as var(--primary). NEVER hsl(var(--primary)) — that is an invalid colour
+     and renders black. Enforced by no-restricted-syntax in eslint.config.js. */
 
 @theme inline {
   --radius-sm: 0.5rem;
