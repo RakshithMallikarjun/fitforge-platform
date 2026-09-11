@@ -153,7 +153,7 @@ function AdminDashboard() {
 
 type SortKey = "name" | "assignedMembers" | "plansThisMonth" | "assessmentsThisMonth";
 
-function TrainerPerformance() {
+function TrainerPerformance({ isAdmin }: { isAdmin: boolean }) {
   const fetchTrainerStats = useServerFn(getTrainerStats);
   const { data, isLoading } = useQuery({
     queryKey: ["trainer-stats"],
@@ -181,11 +181,19 @@ function TrainerPerformance() {
     }
   }
 
+  const cols = isAdmin ? 4 : 3;
+
   return (
     <section className="rounded-[2rem] border border-border bg-card shadow-[var(--shadow-card)]">
       <div className="p-6 pb-2">
-        <h2 className="text-base font-bold tracking-tight">Trainer performance</h2>
-        <p className="text-xs text-muted-foreground">Assigned members and month-to-date activity</p>
+        <h2 className="text-base font-bold tracking-tight">
+          {isAdmin ? "Trainer performance" : "Your performance"}
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          {isAdmin
+            ? "Gym-wide · assigned members and month-to-date activity"
+            : "Your members · month-to-date activity"}
+        </p>
       </div>
       {isLoading ? (
         <div className="space-y-2 p-6">
@@ -196,9 +204,11 @@ function TrainerPerformance() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>
-                <Sort onClick={() => toggle("name")}>Trainer</Sort>
-              </TableHead>
+              {isAdmin && (
+                <TableHead>
+                  <Sort onClick={() => toggle("name")}>Trainer</Sort>
+                </TableHead>
+              )}
               <TableHead>
                 <Sort onClick={() => toggle("assignedMembers")}>Members</Sort>
               </TableHead>
@@ -213,7 +223,9 @@ function TrainerPerformance() {
           <TableBody>
             {rows.map((t: TrainerStat) => (
               <TableRow key={t.trainerId}>
-                <TableCell className="font-medium">{t.displayName ?? t.email}</TableCell>
+                {isAdmin && (
+                  <TableCell className="font-medium">{t.displayName ?? t.email}</TableCell>
+                )}
                 <TableCell className="font-numeric">{t.assignedMembers}</TableCell>
                 <TableCell className="font-numeric">{t.plansThisMonth}</TableCell>
                 <TableCell className="font-numeric">{t.assessmentsThisMonth}</TableCell>
@@ -221,8 +233,8 @@ function TrainerPerformance() {
             ))}
             {!rows.length && (
               <TableRow>
-                <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
-                  No trainers yet.
+                <TableCell colSpan={cols} className="py-6 text-center text-sm text-muted-foreground">
+                  {isAdmin ? "No trainers yet." : "Nothing recorded yet."}
                 </TableCell>
               </TableRow>
             )}
@@ -232,6 +244,7 @@ function TrainerPerformance() {
     </section>
   );
 }
+
 
 function Sort({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return (
