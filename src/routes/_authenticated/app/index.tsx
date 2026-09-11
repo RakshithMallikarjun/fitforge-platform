@@ -167,8 +167,8 @@ function WorkoutOfTheDay({
     );
   }
 
-  const navigate = useNavigate();
   return (
+
     <div className="bento-emerald">
       <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary-foreground/70">
         Workout of the day
