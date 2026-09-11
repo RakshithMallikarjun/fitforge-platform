@@ -62,11 +62,11 @@ import { AddMemberDialog } from "@/components/members/add-member-dialog";
 import { BulkImportDialog } from "@/components/members/bulk-import-dialog";
 import { AssignTrainersDialog } from "@/components/members/assign-trainers-dialog";
 import {
-import { formatShortDate } from "@/lib/format-date";
   StatusBadge,
   getMembershipStatus,
   type MembershipStatus,
 } from "@/components/members/status-badge";
+import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/members")({
   component: MembersPageShell,
