@@ -14,6 +14,7 @@ import { isPlatformAdmin } from "@/lib/platform.functions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { friendlyAuthError, scorePassword } from "@/lib/auth-errors";
+import { verifyGymJoinCode } from "@/lib/join-code.functions";
 
 type AuthSearch = { deactivated?: boolean; gymDisabled?: boolean };
 
@@ -346,6 +347,8 @@ function SignUpForm() {
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const verifyJoinCode = useServerFn(verifyGymJoinCode);
+
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -361,15 +364,17 @@ function SignUpForm() {
     setLoading(true);
     // Gym membership requires the gym's private join code, so a slug alone
     // can't be guessed to enter someone else's tenant. Validated BEFORE signUp,
-    // so a wrong code never creates an account.
-    const { data: valid, error: codeErr } = await supabase.rpc("verify_join_code", {
-      _slug: gymSlug.trim(),
-      _code: joinCode.trim(),
-    });
-    if (codeErr || !valid) {
+    // so a wrong code never creates an account. Verification runs server-side:
+    // the database routine is not callable by the anon/authenticated roles.
+    let valid = false;
+    try {
+      valid = (await verifyJoinCode({ data: { slug: gymSlug.trim(), code: joinCode.trim() } })).valid;
+    } catch (err) {
+      console.error("[auth] join code verification failed", err);
+    }
+    if (!valid) {
       setLoading(false);
       setError("We couldn't find that gym code — check the gym code and join code with your gym.");
-      if (codeErr) console.error("[auth] verify_join_code", codeErr);
       return;
     }
     // SECURITY: role is HARDCODED to "member". Public self-service sign-up must
