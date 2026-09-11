@@ -99,12 +99,9 @@ function SettingsPage() {
     );
   }
 
-
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
-      <h1 className="mb-6 font-display text-3xl font-bold tracking-tight">
-        Gym Settings
-      </h1>
+      <h1 className="mb-6 font-display text-3xl font-bold tracking-tight">Gym Settings</h1>
 
       <Card>
         <CardHeader>
@@ -140,9 +137,7 @@ function SettingsPage() {
                     onChange={(e) => setPrimaryColor(e.target.value)}
                     className="max-w-[140px] font-mono"
                   />
-                  {!validHex && (
-                    <span className="text-xs text-destructive">Use #RRGGBB</span>
-                  )}
+                  {!validHex && <span className="text-xs text-destructive">Use #RRGGBB</span>}
                 </div>
               </div>
 
@@ -240,11 +235,7 @@ function SettingsPage() {
                     }}
                   >
                     {logoValid && (
-                      <img
-                        src={logoUrl}
-                        alt=""
-                        className="h-4 w-4 rounded-sm object-contain"
-                      />
+                      <img src={logoUrl} alt="" className="h-4 w-4 rounded-sm object-contain" />
                     )}
                     {name || "Your Gym"}
                   </span>

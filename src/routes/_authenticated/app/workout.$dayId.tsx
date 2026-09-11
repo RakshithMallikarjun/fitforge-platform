@@ -11,7 +11,6 @@ import {
   ChevronRight,
   CloudOff,
   Dumbbell,
-
   Minus,
   PartyPopper,
   Play,
@@ -25,7 +24,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import {
@@ -39,7 +44,12 @@ import {
   type WorkoutDayData,
   type WorkoutDayExercise,
 } from "@/lib/workout-player.functions";
-import { getExerciseAlternatives, substituteExercise, getYoutubeEmbedUrl, type ExerciseRow } from "@/lib/exercises.functions";
+import {
+  getExerciseAlternatives,
+  substituteExercise,
+  getYoutubeEmbedUrl,
+  type ExerciseRow,
+} from "@/lib/exercises.functions";
 import { enqueueLog } from "@/lib/pwa/offline-queue";
 
 function isOfflineError(e: unknown): boolean {
@@ -56,9 +66,6 @@ function isOfflineError(e: unknown): boolean {
 export const Route = createFileRoute("/_authenticated/app/workout/$dayId")({
   component: WorkoutPlayer,
 });
-
-
-
 
 function Stepper({
   value,
@@ -91,7 +98,8 @@ function Stepper({
 
   function apply(next: number) {
     const clamped = Math.min(max, Math.max(min, next));
-    const rounded = decimals > 0 ? Math.round(clamped * 10 ** decimals) / 10 ** decimals : Math.round(clamped);
+    const rounded =
+      decimals > 0 ? Math.round(clamped * 10 ** decimals) / 10 ** decimals : Math.round(clamped);
     onChange(String(rounded));
   }
 
@@ -119,7 +127,9 @@ function Stepper({
   const valueNode = (
     <span className="min-w-[4.5rem] text-center font-display text-2xl font-bold tabular-nums">
       {display}
-      {unit ? <span className="ml-1 text-sm font-semibold text-muted-foreground">{unit}</span> : null}
+      {unit ? (
+        <span className="ml-1 text-sm font-semibold text-muted-foreground">{unit}</span>
+      ) : null}
     </span>
   );
 
@@ -150,9 +160,14 @@ function Stepper({
           }}
         >
           <PopoverTrigger asChild>
-            <button type="button" className="min-w-[4.5rem] text-center font-display text-2xl font-bold text-muted-foreground">
+            <button
+              type="button"
+              className="min-w-[4.5rem] text-center font-display text-2xl font-bold text-muted-foreground"
+            >
               {display}
-              {unit ? <span className="ml-1 text-sm font-semibold text-muted-foreground">{unit}</span> : null}
+              {unit ? (
+                <span className="ml-1 text-sm font-semibold text-muted-foreground">{unit}</span>
+              ) : null}
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-48 p-3" align="center">
@@ -202,7 +217,6 @@ function Stepper({
     </div>
   );
 }
-
 
 type SetState = { weight: string; reps: string; done: boolean };
 
@@ -331,7 +345,11 @@ function WorkoutPlayer() {
       if (Object.keys(cur).length) return cur;
       const next: Record<string, SetState[]> = {};
       for (const ex of dayData.exercises) {
-        next[ex.id] = Array.from({ length: ex.sets }, () => ({ weight: "", reps: "", done: false }));
+        next[ex.id] = Array.from({ length: ex.sets }, () => ({
+          weight: "",
+          reps: "",
+          done: false,
+        }));
       }
       return next;
     });
@@ -520,17 +538,19 @@ function WorkoutPlayer() {
   }
 
   if (phase === "complete") {
-    return <CompletionScreen
-      notes={notes}
-      setNotes={setNotes}
-      effort={effort}
-      setEffort={setEffort}
-      onFinish={() => completeMut.mutate()}
-      submitting={completeMut.isPending}
-      finished={finished}
-      newPRs={newPRs}
-      onDone={() => navigate({ to: "/app" })}
-    />;
+    return (
+      <CompletionScreen
+        notes={notes}
+        setNotes={setNotes}
+        effort={effort}
+        setEffort={setEffort}
+        onFinish={() => completeMut.mutate()}
+        submitting={completeMut.isPending}
+        finished={finished}
+        newPRs={newPRs}
+        onDone={() => navigate({ to: "/app" })}
+      />
+    );
   }
 
   const ex = current!;
@@ -603,12 +623,22 @@ function WorkoutPlayer() {
         {(() => {
           const bt = dayData.day.block_type ?? "main";
           const meta = {
-            warmup: { label: "Warm-Up", emoji: "🔥", cls: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300" },
+            warmup: {
+              label: "Warm-Up",
+              emoji: "🔥",
+              cls: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+            },
             main: { label: "Main Workout", emoji: "💪", cls: "bg-primary/15 text-primary" },
-            cooldown: { label: "Cooldown", emoji: "🧘", cls: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300" },
+            cooldown: {
+              label: "Cooldown",
+              emoji: "🧘",
+              cls: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
+            },
           }[bt];
           return (
-            <span className={`mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${meta.cls}`}>
+            <span
+              className={`mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${meta.cls}`}
+            >
               <span>{meta.emoji}</span> {meta.label}
             </span>
           );
@@ -659,7 +689,9 @@ function WorkoutPlayer() {
                 {/* Below 400px the two steppers stack so nothing pushes off-canvas. */}
                 <div className="grid grid-cols-1 items-end gap-3 min-[400px]:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] min-[400px]:gap-2">
                   <div className="min-w-0">
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Weight (kg)</p>
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Weight (kg)
+                    </p>
                     <Stepper
                       value={row.weight}
                       onChange={(v) => updateSet(ex.id, idx, { weight: v })}
@@ -672,7 +704,9 @@ function WorkoutPlayer() {
                     />
                   </div>
                   <div className="min-w-0">
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Reps</p>
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Reps
+                    </p>
                     <Stepper
                       value={row.reps}
                       onChange={(v) => updateSet(ex.id, idx, { reps: v })}
@@ -697,14 +731,15 @@ function WorkoutPlayer() {
                     <Check className="h-4 w-4" />
                   </button>
                 </div>
-
               </div>
             );
           })}
         </div>
 
         {prev.length === 0 && (
-          <p className="mt-3 text-[11px] text-muted-foreground">No previous data — this is your baseline.</p>
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            No previous data — this is your baseline.
+          </p>
         )}
         {prev.length > 0 && (
           <p className="mt-3 text-[11px] text-muted-foreground">{`Hint: ${prev
@@ -715,9 +750,7 @@ function WorkoutPlayer() {
       </div>
 
       {/* Rest timer */}
-      {timerLeft != null && (
-        <RestTimer total={timerTotal} left={timerLeft} onSkip={stopTimer} />
-      )}
+      {timerLeft != null && <RestTimer total={timerTotal} left={timerLeft} onSkip={stopTimer} />}
 
       {/* Nav */}
       <div className="flex items-center justify-between gap-3">
@@ -816,7 +849,10 @@ function SwapExerciseDialog({
                   {a.muscle_groups?.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
                       {a.muscle_groups.slice(0, 3).map((m) => (
-                        <span key={m} className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium capitalize text-primary">
+                        <span
+                          key={m}
+                          className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium capitalize text-primary"
+                        >
                           {m}
                         </span>
                       ))}
@@ -847,7 +883,15 @@ function RestTimer({ total, left, onSkip }: { total: number; left: number; onSki
       <div className="mx-auto flex max-w-md items-center justify-between rounded-2xl border border-border bg-card/95 p-3 shadow-[var(--shadow-card)] backdrop-blur">
         <div className="flex items-center gap-3">
           <svg width="68" height="68" viewBox="0 0 68 68" className="-rotate-90">
-            <circle cx="34" cy="34" r={r} stroke="currentColor" strokeWidth="6" className="text-muted" fill="none" />
+            <circle
+              cx="34"
+              cy="34"
+              r={r}
+              stroke="currentColor"
+              strokeWidth="6"
+              className="text-muted"
+              fill="none"
+            />
             <circle
               cx="34"
               cy="34"
@@ -915,7 +959,10 @@ function CompletionScreen({
           </div>
           <ul className="mt-3 space-y-2">
             {newPRs.map((pr, i) => (
-              <li key={i} className="flex items-center justify-between rounded-xl bg-background/60 px-3 py-2">
+              <li
+                key={i}
+                className="flex items-center justify-between rounded-xl bg-background/60 px-3 py-2"
+              >
                 <span className="text-sm font-semibold">{pr.exerciseName}</span>
                 <span className="font-numeric text-sm font-bold text-primary">
                   {pr.weight} kg{pr.reps ? ` × ${pr.reps}` : ""}
@@ -929,7 +976,9 @@ function CompletionScreen({
       {!finished && (
         <>
           <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Effort rating</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+              Effort rating
+            </p>
             <div className="mt-3 grid grid-cols-10 gap-1.5">
               {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                 <button
@@ -950,7 +999,9 @@ function CompletionScreen({
           </div>
 
           <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Session notes</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+              Session notes
+            </p>
             <Textarea
               rows={4}
               className="mt-3 rounded-2xl"

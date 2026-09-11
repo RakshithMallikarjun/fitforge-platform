@@ -56,7 +56,9 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
     if (weIds.length) {
       const { data: subs } = await supabase
         .from("workout_exercise_substitutions")
-        .select("original_workout_exercise_id, substitute_exercise_id, exercises:substitute_exercise_id(id, name, muscle_groups, video_url, thumbnail_url, description)")
+        .select(
+          "original_workout_exercise_id, substitute_exercise_id, exercises:substitute_exercise_id(id, name, muscle_groups, video_url, thumbnail_url, description)",
+        )
         .eq("member_id", userId)
         .in("original_workout_exercise_id", weIds);
       for (const s of (subs ?? []) as any[]) {
@@ -231,7 +233,12 @@ export type NewPR = { exerciseName: string; weight: number; reps: number };
 export const completeWorkout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (d: { logId: string; notes: string | null; effortRating: number | null; syncedOffline?: boolean }) => d,
+    (d: {
+      logId: string;
+      notes: string | null;
+      effortRating: number | null;
+      syncedOffline?: boolean;
+    }) => d,
   )
   .handler(async ({ data, context }): Promise<{ ok: true; newPRs: NewPR[] }> => {
     const { supabase, userId } = context;
@@ -266,7 +273,8 @@ export const completeWorkout = createServerFn({ method: "POST" })
       const w = Number(s.weight);
       if (!isFinite(w) || w <= 0) continue;
       const cur = todayMax.get(s.exercise_id);
-      if (!cur || w > cur.weight) todayMax.set(s.exercise_id, { weight: w, reps: Number(s.reps ?? 0) });
+      if (!cur || w > cur.weight)
+        todayMax.set(s.exercise_id, { weight: w, reps: Number(s.reps ?? 0) });
     }
 
     const newPRs: NewPR[] = [];
@@ -288,20 +296,18 @@ export const completeWorkout = createServerFn({ method: "POST" })
       for (const [exerciseId, { weight, reps }] of todayMax.entries()) {
         const prev = prMap.get(exerciseId) ?? -Infinity;
         if (weight > prev) {
-          const { error: upErr } = await supabase
-            .from("personal_records")
-            .upsert(
-              {
-                member_id: userId,
-                exercise_id: exerciseId,
-                gym_id: logRow.gym_id,
-                weight,
-                reps: reps || null,
-                achieved_at: logRow.date,
-                log_id: data.logId,
-              },
-              { onConflict: "member_id,exercise_id" },
-            );
+          const { error: upErr } = await supabase.from("personal_records").upsert(
+            {
+              member_id: userId,
+              exercise_id: exerciseId,
+              gym_id: logRow.gym_id,
+              weight,
+              reps: reps || null,
+              achieved_at: logRow.date,
+              log_id: data.logId,
+            },
+            { onConflict: "member_id,exercise_id" },
+          );
           if (!upErr) {
             newPRs.push({
               exerciseName: nameMap.get(exerciseId) ?? "Exercise",

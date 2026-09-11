@@ -71,8 +71,12 @@ function Privacy() {
       </div>
 
       <div className="mt-10 flex gap-4 text-sm">
-        <Link to="/" className="font-medium text-primary underline">Back home</Link>
-        <Link to="/terms" className="font-medium text-primary underline">Terms of Service</Link>
+        <Link to="/" className="font-medium text-primary underline">
+          Back home
+        </Link>
+        <Link to="/terms" className="font-medium text-primary underline">
+          Terms of Service
+        </Link>
       </div>
     </main>
   );

@@ -2,13 +2,25 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { updateMemberMembership } from "@/lib/members.functions";
 
 const TIERS = [
@@ -99,10 +111,14 @@ export function EditMembershipDialog({
           <div className="space-y-1.5">
             <Label>Membership type</Label>
             <Select value={type} onValueChange={setType}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {TIERS.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -114,10 +130,14 @@ export function EditMembershipDialog({
           <div className="space-y-1.5">
             <Label>Billing cycle</Label>
             <Select value={cycle} onValueChange={(v) => setCycle(v as Cycle)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {CYCLES.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -140,7 +160,9 @@ export function EditMembershipDialog({
             </div>
           </div>
           <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
-            <Label htmlFor="pay-confirmed" className="cursor-pointer">Payment confirmed</Label>
+            <Label htmlFor="pay-confirmed" className="cursor-pointer">
+              Payment confirmed
+            </Label>
             <Switch id="pay-confirmed" checked={confirmed} onCheckedChange={setConfirmed} />
           </div>
           <div className="space-y-1.5">
@@ -156,7 +178,9 @@ export function EditMembershipDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
             {mutation.isPending ? "Saving…" : "Save"}
           </Button>

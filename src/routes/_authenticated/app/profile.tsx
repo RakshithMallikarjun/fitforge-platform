@@ -179,8 +179,6 @@ function ProfilePage() {
   );
 }
 
-
-
 /**
  * `navigator.serviceWorker.ready` never settles when no worker is registered,
  * so awaiting it directly leaves the toggle spinning forever. Race a timeout.
@@ -216,9 +214,7 @@ function PushNotificationsSection() {
   const [busy, setBusy] = useState(false);
 
   const supported =
-    typeof window !== "undefined" &&
-    "serviceWorker" in navigator &&
-    "PushManager" in window;
+    typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
 
   const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
   const configured = !!vapidKey;

@@ -31,7 +31,6 @@ export const getAdminStats = createServerFn({ method: "GET" })
     const monthStart = `${todayStr.slice(0, 7)}-01T00:00:00.000Z`;
     const sevenDaysAgo = new Date(now.getTime() - 7 * 86400_000).toISOString();
 
-
     let activeMembers = 0;
     let newThisMonth = 0;
     if (memberIds.length) {
@@ -42,7 +41,10 @@ export const getAdminStats = createServerFn({ method: "GET" })
           .select("id", { count: "exact", head: true })
           .in("id", memberIds)
           .gte("created_at", monthStart),
-        supabase.from("member_profiles").select("user_id, membership_expires_at").in("user_id", memberIds),
+        supabase
+          .from("member_profiles")
+          .select("user_id, membership_expires_at")
+          .in("user_id", memberIds),
       ]);
       // A lapsed membership is not an active member, even if the login is enabled.
       const expired = new Set(
@@ -89,7 +91,11 @@ export const getTrainerStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<TrainerStat[]> => {
     const { supabase, userId } = context;
-    const { data: me } = await supabase.from("users").select("gym_id").eq("id", userId).maybeSingle();
+    const { data: me } = await supabase
+      .from("users")
+      .select("gym_id")
+      .eq("id", userId)
+      .maybeSingle();
     const gymId = (me as any)?.gym_id as string | null;
     if (!gymId) return [];
 
@@ -98,7 +104,9 @@ export const getTrainerStats = createServerFn({ method: "GET" })
       .select("user_id")
       .eq("gym_id", gymId)
       .in("role", ["trainer", "admin"]);
-    const trainerIds = Array.from(new Set((trainerRoles ?? []).map((r: any) => r.user_id as string)));
+    const trainerIds = Array.from(
+      new Set((trainerRoles ?? []).map((r: any) => r.user_id as string)),
+    );
     if (!trainerIds.length) return [];
 
     const { data: trainers } = await supabase
@@ -109,15 +117,33 @@ export const getTrainerStats = createServerFn({ method: "GET" })
     const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 
     const [{ data: assigns }, { data: plans }, { data: assess }] = await Promise.all([
-      supabase.from("trainer_assignments").select("trainer_id").eq("gym_id", gymId).eq("active", true),
-      supabase.from("workout_plans").select("trainer_id").eq("gym_id", gymId).gte("created_at", monthStart).eq("is_template", false),
-      supabase.from("fitness_assessments").select("trainer_id").eq("gym_id", gymId).gte("created_at", monthStart),
+      supabase
+        .from("trainer_assignments")
+        .select("trainer_id")
+        .eq("gym_id", gymId)
+        .eq("active", true),
+      supabase
+        .from("workout_plans")
+        .select("trainer_id")
+        .eq("gym_id", gymId)
+        .gte("created_at", monthStart)
+        .eq("is_template", false),
+      supabase
+        .from("fitness_assessments")
+        .select("trainer_id")
+        .eq("gym_id", gymId)
+        .gte("created_at", monthStart),
     ]);
 
-    const bump = (m: Map<string, number>, k: string | null) => { if (k) m.set(k, (m.get(k) ?? 0) + 1); };
-    const aMap = new Map<string, number>(); (assigns ?? []).forEach((r: any) => bump(aMap, r.trainer_id));
-    const pMap = new Map<string, number>(); (plans ?? []).forEach((r: any) => bump(pMap, r.trainer_id));
-    const asMap = new Map<string, number>(); (assess ?? []).forEach((r: any) => bump(asMap, r.trainer_id));
+    const bump = (m: Map<string, number>, k: string | null) => {
+      if (k) m.set(k, (m.get(k) ?? 0) + 1);
+    };
+    const aMap = new Map<string, number>();
+    (assigns ?? []).forEach((r: any) => bump(aMap, r.trainer_id));
+    const pMap = new Map<string, number>();
+    (plans ?? []).forEach((r: any) => bump(pMap, r.trainer_id));
+    const asMap = new Map<string, number>();
+    (assess ?? []).forEach((r: any) => bump(asMap, r.trainer_id));
 
     return (trainers ?? []).map((t: any) => ({
       trainerId: t.id,
@@ -144,7 +170,13 @@ export const getAttendanceReport = createServerFn({ method: "GET" })
   .handler(async ({ data, context }): Promise<AttendanceReport> => {
     const { supabase, userId } = context;
     const { gymId } = await resolveGymTimezone(supabase, userId);
-    const empty: AttendanceReport = { totalCheckIns: 0, uniqueMembers: 0, avgPerDay: 0, daily: [], peakHours: [] };
+    const empty: AttendanceReport = {
+      totalCheckIns: 0,
+      uniqueMembers: 0,
+      avgPerDay: 0,
+      daily: [],
+      peakHours: [],
+    };
     if (!gymId) return empty;
 
     // Day and hour-of-day buckets are computed in SQL using the gym's timezone,
@@ -190,7 +222,6 @@ export const getAttendanceReport = createServerFn({ method: "GET" })
       daily,
       peakHours,
     };
-
   });
 
 // ---------- Engagement report ----------
@@ -212,18 +243,27 @@ export const getEngagementReport = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<EngagementRow[]> => {
     const { supabase, userId } = context;
     try {
-      const { data: me } = await supabase.from("users").select("gym_id").eq("id", userId).maybeSingle();
+      const { data: me } = await supabase
+        .from("users")
+        .select("gym_id")
+        .eq("id", userId)
+        .maybeSingle();
       const gymId = (me as any)?.gym_id as string | null;
       if (!gymId) return [];
 
       const { data: myRoles } = await supabase
-        .from("user_roles").select("role").eq("user_id", userId);
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId);
       const roles = (myRoles ?? []).map((r: any) => r.role as string);
       const isAdmin = roles.includes("admin");
       const isTrainer = roles.includes("trainer");
 
       const { data: memberRoles } = await supabase
-        .from("user_roles").select("user_id").eq("gym_id", gymId).eq("role", "member");
+        .from("user_roles")
+        .select("user_id")
+        .eq("gym_id", gymId)
+        .eq("role", "member");
       let memberIds = (memberRoles ?? []).map((r: any) => r.user_id as string);
 
       if (!isAdmin && isTrainer) {
@@ -238,90 +278,111 @@ export const getEngagementReport = createServerFn({ method: "GET" })
       }
       if (!memberIds.length) return [];
 
+      const { data: members } = await supabase
+        .from("users")
+        .select("id, display_name, email")
+        .in("id", memberIds);
 
-    const { data: members } = await supabase
-      .from("users").select("id, display_name, email").in("id", memberIds);
+      const since = new Date(Date.now() - 30 * 86400_000).toISOString();
 
-    const since = new Date(Date.now() - 30 * 86400_000).toISOString();
+      const [{ data: workouts }, { data: attend }, { data: msgs }, { data: assigns }] =
+        await Promise.all([
+          supabase
+            .from("workout_logs")
+            .select("member_id, completed_at, date")
+            .eq("gym_id", gymId)
+            .in("member_id", memberIds)
+            .gte("date", since.slice(0, 10)),
+          supabase
+            .from("attendance_logs")
+            .select("member_id, check_in_at")
+            .eq("gym_id", gymId)
+            .in("member_id", memberIds)
+            .gte("check_in_at", since),
+          supabase
+            .from("messages")
+            .select("sender_id, recipient_id, created_at")
+            .eq("gym_id", gymId)
+            .gte("created_at", since),
+          supabase
+            .from("trainer_assignments")
+            .select("member_id, trainer_id")
+            .eq("gym_id", gymId)
+            .eq("active", true)
+            .in("member_id", memberIds),
+        ]);
 
-    const [{ data: workouts }, { data: attend }, { data: msgs }, { data: assigns }] = await Promise.all([
-      supabase.from("workout_logs").select("member_id, completed_at, date")
-        .eq("gym_id", gymId).in("member_id", memberIds).gte("date", since.slice(0, 10)),
-      supabase.from("attendance_logs").select("member_id, check_in_at")
-        .eq("gym_id", gymId).in("member_id", memberIds).gte("check_in_at", since),
-      supabase.from("messages").select("sender_id, recipient_id, created_at")
-        .eq("gym_id", gymId).gte("created_at", since),
-      supabase.from("trainer_assignments").select("member_id, trainer_id")
-        .eq("gym_id", gymId).eq("active", true).in("member_id", memberIds),
-    ]);
+      const trainerIds = Array.from(
+        new Set((assigns ?? []).map((a: any) => a.trainer_id).filter(Boolean)),
+      );
+      const { data: trainers } = trainerIds.length
+        ? await supabase.from("users").select("id, display_name, email").in("id", trainerIds)
+        : { data: [] as any[] };
+      const tMap = new Map((trainers ?? []).map((t: any) => [t.id, t.display_name ?? t.email]));
+      const trainerByMember = new Map<string, string>();
+      (assigns ?? []).forEach((a: any) => {
+        if (!trainerByMember.has(a.member_id))
+          trainerByMember.set(a.member_id, tMap.get(a.trainer_id) ?? "");
+      });
 
-    const trainerIds = Array.from(new Set((assigns ?? []).map((a: any) => a.trainer_id).filter(Boolean)));
-    const { data: trainers } = trainerIds.length
-      ? await supabase.from("users").select("id, display_name, email").in("id", trainerIds)
-      : { data: [] as any[] };
-    const tMap = new Map((trainers ?? []).map((t: any) => [t.id, t.display_name ?? t.email]));
-    const trainerByMember = new Map<string, string>();
-    (assigns ?? []).forEach((a: any) => {
-      if (!trainerByMember.has(a.member_id)) trainerByMember.set(a.member_id, tMap.get(a.trainer_id) ?? "");
-    });
+      const wCount = new Map<string, number>();
+      const wLast = new Map<string, string>();
+      for (const w of workouts ?? []) {
+        wCount.set(w.member_id, (wCount.get(w.member_id) ?? 0) + 1);
+        const cur = wLast.get(w.member_id);
+        const d = w.completed_at ?? w.date;
+        if (d && (!cur || d > cur)) wLast.set(w.member_id, d);
+      }
+      const cCount = new Map<string, number>();
+      const cLast = new Map<string, string>();
+      for (const a of attend ?? []) {
+        cCount.set(a.member_id, (cCount.get(a.member_id) ?? 0) + 1);
+        const cur = cLast.get(a.member_id);
+        if (!cur || a.check_in_at > cur) cLast.set(a.member_id, a.check_in_at);
+      }
+      const mCount = new Map<string, number>();
+      for (const m of msgs ?? []) {
+        if (memberIds.includes(m.sender_id))
+          mCount.set(m.sender_id, (mCount.get(m.sender_id) ?? 0) + 1);
+        if (memberIds.includes(m.recipient_id))
+          mCount.set(m.recipient_id, (mCount.get(m.recipient_id) ?? 0) + 1);
+      }
 
-    const wCount = new Map<string, number>();
-    const wLast = new Map<string, string>();
-    for (const w of workouts ?? []) {
-      wCount.set(w.member_id, (wCount.get(w.member_id) ?? 0) + 1);
-      const cur = wLast.get(w.member_id);
-      const d = w.completed_at ?? w.date;
-      if (d && (!cur || d > cur)) wLast.set(w.member_id, d);
-    }
-    const cCount = new Map<string, number>();
-    const cLast = new Map<string, string>();
-    for (const a of attend ?? []) {
-      cCount.set(a.member_id, (cCount.get(a.member_id) ?? 0) + 1);
-      const cur = cLast.get(a.member_id);
-      if (!cur || a.check_in_at > cur) cLast.set(a.member_id, a.check_in_at);
-    }
-    const mCount = new Map<string, number>();
-    for (const m of msgs ?? []) {
-      if (memberIds.includes(m.sender_id)) mCount.set(m.sender_id, (mCount.get(m.sender_id) ?? 0) + 1);
-      if (memberIds.includes(m.recipient_id)) mCount.set(m.recipient_id, (mCount.get(m.recipient_id) ?? 0) + 1);
-    }
-
-    const raw = (members ?? []).map((u: any) => {
-      const w = wCount.get(u.id) ?? 0;
-      const c = cCount.get(u.id) ?? 0;
-      const m = mCount.get(u.id) ?? 0;
-      return {
-        memberId: u.id,
-        displayName: u.display_name,
-        email: u.email,
-        workouts30d: w,
-        checkIns30d: c,
-        messages30d: m,
-        rawScore: w * 3 + c * 2 + m * 1,
-        lastWorkout: wLast.get(u.id) ?? null,
-        lastCheckIn: cLast.get(u.id) ?? null,
-        trainer: trainerByMember.get(u.id) ?? null,
-      };
-    });
-    const max = Math.max(1, ...raw.map((r) => r.rawScore));
-    return raw.map((r) => ({
-      memberId: r.memberId,
-      displayName: r.displayName,
-      email: r.email,
-      workouts30d: r.workouts30d,
-      checkIns30d: r.checkIns30d,
-      messages30d: r.messages30d,
-      score: Math.round((r.rawScore / max) * 100),
-      lastWorkout: r.lastWorkout,
-      lastCheckIn: r.lastCheckIn,
-      trainer: r.trainer,
-    }));
+      const raw = (members ?? []).map((u: any) => {
+        const w = wCount.get(u.id) ?? 0;
+        const c = cCount.get(u.id) ?? 0;
+        const m = mCount.get(u.id) ?? 0;
+        return {
+          memberId: u.id,
+          displayName: u.display_name,
+          email: u.email,
+          workouts30d: w,
+          checkIns30d: c,
+          messages30d: m,
+          rawScore: w * 3 + c * 2 + m * 1,
+          lastWorkout: wLast.get(u.id) ?? null,
+          lastCheckIn: cLast.get(u.id) ?? null,
+          trainer: trainerByMember.get(u.id) ?? null,
+        };
+      });
+      const max = Math.max(1, ...raw.map((r) => r.rawScore));
+      return raw.map((r) => ({
+        memberId: r.memberId,
+        displayName: r.displayName,
+        email: r.email,
+        workouts30d: r.workouts30d,
+        checkIns30d: r.checkIns30d,
+        messages30d: r.messages30d,
+        score: Math.round((r.rawScore / max) * 100),
+        lastWorkout: r.lastWorkout,
+        lastCheckIn: r.lastCheckIn,
+        trainer: r.trainer,
+      }));
     } catch (err) {
       console.error("getEngagementReport failed:", err);
       throw err;
     }
   });
-
 
 // ---------- Recent payments (admin only) ----------
 export type PaymentRow = {
@@ -341,7 +402,11 @@ export const getRecentPayments = createServerFn({ method: "GET" })
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
     if (!isAdmin) throw new Error("Forbidden");
 
-    const { data: me } = await supabase.from("users").select("gym_id").eq("id", userId).maybeSingle();
+    const { data: me } = await supabase
+      .from("users")
+      .select("gym_id")
+      .eq("id", userId)
+      .maybeSingle();
     const gymId = (me as any)?.gym_id as string | null;
     if (!gymId) return [];
 

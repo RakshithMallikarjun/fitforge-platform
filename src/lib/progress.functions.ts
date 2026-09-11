@@ -63,7 +63,10 @@ export const getProgressData = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<ProgressData> => {
     const { supabase, userId } = context;
 
-    const safe = async <T,>(label: string, q: PromiseLike<{ data: T[] | null; error: any }>): Promise<T[]> => {
+    const safe = async <T>(
+      label: string,
+      q: PromiseLike<{ data: T[] | null; error: any }>,
+    ): Promise<T[]> => {
       try {
         const { data, error } = await q;
         if (error) {
@@ -224,7 +227,6 @@ export const getFitnessScore = createServerFn({ method: "GET" })
       }
     }
 
-
     const rows = assessRes.data ?? [];
     if (rows.length === 0) {
       return { score: null, label: "No assessment", trend: null, hasAssessment: false };
@@ -233,10 +235,15 @@ export const getFitnessScore = createServerFn({ method: "GET" })
     const prev = rows[1] ? computeAssessmentScore(rows[1], streak) : null;
     const trend = score != null && prev != null ? score - prev : null;
     const label =
-      score == null ? "No data" :
-      score < 40 ? "Needs Work" :
-      score < 70 ? "Building" :
-      score < 90 ? "Strong" : "Elite";
+      score == null
+        ? "No data"
+        : score < 40
+          ? "Needs Work"
+          : score < 70
+            ? "Building"
+            : score < 90
+              ? "Strong"
+              : "Elite";
     return { score, label, trend, hasAssessment: true };
   });
 
@@ -372,13 +379,11 @@ export const uploadProgressPhoto = createServerFn({ method: "POST" })
     const key = `${memberRow.gym_id}/${crypto.randomUUID()}.${ext}`;
     const bytes = base64ToBytes(data.file_base64);
 
-    const { error: upErr } = await supabase.storage
-      .from("member-photos")
-      .upload(key, bytes, {
-        cacheControl: "3600",
-        upsert: false,
-        contentType: data.content_type || "image/jpeg",
-      });
+    const { error: upErr } = await supabase.storage.from("member-photos").upload(key, bytes, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: data.content_type || "image/jpeg",
+    });
     if (upErr) throw new Error(upErr.message);
 
     // Store only the storage object path in the database. Consumers mint
@@ -391,8 +396,7 @@ export const uploadProgressPhoto = createServerFn({ method: "POST" })
         assessment_id: data.assessment_id ?? null,
         photo_url: key,
         taken_at:
-          data.taken_at ??
-          dateStringInZone((await resolveGymTimezone(supabase, userId)).timeZone),
+          data.taken_at ?? dateStringInZone((await resolveGymTimezone(supabase, userId)).timeZone),
       })
       .select()
       .single();
@@ -413,5 +417,9 @@ export const getProgressPhotos = createServerFn({ method: "GET" })
       .order("taken_at", { ascending: true });
     if (error) throw new Error(error.message);
     const { signPhotoField } = await import("./photo-signing");
-    return (await signPhotoField(context.supabase, (data ?? []) as any[], "photo_url")) as ProgressPhoto[];
+    return (await signPhotoField(
+      context.supabase,
+      (data ?? []) as any[],
+      "photo_url",
+    )) as ProgressPhoto[];
   });

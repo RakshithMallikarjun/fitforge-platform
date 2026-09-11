@@ -4,7 +4,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2, FileSpreadsheet, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { inviteMembersBulk, type MemberInput } from "@/lib/members.functions";
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void };
@@ -23,8 +30,14 @@ export function BulkImportDialog({ open, onOpenChange }: Props) {
     onSuccess: (res) => {
       const ok = res.results.filter((r) => r.ok).length;
       const fail = res.results.length - ok;
-      toast.success(`Imported ${ok} members`, { description: fail ? `${fail} failed — check console for details` : undefined });
-      if (fail) console.warn("Bulk import failures", res.results.filter((r) => !r.ok));
+      toast.success(`Imported ${ok} members`, {
+        description: fail ? `${fail} failed — check console for details` : undefined,
+      });
+      if (fail)
+        console.warn(
+          "Bulk import failures",
+          res.results.filter((r) => !r.ok),
+        );
       qc.invalidateQueries({ queryKey: ["members"] });
       setRows([]);
       setFilename("");
@@ -48,9 +61,11 @@ export function BulkImportDialog({ open, onOpenChange }: Props) {
             email: r.email?.trim(),
             phone: r.phone?.trim() || null,
             goals: r.goals?.trim() || null,
-            experience_level: (["beginner", "intermediate", "advanced"].includes((r.experience_level ?? "").toLowerCase())
+            experience_level: ["beginner", "intermediate", "advanced"].includes(
+              (r.experience_level ?? "").toLowerCase(),
+            )
               ? (r.experience_level!.toLowerCase() as any)
-              : null),
+              : null,
             medical_history: r.medical_history?.trim() || null,
             membership_type: r.membership_type?.trim() || null,
             membership_expires_at: r.membership_expires_at?.trim() || null,
@@ -64,7 +79,9 @@ export function BulkImportDialog({ open, onOpenChange }: Props) {
     const blob = new Blob([TEMPLATE], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = "members-template.csv"; a.click();
+    a.href = url;
+    a.download = "members-template.csv";
+    a.click();
     URL.revokeObjectURL(url);
   }
 
@@ -73,7 +90,9 @@ export function BulkImportDialog({ open, onOpenChange }: Props) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Bulk import members</DialogTitle>
-          <DialogDescription>Upload a CSV. Each row creates an account and sends an email invite.</DialogDescription>
+          <DialogDescription>
+            Upload a CSV. Each row creates an account and sends an email invite.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
@@ -83,14 +102,20 @@ export function BulkImportDialog({ open, onOpenChange }: Props) {
 
           <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-input bg-background px-6 py-10 text-sm text-muted-foreground hover:bg-muted">
             <FileSpreadsheet className="h-6 w-6 text-primary" />
-            <span className="font-medium text-foreground">{filename || "Drop CSV here or click to browse"}</span>
-            <span className="text-xs">{rows.length ? `${rows.length} valid rows ready` : "Required columns: name, email"}</span>
+            <span className="font-medium text-foreground">
+              {filename || "Drop CSV here or click to browse"}
+            </span>
+            <span className="text-xs">
+              {rows.length ? `${rows.length} valid rows ready` : "Required columns: name, email"}
+            </span>
             <input type="file" accept=".csv" className="hidden" onChange={onFile} />
           </label>
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button onClick={() => mut.mutate()} disabled={!rows.length || mut.isPending}>
             {mut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Invite {rows.length || ""} members

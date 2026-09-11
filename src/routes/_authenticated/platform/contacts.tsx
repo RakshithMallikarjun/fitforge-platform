@@ -12,7 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { CopyButton, EmptyState, ErrorState, relTime } from "@/components/platform/platform-ui";
 import { listPlatformGymAdmins } from "@/lib/platform.functions";
 
@@ -62,7 +69,9 @@ function PlatformContactsPage() {
           className="w-72"
         />
         <Select value={role} onValueChange={setRole}>
-          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All roles</SelectItem>
             <SelectItem value="admin">Admins</SelectItem>
@@ -70,7 +79,9 @@ function PlatformContactsPage() {
           </SelectContent>
         </Select>
         <Select value={state} onValueChange={setState}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All gyms</SelectItem>
             <SelectItem value="enabled">Enabled gyms</SelectItem>
@@ -114,31 +125,43 @@ function PlatformContactsPage() {
                       {r.gym_name}
                     </Link>
                     {!r.is_enabled && (
-                      <Badge variant="destructive" className="ml-2">Disabled</Badge>
+                      <Badge variant="destructive" className="ml-2">
+                        Disabled
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-sm">
                     {r.display_name ?? "—"}
-                    {!r.active && <Badge variant="secondary" className="ml-2">Inactive</Badge>}
+                    {!r.active && (
+                      <Badge variant="secondary" className="ml-2">
+                        Inactive
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell className="capitalize text-sm">{r.role}</TableCell>
                   <TableCell className="text-sm">
                     <span className="inline-flex items-center gap-1">
-                      <a href={`mailto:${r.email}`} className="hover:underline">{r.email}</a>
+                      <a href={`mailto:${r.email}`} className="hover:underline">
+                        {r.email}
+                      </a>
                       <CopyButton value={r.email} />
                     </span>
                   </TableCell>
                   <TableCell className="text-sm">
                     {r.phone ? (
                       <span className="inline-flex items-center gap-1">
-                        <a href={`tel:${r.phone}`} className="hover:underline">{r.phone}</a>
+                        <a href={`tel:${r.phone}`} className="hover:underline">
+                          {r.phone}
+                        </a>
                         <CopyButton value={r.phone} />
                       </span>
                     ) : (
                       "—"
                     )}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{relTime(r.last_sign_in_at)}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {relTime(r.last_sign_in_at)}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -7,7 +7,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -152,7 +159,9 @@ export function NewAssessmentSheet({
           });
           qc.invalidateQueries({ queryKey: ["progress-photos"] });
         } catch (err: any) {
-          toast.error(`Assessment saved, but photo upload failed: ${err?.message ?? "unknown error"}`);
+          toast.error(
+            `Assessment saved, but photo upload failed: ${err?.message ?? "unknown error"}`,
+          );
         }
       }
       toast.success("Assessment recorded");
@@ -226,8 +235,12 @@ export function NewAssessmentSheet({
               <Field label="Units">
                 <Tabs value={unit} onValueChange={(v) => form.setValue("unit_system", v as any)}>
                   <TabsList className="w-full">
-                    <TabsTrigger value="metric" className="flex-1">Metric</TabsTrigger>
-                    <TabsTrigger value="imperial" className="flex-1">Imperial</TabsTrigger>
+                    <TabsTrigger value="metric" className="flex-1">
+                      Metric
+                    </TabsTrigger>
+                    <TabsTrigger value="imperial" className="flex-1">
+                      Imperial
+                    </TabsTrigger>
                   </TabsList>
                 </Tabs>
               </Field>
@@ -258,30 +271,54 @@ export function NewAssessmentSheet({
           {/* Measurements */}
           <Section title={`Measurements (${lU})`}>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Chest"><Input type="number" step="0.1" {...form.register("chest")} /></Field>
-              <Field label="Waist"><Input type="number" step="0.1" {...form.register("waist")} /></Field>
-              <Field label="Hips"><Input type="number" step="0.1" {...form.register("hips")} /></Field>
-              <Field label="Arms"><Input type="number" step="0.1" {...form.register("arms")} /></Field>
-              <Field label="Thighs"><Input type="number" step="0.1" {...form.register("thighs")} /></Field>
+              <Field label="Chest">
+                <Input type="number" step="0.1" {...form.register("chest")} />
+              </Field>
+              <Field label="Waist">
+                <Input type="number" step="0.1" {...form.register("waist")} />
+              </Field>
+              <Field label="Hips">
+                <Input type="number" step="0.1" {...form.register("hips")} />
+              </Field>
+              <Field label="Arms">
+                <Input type="number" step="0.1" {...form.register("arms")} />
+              </Field>
+              <Field label="Thighs">
+                <Input type="number" step="0.1" {...form.register("thighs")} />
+              </Field>
             </div>
           </Section>
 
           {/* Benchmarks */}
           <Section title="Fitness benchmarks">
             <div className="grid grid-cols-2 gap-3">
-              <Field label="VO2 max"><Input type="number" step="0.1" {...form.register("vo2_max")} /></Field>
-              <Field label="Resting HR (bpm)"><Input type="number" {...form.register("resting_hr")} /></Field>
-              <Field label="Blood pressure"><Input placeholder="120/80" {...form.register("blood_pressure")} /></Field>
-              <Field label="Flexibility (cm)"><Input type="number" step="0.1" {...form.register("flexibility")} /></Field>
+              <Field label="VO2 max">
+                <Input type="number" step="0.1" {...form.register("vo2_max")} />
+              </Field>
+              <Field label="Resting HR (bpm)">
+                <Input type="number" {...form.register("resting_hr")} />
+              </Field>
+              <Field label="Blood pressure">
+                <Input placeholder="120/80" {...form.register("blood_pressure")} />
+              </Field>
+              <Field label="Flexibility (cm)">
+                <Input type="number" step="0.1" {...form.register("flexibility")} />
+              </Field>
             </div>
           </Section>
 
           {/* 1RM */}
           <Section title={`Strength 1RM (${wU})`}>
             <div className="grid grid-cols-3 gap-3">
-              <Field label="Bench"><Input type="number" step="0.5" {...form.register("bench_1rm")} /></Field>
-              <Field label="Squat"><Input type="number" step="0.5" {...form.register("squat_1rm")} /></Field>
-              <Field label="Deadlift"><Input type="number" step="0.5" {...form.register("deadlift_1rm")} /></Field>
+              <Field label="Bench">
+                <Input type="number" step="0.5" {...form.register("bench_1rm")} />
+              </Field>
+              <Field label="Squat">
+                <Input type="number" step="0.5" {...form.register("squat_1rm")} />
+              </Field>
+              <Field label="Deadlift">
+                <Input type="number" step="0.5" {...form.register("deadlift_1rm")} />
+              </Field>
             </div>
           </Section>
 
@@ -319,7 +356,10 @@ export function NewAssessmentSheet({
                     size="sm"
                     variant="secondary"
                     className="absolute right-1 top-1 h-7"
-                    onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
+                    onClick={() => {
+                      setPhotoFile(null);
+                      setPhotoPreview(null);
+                    }}
                   >
                     Remove
                   </Button>
@@ -329,7 +369,9 @@ export function NewAssessmentSheet({
           </Section>
 
           <SheetFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={mutation.isPending}>
               {mutation.isPending ? "Saving…" : "Save assessment"}
             </Button>
@@ -353,12 +395,12 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-
-
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h4>
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </h4>
       {children}
     </div>
   );

@@ -6,8 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { inviteMember, type MemberInput } from "@/lib/members.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { uploadMemberPhoto, signMemberPhotoForDisplay } from "@/lib/photo-upload";
@@ -36,12 +49,15 @@ export function AddMemberDialog({ open, onOpenChange }: Props) {
   const mut = useMutation({
     mutationFn: (data: MemberInput) => inviteMember({ data }),
     onSuccess: () => {
-      toast.success("Member invited", { description: `${form.name} will receive an email invitation.` });
+      toast.success("Member invited", {
+        description: `${form.name} will receive an email invitation.`,
+      });
       qc.invalidateQueries({ queryKey: ["members"] });
       setForm(empty);
       onOpenChange(false);
     },
-    onError: (e: any) => toast.error("Could not invite member", { description: e?.message ?? "Unknown error" }),
+    onError: (e: any) =>
+      toast.error("Could not invite member", { description: e?.message ?? "Unknown error" }),
   });
 
   function update<K extends keyof MemberInput>(k: K, v: MemberInput[K]) {
@@ -68,7 +84,9 @@ export function AddMemberDialog({ open, onOpenChange }: Props) {
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Add member</DialogTitle>
-          <DialogDescription>Invite a new member. They'll receive an email to set up their account.</DialogDescription>
+          <DialogDescription>
+            Invite a new member. They'll receive an email to set up their account.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-2 md:grid-cols-2">
@@ -76,34 +94,65 @@ export function AddMemberDialog({ open, onOpenChange }: Props) {
             <div className="grid h-16 w-16 place-items-center overflow-hidden rounded-full bg-accent text-primary">
               {previewUrl ? (
                 <img src={previewUrl} alt="" className="h-full w-full object-cover" />
-
               ) : (
-                <span className="text-lg font-semibold">{(form.name || "??").slice(0, 2).toUpperCase()}</span>
+                <span className="text-lg font-semibold">
+                  {(form.name || "??").slice(0, 2).toUpperCase()}
+                </span>
               )}
             </div>
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-input bg-background px-3 py-2 text-sm hover:bg-muted">
-              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              {uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="h-4 w-4" />
+              )}
               <span>Upload photo</span>
-              <input type="file" accept="image/*" className="hidden" onChange={onPhoto} disabled={uploading} />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={onPhoto}
+                disabled={uploading}
+              />
             </label>
           </div>
 
           <div>
             <Label htmlFor="name">Full name *</Label>
-            <Input id="name" value={form.name} onChange={(e) => update("name", e.target.value)} required />
+            <Input
+              id="name"
+              value={form.name}
+              onChange={(e) => update("name", e.target.value)}
+              required
+            />
           </div>
           <div>
             <Label htmlFor="email">Email *</Label>
-            <Input id="email" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} required />
+            <Input
+              id="email"
+              type="email"
+              value={form.email}
+              onChange={(e) => update("email", e.target.value)}
+              required
+            />
           </div>
           <div>
             <Label htmlFor="phone">Phone</Label>
-            <Input id="phone" value={form.phone ?? ""} onChange={(e) => update("phone", e.target.value)} />
+            <Input
+              id="phone"
+              value={form.phone ?? ""}
+              onChange={(e) => update("phone", e.target.value)}
+            />
           </div>
           <div>
             <Label htmlFor="exp">Experience level</Label>
-            <Select value={form.experience_level ?? "beginner"} onValueChange={(v) => update("experience_level", v as any)}>
-              <SelectTrigger id="exp"><SelectValue /></SelectTrigger>
+            <Select
+              value={form.experience_level ?? "beginner"}
+              onValueChange={(v) => update("experience_level", v as any)}
+            >
+              <SelectTrigger id="exp">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="beginner">Beginner</SelectItem>
                 <SelectItem value="intermediate">Intermediate</SelectItem>
@@ -113,25 +162,49 @@ export function AddMemberDialog({ open, onOpenChange }: Props) {
           </div>
           <div>
             <Label htmlFor="mtype">Membership type</Label>
-            <Input id="mtype" value={form.membership_type ?? ""} onChange={(e) => update("membership_type", e.target.value)} placeholder="Monthly, Annual…" />
+            <Input
+              id="mtype"
+              value={form.membership_type ?? ""}
+              onChange={(e) => update("membership_type", e.target.value)}
+              placeholder="Monthly, Annual…"
+            />
           </div>
           <div>
             <Label htmlFor="exp-date">Membership expires</Label>
-            <Input id="exp-date" type="date" value={form.membership_expires_at ?? ""} onChange={(e) => update("membership_expires_at", e.target.value)} />
+            <Input
+              id="exp-date"
+              type="date"
+              value={form.membership_expires_at ?? ""}
+              onChange={(e) => update("membership_expires_at", e.target.value)}
+            />
           </div>
 
           <div className="md:col-span-2">
             <Label htmlFor="goals">Goals</Label>
-            <Textarea id="goals" rows={2} value={form.goals ?? ""} onChange={(e) => update("goals", e.target.value)} placeholder="Lose 5kg, run a 10K…" />
+            <Textarea
+              id="goals"
+              rows={2}
+              value={form.goals ?? ""}
+              onChange={(e) => update("goals", e.target.value)}
+              placeholder="Lose 5kg, run a 10K…"
+            />
           </div>
           <div className="md:col-span-2">
             <Label htmlFor="med">Medical history</Label>
-            <Textarea id="med" rows={3} value={form.medical_history ?? ""} onChange={(e) => update("medical_history", e.target.value)} placeholder="Injuries, conditions, allergies…" />
+            <Textarea
+              id="med"
+              rows={3}
+              value={form.medical_history ?? ""}
+              onChange={(e) => update("medical_history", e.target.value)}
+              placeholder="Injuries, conditions, allergies…"
+            />
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button
             onClick={() => mut.mutate(form)}
             disabled={!form.name || !form.email || mut.isPending}

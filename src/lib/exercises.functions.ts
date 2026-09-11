@@ -70,10 +70,7 @@ export const listExercises = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => listSchema.parse(data) ?? {})
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    let q = supabase
-      .from("exercises")
-      .select("*")
-      .order("name", { ascending: true });
+    let q = supabase.from("exercises").select("*").order("name", { ascending: true });
     if (data?.search) q = q.ilike("name", `%${data.search}%`);
     if (data?.muscleGroups?.length) q = q.overlaps("muscle_groups", data.muscleGroups);
     if (data?.equipment?.length) q = q.overlaps("equipment", data.equipment);

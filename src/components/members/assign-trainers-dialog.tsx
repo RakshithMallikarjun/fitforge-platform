@@ -3,7 +3,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { assignTrainers, listTrainers } from "@/lib/members.functions";
 
 type Props = {
@@ -14,7 +21,13 @@ type Props = {
   initialTrainerIds: string[];
 };
 
-export function AssignTrainersDialog({ open, onOpenChange, memberId, memberName, initialTrainerIds }: Props) {
+export function AssignTrainersDialog({
+  open,
+  onOpenChange,
+  memberId,
+  memberName,
+  initialTrainerIds,
+}: Props) {
   const qc = useQueryClient();
   const [selected, setSelected] = useState<Set<string>>(new Set(initialTrainerIds));
 
@@ -61,7 +74,9 @@ export function AssignTrainersDialog({ open, onOpenChange, memberId, memberName,
               <Loader2 className="h-4 w-4 animate-spin" />
             </div>
           ) : trainers.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">No trainers in this gym yet.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              No trainers in this gym yet.
+            </p>
           ) : (
             trainers.map((t: any) => {
               const on = selected.has(t.id);
@@ -76,7 +91,11 @@ export function AssignTrainersDialog({ open, onOpenChange, memberId, memberName,
                   ].join(" ")}
                 >
                   <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-accent text-xs font-semibold text-primary">
-                    {t.photo_url ? <img src={t.photo_url} alt="" className="h-full w-full object-cover" /> : (t.display_name ?? t.email).slice(0, 2).toUpperCase()}
+                    {t.photo_url ? (
+                      <img src={t.photo_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      (t.display_name ?? t.email).slice(0, 2).toUpperCase()
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{t.display_name ?? t.email}</p>
@@ -90,7 +109,9 @@ export function AssignTrainersDialog({ open, onOpenChange, memberId, memberName,
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button onClick={() => mut.mutate()} disabled={mut.isPending}>
             {mut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save assignments

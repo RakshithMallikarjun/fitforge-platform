@@ -66,14 +66,14 @@ async function notifyPlanAssigned(memberId: string, planId: string, name: string
   }
 }
 
-
 export const listPlans = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
-    z
-      .object({ memberId: z.string().uuid().optional(), templatesOnly: z.boolean().optional() })
-      .optional()
-      .parse(data) ?? {},
+  .inputValidator(
+    (data: unknown) =>
+      z
+        .object({ memberId: z.string().uuid().optional(), templatesOnly: z.boolean().optional() })
+        .optional()
+        .parse(data) ?? {},
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
@@ -125,7 +125,9 @@ export const getPlan = createServerFn({ method: "GET" })
       .sort((a: any, b: any) => a.order - b.order)
       .map((d: any) => ({
         ...d,
-        workout_exercises: (d.workout_exercises ?? []).slice().sort((a: any, b: any) => a.order - b.order),
+        workout_exercises: (d.workout_exercises ?? [])
+          .slice()
+          .sort((a: any, b: any) => a.order - b.order),
       }));
     return { ...plan, workout_days: days } as any;
   });
@@ -174,7 +176,8 @@ export const createPlan = createServerFn({ method: "POST" })
         .select("gym_id")
         .eq("id", memberId)
         .maybeSingle();
-      if (!target || (target as any).gym_id !== gymId) throw new Error("Member not found in your gym");
+      if (!target || (target as any).gym_id !== gymId)
+        throw new Error("Member not found in your gym");
     }
 
     const { data: plan, error: planErr } = await supabase
@@ -226,7 +229,12 @@ async function copyPlanContents(supabase: any, planId: string, sortedDays: any[]
     const d = sortedDays[i] as any;
     const { data: newDay, error: dErr } = await supabase
       .from("workout_days")
-      .insert({ plan_id: planId, day_label: d.day_label, block_type: d.block_type ?? "main", order: i })
+      .insert({
+        plan_id: planId,
+        day_label: d.day_label,
+        block_type: d.block_type ?? "main",
+        order: i,
+      })
       .select("id")
       .single();
     if (dErr) throw new Error(dErr.message);
@@ -416,5 +424,3 @@ export const bulkAssignPlan = createServerFn({ method: "POST" })
 
     return { assigned, errors };
   });
-
-

@@ -3,7 +3,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type ThreadSummary = {
   otherUserId: string;
-  otherUser: { id: string; display_name: string | null; email: string; photo_url: string | null } | null;
+  otherUser: {
+    id: string;
+    display_name: string | null;
+    email: string;
+    photo_url: string | null;
+  } | null;
   lastMessage: { body: string; created_at: string; sender_id: string } | null;
   unreadCount: number;
 };
@@ -42,7 +47,11 @@ export const listThreads = createServerFn({ method: "GET" })
         otherUserId: id,
         otherUser: uMap.get(id) ?? null,
         lastMessage: entry.last
-          ? { body: entry.last.body, created_at: entry.last.created_at, sender_id: entry.last.sender_id }
+          ? {
+              body: entry.last.body,
+              created_at: entry.last.created_at,
+              sender_id: entry.last.sender_id,
+            }
           : null,
         unreadCount: entry.unread,
       };
@@ -70,7 +79,9 @@ export const getThread = createServerFn({ method: "GET" })
       .eq("id", data.otherUserId)
       .maybeSingle();
     const { signPhotoValue } = await import("./photo-signing");
-    const signedOther = other ? { ...other, photo_url: await signPhotoValue(supabase, (other as any).photo_url) } : other;
+    const signedOther = other
+      ? { ...other, photo_url: await signPhotoValue(supabase, (other as any).photo_url) }
+      : other;
 
     return { messages: msgs ?? [], other: signedOther };
   });
@@ -82,7 +93,11 @@ export const sendMessage = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const body = data.body.trim();
     if (!body) throw new Error("Empty message");
-    const { data: u } = await supabase.from("users").select("gym_id").eq("id", userId).maybeSingle();
+    const { data: u } = await supabase
+      .from("users")
+      .select("gym_id")
+      .eq("id", userId)
+      .maybeSingle();
     if (!u?.gym_id) throw new Error("No gym");
     // Enforce that recipient belongs to the sender's gym.
     const { data: recip } = await supabase
@@ -129,7 +144,12 @@ export const unreadCount = createServerFn({ method: "GET" })
     return { count: count ?? 0 };
   });
 
-export type Contact = { id: string; display_name: string | null; email: string; photo_url: string | null };
+export type Contact = {
+  id: string;
+  display_name: string | null;
+  email: string;
+  photo_url: string | null;
+};
 
 /** Staff the current member can start a conversation with (their active assigned trainers). */
 export const listMyTrainers = createServerFn({ method: "GET" })

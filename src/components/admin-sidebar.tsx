@@ -1,8 +1,17 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Users, Dumbbell, ClipboardList,
-  Settings, LogOut, ShieldCheck, UserCog, ScanLine,
-  CalendarClock, Activity, Globe2,
+  LayoutDashboard,
+  Users,
+  Dumbbell,
+  ClipboardList,
+  Settings,
+  LogOut,
+  ShieldCheck,
+  UserCog,
+  ScanLine,
+  CalendarClock,
+  Activity,
+  Globe2,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,8 +19,14 @@ import { useTheme } from "@/lib/theme-provider";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { isPlatformAdmin } from "@/lib/platform.functions";
 
-
-type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; adminOnly?: boolean; group?: string };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact?: boolean;
+  adminOnly?: boolean;
+  group?: string;
+};
 const NAV: NavItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/members", label: "Members", icon: Users },
@@ -24,7 +39,6 @@ const NAV: NavItem[] = [
   { to: "/admin/reports/engagement", label: "Engagement", icon: Activity, group: "Reports" },
   { to: "/admin/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];
-
 
 export function AdminSidebar() {
   return (
@@ -48,8 +62,6 @@ export function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
     enabled: !!me,
     staleTime: 5 * 60_000,
   });
-
-
 
   async function signOut() {
     await qc.cancelQueries();
@@ -86,7 +98,10 @@ export function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
           items.forEach((item) => {
             if (item.group && item.group !== lastGroup) {
               out.push(
-                <div key={`grp-${item.group}`} className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <div
+                  key={`grp-${item.group}`}
+                  className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                >
                   {item.group}
                 </div>,
               );

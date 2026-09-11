@@ -2,7 +2,20 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Calendar, ClipboardList, FileText, Mail, MessageSquare, Phone, StickyNote, User, UserCog, UserCheck, CreditCard } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  ClipboardList,
+  FileText,
+  Mail,
+  MessageSquare,
+  Phone,
+  StickyNote,
+  User,
+  UserCog,
+  UserCheck,
+  CreditCard,
+} from "lucide-react";
 import { toast } from "sonner";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
@@ -47,13 +60,19 @@ function MemberProfile() {
   });
 
   if (isLoading) {
-    return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Loading…</div>;
+    return (
+      <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">
+        Loading…
+      </div>
+    );
   }
   if (error || !data?.user) {
     return (
       <div className="grid min-h-[60vh] place-items-center gap-3 text-sm text-muted-foreground">
         <p>Couldn't load this member.</p>
-        <Link to="/admin/members" className="text-primary hover:underline">← Back to members</Link>
+        <Link to="/admin/members" className="text-primary hover:underline">
+          ← Back to members
+        </Link>
       </div>
     );
   }
@@ -71,14 +90,21 @@ function MemberProfile() {
       />
 
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
-        <Link to="/admin/members" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          to="/admin/members"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-4 w-4" /> All members
         </Link>
 
         {/* Header card */}
         <div className="flex flex-wrap items-start gap-6 rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)]">
           <div className="grid h-20 w-20 place-items-center overflow-hidden rounded-2xl bg-accent text-xl font-bold text-primary">
-            {user.photo_url ? <img src={user.photo_url} alt="" className="h-full w-full object-cover" /> : initials}
+            {user.photo_url ? (
+              <img src={user.photo_url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              initials
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-3">
@@ -86,17 +112,36 @@ function MemberProfile() {
               <StatusBadge status={status} />
             </div>
             <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {user.email}</span>
-              {user.phone && <span className="inline-flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> {user.phone}</span>}
-              <span className="inline-flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> Joined {new Date(user.created_at).toLocaleDateString()}</span>
+              <span className="inline-flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5" /> {user.email}
+              </span>
+              {user.phone && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5" /> {user.phone}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5" /> Joined{" "}
+                {new Date(user.created_at).toLocaleDateString()}
+              </span>
             </div>
           </div>
           {isAdmin && (
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setMembershipOpen(true)}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-lg"
+                onClick={() => setMembershipOpen(true)}
+              >
                 <CreditCard className="mr-1.5 h-4 w-4" /> Edit membership
               </Button>
-              <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setAssignOpen(true)}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-lg"
+                onClick={() => setAssignOpen(true)}
+              >
                 <UserCog className="mr-1.5 h-4 w-4" /> Assign trainers
               </Button>
             </div>
@@ -106,31 +151,60 @@ function MemberProfile() {
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList className="rounded-xl">
-            <TabsTrigger value="overview"><User className="mr-1.5 h-4 w-4" /> Overview</TabsTrigger>
-            <TabsTrigger value="assessments"><FileText className="mr-1.5 h-4 w-4" /> Assessments</TabsTrigger>
-            <TabsTrigger value="plans"><ClipboardList className="mr-1.5 h-4 w-4" /> Workout plans</TabsTrigger>
-            <TabsTrigger value="attendance"><Calendar className="mr-1.5 h-4 w-4" /> Attendance</TabsTrigger>
-            <TabsTrigger value="messages"><MessageSquare className="mr-1.5 h-4 w-4" /> Messages</TabsTrigger>
-            <TabsTrigger value="notes"><StickyNote className="mr-1.5 h-4 w-4" /> Notes</TabsTrigger>
+            <TabsTrigger value="overview">
+              <User className="mr-1.5 h-4 w-4" /> Overview
+            </TabsTrigger>
+            <TabsTrigger value="assessments">
+              <FileText className="mr-1.5 h-4 w-4" /> Assessments
+            </TabsTrigger>
+            <TabsTrigger value="plans">
+              <ClipboardList className="mr-1.5 h-4 w-4" /> Workout plans
+            </TabsTrigger>
+            <TabsTrigger value="attendance">
+              <Calendar className="mr-1.5 h-4 w-4" /> Attendance
+            </TabsTrigger>
+            <TabsTrigger value="messages">
+              <MessageSquare className="mr-1.5 h-4 w-4" /> Messages
+            </TabsTrigger>
+            <TabsTrigger value="notes">
+              <StickyNote className="mr-1.5 h-4 w-4" /> Notes
+            </TabsTrigger>
           </TabsList>
 
           {/* OVERVIEW */}
           <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <InfoCard title="Demographics" rows={[
-                ["Date of birth", profile?.dob ? new Date(profile.dob).toLocaleDateString() : "—"],
-                ["Gender", profile?.gender ?? "—"],
-                ["Experience", profile?.experience_level ?? "—"],
-              ]} />
-              <InfoCard title="Membership" rows={[
-                ["Plan", profile?.membership_type ?? "—"],
-                ["Expires", profile?.membership_expires_at ? new Date(profile.membership_expires_at).toLocaleDateString() : "—"],
-                ["Status", <StatusBadge key="s" status={status} />],
-              ]} />
-              <InfoCard title="Contact" rows={[
-                ["Email", user.email],
-                ["Phone", user.phone ?? "—"],
-              ]} />
+              <InfoCard
+                title="Demographics"
+                rows={[
+                  [
+                    "Date of birth",
+                    profile?.dob ? new Date(profile.dob).toLocaleDateString() : "—",
+                  ],
+                  ["Gender", profile?.gender ?? "—"],
+                  ["Experience", profile?.experience_level ?? "—"],
+                ]}
+              />
+              <InfoCard
+                title="Membership"
+                rows={[
+                  ["Plan", profile?.membership_type ?? "—"],
+                  [
+                    "Expires",
+                    profile?.membership_expires_at
+                      ? new Date(profile.membership_expires_at).toLocaleDateString()
+                      : "—",
+                  ],
+                  ["Status", <StatusBadge key="s" status={status} />],
+                ]}
+              />
+              <InfoCard
+                title="Contact"
+                rows={[
+                  ["Email", user.email],
+                  ["Phone", user.phone ?? "—"],
+                ]}
+              />
               <div className="rounded-2xl border border-border bg-card p-5">
                 <h3 className="text-sm font-semibold tracking-tight">Assigned trainers</h3>
                 {trainers.length === 0 ? (
@@ -140,10 +214,16 @@ function MemberProfile() {
                     {trainers.map((t: any) => (
                       <li key={t.id} className="flex items-center gap-3">
                         <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-accent text-xs font-semibold text-primary">
-                          {t.photo_url ? <img src={t.photo_url} alt="" className="h-full w-full object-cover" /> : (t.display_name ?? t.email).slice(0,2).toUpperCase()}
+                          {t.photo_url ? (
+                            <img src={t.photo_url} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            (t.display_name ?? t.email).slice(0, 2).toUpperCase()
+                          )}
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold">{t.display_name ?? t.email}</p>
+                          <p className="truncate text-sm font-semibold">
+                            {t.display_name ?? t.email}
+                          </p>
                           <p className="truncate text-xs text-muted-foreground">{t.email}</p>
                         </div>
                       </li>
@@ -153,49 +233,74 @@ function MemberProfile() {
               </div>
             </div>
 
-            {isAdmin && (() => {
-              const p: any = profile ?? {};
-              const cycleLabel = ({ monthly: "Monthly", quarterly: "Quarterly", half_year: "Half-year", annual: "Annual" } as any)[p.billing_cycle] ?? "—";
-              const confirmed = !!p.payment_confirmed;
-              return (
-                <div className="rounded-2xl border border-border bg-card p-5">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold tracking-tight">Payment</h3>
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${confirmed ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-red-500/15 text-red-600 dark:text-red-400"}`}>
-                      {confirmed ? "✓ Confirmed" : "✗ Unconfirmed"}
-                    </span>
+            {isAdmin &&
+              (() => {
+                const p: any = profile ?? {};
+                const cycleLabel =
+                  (
+                    {
+                      monthly: "Monthly",
+                      quarterly: "Quarterly",
+                      half_year: "Half-year",
+                      annual: "Annual",
+                    } as any
+                  )[p.billing_cycle] ?? "—";
+                const confirmed = !!p.payment_confirmed;
+                return (
+                  <div className="rounded-2xl border border-border bg-card p-5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold tracking-tight">Payment</h3>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${confirmed ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-red-500/15 text-red-600 dark:text-red-400"}`}
+                      >
+                        {confirmed ? "✓ Confirmed" : "✗ Unconfirmed"}
+                      </span>
+                    </div>
+                    <dl className="mt-3 grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <dt className="text-muted-foreground text-xs">Billing cycle</dt>
+                        <dd className="mt-0.5 font-medium">{cycleLabel}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground text-xs">Last payment</dt>
+                        <dd className="mt-0.5 font-medium">
+                          {p.last_payment_date
+                            ? new Date(p.last_payment_date).toLocaleDateString()
+                            : "—"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground text-xs">Amount</dt>
+                        <dd className="mt-0.5 font-medium">
+                          {p.last_payment_amount != null
+                            ? `₹${Number(p.last_payment_amount).toLocaleString()}`
+                            : "—"}
+                        </dd>
+                      </div>
+                    </dl>
+                    {p.payment_notes && (
+                      <p className="mt-3 whitespace-pre-wrap text-xs text-muted-foreground">
+                        {p.payment_notes}
+                      </p>
+                    )}
                   </div>
-                  <dl className="mt-3 grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <dt className="text-muted-foreground text-xs">Billing cycle</dt>
-                      <dd className="mt-0.5 font-medium">{cycleLabel}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-muted-foreground text-xs">Last payment</dt>
-                      <dd className="mt-0.5 font-medium">{p.last_payment_date ? new Date(p.last_payment_date).toLocaleDateString() : "—"}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-muted-foreground text-xs">Amount</dt>
-                      <dd className="mt-0.5 font-medium">{p.last_payment_amount != null ? `₹${Number(p.last_payment_amount).toLocaleString()}` : "—"}</dd>
-                    </div>
-                  </dl>
-                  {p.payment_notes && (
-                    <p className="mt-3 whitespace-pre-wrap text-xs text-muted-foreground">{p.payment_notes}</p>
-                  )}
-                </div>
-              );
-            })()}
+                );
+              })()}
 
             {profile?.goals && (
               <div className="rounded-2xl border border-border bg-card p-5">
                 <h3 className="text-sm font-semibold tracking-tight">Goals</h3>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{profile.goals}</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                  {profile.goals}
+                </p>
               </div>
             )}
             {profile?.health_notes && (
               <div className="rounded-2xl border border-border bg-card p-5">
                 <h3 className="text-sm font-semibold tracking-tight">Medical history</h3>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{profile.health_notes}</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                  {profile.health_notes}
+                </p>
               </div>
             )}
           </TabsContent>
@@ -204,7 +309,6 @@ function MemberProfile() {
           <TabsContent value="assessments">
             <AssessmentsTab memberId={memberId} />
           </TabsContent>
-
 
           {/* PLANS */}
           <TabsContent value="plans" className="space-y-4">
@@ -242,26 +346,42 @@ function MemberProfile() {
                     const total = p.total_sessions ?? 0;
                     return (
                       <li key={p.id} className="relative">
-                        <span className={`absolute -left-[29px] top-4 grid h-4 w-4 place-items-center rounded-full border-2 border-background ${isActive ? "bg-primary" : "bg-muted-foreground/40"}`} />
+                        <span
+                          className={`absolute -left-[29px] top-4 grid h-4 w-4 place-items-center rounded-full border-2 border-background ${isActive ? "bg-primary" : "bg-muted-foreground/40"}`}
+                        />
                         <div className="rounded-2xl border border-border bg-card p-4">
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
-                                <p className="truncate text-sm font-semibold">{p.name ?? "Untitled plan"}</p>
-                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${badgeCls}`}>
+                                <p className="truncate text-sm font-semibold">
+                                  {p.name ?? "Untitled plan"}
+                                </p>
+                                <span
+                                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${badgeCls}`}
+                                >
                                   {badgeLabel}
                                 </span>
                               </div>
                               <p className="mt-1 text-xs text-muted-foreground">
-                                {p.start_date ? `Starts ${new Date(p.start_date).toLocaleDateString()}` : "No start date"}
-                                {p.duration_weeks ? ` · ${p.duration_weeks} ${p.duration_weeks === 1 ? "week" : "weeks"}` : ""}
-                                {typeof p.day_count === "number" ? ` · ${p.day_count} ${p.day_count === 1 ? "day" : "days"}` : ""}
+                                {p.start_date
+                                  ? `Starts ${new Date(p.start_date).toLocaleDateString()}`
+                                  : "No start date"}
+                                {p.duration_weeks
+                                  ? ` · ${p.duration_weeks} ${p.duration_weeks === 1 ? "week" : "weeks"}`
+                                  : ""}
+                                {typeof p.day_count === "number"
+                                  ? ` · ${p.day_count} ${p.day_count === 1 ? "day" : "days"}`
+                                  : ""}
                               </p>
                               <p className="mt-1 text-xs font-medium text-foreground">
                                 {completed} / {total} sessions logged
                               </p>
                             </div>
-                            <Link to="/admin/plans/$planId" params={{ planId: p.id }} className="text-sm font-medium text-primary hover:underline">
+                            <Link
+                              to="/admin/plans/$planId"
+                              params={{ planId: p.id }}
+                              className="text-sm font-medium text-primary hover:underline"
+                            >
                               View plan
                             </Link>
                           </div>
@@ -272,7 +392,6 @@ function MemberProfile() {
               </ol>
             )}
           </TabsContent>
-
 
           {/* ATTENDANCE */}
           <TabsContent value="attendance" className="space-y-4">
@@ -296,14 +415,23 @@ function MemberProfile() {
               render={(a: any) => {
                 const isHome = a.location_type === "home";
                 return (
-                  <li key={a.id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
+                  <li
+                    key={a.id}
+                    className="flex items-center justify-between rounded-2xl border border-border bg-card p-4"
+                  >
                     <div>
-                      <p className="text-sm font-semibold">{new Date(a.check_in_at).toLocaleString()}</p>
+                      <p className="text-sm font-semibold">
+                        {new Date(a.check_in_at).toLocaleString()}
+                      </p>
                       {a.check_out_at && (
-                        <p className="text-xs text-muted-foreground">Checked out {new Date(a.check_out_at).toLocaleTimeString()}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Checked out {new Date(a.check_out_at).toLocaleTimeString()}
+                        </p>
                       )}
                     </div>
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${isHome ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground"}`}>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${isHome ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground"}`}
+                    >
                       {isHome ? "Home" : "Gym"}
                     </span>
                   </li>
@@ -369,7 +497,17 @@ function InfoCard({ title, rows }: { title: string; rows: [string, React.ReactNo
   );
 }
 
-function EmptyOrList<T>({ items, emptyIcon, emptyText, render }: { items: T[]; emptyIcon: React.ReactNode; emptyText: string; render: (item: T) => React.ReactNode }) {
+function EmptyOrList<T>({
+  items,
+  emptyIcon,
+  emptyText,
+  render,
+}: {
+  items: T[];
+  emptyIcon: React.ReactNode;
+  emptyText: string;
+  render: (item: T) => React.ReactNode;
+}) {
   if (!items.length) {
     return (
       <div className="grid place-items-center gap-2 rounded-2xl border border-dashed border-border py-12 text-sm text-muted-foreground">

@@ -29,7 +29,9 @@ export async function signPhotoValue(
   if (!value) return null;
   const path = extractPath(value);
   if (!path) return null;
-  const { data } = await supabase.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_TTL_SECONDS);
+  const { data } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(path, SIGNED_URL_TTL_SECONDS);
   return data?.signedUrl ?? null;
 }
 

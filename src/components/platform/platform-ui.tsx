@@ -82,7 +82,9 @@ export function HealthBar({ score, memberCount }: { score: number; memberCount: 
           {memberCount === 0 ? "—" : Math.round(Number(score ?? 0))}
         </span>
       </div>
-      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{band.label}</span>
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+        {band.label}
+      </span>
     </div>
   );
 }
@@ -99,7 +101,11 @@ export function KpiCard({
   tone?: "default" | "warn" | "bad" | "good";
 }) {
   const valueClass =
-    tone === "bad" ? "text-destructive" : tone === "warn" ? "text-amber-600 dark:text-amber-400" : "";
+    tone === "bad"
+      ? "text-destructive"
+      : tone === "warn"
+        ? "text-amber-600 dark:text-amber-400"
+        : "";
   return (
     <div className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
       <div className="flex items-center gap-1">

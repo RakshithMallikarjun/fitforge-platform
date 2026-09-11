@@ -8,9 +8,15 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "FitForge — White-label fitness platform" },
-      { name: "description", content: "Branded member apps, trainer tools, and analytics for modern gyms." },
+      {
+        name: "description",
+        content: "Branded member apps, trainer tools, and analytics for modern gyms.",
+      },
       { property: "og:title", content: "FitForge" },
-      { property: "og:description", content: "Branded member apps, trainer tools, and analytics for modern gyms." },
+      {
+        property: "og:description",
+        content: "Branded member apps, trainer tools, and analytics for modern gyms.",
+      },
     ],
   }),
   component: Landing,
@@ -42,7 +48,9 @@ function Landing() {
             <span className="font-display text-lg font-bold tracking-tight">FitForge</span>
           </div>
           <Link to="/auth">
-            <Button variant="ghost" className="rounded-xl">Sign in</Button>
+            <Button variant="ghost" className="rounded-xl">
+              Sign in
+            </Button>
           </Link>
         </div>
       </header>
@@ -54,13 +62,12 @@ function Landing() {
             White-label · multi-tenant · PWA
           </div>
           <h1 className="mt-6 font-display text-5xl font-bold leading-[1.05] tracking-tight md:text-6xl">
-            The operating system for{" "}
-            <span className="text-primary">modern gyms.</span>
+            The operating system for <span className="text-primary">modern gyms.</span>
           </h1>
           <p className="mt-6 max-w-2xl text-base text-muted-foreground md:text-lg">
-            FitForge gives gym owners a branded member app, gives trainers a programming
-            toolkit, and gives members a beautifully clean place to train — all on one
-            multi-tenant backbone you can fully white-label.
+            FitForge gives gym owners a branded member app, gives trainers a programming toolkit,
+            and gives members a beautifully clean place to train — all on one multi-tenant backbone
+            you can fully white-label.
           </p>
 
           <div className="mt-10 flex flex-wrap gap-3">
@@ -101,9 +108,15 @@ function Landing() {
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-8 py-10 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} FitForge. All rights reserved.</p>
           <nav className="flex flex-wrap gap-6">
-            <Link to="/privacy" className="hover:text-foreground">Privacy Policy</Link>
-            <Link to="/terms" className="hover:text-foreground">Terms of Service</Link>
-            <Link to="/auth" className="hover:text-foreground">Sign in</Link>
+            <Link to="/privacy" className="hover:text-foreground">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="hover:text-foreground">
+              Terms of Service
+            </Link>
+            <Link to="/auth" className="hover:text-foreground">
+              Sign in
+            </Link>
           </nav>
         </div>
       </footer>
@@ -111,7 +124,15 @@ function Landing() {
   );
 }
 
-function FeatureCard({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+function FeatureCard({
+  icon,
+  title,
+  body,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+}) {
   return (
     <div className="card-lift rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)]">
       <div className="grid h-10 w-10 place-items-center rounded-xl bg-accent text-accent-foreground">

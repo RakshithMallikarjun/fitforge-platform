@@ -42,7 +42,11 @@ function MemberHome() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
-            {new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+            {new Date().toLocaleDateString(undefined, {
+              weekday: "long",
+              month: "short",
+              day: "numeric",
+            })}
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold tracking-tight">
             Hey {name} — ready to train?
@@ -104,7 +108,8 @@ function MemberHome() {
             <p className="text-xs font-semibold uppercase tracking-[0.15em]">Trainer tip</p>
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">
-            {tip.exerciseName}: aim for {tip.suggestion?.suggestedWeight ?? "—"}kg × {tip.suggestion?.suggestedReps ?? "—"}
+            {tip.exerciseName}: aim for {tip.suggestion?.suggestedWeight ?? "—"}kg ×{" "}
+            {tip.suggestion?.suggestedReps ?? "—"}
           </p>
           {tip.suggestion?.reasoning && (
             <p className="mt-1 text-xs text-muted-foreground">{tip.suggestion.reasoning}</p>
@@ -122,7 +127,9 @@ function MemberHome() {
             </p>
           </div>
           <p className="mt-2 text-sm leading-relaxed text-foreground">{data.latestNote.body}</p>
-          <p className="mt-2 text-[11px] text-muted-foreground">{formatRelative(data.latestNote.created_at)}</p>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            {formatRelative(data.latestNote.created_at)}
+          </p>
         </div>
       )}
     </div>
@@ -139,7 +146,6 @@ function WorkoutOfTheDay({
   const navigate = useNavigate();
 
   if (isLoading) {
-
     return (
       <div className="bento-emerald animate-pulse">
         <div className="h-3 w-24 rounded bg-white/20" />
@@ -168,7 +174,6 @@ function WorkoutOfTheDay({
   }
 
   return (
-
     <div className="bento-emerald">
       <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary-foreground/70">
         Workout of the day

@@ -1,4 +1,11 @@
-import { createFileRoute, Link, Navigate, Outlet, useRouterState, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  Navigate,
+  Outlet,
+  useRouterState,
+  useNavigate,
+} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -22,14 +29,19 @@ export const Route = createFileRoute("/_authenticated/app")({
   component: MemberShell,
 });
 
-const NAV: ReadonlyArray<{ to: "/app" | "/app/workouts" | "/app/progress" | "/app/messages" | "/app/profile"; label: string; icon: typeof Home; exact?: boolean; badgeKey?: "unread" }> = [
+const NAV: ReadonlyArray<{
+  to: "/app" | "/app/workouts" | "/app/progress" | "/app/messages" | "/app/profile";
+  label: string;
+  icon: typeof Home;
+  exact?: boolean;
+  badgeKey?: "unread";
+}> = [
   { to: "/app", label: "Home", icon: Home, exact: true },
   { to: "/app/workouts", label: "Workouts", icon: Dumbbell },
   { to: "/app/progress", label: "Progress", icon: Activity },
   { to: "/app/messages", label: "Messages", icon: MessageSquare, badgeKey: "unread" },
   { to: "/app/profile", label: "Profile", icon: User },
 ];
-
 
 function MemberShell() {
   const { data: user, isLoading } = useCurrentUser();
@@ -61,7 +73,11 @@ function MemberShell() {
   }, []);
 
   if (isLoading) {
-    return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Loading…</div>;
+    return (
+      <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">
+        Loading…
+      </div>
+    );
   }
   if (user && user.primaryRole && user.primaryRole !== "member") {
     return <Navigate to="/admin" replace />;
@@ -75,12 +91,19 @@ function MemberShell() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24" style={{ paddingBottom: "max(6rem, env(safe-area-inset-bottom))" }}>
+    <div
+      className="min-h-screen bg-background pb-24"
+      style={{ paddingBottom: "max(6rem, env(safe-area-inset-bottom))" }}
+    >
       <header className="glass-header" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="mx-auto flex h-16 max-w-md items-center justify-between px-5">
           <div className="flex items-center gap-2">
             {theme.logoUrl ? (
-              <img src={theme.logoUrl} alt={theme.name} className="h-9 w-9 rounded-xl object-cover" />
+              <img
+                src={theme.logoUrl}
+                alt={theme.name}
+                className="h-9 w-9 rounded-xl object-cover"
+              />
             ) : (
               <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground">
                 <Dumbbell className="h-4 w-4" />
@@ -88,7 +111,11 @@ function MemberShell() {
             )}
             <span className="font-display text-base font-bold tracking-tight">{theme.name}</span>
           </div>
-          <button onClick={signOut} aria-label="Sign out" className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-muted">
+          <button
+            onClick={signOut}
+            aria-label="Sign out"
+            className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-muted"
+          >
             <LogOut className="h-4 w-4" />
           </button>
         </div>
@@ -123,12 +150,15 @@ function MemberShell() {
 
       <InstallPrompt />
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <nav
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
         <div className="mx-auto flex max-w-md items-center justify-around px-2 py-2">
           {NAV.map((item) => {
             const Icon = item.icon;
             const active = item.exact ? path === item.to : path.startsWith(item.to);
-            const badge = item.badgeKey === "unread" ? unread?.count ?? 0 : 0;
+            const badge = item.badgeKey === "unread" ? (unread?.count ?? 0) : 0;
             return (
               <Link
                 key={item.label}

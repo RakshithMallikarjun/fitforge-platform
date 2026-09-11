@@ -45,10 +45,7 @@ export const claimGymAdmin = createServerFn({ method: "POST" })
     // admin of an unclaimed gym slug.
     const expected = process.env.BOOTSTRAP_ADMIN_TOKEN;
     if (!expected) throw new Error("Bootstrap is disabled");
-    if (
-      data.bootstrapToken.length !== expected.length ||
-      data.bootstrapToken !== expected
-    ) {
+    if (data.bootstrapToken.length !== expected.length || data.bootstrapToken !== expected) {
       throw new Error("Invalid bootstrap token");
     }
 

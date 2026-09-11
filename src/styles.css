@@ -69,18 +69,18 @@
   --font-heading: "General Sans", ui-sans-serif, system-ui, sans-serif;
 
   /* Brand — overridable at runtime */
-  --primary: oklch(0.62 0.14 162);          /* emerald-600 #059669 */
+  --primary: oklch(0.62 0.14 162); /* emerald-600 #059669 */
   --primary-foreground: oklch(0.99 0.005 162);
-  --primary-soft: oklch(0.96 0.04 162);     /* emerald-50  */
-  --primary-deep: oklch(0.32 0.07 162);     /* emerald-900 #064E3B */
+  --primary-soft: oklch(0.96 0.04 162); /* emerald-50  */
+  --primary-deep: oklch(0.32 0.07 162); /* emerald-900 #064E3B */
 
-  --secondary: oklch(0.62 0.14 232);        /* sky-600     #0284c7 */
+  --secondary: oklch(0.62 0.14 232); /* sky-600     #0284c7 */
   --secondary-foreground: oklch(0.99 0.005 232);
-  --secondary-soft: oklch(0.96 0.04 232);   /* sky-50      */
+  --secondary-soft: oklch(0.96 0.04 232); /* sky-50      */
 
-  --background: oklch(0.985 0.005 250);     /* slate-50  #F8FAFC */
-  --foreground: oklch(0.21 0.04 260);       /* slate-900 */
-  --surface: oklch(1 0 0);                  /* card #fff */
+  --background: oklch(0.985 0.005 250); /* slate-50  #F8FAFC */
+  --foreground: oklch(0.21 0.04 260); /* slate-900 */
+  --surface: oklch(1 0 0); /* card #fff */
 
   --card: var(--surface);
   --card-foreground: var(--foreground);
@@ -89,7 +89,7 @@
 
   --muted: oklch(0.97 0.005 250);
   --muted-foreground: oklch(0.55 0.03 256); /* slate-500 */
-  --accent: oklch(0.96 0.04 162);           /* primary-soft */
+  --accent: oklch(0.96 0.04 162); /* primary-soft */
   --accent-foreground: var(--primary-deep);
 
   --success: oklch(0.62 0.14 162);
@@ -98,7 +98,7 @@
   --destructive: oklch(0.6 0.22 27);
   --destructive-foreground: oklch(0.99 0.005 27);
 
-  --border: oklch(0.93 0.01 250);           /* slate-200 #E2E8F0 */
+  --border: oklch(0.93 0.01 250); /* slate-200 #E2E8F0 */
   --input: oklch(0.93 0.01 250);
   --ring: var(--primary);
 
@@ -173,14 +173,20 @@
   * {
     border-color: var(--color-border);
   }
-  html, body {
+  html,
+  body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "ss01", "cv11";
   }
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
     font-weight: 700;
@@ -192,7 +198,9 @@
 }
 
 @utility card-lift {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   &:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-card-hover);

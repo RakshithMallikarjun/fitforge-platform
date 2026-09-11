@@ -32,7 +32,7 @@ export function AttendanceHeatmap({ entries }: { entries: Entry[] }) {
     cursor.setDate(cursor.getDate() + 1);
   }
 
-  const columns: typeof cells[] = [];
+  const columns: (typeof cells)[] = [];
   for (let i = 0; i < cells.length; i += 7) columns.push(cells.slice(i, i + 7));
 
   function shade(count: number, inRange: boolean) {

@@ -54,7 +54,9 @@ export const listMembers = createServerFn({ method: "GET" })
         .in("id", memberIds),
       supabase
         .from("member_profiles")
-        .select("user_id, experience_level, membership_type, membership_expires_at, goals, health_notes, dob, gender")
+        .select(
+          "user_id, experience_level, membership_type, membership_expires_at, goals, health_notes, dob, gender",
+        )
         .in("user_id", memberIds),
       supabase
         .from("trainer_assignments")
@@ -71,7 +73,6 @@ export const listMembers = createServerFn({ method: "GET" })
 
     void isAdmin;
 
-
     const profileMap = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
     const assignMap = new Map<string, any[]>();
     for (const a of assignments ?? []) {
@@ -85,7 +86,11 @@ export const listMembers = createServerFn({ method: "GET" })
     const { signPhotoField, signPhotoValue } = await import("./photo-signing");
     const signedUsers = await signPhotoField(supabase, (users ?? []) as any[], "photo_url");
     // Also sign trainer photos so profile chips render.
-    const signedTrainers = await signPhotoField(supabase, (trainers ?? []) as any[], "photo_url" as any);
+    const signedTrainers = await signPhotoField(
+      supabase,
+      (trainers ?? []) as any[],
+      "photo_url" as any,
+    );
     const signedTrainerMap = new Map(signedTrainers.map((t: any) => [t.id, t]));
     const signedAssignMap = new Map<string, any[]>();
     for (const a of assignments ?? []) {
@@ -147,18 +152,46 @@ export const getMember = createServerFn({ method: "GET" })
       if (!a) throw new Error("Forbidden");
     }
 
-    const [{ data: user }, { data: profile }, { data: assigns }, { data: assessments }, { data: plans }, { data: attendance }] = await Promise.all([
+    const [
+      { data: user },
+      { data: profile },
+      { data: assigns },
+      { data: assessments },
+      { data: plans },
+      { data: attendance },
+    ] = await Promise.all([
       supabase.from("users").select("*").eq("id", data.memberId).maybeSingle(),
       supabase.from("member_profiles").select("*").eq("user_id", data.memberId).maybeSingle(),
-      supabase.from("trainer_assignments").select("id, trainer_id, active, assigned_at").eq("member_id", data.memberId).eq("active", true),
-      supabase.from("fitness_assessments").select("*").eq("member_id", data.memberId).order("date", { ascending: false }),
-      supabase.from("workout_plans").select("*").eq("member_id", data.memberId).eq("is_template", false).order("created_at", { ascending: false }),
-      supabase.from("attendance_logs").select("id, member_id, gym_id, check_in_at, check_out_at, location_type").eq("member_id", data.memberId).order("check_in_at", { ascending: false }).limit(100),
+      supabase
+        .from("trainer_assignments")
+        .select("id, trainer_id, active, assigned_at")
+        .eq("member_id", data.memberId)
+        .eq("active", true),
+      supabase
+        .from("fitness_assessments")
+        .select("*")
+        .eq("member_id", data.memberId)
+        .order("date", { ascending: false }),
+      supabase
+        .from("workout_plans")
+        .select("*")
+        .eq("member_id", data.memberId)
+        .eq("is_template", false)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("attendance_logs")
+        .select("id, member_id, gym_id, check_in_at, check_out_at, location_type")
+        .eq("member_id", data.memberId)
+        .order("check_in_at", { ascending: false })
+        .limit(100),
     ]);
 
     const trainerIds = (assigns ?? []).map((a: any) => a.trainer_id);
     const { data: trainers } = trainerIds.length
-      ? await supabase.from("users").select("id, display_name, email, photo_url").in("id", trainerIds)
+      ? await supabase
+          .from("users")
+          .select("id, display_name, email, photo_url")
+          .in("id", trainerIds)
       : { data: [] as any[] };
 
     // Enrich plans with completed workout log counts and day counts
@@ -175,9 +208,11 @@ export const getMember = createServerFn({ method: "GET" })
         supabase.from("workout_days").select("id, plan_id").in("plan_id", planIds),
       ]);
       const logCount = new Map<string, number>();
-      for (const l of (logs ?? []) as any[]) if (l.plan_id) logCount.set(l.plan_id, (logCount.get(l.plan_id) ?? 0) + 1);
+      for (const l of (logs ?? []) as any[])
+        if (l.plan_id) logCount.set(l.plan_id, (logCount.get(l.plan_id) ?? 0) + 1);
       const dayCount = new Map<string, number>();
-      for (const d of (days ?? []) as any[]) if (d.plan_id) dayCount.set(d.plan_id, (dayCount.get(d.plan_id) ?? 0) + 1);
+      for (const d of (days ?? []) as any[])
+        if (d.plan_id) dayCount.set(d.plan_id, (dayCount.get(d.plan_id) ?? 0) + 1);
       plansWithCounts = (plans ?? []).map((p: any) => ({
         ...p,
         completed_logs_count: logCount.get(p.id) ?? 0,
@@ -190,7 +225,11 @@ export const getMember = createServerFn({ method: "GET" })
     const signedUser = user
       ? { ...user, photo_url: await signPhotoValue(supabase, (user as any).photo_url) }
       : user;
-    const signedTrainers = await signPhotoField(supabase, (trainers ?? []) as any[], "photo_url" as any);
+    const signedTrainers = await signPhotoField(
+      supabase,
+      (trainers ?? []) as any[],
+      "photo_url" as any,
+    );
 
     return {
       user: signedUser,
@@ -296,13 +335,16 @@ async function inviteOneMember(input: MemberInput, gymId: string) {
     .maybeSingle();
   if (gErr || !gym) throw new Error("Gym not found");
 
-  const { data: invited, error: invErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(input.email, {
-    data: {
-      gym_slug: gym.slug,
-      role: "member",
-      display_name: input.name,
+  const { data: invited, error: invErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+    input.email,
+    {
+      data: {
+        gym_slug: gym.slug,
+        role: "member",
+        display_name: input.name,
+      },
     },
-  });
+  );
   if (invErr || !invited.user) throw new Error(invErr?.message ?? "Invite failed");
   const newId = invited.user.id;
 
@@ -341,7 +383,9 @@ export const inviteMember = createServerFn({ method: "POST" })
 
 export const inviteMembersBulk = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { members: MemberInput[] }) => ({ members: z.array(memberInputSchema).parse(d.members) }))
+  .inputValidator((d: { members: MemberInput[] }) => ({
+    members: z.array(memberInputSchema).parse(d.members),
+  }))
   .handler(async ({ data, context }) => {
     const gymId = await assertAdmin(context.supabase, context.userId);
     const results: { email: string; ok: boolean; error?: string }[] = [];
@@ -390,7 +434,8 @@ export const updateMember = createServerFn({ method: "POST" })
     if (p.experience_level !== undefined) profPatch.experience_level = p.experience_level;
     if (p.medical_history !== undefined) profPatch.health_notes = p.medical_history;
     if (p.membership_type !== undefined) profPatch.membership_type = p.membership_type;
-    if (p.membership_expires_at !== undefined) profPatch.membership_expires_at = p.membership_expires_at || null;
+    if (p.membership_expires_at !== undefined)
+      profPatch.membership_expires_at = p.membership_expires_at || null;
     if (Object.keys(profPatch).length) {
       await supabase.from("member_profiles").update(profPatch).eq("user_id", data.memberId);
     }
@@ -451,7 +496,10 @@ export const setMemberActive = createServerFn({ method: "POST" })
   .inputValidator((d: { memberId: string; active: boolean }) => d)
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { error } = await context.supabase.from("users").update({ active: data.active }).eq("id", data.memberId);
+    const { error } = await context.supabase
+      .from("users")
+      .update({ active: data.active })
+      .eq("id", data.memberId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -477,7 +525,10 @@ export const assignTrainers = createServerFn({ method: "POST" })
       await supabase
         .from("trainer_assignments")
         .update({ active: false })
-        .in("id", toDeactivate.map((r: any) => r.id));
+        .in(
+          "id",
+          toDeactivate.map((r: any) => r.id),
+        );
     }
     // Reactivate or insert
     for (const tid of want) {
@@ -512,7 +563,11 @@ export const resendMemberInvite = createServerFn({ method: "POST" })
     if (!member || member.gym_id !== gymId) throw new Error("Member not found");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: gym } = await supabaseAdmin.from("gyms").select("slug").eq("id", gymId).maybeSingle();
+    const { data: gym } = await supabaseAdmin
+      .from("gyms")
+      .select("slug")
+      .eq("id", gymId)
+      .maybeSingle();
     if (!gym) throw new Error("Gym not found");
 
     const { data: existing } = await supabaseAdmin.auth.admin.getUserById(data.memberId);

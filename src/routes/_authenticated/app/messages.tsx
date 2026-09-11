@@ -41,7 +41,12 @@ function MessagesPage() {
       .channel(`inbox-${me.userId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `recipient_id=eq.${me.userId}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `recipient_id=eq.${me.userId}`,
+        },
         () => {
           qc.invalidateQueries({ queryKey: ["threads"] });
           qc.invalidateQueries({ queryKey: ["unread-count"] });
@@ -57,7 +62,11 @@ function MessagesPage() {
     const t = threads?.find((x) => x.otherUserId === withUser);
     const contact = myTrainers?.find((c) => c.id === withUser);
     const name =
-      t?.otherUser?.display_name ?? t?.otherUser?.email ?? contact?.display_name ?? contact?.email ?? "Conversation";
+      t?.otherUser?.display_name ??
+      t?.otherUser?.email ??
+      contact?.display_name ??
+      contact?.email ??
+      "Conversation";
     return (
       <div className="space-y-4">
         <button
@@ -93,7 +102,8 @@ function MessagesPage() {
       )}
 
       {/* Members can open a thread with any of their assigned trainers. */}
-      {(myTrainers ?? []).filter((c) => !(threads ?? []).some((t) => t.otherUserId === c.id)).length > 0 && (
+      {(myTrainers ?? []).filter((c) => !(threads ?? []).some((t) => t.otherUserId === c.id))
+        .length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
             Start a conversation
@@ -118,7 +128,9 @@ function MessagesPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{cname}</p>
-                    <p className="truncate text-xs text-muted-foreground">Your trainer · tap to message</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      Your trainer · tap to message
+                    </p>
                   </div>
                 </Link>
               );
@@ -138,7 +150,11 @@ function MessagesPage() {
               >
                 <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-primary">
                   {t.otherUser?.photo_url ? (
-                    <img src={t.otherUser.photo_url} alt="" className="h-full w-full object-cover" />
+                    <img
+                      src={t.otherUser.photo_url}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     initials
                   )}

@@ -132,7 +132,10 @@ export const deleteAssessment = createServerFn({ method: "POST" })
 
 function esc(s: any): string {
   if (s == null || s === "") return "—";
-  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+  return String(s).replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
+  );
 }
 
 function trend(curr: number | null | undefined, prev: number | null | undefined): string {
@@ -158,7 +161,11 @@ export const exportAssessmentReport = createServerFn({ method: "POST" })
 
     let gymName = "";
     if ((member as any)?.gym_id) {
-      const { data: gym } = await supabase.from("gyms").select("name").eq("id", (member as any).gym_id).maybeSingle();
+      const { data: gym } = await supabase
+        .from("gyms")
+        .select("name")
+        .eq("id", (member as any).gym_id)
+        .maybeSingle();
       gymName = (gym as any)?.name || "";
     }
 
@@ -190,18 +197,27 @@ export const exportAssessmentReport = createServerFn({ method: "POST" })
       ["Deadlift 1RM", "deadlift_1rm", "kg"],
     ];
 
-    const headerCells = assessments.map((a: any) => `<th>${esc(new Date(a.date).toLocaleDateString())}</th>`).join("");
+    const headerCells = assessments
+      .map((a: any) => `<th>${esc(new Date(a.date).toLocaleDateString())}</th>`)
+      .join("");
 
-    const rowsHtml = metrics.map(([label, key, suffix]) => {
-      const cells = assessments.map((a: any, i: number) => {
-        const v = a[key as string];
-        const prev = i > 0 ? (assessments[i - 1] as any)[key as string] : null;
-        const display = v == null || v === "" ? "—" : `${typeof v === "number" ? Number(v).toFixed(1) : esc(v)}${suffix ? " " + suffix : ""}`;
-        const t = typeof v === "number" && typeof prev === "number" ? trend(v, prev) : "";
-        return `<td>${display}${t}</td>`;
-      }).join("");
-      return `<tr><th style="text-align:left;background:#f9fafb">${esc(label)}</th>${cells}</tr>`;
-    }).join("");
+    const rowsHtml = metrics
+      .map(([label, key, suffix]) => {
+        const cells = assessments
+          .map((a: any, i: number) => {
+            const v = a[key as string];
+            const prev = i > 0 ? (assessments[i - 1] as any)[key as string] : null;
+            const display =
+              v == null || v === ""
+                ? "—"
+                : `${typeof v === "number" ? Number(v).toFixed(1) : esc(v)}${suffix ? " " + suffix : ""}`;
+            const t = typeof v === "number" && typeof prev === "number" ? trend(v, prev) : "";
+            return `<td>${display}${t}</td>`;
+          })
+          .join("");
+        return `<tr><th style="text-align:left;background:#f9fafb">${esc(label)}</th>${cells}</tr>`;
+      })
+      .join("");
 
     const html = `<!doctype html>
 <html><head><meta charset="utf-8"><title>Assessment Report — ${esc(memberName)}</title>
@@ -222,9 +238,11 @@ export const exportAssessmentReport = createServerFn({ method: "POST" })
   <div class="actions"><button onclick="window.print()">Print / Save as PDF</button></div>
   <h1>${esc(gymName ? gymName + " — " : "")}Assessment Report</h1>
   <div class="sub">${esc(memberName)} · Generated ${esc(new Date().toLocaleDateString())} · ${assessments.length} assessment${assessments.length === 1 ? "" : "s"}</div>
-  ${assessments.length === 0
-    ? '<p style="color:#6b7280">No assessments recorded.</p>'
-    : `<table><thead><tr><th style="text-align:left">Metric</th>${headerCells}</tr></thead><tbody>${rowsHtml}</tbody></table>`}
+  ${
+    assessments.length === 0
+      ? '<p style="color:#6b7280">No assessments recorded.</p>'
+      : `<table><thead><tr><th style="text-align:left">Metric</th>${headerCells}</tr></thead><tbody>${rowsHtml}</tbody></table>`
+  }
   <script>window.addEventListener("message",function(e){if(e.data==="print")window.print();});</script>
 </body></html>`;
 

@@ -28,7 +28,13 @@ const LABELS: Record<MembershipStatus, string> = {
   expired: "Expired",
 };
 
-export function StatusBadge({ status, className }: { status: MembershipStatus; className?: string }) {
+export function StatusBadge({
+  status,
+  className,
+}: {
+  status: MembershipStatus;
+  className?: string;
+}) {
   return (
     <span
       className={cn(

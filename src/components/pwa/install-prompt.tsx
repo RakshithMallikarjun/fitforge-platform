@@ -70,7 +70,9 @@ export function InstallPrompt() {
   const dismiss = () => {
     try {
       localStorage.setItem(DISMISS_KEY, String(Date.now()));
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setShow(false);
   };
 
