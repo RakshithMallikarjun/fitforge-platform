@@ -201,6 +201,7 @@ export const assignPlan = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (planErr) throw new Error(planErr.message);
+    await notifyPlanAssigned(data.memberId, plan.id, src.name);
 
     const days = (src.workout_days ?? []).slice().sort((a: any, b: any) => a.order - b.order);
     for (let i = 0; i < days.length; i++) {
