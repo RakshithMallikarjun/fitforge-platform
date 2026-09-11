@@ -71,6 +71,7 @@ function AdminDashboard() {
                 value={stats.activeMemberships.toLocaleString()}
                 footer={
                   <span className="flex flex-col gap-0.5">
+                    <span>Gym-wide</span>
                     <span>{stats.activeAccounts.toLocaleString()} accounts enabled</span>
                     <span className="inline-flex items-center gap-1">
                       <ArrowUpRight className="h-3 w-3" /> {stats.newThisMonth} new this month
@@ -81,23 +82,24 @@ function AdminDashboard() {
               <BentoStatCard
                 label="New this month"
                 value={stats.newThisMonth.toLocaleString()}
-                footer="Members joined"
+                footer="Gym-wide · members joined"
               />
               <BentoStatCard
                 label="Sessions today"
                 value={stats.sessionsToday.toLocaleString()}
-                footer="Workouts logged"
+                footer={`${scopeLabel} · workouts logged`}
               />
               <BentoStatCard
                 label="Avg check-ins / day"
                 value={stats.avgCheckIns7d.toString()}
-                footer="Last 7 days"
+                footer={`${scopeLabel} · last 7 days`}
               />
             </>
           )}
         </section>
 
-        <TrainerPerformance />
+        <TrainerPerformance isAdmin={isAdmin} />
+
 
         {/* Two-column main */}
         <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
