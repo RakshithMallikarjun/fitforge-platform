@@ -107,7 +107,7 @@ function AdminDashboard() {
         {/* Two-column main */}
         <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
           <div className="space-y-6">
-            <AtRiskMembers />
+            <AtRiskMembers isAdmin={isAdmin} />
             {isAdmin && <PaymentHistory />}
           </div>
 
