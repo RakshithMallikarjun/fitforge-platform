@@ -65,7 +65,7 @@ export const listPlans = createServerFn({ method: "GET" })
       id: r.id,
       name: r.name,
       member_id: r.member_id,
-      member_name: r.users?.display_name ?? r.users?.email ?? null,
+      member_name: r.member_id ? (r.users?.display_name ?? r.users?.email ?? null) : null,
       trainer_id: r.trainer_id,
       trainer_name: r.trainer?.display_name ?? r.trainer?.email ?? null,
       status: r.status,
@@ -138,8 +138,18 @@ export const createPlan = createServerFn({ method: "POST" })
     if (!gymId) throw new Error("No gym");
     if (!isAdmin && !isTrainer) throw new Error("Forbidden");
 
-    // For templates without an assigned member, store member_id = caller (trainer/admin owns it).
-    const memberId = data.member_id ?? userId;
+    // Templates belong to no member: store member_id = null so trainers never
+    // show up as their own members in queries that don't filter is_template.
+    const memberId = data.is_template ? null : (data.member_id ?? null);
+    if (!data.is_template && !memberId) throw new Error("A member is required for a plan");
+    if (memberId) {
+      const { data: target } = await supabase
+        .from("users")
+        .select("gym_id")
+        .eq("id", memberId)
+        .maybeSingle();
+      if (!target || (target as any).gym_id !== gymId) throw new Error("Member not found in your gym");
+    }
 
     const { data: plan, error: planErr } = await supabase
       .from("workout_plans")
