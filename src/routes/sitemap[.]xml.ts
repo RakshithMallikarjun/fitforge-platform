@@ -15,8 +15,8 @@ function resolveOrigin(request: Request): string {
 }
 
 const ENTRIES: { path: string; changefreq: string; priority: string }[] = [
+  // /auth is disallowed in robots.txt, so it must not be advertised here.
   { path: "/", changefreq: "weekly", priority: "1.0" },
-  { path: "/auth", changefreq: "monthly", priority: "0.5" },
 ];
 
 export const Route = createFileRoute("/sitemap.xml")({
