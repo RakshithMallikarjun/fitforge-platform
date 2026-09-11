@@ -11,6 +11,11 @@ export type AdminStats = {
   newThisMonth: number;
   sessionsToday: number;
   avgCheckIns7d: number;
+  /**
+   * Which population sessionsToday / avgCheckIns7d cover: the whole gym (admins)
+   * or only the caller's assigned members (trainers). The UI must label this.
+   */
+  activityScope: "gym" | "assigned";
 };
 
 export const getAdminStats = createServerFn({ method: "GET" })
@@ -25,7 +30,25 @@ export const getAdminStats = createServerFn({ method: "GET" })
         newThisMonth: 0,
         sessionsToday: 0,
         avgCheckIns7d: 0,
+        activityScope: "gym",
       };
+    }
+
+    // Trainers only see activity for the members they coach; admins see the gym.
+    const { data: myRoles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const isAdmin = (myRoles ?? []).some((r: any) => r.role === "admin");
+    let assignedIds: string[] | null = null;
+    if (!isAdmin) {
+      const { data: myAssigned } = await supabase
+        .from("trainer_assignments")
+        .select("member_id")
+        .eq("gym_id", gymId)
+        .eq("trainer_id", userId)
+        .eq("active", true);
+      assignedIds = Array.from(new Set((myAssigned ?? []).map((a: any) => a.member_id as string)));
     }
 
     const { data: memberRoles } = await supabase
@@ -68,25 +91,42 @@ export const getAdminStats = createServerFn({ method: "GET" })
       newThisMonth = nm ?? 0;
     }
 
-    const [{ count: sessions }, { count: weekCheckIns }] = await Promise.all([
-      supabase
+    let sessionsToday = 0;
+    let avgCheckIns7d = 0;
+    if (assignedIds && !assignedIds.length) {
+      // Trainer with nobody assigned: genuinely zero, not a hidden gym number.
+      sessionsToday = 0;
+      avgCheckIns7d = 0;
+    } else {
+      let sessionsQ = supabase
         .from("workout_logs")
         .select("id", { count: "exact", head: true })
         .eq("gym_id", gymId)
-        .eq("date", todayStr),
-      supabase
+        .eq("date", todayStr);
+      let checkInsQ = supabase
         .from("attendance_logs")
         .select("id", { count: "exact", head: true })
         .eq("gym_id", gymId)
-        .gte("check_in_at", sevenDaysAgo),
-    ]);
+        .gte("check_in_at", sevenDaysAgo);
+      if (assignedIds) {
+        sessionsQ = sessionsQ.in("member_id", assignedIds);
+        checkInsQ = checkInsQ.in("member_id", assignedIds);
+      }
+      const [{ count: sessions }, { count: weekCheckIns }] = await Promise.all([
+        sessionsQ,
+        checkInsQ,
+      ]);
+      sessionsToday = sessions ?? 0;
+      avgCheckIns7d = Math.round(((weekCheckIns ?? 0) / 7) * 10) / 10;
+    }
 
     return {
       activeMemberships,
       activeAccounts,
       newThisMonth,
-      sessionsToday: sessions ?? 0,
-      avgCheckIns7d: Math.round(((weekCheckIns ?? 0) / 7) * 10) / 10,
+      sessionsToday,
+      avgCheckIns7d,
+      activityScope: assignedIds ? "assigned" : "gym",
     };
   });
 
@@ -112,14 +152,26 @@ export const getTrainerStats = createServerFn({ method: "GET" })
     const gymId = (me as any)?.gym_id as string | null;
     if (!gymId) return [];
 
-    const { data: trainerRoles } = await supabase
+    // trainer_assignments / plans / assessments are RLS-scoped to the caller, so a
+    // trainer can only ever see their own true figures. Returning every trainer
+    // would show other coaches as zero, which reads as fact but is an artefact.
+    const { data: myRoles } = await supabase
       .from("user_roles")
-      .select("user_id")
-      .eq("gym_id", gymId)
-      .in("role", ["trainer", "admin"]);
-    const trainerIds = Array.from(
-      new Set((trainerRoles ?? []).map((r: any) => r.user_id as string)),
-    );
+      .select("role")
+      .eq("user_id", userId);
+    const isAdmin = (myRoles ?? []).some((r: any) => r.role === "admin");
+
+    let trainerIds: string[];
+    if (isAdmin) {
+      const { data: trainerRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("gym_id", gymId)
+        .in("role", ["trainer", "admin"]);
+      trainerIds = Array.from(new Set((trainerRoles ?? []).map((r: any) => r.user_id as string)));
+    } else {
+      trainerIds = [userId];
+    }
     if (!trainerIds.length) return [];
 
     const { data: trainers } = await supabase

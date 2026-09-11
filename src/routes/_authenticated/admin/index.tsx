@@ -44,6 +44,8 @@ function AdminDashboard() {
     queryFn: () => fetchStats(),
     enabled: !!user,
   });
+  // Trainers only get data for their own members; say so on every tile.
+  const scopeLabel = stats?.activityScope === "assigned" ? "Your members" : "Gym-wide";
 
   return (
     <>
@@ -71,6 +73,7 @@ function AdminDashboard() {
                 value={stats.activeMemberships.toLocaleString()}
                 footer={
                   <span className="flex flex-col gap-0.5">
+                    <span>Gym-wide</span>
                     <span>{stats.activeAccounts.toLocaleString()} accounts enabled</span>
                     <span className="inline-flex items-center gap-1">
                       <ArrowUpRight className="h-3 w-3" /> {stats.newThisMonth} new this month
@@ -81,28 +84,28 @@ function AdminDashboard() {
               <BentoStatCard
                 label="New this month"
                 value={stats.newThisMonth.toLocaleString()}
-                footer="Members joined"
+                footer="Gym-wide · members joined"
               />
               <BentoStatCard
                 label="Sessions today"
                 value={stats.sessionsToday.toLocaleString()}
-                footer="Workouts logged"
+                footer={`${scopeLabel} · workouts logged`}
               />
               <BentoStatCard
                 label="Avg check-ins / day"
                 value={stats.avgCheckIns7d.toString()}
-                footer="Last 7 days"
+                footer={`${scopeLabel} · last 7 days`}
               />
             </>
           )}
         </section>
 
-        <TrainerPerformance />
+        <TrainerPerformance isAdmin={isAdmin} />
 
         {/* Two-column main */}
         <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
           <div className="space-y-6">
-            <AtRiskMembers />
+            <AtRiskMembers isAdmin={isAdmin} />
             {isAdmin && <PaymentHistory />}
           </div>
 
@@ -148,7 +151,7 @@ function AdminDashboard() {
 
 type SortKey = "name" | "assignedMembers" | "plansThisMonth" | "assessmentsThisMonth";
 
-function TrainerPerformance() {
+function TrainerPerformance({ isAdmin }: { isAdmin: boolean }) {
   const fetchTrainerStats = useServerFn(getTrainerStats);
   const { data, isLoading } = useQuery({
     queryKey: ["trainer-stats"],
@@ -176,11 +179,19 @@ function TrainerPerformance() {
     }
   }
 
+  const cols = isAdmin ? 4 : 3;
+
   return (
     <section className="rounded-[2rem] border border-border bg-card shadow-[var(--shadow-card)]">
       <div className="p-6 pb-2">
-        <h2 className="text-base font-bold tracking-tight">Trainer performance</h2>
-        <p className="text-xs text-muted-foreground">Assigned members and month-to-date activity</p>
+        <h2 className="text-base font-bold tracking-tight">
+          {isAdmin ? "Trainer performance" : "Your performance"}
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          {isAdmin
+            ? "Gym-wide · assigned members and month-to-date activity"
+            : "Your members · month-to-date activity"}
+        </p>
       </div>
       {isLoading ? (
         <div className="space-y-2 p-6">
@@ -191,9 +202,11 @@ function TrainerPerformance() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>
-                <Sort onClick={() => toggle("name")}>Trainer</Sort>
-              </TableHead>
+              {isAdmin && (
+                <TableHead>
+                  <Sort onClick={() => toggle("name")}>Trainer</Sort>
+                </TableHead>
+              )}
               <TableHead>
                 <Sort onClick={() => toggle("assignedMembers")}>Members</Sort>
               </TableHead>
@@ -208,7 +221,9 @@ function TrainerPerformance() {
           <TableBody>
             {rows.map((t: TrainerStat) => (
               <TableRow key={t.trainerId}>
-                <TableCell className="font-medium">{t.displayName ?? t.email}</TableCell>
+                {isAdmin && (
+                  <TableCell className="font-medium">{t.displayName ?? t.email}</TableCell>
+                )}
                 <TableCell className="font-numeric">{t.assignedMembers}</TableCell>
                 <TableCell className="font-numeric">{t.plansThisMonth}</TableCell>
                 <TableCell className="font-numeric">{t.assessmentsThisMonth}</TableCell>
@@ -216,8 +231,11 @@ function TrainerPerformance() {
             ))}
             {!rows.length && (
               <TableRow>
-                <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
-                  No trainers yet.
+                <TableCell
+                  colSpan={cols}
+                  className="py-6 text-center text-sm text-muted-foreground"
+                >
+                  {isAdmin ? "No trainers yet." : "Nothing recorded yet."}
                 </TableCell>
               </TableRow>
             )}
@@ -237,7 +255,7 @@ function Sort({ children, onClick }: { children: React.ReactNode; onClick: () =>
 }
 
 /** Members whose 30-day engagement has dropped — same signal as the engagement report. */
-function AtRiskMembers() {
+function AtRiskMembers({ isAdmin }: { isAdmin: boolean }) {
   const fetchEngagement = useServerFn(getEngagementReport);
   const { data, isLoading } = useQuery({
     queryKey: ["engagement-report"],
@@ -256,7 +274,11 @@ function AtRiskMembers() {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-base font-bold tracking-tight">Members needing attention</h2>
-          <p className="text-xs text-muted-foreground">Lowest 30-day engagement in your gym</p>
+          <p className="text-xs text-muted-foreground">
+            {isAdmin
+              ? "Gym-wide · lowest 30-day engagement"
+              : "Your members · lowest 30-day engagement"}
+          </p>
         </div>
         <Button asChild variant="ghost" size="sm" className="rounded-lg">
           <Link to="/admin/reports/engagement">View all</Link>
