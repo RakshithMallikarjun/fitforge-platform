@@ -255,7 +255,7 @@ function Sort({ children, onClick }: { children: React.ReactNode; onClick: () =>
 }
 
 /** Members whose 30-day engagement has dropped — same signal as the engagement report. */
-function AtRiskMembers() {
+function AtRiskMembers({ isAdmin }: { isAdmin: boolean }) {
   const fetchEngagement = useServerFn(getEngagementReport);
   const { data, isLoading } = useQuery({
     queryKey: ["engagement-report"],
