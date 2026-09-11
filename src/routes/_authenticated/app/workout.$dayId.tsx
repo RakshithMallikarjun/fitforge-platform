@@ -355,7 +355,7 @@ function WorkoutPlayer() {
     });
   }, [dayData]);
 
-  const exercises = dayData?.exercises ?? [];
+  const exercises = useMemo(() => dayData?.exercises ?? [], [dayData]);
   const current = exercises[currentIdx];
 
   // Fetch previous set values per exercise (parallel).
@@ -486,33 +486,64 @@ function WorkoutPlayer() {
     }
   }
 
-  // Rest timer
-  const [timerLeft, setTimerLeft] = useState<number | null>(null);
+  // Rest timer — wall-clock based so screen locks / background throttling can't
+  // stretch a 90s rest into several real minutes.
+  const [endsAt, setEndsAt] = useState<number | null>(null);
   const [timerTotal, setTimerTotal] = useState<number>(0);
+  const [, forceTick] = useState(0);
   const intervalRef = useRef<number | null>(null);
+  const firedRef = useRef(false);
+
   function startTimer(seconds: number) {
     setTimerTotal(seconds);
-    setTimerLeft(seconds);
+    firedRef.current = false;
+    setEndsAt(Date.now() + seconds * 1000);
   }
   function stopTimer() {
-    setTimerLeft(null);
+    setEndsAt(null);
   }
+
+  const timerLeft = endsAt == null ? null : Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+  const timerRunning = endsAt != null;
+
   useEffect(() => {
-    if (timerLeft == null) return;
-    intervalRef.current = window.setInterval(() => {
-      setTimerLeft((l) => {
-        if (l == null) return null;
-        if (l <= 1) {
-          window.clearInterval(intervalRef.current!);
-          return null;
+    if (!timerRunning) return;
+
+    async function notifyRestComplete() {
+      try {
+        if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+        if (!("serviceWorker" in navigator)) return;
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (!reg) return;
+        await reg.showNotification("Rest complete — next set", {
+          body: "Time to get back under the bar.",
+          tag: "rest-timer",
+        });
+      } catch {
+        // Silent no-op: notifications are a nice-to-have.
+      }
+    }
+
+    function check() {
+      if (endsAt == null) return;
+      if (Date.now() >= endsAt) {
+        setEndsAt(null);
+        if (!firedRef.current) {
+          firedRef.current = true;
+          void notifyRestComplete();
         }
-        return l - 1;
-      });
-    }, 1000);
+        return;
+      }
+      forceTick((n) => n + 1);
+    }
+
+    intervalRef.current = window.setInterval(check, 250);
+    document.addEventListener("visibilitychange", check);
     return () => {
       if (intervalRef.current) window.clearInterval(intervalRef.current);
+      document.removeEventListener("visibilitychange", check);
     };
-  }, [timerLeft != null ? "on" : "off"]);
+  }, [timerRunning, endsAt]);
 
   if (isLoading || !dayData) {
     return (
