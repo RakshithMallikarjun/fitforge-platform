@@ -170,8 +170,51 @@ function SettingsPage() {
     onError: (e: any) => toast.error(e?.message ?? "Failed to save"),
   });
 
+  const opsMutation = useMutation({
+    mutationFn: (vars: { timezone: string; customDomain?: string | null }) =>
+      saveOperations({ data: vars }),
+    onSuccess: () => {
+      toast.success("Operations settings saved");
+      qc.invalidateQueries({ queryKey: ["gym-settings"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed to save"),
+  });
+
+  const { data: joinInfo, isLoading: joinLoading } = useQuery({
+    queryKey: ["gym-join-code"],
+    queryFn: () => fetchJoinCode(),
+    enabled: isAdmin,
+  });
+
+  const [revealCode, setRevealCode] = useState(false);
+  const [confirmRotate, setConfirmRotate] = useState(false);
+
+  const rotateMutation = useMutation({
+    mutationFn: () => rotateJoinCode(),
+    onSuccess: () => {
+      toast.success("New join code generated");
+      setRevealCode(true);
+      setConfirmRotate(false);
+      qc.invalidateQueries({ queryKey: ["gym-join-code"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not regenerate the join code"),
+  });
+
+  const slug = joinInfo?.slug ?? gym?.slug ?? "";
+  const joinCode = joinInfo?.joinCode ?? "";
+  const appOrigin = typeof window !== "undefined" ? window.location.origin : "";
+  const signupMessage = `Join ${name || "our gym"} on FitForge 💪
+
+1. Open ${appOrigin}/auth
+2. Tap "Create account"
+3. Gym code: ${slug}
+4. Join code: ${joinCode}
+
+See you at the gym!`;
+
   const validHex = /^#[0-9a-fA-F]{6}$/.test(primaryColor);
   const logoValid = logoUrl && /^https?:\/\//i.test(logoUrl);
+
 
   if (!isAdmin) {
     return (
