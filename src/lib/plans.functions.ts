@@ -17,6 +17,32 @@ async function getRolesAndGym(supabase: any, userId: string) {
   };
 }
 
+/** Throws unless every listed member exists in the caller's gym. */
+async function assertMembersInGym(supabase: any, gymId: string, memberIds: string[]) {
+  const { data: rows, error } = await supabase
+    .from("users")
+    .select("id, gym_id, display_name, email")
+    .in("id", memberIds);
+  if (error) throw new Error(error.message);
+  const byId = new Map<string, any>((rows ?? []).map((r: any) => [r.id, r]));
+  for (const id of memberIds) {
+    const row = byId.get(id);
+    if (!row || row.gym_id !== gymId) throw new Error("Member not found in your gym");
+  }
+  return byId;
+}
+
+/** Retires any plan the member is currently on, so only one stays active. */
+async function archiveActivePlans(supabase: any, memberId: string) {
+  const { error } = await supabase
+    .from("workout_plans")
+    .update({ status: "archived" })
+    .eq("member_id", memberId)
+    .eq("status", "active")
+    .eq("is_template", false);
+  if (error) throw new Error(error.message);
+}
+
 /**
  * Fires the plan-assigned push. There is no DB webhook configured, so the
  * server calls the function directly. Push delivery must never break the
