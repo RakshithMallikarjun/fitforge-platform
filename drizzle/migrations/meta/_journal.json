@@ -71,6 +71,13 @@
       "when": 1789122908653,
       "tag": "0009_platform_gyms_active_membership_definition",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789132465384,
+      "tag": "0010_scope_workout_policies_to_authenticated_and_harden_definers",
+      "breakpoints": true
     }
   ]
 }
