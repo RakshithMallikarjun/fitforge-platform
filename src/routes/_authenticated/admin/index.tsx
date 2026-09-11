@@ -274,7 +274,12 @@ function AtRiskMembers({ isAdmin }: { isAdmin: boolean }) {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-base font-bold tracking-tight">Members needing attention</h2>
-          <p className="text-xs text-muted-foreground">Lowest 30-day engagement in your gym</p>
+          <p className="text-xs text-muted-foreground">
+            {isAdmin
+              ? "Gym-wide · lowest 30-day engagement"
+              : "Your members · lowest 30-day engagement"}
+          </p>
+
         </div>
         <Button asChild variant="ghost" size="sm" className="rounded-lg">
           <Link to="/admin/reports/engagement">View all</Link>
