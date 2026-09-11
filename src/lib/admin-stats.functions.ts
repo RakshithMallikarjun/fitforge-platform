@@ -155,15 +155,28 @@ export const getTrainerStats = createServerFn({ method: "GET" })
     const gymId = (me as any)?.gym_id as string | null;
     if (!gymId) return [];
 
-    const { data: trainerRoles } = await supabase
+    // trainer_assignments / plans / assessments are RLS-scoped to the caller, so a
+    // trainer can only ever see their own true figures. Returning every trainer
+    // would show other coaches as zero, which reads as fact but is an artefact.
+    const { data: myRoles } = await supabase
       .from("user_roles")
-      .select("user_id")
-      .eq("gym_id", gymId)
-      .in("role", ["trainer", "admin"]);
-    const trainerIds = Array.from(
-      new Set((trainerRoles ?? []).map((r: any) => r.user_id as string)),
-    );
+      .select("role")
+      .eq("user_id", userId);
+    const isAdmin = (myRoles ?? []).some((r: any) => r.role === "admin");
+
+    let trainerIds: string[];
+    if (isAdmin) {
+      const { data: trainerRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("gym_id", gymId)
+        .in("role", ["trainer", "admin"]);
+      trainerIds = Array.from(new Set((trainerRoles ?? []).map((r: any) => r.user_id as string)));
+    } else {
+      trainerIds = [userId];
+    }
     if (!trainerIds.length) return [];
+
 
     const { data: trainers } = await supabase
       .from("users")
