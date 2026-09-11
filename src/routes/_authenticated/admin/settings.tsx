@@ -3,12 +3,29 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
-import { getGymSettings, updateGymSettings } from "@/lib/gym-theme.functions";
+import { ArrowLeft, Check, Copy, Eye, EyeOff, RefreshCw, Share2 } from "lucide-react";
+import {
+  getGymJoinCode,
+  getGymSettings,
+  regenerateGymJoinCode,
+  updateGymOperations,
+  updateGymSettings,
+} from "@/lib/gym-theme.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -24,14 +41,91 @@ export const Route = createFileRoute("/_authenticated/admin/settings")({
 
 const FONTS = ["Satoshi", "Inter", "DM Sans", "Plus Jakarta Sans"] as const;
 
+/** Common IANA zones for gym operators. */
+const TIMEZONES = [
+  "Asia/Kolkata",
+  "Asia/Dubai",
+  "Asia/Karachi",
+  "Asia/Colombo",
+  "Asia/Kathmandu",
+  "Asia/Dhaka",
+  "Asia/Bangkok",
+  "Asia/Singapore",
+  "Asia/Hong_Kong",
+  "Asia/Tokyo",
+  "Australia/Sydney",
+  "Australia/Perth",
+  "Europe/London",
+  "Europe/Dublin",
+  "Europe/Lisbon",
+  "Europe/Madrid",
+  "Europe/Paris",
+  "Europe/Berlin",
+  "Europe/Warsaw",
+  "Europe/Athens",
+  "Europe/Istanbul",
+  "Europe/Moscow",
+  "Africa/Lagos",
+  "Africa/Cairo",
+  "Africa/Nairobi",
+  "Africa/Johannesburg",
+  "America/New_York",
+  "America/Toronto",
+  "America/Chicago",
+  "America/Mexico_City",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Vancouver",
+  "America/Sao_Paulo",
+  "America/Bogota",
+  "Pacific/Auckland",
+  "UTC",
+] as const;
+
+function CopyButton({
+  value,
+  label = "Copy",
+  disabled,
+}: {
+  value: string;
+  label?: string;
+  disabled?: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      toast.success(`${label === "Copy" ? "Copied" : label} to clipboard`);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Your browser blocked clipboard access — select and copy manually.");
+    }
+  }
+  return (
+    <Button type="button" variant="outline" size="sm" onClick={copy} disabled={disabled || !value}>
+      {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+      {label}
+    </Button>
+  );
+}
+
 function SettingsPage() {
   const qc = useQueryClient();
   const fetchSettings = useServerFn(getGymSettings);
   const saveSettings = useServerFn(updateGymSettings);
+  const saveOperations = useServerFn(updateGymOperations);
+  const fetchJoinCode = useServerFn(getGymJoinCode);
+  const rotateJoinCode = useServerFn(regenerateGymJoinCode);
 
+  const { data: me } = useCurrentUser();
+  const isAdmin = !!me?.roles.includes("admin");
+
+  // getGymSettings throws "Forbidden" for non-admins, so never fire it for them.
   const { data: gym, isLoading } = useQuery({
     queryKey: ["gym-settings"],
     queryFn: () => fetchSettings(),
+    enabled: isAdmin,
   });
 
   const [name, setName] = useState("");
@@ -41,9 +135,8 @@ function SettingsPage() {
   const [fontFamily, setFontFamily] = useState<string>("Satoshi");
   const [supportEmail, setSupportEmail] = useState("");
   const [supportPhone, setSupportPhone] = useState("");
-
-  const { data: me } = useCurrentUser();
-  const isAdmin = !!me?.roles.includes("admin");
+  const [timezone, setTimezone] = useState("UTC");
+  const [customDomain, setCustomDomain] = useState("");
 
   useEffect(() => {
     if (!gym) return;
@@ -54,7 +147,10 @@ function SettingsPage() {
     setFontFamily(gym.font_family ?? "Satoshi");
     setSupportEmail(gym.support_email ?? "");
     setSupportPhone(gym.support_phone ?? "");
+    setTimezone(gym.timezone ?? "UTC");
+    setCustomDomain(gym.custom_domain ?? "");
   }, [gym]);
+
 
   const mutation = useMutation({
     mutationFn: (vars: {
