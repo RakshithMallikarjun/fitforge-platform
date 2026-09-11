@@ -57,6 +57,13 @@
       "when": 1789122279926,
       "tag": "0007_workout_plans_member_id_nullable",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789122517728,
+      "tag": "0008_member_notes_shared_with_member",
+      "breakpoints": true
     }
   ]
 }

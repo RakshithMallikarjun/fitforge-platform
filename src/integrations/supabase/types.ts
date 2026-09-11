@@ -437,6 +437,7 @@ export type Database = {
           gym_id: string
           id: string
           member_id: string
+          shared_with_member: boolean
           updated_at: string
         }
         Insert: {
@@ -446,6 +447,7 @@ export type Database = {
           gym_id: string
           id?: string
           member_id: string
+          shared_with_member?: boolean
           updated_at?: string
         }
         Update: {
@@ -455,6 +457,7 @@ export type Database = {
           gym_id?: string
           id?: string
           member_id?: string
+          shared_with_member?: boolean
           updated_at?: string
         }
         Relationships: [
