@@ -134,7 +134,7 @@ export const verifyAndCheckin = createServerFn({ method: "POST" })
       .eq("id", body.u)
       .maybeSingle();
 
-    return { ok: true as const, member, alreadyCheckedIn: duplicate };
+    return { ok: true as const, member, alreadyCheckedIn: duplicate, upgradedFromHome };
   });
 
 /** Manual check-in from Member 360 (admin/trainer front desk). */
