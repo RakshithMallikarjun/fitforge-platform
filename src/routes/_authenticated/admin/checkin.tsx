@@ -55,7 +55,11 @@ function AdminCheckin() {
           try {
             const r: any = await verify({ data: { token: decodedText } });
             const name = r.member?.display_name ?? r.member?.email ?? "Member";
-            const msg = r.alreadyCheckedIn ? `${name} already checked in today` : `Checked in ${name}`;
+            const msg = r.upgradedFromHome
+              ? `Checked in ${name} — switched today's home session to a gym visit`
+              : r.alreadyCheckedIn
+                ? `${name} already checked in today`
+                : `Checked in ${name}`;
             setRecent((cur) => [{ at: now, ok: true, message: msg }, ...cur].slice(0, 10));
             toast.success(msg);
 

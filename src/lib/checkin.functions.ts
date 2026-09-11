@@ -88,12 +88,45 @@ export const verifyAndCheckin = createServerFn({ method: "POST" })
     if (age > TOKEN_TTL_SECONDS || age < -60) throw new Error("Token expired");
     if (body.g !== me.gym_id) throw new Error("Wrong gym");
 
-    // Insert attendance (one per member per day)
+    // Insert attendance (one per member per UTC day, per attendance_logs_member_day_uidx)
+    const now = new Date();
     const { error } = await supabase
       .from("attendance_logs")
-      .insert({ gym_id: body.g, member_id: body.u, check_in_at: new Date().toISOString() });
+      .insert({
+        gym_id: body.g,
+        member_id: body.u,
+        check_in_at: now.toISOString(),
+        location_type: "gym",
+      });
     const duplicate = isDuplicateCheckin(error as any);
     if (error && !duplicate) throw new Error(error.message);
+
+    // A row already exists for today — it may be a self-reported home session.
+    // A real front-desk scan is authoritative: promote it to 'gym'.
+    let upgradedFromHome = false;
+    if (duplicate) {
+      const dayStart = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+      ).toISOString();
+      const dayEnd = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1),
+      ).toISOString();
+      const { data: existing } = await supabase
+        .from("attendance_logs")
+        .select("id, location_type")
+        .eq("member_id", body.u)
+        .gte("check_in_at", dayStart)
+        .lt("check_in_at", dayEnd)
+        .maybeSingle();
+      if (existing) {
+        upgradedFromHome = existing.location_type === "home";
+        await supabase
+          .from("attendance_logs")
+          .update({ location_type: "gym", check_in_at: now.toISOString() })
+          .eq("id", existing.id);
+      }
+    }
+
 
     const { data: member } = await supabase
       .from("users")
@@ -101,7 +134,7 @@ export const verifyAndCheckin = createServerFn({ method: "POST" })
       .eq("id", body.u)
       .maybeSingle();
 
-    return { ok: true as const, member, alreadyCheckedIn: duplicate };
+    return { ok: true as const, member, alreadyCheckedIn: duplicate, upgradedFromHome };
   });
 
 /** Manual check-in from Member 360 (admin/trainer front desk). */
