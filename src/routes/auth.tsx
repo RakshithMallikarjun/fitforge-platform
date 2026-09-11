@@ -14,6 +14,7 @@ import { isPlatformAdmin } from "@/lib/platform.functions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { friendlyAuthError, scorePassword } from "@/lib/auth-errors";
+import { verifyGymJoinCode } from "@/lib/join-code.functions";
 
 type AuthSearch = { deactivated?: boolean; gymDisabled?: boolean };
 
