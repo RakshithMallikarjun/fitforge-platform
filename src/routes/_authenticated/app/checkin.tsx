@@ -22,8 +22,7 @@ function CheckinPage() {
         <h1 className="text-2xl font-bold tracking-tight">Check in</h1>
         <p className="mt-3 text-sm text-muted-foreground">
           Checking in is paused because your membership expired
-          {membership.expiresAt ? ` on ${membership.expiresAt}` : ""}. Contact
-          {" "}
+          {membership.expiresAt ? ` on ${membership.expiresAt}` : ""}. Contact{" "}
           {membership.gymName ?? "your gym"} to renew — your history stays available.
         </p>
       </main>

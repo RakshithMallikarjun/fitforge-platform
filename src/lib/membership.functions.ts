@@ -29,8 +29,8 @@ export const getMembershipStatus = createServerFn({ method: "GET" })
         : Promise.resolve({ data: null }),
     ]);
 
-    const expiresAt = (profile as { membership_expires_at?: string | null } | null)
-      ?.membership_expires_at ?? null;
+    const expiresAt =
+      (profile as { membership_expires_at?: string | null } | null)?.membership_expires_at ?? null;
 
     return {
       expiresAt,
