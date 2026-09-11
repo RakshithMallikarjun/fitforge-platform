@@ -181,6 +181,27 @@ function ProfilePage() {
 
 
 
+/**
+ * `navigator.serviceWorker.ready` never settles when no worker is registered,
+ * so awaiting it directly leaves the toggle spinning forever. Race a timeout.
+ */
+async function getServiceWorkerRegistration(timeoutMs = 5000): Promise<ServiceWorkerRegistration> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error("Offline mode isn't ready yet — reload the app and try again.")),
+          timeoutMs,
+        );
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 function PushNotificationsSection() {
   const qc = useQueryClient();
   const statusFn = useServerFn(getPushStatus);
@@ -199,9 +220,26 @@ function PushNotificationsSection() {
     "serviceWorker" in navigator &&
     "PushManager" in window;
 
+  const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+  const configured = !!vapidKey;
+
+  async function requireRegistration(): Promise<ServiceWorkerRegistration | null> {
+    const existing = await navigator.serviceWorker.getRegistration();
+    if (!existing) {
+      toast.error("Offline mode isn't active yet", {
+        description:
+          "Reload the app (or install it to your home screen) so notifications can be set up.",
+      });
+      return null;
+    }
+    return getServiceWorkerRegistration();
+  }
+
   async function enable() {
     setBusy(true);
     try {
+      const reg = await requireRegistration();
+      if (!reg) return;
       const perm = await Notification.requestPermission();
       if (perm !== "granted") {
         toast.error("Notifications blocked", {
@@ -209,12 +247,9 @@ function PushNotificationsSection() {
         });
         return;
       }
-      const vapid = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
-      if (!vapid) throw new Error("VAPID public key not configured");
-      const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapid).buffer as ArrayBuffer,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey!).buffer as ArrayBuffer,
       });
       await subFn({ data: { subscription: sub.toJSON() } });
       qc.invalidateQueries({ queryKey: ["push-status"] });
@@ -229,9 +264,11 @@ function PushNotificationsSection() {
   async function disable() {
     setBusy(true);
     try {
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.getSubscription();
-      if (sub) await sub.unsubscribe();
+      const reg = await requireRegistration();
+      if (reg) {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) await sub.unsubscribe();
+      }
       await unsubFn();
       qc.invalidateQueries({ queryKey: ["push-status"] });
       toast.success("Notifications disabled");
@@ -242,6 +279,12 @@ function PushNotificationsSection() {
     }
   }
 
+  const hint = !supported
+    ? "Not supported on this device"
+    : !configured
+      ? "Push notifications aren't configured for this gym yet"
+      : "Workout & plan reminders";
+
   return (
     <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <div className="flex items-center gap-3">
@@ -250,13 +293,11 @@ function PushNotificationsSection() {
         </div>
         <div className="flex-1">
           <p className="text-sm font-semibold">Push Notifications</p>
-          <p className="text-xs text-muted-foreground">
-            {supported ? "Workout & plan reminders" : "Not supported on this device"}
-          </p>
+          <p className="text-xs text-muted-foreground">{hint}</p>
         </div>
         <Switch
           checked={enabled}
-          disabled={!supported || busy}
+          disabled={!supported || !configured || busy}
           onCheckedChange={(v) => (v ? enable() : disable())}
         />
       </div>

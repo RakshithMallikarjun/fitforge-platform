@@ -17,6 +17,30 @@ async function getRolesAndGym(supabase: any, userId: string) {
   };
 }
 
+/**
+ * Fires the plan-assigned push. There is no DB webhook configured, so the
+ * server calls the function directly. Push delivery must never break the
+ * assignment itself, so every failure is swallowed after logging.
+ */
+async function notifyPlanAssigned(memberId: string, planId: string, name: string) {
+  try {
+    const base = process.env["SUPABASE_URL"];
+    const secret = process.env["NOTIFY_WEBHOOK_SECRET"];
+    if (!base || !secret) return;
+    const res = await fetch(`${base}/functions/v1/notify-plan-assigned`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-webhook-secret": secret },
+      body: JSON.stringify({ record: { member_id: memberId, plan_id: planId, name } }),
+    });
+    if (!res.ok) {
+      console.error(`[plans] notify-plan-assigned failed [${res.status}]: ${await res.text()}`);
+    }
+  } catch (e) {
+    console.error("[plans] notify-plan-assigned error", e);
+  }
+}
+
+
 export const listPlans = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
@@ -201,6 +225,7 @@ export const assignPlan = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (planErr) throw new Error(planErr.message);
+    await notifyPlanAssigned(data.memberId, plan.id, src.name);
 
     const days = (src.workout_days ?? []).slice().sort((a: any, b: any) => a.order - b.order);
     for (let i = 0; i < days.length; i++) {
@@ -350,6 +375,7 @@ export const bulkAssignPlan = createServerFn({ method: "POST" })
           }
         }
         assigned++;
+        await notifyPlanAssigned(memberId, plan.id, (src as any).name);
       } catch (e: any) {
         errors.push(`${memberLabel}: ${e?.message ?? "unknown error"}`);
       }
