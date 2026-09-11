@@ -52,6 +52,7 @@ export const getMemberHome = createServerFn({ method: "GET" })
         .from("member_notes")
         .select("body, created_at, author_id, users:author_id(display_name)")
         .eq("member_id", userId)
+        .eq("shared_with_member", true)
         .order("created_at", { ascending: false })
         .limit(1),
     ]);

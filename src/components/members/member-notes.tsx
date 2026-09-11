@@ -2,16 +2,25 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
-import { Loader2, Trash2, StickyNote } from "lucide-react";
+import { Loader2, Trash2, StickyNote, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { createMemberNote, deleteMemberNote, listMemberNotes } from "@/lib/members.functions";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  createMemberNote,
+  deleteMemberNote,
+  listMemberNotes,
+  setMemberNoteShared,
+} from "@/lib/members.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 export function MemberNotes({ memberId }: { memberId: string }) {
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
   const [body, setBody] = useState("");
+  const [shareNew, setShareNew] = useState(false);
 
   const { data: notes = [], isLoading } = useQuery({
     queryKey: ["member-notes", memberId],
@@ -19,12 +28,22 @@ export function MemberNotes({ memberId }: { memberId: string }) {
   });
 
   const create = useMutation({
-    mutationFn: () => createMemberNote({ data: { memberId, body } }),
+    mutationFn: () => createMemberNote({ data: { memberId, body, sharedWithMember: shareNew } }),
     onSuccess: () => {
       setBody("");
+      setShareNew(false);
       qc.invalidateQueries({ queryKey: ["member-notes", memberId] });
     },
     onError: (e: any) => toast.error("Could not save note", { description: e?.message }),
+  });
+
+  const share = useMutation({
+    mutationFn: (v: { id: string; shared: boolean }) => setMemberNoteShared({ data: v }),
+    onSuccess: (_r, v) => {
+      qc.invalidateQueries({ queryKey: ["member-notes", memberId] });
+      toast.success(v.shared ? "Note shared with the member" : "Note is private again");
+    },
+    onError: (e: any) => toast.error("Could not update note", { description: e?.message }),
   });
 
   const del = useMutation({
@@ -42,7 +61,13 @@ export function MemberNotes({ memberId }: { memberId: string }) {
           value={body}
           onChange={(e) => setBody(e.target.value)}
         />
-        <div className="mt-2 flex justify-end">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Switch id="share-new-note" checked={shareNew} onCheckedChange={setShareNew} />
+            <Label htmlFor="share-new-note" className="text-xs text-muted-foreground">
+              Share with member
+            </Label>
+          </div>
           <Button size="sm" disabled={!body.trim() || create.isPending} onClick={() => create.mutate()}>
             {create.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Add note
@@ -70,8 +95,24 @@ export function MemberNotes({ memberId }: { memberId: string }) {
                     <span className="ml-2 font-normal text-muted-foreground">
                       {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
                     </span>
+                    {n.shared_with_member && (
+                      <Badge variant="secondary" className="ml-2 gap-1 align-middle text-[10px]">
+                        <Eye className="h-3 w-3" /> Shared
+                      </Badge>
+                    )}
                   </p>
                   <p className="mt-1.5 whitespace-pre-wrap text-sm">{n.body}</p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <Switch
+                      id={`share-${n.id}`}
+                      checked={!!n.shared_with_member}
+                      disabled={share.isPending}
+                      onCheckedChange={(v) => share.mutate({ id: n.id, shared: v })}
+                    />
+                    <Label htmlFor={`share-${n.id}`} className="text-xs text-muted-foreground">
+                      Share with member
+                    </Label>
+                  </div>
                 </div>
                 {n.author_id === me?.userId && (
                   <button
