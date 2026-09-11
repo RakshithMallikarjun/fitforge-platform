@@ -11,7 +11,13 @@ export type AdminStats = {
   newThisMonth: number;
   sessionsToday: number;
   avgCheckIns7d: number;
+  /**
+   * Which population sessionsToday / avgCheckIns7d cover: the whole gym (admins)
+   * or only the caller's assigned members (trainers). The UI must label this.
+   */
+  activityScope: "gym" | "assigned";
 };
+
 
 export const getAdminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
