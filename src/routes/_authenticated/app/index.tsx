@@ -136,7 +136,10 @@ function WorkoutOfTheDay({
   data: Awaited<ReturnType<typeof getMemberHome>> | undefined;
   isLoading: boolean;
 }) {
+  const navigate = useNavigate();
+
   if (isLoading) {
+
     return (
       <div className="bento-emerald animate-pulse">
         <div className="h-3 w-24 rounded bg-white/20" />
