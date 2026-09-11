@@ -46,7 +46,6 @@ async function requireAdminGym(supabase: any, userId: string): Promise<string> {
   return user.gym_id as string;
 }
 
-
 /** Fetch the current user's gym theme (member or staff). */
 export const getGymTheme = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -195,4 +194,3 @@ export const regenerateGymJoinCode = createServerFn({ method: "POST" })
     if (error) throw error;
     return { joinCode };
   });
-

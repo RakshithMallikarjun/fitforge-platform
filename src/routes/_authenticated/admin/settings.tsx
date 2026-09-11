@@ -484,7 +484,10 @@ See you at the gym!`;
           </div>
 
           <pre className="whitespace-pre-wrap rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
-            {revealCode ? signupMessage : signupMessage.replace(joinCode, "••••••••••••")}
+            {revealCode || !joinCode
+              ? signupMessage
+              : signupMessage.replace(joinCode, "••••••••••••")}
+
           </pre>
         </CardContent>
       </Card>
