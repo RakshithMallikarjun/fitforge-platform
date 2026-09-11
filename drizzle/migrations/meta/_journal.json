@@ -78,6 +78,13 @@
       "when": 1789132465384,
       "tag": "0010_scope_workout_policies_to_authenticated_and_harden_definers",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789132501477,
+      "tag": "0011_restore_is_gym_staff_user_for_member_visibility",
+      "breakpoints": true
     }
   ]
 }
