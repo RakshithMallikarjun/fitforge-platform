@@ -8,12 +8,26 @@ import { Home, Loader2, RefreshCw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { issueCheckinToken, selfCheckin } from "@/lib/checkin.functions";
+import { useMembership } from "@/lib/membership-context";
 
 export const Route = createFileRoute("/_authenticated/app/checkin")({
   component: CheckinPage,
 });
 
 function CheckinPage() {
+  const membership = useMembership();
+  if (membership?.expired) {
+    return (
+      <main className="mx-auto w-full max-w-lg px-5 py-8 text-center">
+        <h1 className="text-2xl font-bold tracking-tight">Check in</h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Checking in is paused because your membership expired
+          {membership.expiresAt ? ` on ${membership.expiresAt}` : ""}. Contact{" "}
+          {membership.gymName ?? "your gym"} to renew — your history stays available.
+        </p>
+      </main>
+    );
+  }
   return (
     <main className="mx-auto w-full max-w-lg px-5 py-8">
       <div className="mb-6 text-center">

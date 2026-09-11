@@ -17,6 +17,9 @@ import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { registerSW } from "@/lib/pwa/register-sw";
 import { unreadCount } from "@/lib/messages.functions";
 import { getGymTheme } from "@/lib/gym-theme.functions";
+import { getMembershipStatus } from "@/lib/membership.functions";
+import { MembershipProvider } from "@/lib/membership-context";
+import { AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app")({
   head: () => ({
@@ -56,6 +59,13 @@ function MemberShell() {
     queryFn: () => fetchUnread(),
     enabled: !!user,
     refetchInterval: 30_000,
+  });
+  const fetchMembership = useServerFn(getMembershipStatus);
+  const { data: membership } = useQuery({
+    queryKey: ["membership-status"],
+    queryFn: () => fetchMembership(),
+    enabled: !!user,
+    staleTime: 5 * 60_000,
   });
   const { data: gymTheme } = useQuery({
     queryKey: ["gym-theme"],
@@ -122,7 +132,25 @@ function MemberShell() {
       </header>
 
       <main className="mx-auto max-w-md px-5 py-6">
-        <Outlet />
+        {membership?.expired && (
+          <div className="mb-5 flex items-start gap-3 rounded-2xl border border-destructive/40 bg-destructive/10 p-4 text-sm">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+            <p className="text-foreground">
+              Your membership expired on{" "}
+              <span className="font-semibold">
+                {new Date(`${membership.expiresAt}T00:00:00`).toLocaleDateString(undefined, {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+              . Contact {membership.gymName ?? theme.name} to renew.
+            </p>
+          </div>
+        )}
+        <MembershipProvider value={membership ?? null}>
+          <Outlet />
+        </MembershipProvider>
         {(theme.supportEmail || theme.supportPhone) && (
           <div className="mt-10 flex flex-col items-center gap-2 border-t border-border pt-6 text-xs text-muted-foreground">
             <p>Questions about your membership or training?</p>

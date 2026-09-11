@@ -67,11 +67,14 @@ function AdminDashboard() {
             <>
               <BentoStatCard
                 variant="dark"
-                label="Active members"
-                value={stats.activeMembers.toLocaleString()}
+                label="Active memberships"
+                value={stats.activeMemberships.toLocaleString()}
                 footer={
-                  <span className="inline-flex items-center gap-1">
-                    <ArrowUpRight className="h-3 w-3" /> {stats.newThisMonth} new this month
+                  <span className="flex flex-col gap-0.5">
+                    <span>{stats.activeAccounts.toLocaleString()} accounts enabled</span>
+                    <span className="inline-flex items-center gap-1">
+                      <ArrowUpRight className="h-3 w-3" /> {stats.newThisMonth} new this month
+                    </span>
                   </span>
                 }
               />

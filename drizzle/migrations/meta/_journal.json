@@ -64,6 +64,13 @@
       "when": 1789122517728,
       "tag": "0008_member_notes_shared_with_member",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789122908653,
+      "tag": "0009_platform_gyms_active_membership_definition",
+      "breakpoints": true
     }
   ]
 }

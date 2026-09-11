@@ -7,6 +7,7 @@ import { BentoStatCard } from "@/components/bento-stat-card";
 import { Button } from "@/components/ui/button";
 import { getMemberHome } from "@/lib/member-home.functions";
 import { getMemberTip } from "@/lib/overload.functions";
+import { useMembershipExpired } from "@/lib/membership-context";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: MemberHome,
@@ -23,6 +24,7 @@ function formatRelative(iso: string | null): string {
 }
 
 function MemberHome() {
+  const membershipExpired = useMembershipExpired();
   const fetchHome = useServerFn(getMemberHome);
   const fetchTip = useServerFn(getMemberTip);
   const { data, isLoading } = useQuery({
@@ -52,17 +54,28 @@ function MemberHome() {
             Hey {name} — ready to train?
           </h1>
         </div>
-        <Link
-          to="/app/checkin"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-[var(--shadow-card)] hover:bg-muted"
-        >
-          <QrCode className="h-4 w-4 text-primary" />
-          Check in
-        </Link>
+        {membershipExpired ? (
+          <span
+            aria-disabled="true"
+            title="Renew your membership to check in"
+            className="inline-flex shrink-0 cursor-not-allowed items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground opacity-60"
+          >
+            <QrCode className="h-4 w-4" />
+            Check in
+          </span>
+        ) : (
+          <Link
+            to="/app/checkin"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-[var(--shadow-card)] hover:bg-muted"
+          >
+            <QrCode className="h-4 w-4 text-primary" />
+            Check in
+          </Link>
+        )}
       </div>
 
       {/* Workout of the day hero */}
-      <WorkoutOfTheDay data={data} isLoading={isLoading} />
+      <WorkoutOfTheDay data={data} isLoading={isLoading} disabled={membershipExpired} />
 
       <div className="grid grid-cols-2 gap-3">
         <BentoStatCard
@@ -139,9 +152,11 @@ function MemberHome() {
 function WorkoutOfTheDay({
   data,
   isLoading,
+  disabled = false,
 }: {
   data: Awaited<ReturnType<typeof getMemberHome>> | undefined;
   isLoading: boolean;
+  disabled?: boolean;
 }) {
   const navigate = useNavigate();
 
@@ -195,12 +210,18 @@ function WorkoutOfTheDay({
       <Button
         variant="secondary"
         size="sm"
+        disabled={disabled}
         className="mt-5 rounded-lg"
         onClick={() => navigate({ to: "/app/workout/$dayId", params: { dayId: next.dayId } })}
       >
         <Play className="mr-1.5 h-3.5 w-3.5" />
         Start workout
       </Button>
+      {disabled && (
+        <p className="mt-2 text-xs text-primary-foreground/80">
+          Renew your membership to start workouts.
+        </p>
+      )}
     </div>
   );
 }
