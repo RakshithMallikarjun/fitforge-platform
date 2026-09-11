@@ -7,21 +7,29 @@ Uses **Lovable AI Gateway** (`google/gemini-2.5-flash` by default). The
 
 If you want to switch models, edit `model:` in `src/lib/overload.functions.ts`.
 
-## Web Push (deferred — Prompt 8.2)
+## Web Push
 
-Once you're ready to enable push notifications, generate a VAPID keypair:
+Generate a VAPID keypair:
 
 ```bash
 npx web-push generate-vapid-keys
 ```
 
-Add these as secrets:
+Required secrets:
 
-- `VAPID_PUBLIC_KEY`  (exposed to the browser via a server function)
-- `VAPID_PRIVATE_KEY` (server only)
-- `VAPID_SUBJECT`     (`mailto:you@yourgym.com`)
+| Secret | Purpose |
+| --- | --- |
+| `VAPID_PUBLIC_KEY` | Public application server key (also needed in the browser as `VITE_VAPID_PUBLIC_KEY`; the Profile toggle stays disabled without it) |
+| `VAPID_PRIVATE_KEY` | Signs push messages (server only) |
+| `VAPID_SUBJECT` | Contact for push services, e.g. `mailto:you@yourgym.com` |
+| `NOTIFY_WEBHOOK_SECRET` | Shared secret sent as `x-webhook-secret` when the server calls `notify-plan-assigned` |
 
-Then build the `push_subscriptions` table + `send-push` edge function.
+Plan-assignment pushes are fired directly from `src/lib/plans.functions.ts`
+(`assignPlan` and `bulkAssignPlan`) — no database webhook is required. A push
+failure is logged and never fails the assignment.
+
+Push and offline support only work on the published site, where the service
+worker registers; they do not work in the editor preview.
 
 ## White-label branding
 
