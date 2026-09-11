@@ -1,9 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { dateStringInZone, dateStringRange, resolveGymTimezone } from "@/lib/gym-date";
+import { isMembershipCurrent } from "@/lib/membership";
 
 export type AdminStats = {
-  activeMembers: number;
+  /** Active account AND membership not past expiry (gym timezone). */
+  activeMemberships: number;
+  /** users.active = true, regardless of membership expiry. */
+  activeAccounts: number;
   newThisMonth: number;
   sessionsToday: number;
   avgCheckIns7d: number;
@@ -15,7 +19,13 @@ export const getAdminStats = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { timeZone, gymId } = await resolveGymTimezone(supabase, userId);
     if (!gymId) {
-      return { activeMembers: 0, newThisMonth: 0, sessionsToday: 0, avgCheckIns7d: 0 };
+      return {
+        activeMemberships: 0,
+        activeAccounts: 0,
+        newThisMonth: 0,
+        sessionsToday: 0,
+        avgCheckIns7d: 0,
+      };
     }
 
     const { data: memberRoles } = await supabase
@@ -31,7 +41,8 @@ export const getAdminStats = createServerFn({ method: "GET" })
     const monthStart = `${todayStr.slice(0, 7)}-01T00:00:00.000Z`;
     const sevenDaysAgo = new Date(now.getTime() - 7 * 86400_000).toISOString();
 
-    let activeMembers = 0;
+    let activeMemberships = 0;
+    let activeAccounts = 0;
     let newThisMonth = 0;
     if (memberIds.length) {
       const [{ data: activeRows }, { count: nm }, { data: profiles }] = await Promise.all([
@@ -46,13 +57,14 @@ export const getAdminStats = createServerFn({ method: "GET" })
           .select("user_id, membership_expires_at")
           .in("user_id", memberIds),
       ]);
-      // A lapsed membership is not an active member, even if the login is enabled.
-      const expired = new Set(
-        (profiles ?? [])
-          .filter((p: any) => p.membership_expires_at && p.membership_expires_at < todayStr)
-          .map((p: any) => p.user_id as string),
+      // A lapsed membership is not an active membership, even if the login is enabled.
+      const expiryByUser = new Map<string, string | null>(
+        (profiles ?? []).map((p: any) => [p.user_id as string, p.membership_expires_at ?? null]),
       );
-      activeMembers = (activeRows ?? []).filter((u: any) => !expired.has(u.id)).length;
+      activeAccounts = (activeRows ?? []).length;
+      activeMemberships = (activeRows ?? []).filter((u: any) =>
+        isMembershipCurrent(expiryByUser.get(u.id) ?? null, todayStr),
+      ).length;
       newThisMonth = nm ?? 0;
     }
 
@@ -70,7 +82,8 @@ export const getAdminStats = createServerFn({ method: "GET" })
     ]);
 
     return {
-      activeMembers,
+      activeMemberships,
+      activeAccounts,
       newThisMonth,
       sessionsToday: sessions ?? 0,
       avgCheckIns7d: Math.round(((weekCheckIns ?? 0) / 7) * 10) / 10,
