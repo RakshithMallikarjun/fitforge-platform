@@ -72,31 +72,26 @@ export const getGymTheme = createServerFn({ method: "GET" })
     };
   });
 
-/** Admin: read the full gym settings row. */
+/**
+ * Admin: read the full gym settings row.
+ *
+ * `subscription_plan`, `payment_status` and `join_code` are deliberately not
+ * granted to the `authenticated` role, so those are read with the service-role
+ * client AFTER the caller has been verified as an admin of this gym.
+ */
 export const getGymSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<GymSettingsRow | null> => {
     const { supabase, userId } = context;
-    const { data: isAdmin } = await supabase.rpc("has_role", {
-      _user_id: userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
-    const { data: user } = await supabase
-      .from("users")
-      .select("gym_id")
-      .eq("id", userId)
-      .maybeSingle();
-    if (!user?.gym_id) return null;
-    const { data: gym, error } = await supabase
+    const gymId = await requireAdminGym(supabase, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: gym, error } = await supabaseAdmin
       .from("gyms")
-      .select(
-        "id, name, slug, primary_color, secondary_color, logo_url, font_family, support_email, support_phone",
-      )
-      .eq("id", user.gym_id)
+      .select(SETTINGS_COLUMNS)
+      .eq("id", gymId)
       .maybeSingle();
     if (error) throw error;
-    return (gym as GymSettingsRow) ?? null;
+    return (gym as unknown as GymSettingsRow) ?? null;
   });
 
 /** Admin: update gym branding. */
@@ -120,20 +115,10 @@ export const updateGymSettings = createServerFn({ method: "POST" })
       return data;
     },
   )
-  .handler(async ({ data, context }): Promise<GymSettingsRow> => {
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
     const { supabase, userId } = context;
-    const { data: isAdmin } = await supabase.rpc("has_role", {
-      _user_id: userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
-    const { data: user } = await supabase
-      .from("users")
-      .select("gym_id")
-      .eq("id", userId)
-      .maybeSingle();
-    if (!user?.gym_id) throw new Error("No gym linked to this user");
-    const { data: gym, error } = await supabase
+    const gymId = await requireAdminGym(supabase, userId);
+    const { error } = await supabase
       .from("gyms")
       .update({
         name: data.name.trim(),
@@ -144,11 +129,70 @@ export const updateGymSettings = createServerFn({ method: "POST" })
         support_email: data.supportEmail?.trim() || null,
         support_phone: data.supportPhone?.trim() || null,
       })
-      .eq("id", user.gym_id)
-      .select(
-        "id, name, slug, primary_color, secondary_color, logo_url, font_family, support_email, support_phone",
-      )
-      .single();
+      .eq("id", gymId);
     if (error) throw error;
-    return gym as GymSettingsRow;
+    return { ok: true };
   });
+
+/** Admin: update operational settings (timezone + custom domain). */
+export const updateGymOperations = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { timezone: string; customDomain?: string | null }) => {
+    if (!data.timezone?.trim()) throw new Error("Timezone is required");
+    try {
+      new Intl.DateTimeFormat("en-US", { timeZone: data.timezone });
+    } catch {
+      throw new Error("Unknown timezone");
+    }
+    const domain = data.customDomain?.trim().toLowerCase() || null;
+    if (domain && !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain))
+      throw new Error("Enter a bare domain like app.yourgym.com");
+    return { timezone: data.timezone.trim(), customDomain: domain };
+  })
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { supabase, userId } = context;
+    const gymId = await requireAdminGym(supabase, userId);
+    const { error } = await supabase
+      .from("gyms")
+      .update({ timezone: data.timezone, custom_domain: data.customDomain })
+      .eq("id", gymId);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+/** Admin: read the gym's self-service join code. */
+export const getGymJoinCode = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ slug: string; joinCode: string | null }> => {
+    const { supabase, userId } = context;
+    const gymId = await requireAdminGym(supabase, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("gyms")
+      .select("slug, join_code")
+      .eq("id", gymId)
+      .maybeSingle();
+    if (error) throw error;
+    return { slug: data?.slug ?? "", joinCode: data?.join_code ?? null };
+  });
+
+/** Admin: issue a fresh join code, invalidating anything already shared. */
+export const regenerateGymJoinCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ joinCode: string }> => {
+    const { supabase, userId } = context;
+    const gymId = await requireAdminGym(supabase, userId);
+    const bytes = new Uint8Array(6);
+    crypto.getRandomValues(bytes);
+    const joinCode = Array.from(bytes)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("gyms")
+      .update({ join_code: joinCode })
+      .eq("id", gymId);
+    if (error) throw error;
+    return { joinCode };
+  });
+
