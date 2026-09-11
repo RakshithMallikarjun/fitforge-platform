@@ -37,7 +37,6 @@ export default defineConfig({
         // Nitro emits the browser-served files to dist/client (served at "/"),
         // so both the precache manifest and sw.js must target that folder.
         outDir: "dist/client",
-        swDest: "dist/client/sw.js",
         workbox: {
           // Generate the manifest against the actually-served directory so URLs
           // are root-relative ("assets/...", "offline.html") — not "client/...".
