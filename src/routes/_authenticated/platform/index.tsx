@@ -35,7 +35,15 @@ export const Route = createFileRoute("/_authenticated/platform/")({
   component: PlatformOverviewPage,
 });
 
-function Card({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+function Card({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <h2 className="text-sm font-semibold">{title}</h2>
@@ -100,7 +108,11 @@ function PlatformOverviewPage() {
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <KpiCard label="Total gyms" value={o.total_gyms} />
             <KpiCard label="Enabled" value={o.enabled_gyms} />
-            <KpiCard label="Disabled" value={o.disabled_gyms} tone={o.disabled_gyms ? "warn" : "default"} />
+            <KpiCard
+              label="Disabled"
+              value={o.disabled_gyms}
+              tone={o.disabled_gyms ? "warn" : "default"}
+            />
             <KpiCard
               label="Engaged (30d)"
               value={o.engaged_gyms_30d}
@@ -118,7 +130,11 @@ function PlatformOverviewPage() {
               tone={o.overdue_gyms ? "bad" : "default"}
               hint="Payment status manually recorded as overdue or failed."
             />
-            <KpiCard label="Total members" value={o.total_members} hint={`${o.active_members} active accounts`} />
+            <KpiCard
+              label="Total members"
+              value={o.total_members}
+              hint={`${o.active_members} active accounts`}
+            />
             <KpiCard
               label="MAU"
               value={o.mau}
@@ -131,7 +147,10 @@ function PlatformOverviewPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <Card title="Signups" subtitle="Gyms and members created, last 90 days">
               {signups.isError ? (
-                <ErrorState message={(signups.error as Error).message} onRetry={() => signups.refetch()} />
+                <ErrorState
+                  message={(signups.error as Error).message}
+                  onRetry={() => signups.refetch()}
+                />
               ) : signups.isLoading ? (
                 <Skeleton className="h-56 rounded-xl" />
               ) : !hasSignups ? (
@@ -140,19 +159,46 @@ function PlatformOverviewPage() {
                 <ResponsiveContainer width="100%" height={220}>
                   <AreaChart data={signupData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis dataKey="day" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickFormatter={(d) => String(d).slice(5)} />
-                    <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} allowDecimals={false} />
+                    <XAxis
+                      dataKey="day"
+                      tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                      tickFormatter={(d) => String(d).slice(5)}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                      allowDecimals={false}
+                    />
                     <RTooltip />
-                    <Area type="monotone" dataKey="members_created" name="Members" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.2} />
-                    <Area type="monotone" dataKey="gyms_created" name="Gyms" stroke="var(--secondary)" fill="var(--secondary)" fillOpacity={0.2} />
+                    <Area
+                      type="monotone"
+                      dataKey="members_created"
+                      name="Members"
+                      stroke="var(--primary)"
+                      fill="var(--primary)"
+                      fillOpacity={0.2}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="gyms_created"
+                      name="Gyms"
+                      stroke="var(--secondary)"
+                      fill="var(--secondary)"
+                      fillOpacity={0.2}
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
             </Card>
 
-            <Card title="Platform activity" subtitle="Workouts, check-ins and active members per day (30d)">
+            <Card
+              title="Platform activity"
+              subtitle="Workouts, check-ins and active members per day (30d)"
+            >
               {activity.isError ? (
-                <ErrorState message={(activity.error as Error).message} onRetry={() => activity.refetch()} />
+                <ErrorState
+                  message={(activity.error as Error).message}
+                  onRetry={() => activity.refetch()}
+                />
               ) : activity.isLoading ? (
                 <Skeleton className="h-56 rounded-xl" />
               ) : !hasActivity ? (
@@ -161,12 +207,37 @@ function PlatformOverviewPage() {
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={activityData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis dataKey="day" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickFormatter={(d) => String(d).slice(5)} />
-                    <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} allowDecimals={false} />
+                    <XAxis
+                      dataKey="day"
+                      tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                      tickFormatter={(d) => String(d).slice(5)}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                      allowDecimals={false}
+                    />
                     <RTooltip />
-                    <Line type="monotone" dataKey="workouts" name="Workouts" stroke="var(--primary)" dot={false} />
-                    <Line type="monotone" dataKey="checkins" name="Check-ins" stroke="var(--secondary)" dot={false} />
-                    <Line type="monotone" dataKey="active_members" name="Active members" stroke="var(--muted-foreground)" dot={false} />
+                    <Line
+                      type="monotone"
+                      dataKey="workouts"
+                      name="Workouts"
+                      stroke="var(--primary)"
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="checkins"
+                      name="Check-ins"
+                      stroke="var(--secondary)"
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="active_members"
+                      name="Active members"
+                      stroke="var(--muted-foreground)"
+                      dot={false}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -178,11 +249,20 @@ function PlatformOverviewPage() {
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart
-                    data={Object.entries(o.gyms_by_payment_status).map(([k, v]) => ({ name: k, gyms: v }))}
+                    data={Object.entries(o.gyms_by_payment_status).map(([k, v]) => ({
+                      name: k,
+                      gyms: v,
+                    }))}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
-                    <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} allowDecimals={false} />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                      allowDecimals={false}
+                    />
                     <RTooltip />
                     <Bar dataKey="gyms" fill="var(--primary)" radius={[6, 6, 0, 0]} />
                   </BarChart>
@@ -195,10 +275,18 @@ function PlatformOverviewPage() {
                 <EmptyState>No gyms yet.</EmptyState>
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={Object.entries(o.gyms_by_plan).map(([k, v]) => ({ name: k, gyms: v }))}>
+                  <BarChart
+                    data={Object.entries(o.gyms_by_plan).map(([k, v]) => ({ name: k, gyms: v }))}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
-                    <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} allowDecimals={false} />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                      allowDecimals={false}
+                    />
                     <RTooltip />
                     <Bar dataKey="gyms" fill="var(--secondary)" radius={[6, 6, 0, 0]} />
                   </BarChart>
@@ -208,9 +296,15 @@ function PlatformOverviewPage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <Card title="Needs attention" subtitle="Enabled gyms with no activity for 14+ days, stalest first">
+            <Card
+              title="Needs attention"
+              subtitle="Enabled gyms with no activity for 14+ days, stalest first"
+            >
               {gyms.isError ? (
-                <ErrorState message={(gyms.error as Error).message} onRetry={() => gyms.refetch()} />
+                <ErrorState
+                  message={(gyms.error as Error).message}
+                  onRetry={() => gyms.refetch()}
+                />
               ) : gyms.isLoading ? (
                 <Skeleton className="h-32 rounded-xl" />
               ) : needsAttention.length === 0 ? (

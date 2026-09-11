@@ -4,12 +4,26 @@ import { useServerFn } from "@tanstack/react-start";
 import { format, differenceInDays } from "date-fns";
 import { AlertTriangle, ChevronDown, ChevronRight, Plus, FileText, Download } from "lucide-react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
 } from "recharts";
 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { listAssessments, exportAssessmentReport } from "@/lib/assessments.functions";
 import { NewAssessmentSheet } from "./new-assessment-sheet";
 
@@ -73,7 +87,12 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
           )}
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDownload} disabled={exporting || rows.length === 0} className="rounded-lg">
+          <Button
+            variant="outline"
+            onClick={handleDownload}
+            disabled={exporting || rows.length === 0}
+            className="rounded-lg"
+          >
             <Download className="mr-1.5 h-4 w-4" /> {exporting ? "Generating…" : "Download PDF"}
           </Button>
           <Button onClick={() => setOpen(true)} className="rounded-lg">
@@ -87,13 +106,17 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
           <div className="text-sm">
             <p className="font-semibold">Due for assessment</p>
-            <p className="text-xs opacity-80">It's been {dueDays} days since the last assessment.</p>
+            <p className="text-xs opacity-80">
+              It's been {dueDays} days since the last assessment.
+            </p>
           </div>
         </div>
       )}
 
       {isLoading ? (
-        <div className="rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">Loading…</div>
+        <div className="rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+          Loading…
+        </div>
       ) : rows.length === 0 ? (
         <div className="grid place-items-center gap-2 rounded-2xl border border-dashed border-border py-12 text-sm text-muted-foreground">
           <FileText className="h-6 w-6" />
@@ -124,13 +147,25 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
                       onClick={() => setExpanded(isOpen ? null : a.id)}
                     >
                       <TableCell>
-                        {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                        {isOpen ? (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        )}
                       </TableCell>
-                      <TableCell className="font-medium">{format(new Date(a.date), "PP")}</TableCell>
-                      <TableCell>{a.weight != null ? `${Number(a.weight).toFixed(1)} kg` : "—"}</TableCell>
+                      <TableCell className="font-medium">
+                        {format(new Date(a.date), "PP")}
+                      </TableCell>
+                      <TableCell>
+                        {a.weight != null ? `${Number(a.weight).toFixed(1)} kg` : "—"}
+                      </TableCell>
                       <TableCell>{a.bmi != null ? Number(a.bmi).toFixed(1) : "—"}</TableCell>
-                      <TableCell>{a.body_fat_pct != null ? `${Number(a.body_fat_pct).toFixed(1)}%` : "—"}</TableCell>
-                      <TableCell>{a.muscle_mass != null ? `${Number(a.muscle_mass).toFixed(1)} kg` : "—"}</TableCell>
+                      <TableCell>
+                        {a.body_fat_pct != null ? `${Number(a.body_fat_pct).toFixed(1)}%` : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {a.muscle_mass != null ? `${Number(a.muscle_mass).toFixed(1)} kg` : "—"}
+                      </TableCell>
                       <TableCell className="max-w-[240px] truncate text-muted-foreground">
                         {a.notes ?? "—"}
                       </TableCell>
@@ -168,7 +203,13 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
               <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
               <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
               <Tooltip />
-              <Line type="monotone" dataKey="body_fat_pct" stroke="var(--secondary)" strokeWidth={2} dot />
+              <Line
+                type="monotone"
+                dataKey="body_fat_pct"
+                stroke="var(--secondary)"
+                strokeWidth={2}
+                dot
+              />
             </LineChart>
           </ChartCard>
           <ChartCard title="Strength 1RM" className="md:col-span-2">
@@ -191,7 +232,15 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
   );
 }
 
-function ChartCard({ title, children, className = "" }: { title: string; children: React.ReactElement; className?: string }) {
+function ChartCard({
+  title,
+  children,
+  className = "",
+}: {
+  title: string;
+  children: React.ReactElement;
+  className?: string;
+}) {
   return (
     <div className={`rounded-2xl border border-border bg-card p-4 ${className}`}>
       <h4 className="mb-2 text-sm font-semibold">{title}</h4>
@@ -231,13 +280,19 @@ function DetailGrid({ a }: { a: any }) {
         {fields.map(([k, v, suffix]) => (
           <div key={k} className="flex items-baseline justify-between gap-2 text-sm">
             <span className="text-muted-foreground">{k}</span>
-            <span className="font-medium">{v != null && v !== "" ? `${typeof v === "number" ? Number(v).toFixed(1) : v}${suffix ? ` ${suffix}` : ""}` : "—"}</span>
+            <span className="font-medium">
+              {v != null && v !== ""
+                ? `${typeof v === "number" ? Number(v).toFixed(1) : v}${suffix ? ` ${suffix}` : ""}`
+                : "—"}
+            </span>
           </div>
         ))}
       </div>
       {a.notes && (
         <div className="rounded-xl bg-background p-3 text-sm">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Notes</p>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Notes
+          </p>
           <p className="whitespace-pre-wrap">{a.notes}</p>
         </div>
       )}

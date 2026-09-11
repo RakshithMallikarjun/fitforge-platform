@@ -5,7 +5,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { format, parseISO, isWithinInterval } from "date-fns";
 import { TrendingUp, Plus, Trash2, Trophy, Target, Dumbbell, Activity, Camera } from "lucide-react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
 } from "recharts";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -15,12 +21,23 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  getProgressData, createGoal, deleteGoal, getFitnessScore, getProgressPhotos,
-  type ProgressData, type FitnessScore, type ProgressPhoto,
+  getProgressData,
+  createGoal,
+  deleteGoal,
+  getFitnessScore,
+  getProgressPhotos,
+  type ProgressData,
+  type FitnessScore,
+  type ProgressPhoto,
 } from "@/lib/progress.functions";
 import { listPersonalRecords, type PersonalRecord } from "@/lib/workout-player.functions";
 
@@ -62,16 +79,32 @@ function ProgressPage() {
         </TabsList>
 
         <TabsContent value="body" className="mt-4">
-          {data ? <BodyTab data={data} /> : <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />}
+          {data ? (
+            <BodyTab data={data} />
+          ) : (
+            <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />
+          )}
         </TabsContent>
         <TabsContent value="strength" className="mt-4">
-          {data ? <StrengthTab data={data} /> : <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />}
+          {data ? (
+            <StrengthTab data={data} />
+          ) : (
+            <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />
+          )}
         </TabsContent>
         <TabsContent value="history" className="mt-4">
-          {data ? <HistoryTab data={data} /> : <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />}
+          {data ? (
+            <HistoryTab data={data} />
+          ) : (
+            <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />
+          )}
         </TabsContent>
         <TabsContent value="goals" className="mt-4">
-          {data ? <GoalsTab data={data} /> : <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />}
+          {data ? (
+            <GoalsTab data={data} />
+          ) : (
+            <TabFallback error={error} onRetry={() => void refetch()} busy={isFetching} />
+          )}
         </TabsContent>
 
         <TabsContent value="photos" className="mt-4">
@@ -83,7 +116,15 @@ function ProgressPage() {
 }
 
 /** Shown whenever progress data is unavailable — loading, or a failed query. */
-function TabFallback({ error, onRetry, busy }: { error: unknown; onRetry: () => void; busy: boolean }) {
+function TabFallback({
+  error,
+  onRetry,
+  busy,
+}: {
+  error: unknown;
+  onRetry: () => void;
+  busy: boolean;
+}) {
   if (!error) return <SkeletonCard />;
   console.error("[progress] failed to load progress data:", error);
   return (
@@ -92,17 +133,20 @@ function TabFallback({ error, onRetry, busy }: { error: unknown; onRetry: () => 
       <p className="mt-1 text-xs text-muted-foreground">
         We couldn&apos;t load your progress right now. Please try again in a moment.
       </p>
-      <Button variant="outline" size="sm" className="mt-4 rounded-xl" onClick={onRetry} disabled={busy}>
+      <Button
+        variant="outline"
+        size="sm"
+        className="mt-4 rounded-xl"
+        onClick={onRetry}
+        disabled={busy}
+      >
         {busy ? "Retrying…" : "Try again"}
       </Button>
     </div>
   );
 }
 
-
-
 /* ---------------- FITNESS SCORE CARD ---------------- */
-
 
 function FitnessScoreCard({ score }: { score: FitnessScore }) {
   if (!score.hasAssessment || score.score == null) {
@@ -117,9 +161,7 @@ function FitnessScoreCard({ score }: { score: FitnessScore }) {
   }
   const s = score.score;
   const barColor =
-    s < 40 ? "bg-red-500" :
-    s < 70 ? "bg-amber-500" :
-    s < 90 ? "bg-green-500" : "bg-yellow-400";
+    s < 40 ? "bg-red-500" : s < 70 ? "bg-amber-500" : s < 90 ? "bg-green-500" : "bg-yellow-400";
   const trendEl =
     score.trend == null ? (
       <span className="text-xs text-muted-foreground">First assessment</span>
@@ -134,7 +176,9 @@ function FitnessScoreCard({ score }: { score: FitnessScore }) {
   return (
     <div className="rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)]">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Fitness Score</p>
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Fitness Score
+        </p>
         {trendEl}
       </div>
       <div className="mt-2 flex items-baseline gap-3">
@@ -152,7 +196,15 @@ function SkeletonCard() {
   return <div className="h-40 animate-pulse rounded-[2rem] bg-muted" />;
 }
 
-function EmptyCard({ icon: Icon, title, subtitle }: { icon: any; title: string; subtitle?: string }) {
+function EmptyCard({
+  icon: Icon,
+  title,
+  subtitle,
+}: {
+  icon: any;
+  title: string;
+  subtitle?: string;
+}) {
   return (
     <div className="rounded-[2rem] border border-border bg-card p-8 text-center shadow-[var(--shadow-card)]">
       <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-secondary-soft text-secondary">
@@ -197,14 +249,27 @@ function BodyTab({ data }: { data: ProgressData }) {
           Latest snapshot · {format(parseISO(latest.date), "PPP")}
         </p>
         <div className="mt-3 grid grid-cols-3 gap-3">
-          <Metric label="Weight" value={latest.weight} unit={latest.unit_system === "imperial" ? "lb" : "kg"} />
+          <Metric
+            label="Weight"
+            value={latest.weight}
+            unit={latest.unit_system === "imperial" ? "lb" : "kg"}
+          />
           <Metric label="Body fat" value={latest.body_fat_pct} unit="%" />
-          <Metric label="Muscle" value={latest.muscle_mass} unit={latest.unit_system === "imperial" ? "lb" : "kg"} />
+          <Metric
+            label="Muscle"
+            value={latest.muscle_mass}
+            unit={latest.unit_system === "imperial" ? "lb" : "kg"}
+          />
         </div>
       </div>
 
       <ChartCard title="Weight" dataKey="weight" data={chartData} color="var(--primary)" />
-      <ChartCard title="Body fat %" dataKey="body_fat_pct" data={chartData} color="var(--secondary)" />
+      <ChartCard
+        title="Body fat %"
+        dataKey="body_fat_pct"
+        data={chartData}
+        color="var(--secondary)"
+      />
 
       <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-between">
@@ -230,7 +295,13 @@ function BodyTab({ data }: { data: ProgressData }) {
               <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
               <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
               <Tooltip />
-              <Line type="monotone" dataKey={measure} stroke="var(--primary)" strokeWidth={2} dot={{ r: 3 }} />
+              <Line
+                type="monotone"
+                dataKey={measure}
+                stroke="var(--primary)"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -242,10 +313,14 @@ function BodyTab({ data }: { data: ProgressData }) {
 function Metric({ label, value, unit }: { label: string; value: number | null; unit: string }) {
   return (
     <div>
-      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
       <p className="mt-1 text-xl font-bold tracking-tight">
         {value != null ? value : "—"}
-        {value != null && <span className="ml-0.5 text-xs font-normal text-muted-foreground">{unit}</span>}
+        {value != null && (
+          <span className="ml-0.5 text-xs font-normal text-muted-foreground">{unit}</span>
+        )}
       </p>
     </div>
   );
@@ -321,7 +396,9 @@ function StrengthTab({ data }: { data: ProgressData }) {
       cur.volume += l.weight * l.reps;
       volumes.set(l.exercise_id, cur);
     });
-    return Array.from(volumes.values()).sort((a, b) => b.volume - a.volume).slice(0, 5);
+    return Array.from(volumes.values())
+      .sort((a, b) => b.volume - a.volume)
+      .slice(0, 5);
   }, [logs]);
 
   const prs = useMemo(() => {
@@ -343,7 +420,13 @@ function StrengthTab({ data }: { data: ProgressData }) {
   }, [logs, data.assessments]);
 
   if (logs.length === 0) {
-    return <EmptyCard icon={Dumbbell} title="No workout logs yet" subtitle="Complete a workout to see strength trends." />;
+    return (
+      <EmptyCard
+        icon={Dumbbell}
+        title="No workout logs yet"
+        subtitle="Complete a workout to see strength trends."
+      />
+    );
   }
 
   return (
@@ -358,7 +441,9 @@ function StrengthTab({ data }: { data: ProgressData }) {
               key={e.id}
               onClick={() => setSelectedExercise(e.id)}
               className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition ${
-                activeExerciseId === e.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                activeExerciseId === e.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
               }`}
             >
               {e.name}
@@ -373,23 +458,38 @@ function StrengthTab({ data }: { data: ProgressData }) {
                 <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
                 <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
                 <Tooltip />
-                <Line type="monotone" dataKey="oneRm" stroke="var(--primary)" strokeWidth={2} dot={{ r: 3 }} />
+                <Line
+                  type="monotone"
+                  dataKey="oneRm"
+                  stroke="var(--primary)"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
         ) : (
-          <p className="mt-4 text-center text-xs text-muted-foreground">Log more sessions to see the trend.</p>
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            Log more sessions to see the trend.
+          </p>
         )}
       </div>
 
       <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
         <h3 className="text-sm font-semibold">Top volume (30 days)</h3>
         <div className="mt-3 space-y-2">
-          {topVolume.length === 0 && <p className="text-xs text-muted-foreground">No volume in the last 30 days.</p>}
+          {topVolume.length === 0 && (
+            <p className="text-xs text-muted-foreground">No volume in the last 30 days.</p>
+          )}
           {topVolume.map((t) => (
-            <div key={t.name} className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2">
+            <div
+              key={t.name}
+              className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2"
+            >
               <span className="text-sm font-medium">{t.name}</span>
-              <span className="font-mono text-xs text-muted-foreground">{Math.round(t.volume).toLocaleString()}</span>
+              <span className="font-mono text-xs text-muted-foreground">
+                {Math.round(t.volume).toLocaleString()}
+              </span>
             </div>
           ))}
         </div>
@@ -403,7 +503,9 @@ function StrengthTab({ data }: { data: ProgressData }) {
         <div className="mt-3 grid grid-cols-3 gap-3">
           {prs.map((p) => (
             <div key={p.lift} className="rounded-2xl bg-primary/5 p-3 text-center">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{p.lift}</p>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                {p.lift}
+              </p>
               <p className="mt-1 text-lg font-bold">{p.logged ?? "—"}</p>
               {p.assessed != null && (
                 <p className="text-[10px] text-muted-foreground">Trainer: {p.assessed}</p>
@@ -425,7 +527,10 @@ function StrengthTab({ data }: { data: ProgressData }) {
         ) : (
           <ul className="mt-3 space-y-2">
             {(personalRecords as PersonalRecord[]).map((pr) => (
-              <li key={pr.id} className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2">
+              <li
+                key={pr.id}
+                className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2"
+              >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{pr.exercise_name}</p>
                   <p className="text-[10px] text-muted-foreground">
@@ -473,44 +578,84 @@ function HistoryTab({ data }: { data: ProgressData }) {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 rounded-[2rem] border border-border bg-card p-4 shadow-[var(--shadow-card)]">
         <div>
-          <Label htmlFor="from" className="text-xs">From</Label>
-          <Input id="from" type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(0); }} />
+          <Label htmlFor="from" className="text-xs">
+            From
+          </Label>
+          <Input
+            id="from"
+            type="date"
+            value={from}
+            onChange={(e) => {
+              setFrom(e.target.value);
+              setPage(0);
+            }}
+          />
         </div>
         <div>
-          <Label htmlFor="to" className="text-xs">To</Label>
-          <Input id="to" type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(0); }} />
+          <Label htmlFor="to" className="text-xs">
+            To
+          </Label>
+          <Input
+            id="to"
+            type="date"
+            value={to}
+            onChange={(e) => {
+              setTo(e.target.value);
+              setPage(0);
+            }}
+          />
         </div>
       </div>
 
       <div className="space-y-2">
         {paged.map((h) => (
-          <div key={h.id} className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
+          <div
+            key={h.id}
+            className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]"
+          >
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="text-sm font-semibold">{h.plan_name ?? "Workout"}</p>
                 <p className="text-xs text-muted-foreground">
-                  {format(parseISO(h.date), "PPP")} · {h.day_label ?? "Session"} · {h.exercise_count} exercises
+                  {format(parseISO(h.date), "PPP")} · {h.day_label ?? "Session"} ·{" "}
+                  {h.exercise_count} exercises
                 </p>
               </div>
               {h.effort_rating != null && (
-                <Badge variant="secondary" className="shrink-0">RPE {h.effort_rating}</Badge>
+                <Badge variant="secondary" className="shrink-0">
+                  RPE {h.effort_rating}
+                </Badge>
               )}
             </div>
             {h.notes && <p className="mt-2 text-xs text-muted-foreground">{h.notes}</p>}
           </div>
         ))}
         {paged.length === 0 && (
-          <p className="py-8 text-center text-sm text-muted-foreground">No workouts in this range.</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            No workouts in this range.
+          </p>
         )}
       </div>
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 0}
+            onClick={() => setPage((p) => p - 1)}
+          >
             Prev
           </Button>
-          <span className="text-xs text-muted-foreground">Page {page + 1} of {totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
+          <span className="text-xs text-muted-foreground">
+            Page {page + 1} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((p) => p + 1)}
+          >
             Next
           </Button>
         </div>
@@ -542,7 +687,8 @@ function GoalsTab({ data }: { data: ProgressData }) {
           if (nm.includes("weight") && latest.weight != null) current = latest.weight;
           else if (nm.includes("bench") && latest.bench_1rm != null) current = latest.bench_1rm;
           else if (nm.includes("squat") && latest.squat_1rm != null) current = latest.squat_1rm;
-          else if (nm.includes("deadlift") && latest.deadlift_1rm != null) current = latest.deadlift_1rm;
+          else if (nm.includes("deadlift") && latest.deadlift_1rm != null)
+            current = latest.deadlift_1rm;
         } else if (g.unit === "%" && nm.includes("fat") && latest.body_fat_pct != null) {
           current = latest.body_fat_pct;
         }
@@ -564,7 +710,10 @@ function GoalsTab({ data }: { data: ProgressData }) {
     onSuccess: () => {
       toast.success("Goal added");
       setOpen(false);
-      setName(""); setTarget(""); setUnit("kg"); setTargetDate("");
+      setName("");
+      setTarget("");
+      setUnit("kg");
+      setTargetDate("");
       qc.invalidateQueries({ queryKey: ["progress-data"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
@@ -581,14 +730,23 @@ function GoalsTab({ data }: { data: ProgressData }) {
         <h3 className="text-sm font-semibold">Your goals</h3>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="rounded-lg"><Plus className="mr-1 h-4 w-4" />Add</Button>
+            <Button size="sm" className="rounded-lg">
+              <Plus className="mr-1 h-4 w-4" />
+              Add
+            </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>New goal</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>New goal</DialogTitle>
+            </DialogHeader>
             <div className="space-y-3">
               <div>
                 <Label>Name</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Bench press 100kg" />
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Bench press 100kg"
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -597,12 +755,20 @@ function GoalsTab({ data }: { data: ProgressData }) {
                 </div>
                 <div>
                   <Label>Unit</Label>
-                  <Input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="kg / lb / %" />
+                  <Input
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                    placeholder="kg / lb / %"
+                  />
                 </div>
               </div>
               <div>
                 <Label>Target date</Label>
-                <Input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />
+                <Input
+                  type="date"
+                  value={targetDate}
+                  onChange={(e) => setTargetDate(e.target.value)}
+                />
               </div>
             </div>
             <DialogFooter>
@@ -615,15 +781,23 @@ function GoalsTab({ data }: { data: ProgressData }) {
       </div>
 
       {enrichedGoals.length === 0 && (
-        <EmptyCard icon={Target} title="No goals yet" subtitle="Set a target to track your progress." />
+        <EmptyCard
+          icon={Target}
+          title="No goals yet"
+          subtitle="Set a target to track your progress."
+        />
       )}
 
       {enrichedGoals.map((g) => {
-        const pct = g.target_value && g.current_value
-          ? Math.min(100, Math.max(0, (Number(g.current_value) / Number(g.target_value)) * 100))
-          : 0;
+        const pct =
+          g.target_value && g.current_value
+            ? Math.min(100, Math.max(0, (Number(g.current_value) / Number(g.target_value)) * 100))
+            : 0;
         return (
-          <div key={g.id} className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
+          <div
+            key={g.id}
+            className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]"
+          >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">{g.name}</p>
@@ -667,7 +841,9 @@ function PhotosTab() {
     );
   }
 
-  const sorted = [...(photos as ProgressPhoto[])].sort((a, b) => a.taken_at.localeCompare(b.taken_at));
+  const sorted = [...(photos as ProgressPhoto[])].sort((a, b) =>
+    a.taken_at.localeCompare(b.taken_at),
+  );
   const oldest = sorted[0];
   const newest = sorted[sorted.length - 1];
 
@@ -699,7 +875,11 @@ function PhotosTab() {
         {sorted.map((p) => (
           <div key={p.id} className="space-y-1">
             <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-muted">
-              <img src={p.photo_url} alt={`Progress photo from ${p.taken_at}`} className="h-full w-full object-cover" />
+              <img
+                src={p.photo_url}
+                alt={`Progress photo from ${p.taken_at}`}
+                className="h-full w-full object-cover"
+              />
             </div>
             <p className="text-center text-xs text-muted-foreground">
               {format(parseISO(p.taken_at), "PPP")}
@@ -714,12 +894,17 @@ function PhotosTab() {
 function PhotoTile({ photo, label }: { photo: ProgressPhoto; label: string }) {
   return (
     <div className="space-y-1">
-      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
       <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-muted">
-        <img src={photo.photo_url} alt={`Progress photo from ${photo.taken_at}`} className="h-full w-full object-cover" />
+        <img
+          src={photo.photo_url}
+          alt={`Progress photo from ${photo.taken_at}`}
+          className="h-full w-full object-cover"
+        />
       </div>
       <p className="text-center text-xs font-medium">{format(parseISO(photo.taken_at), "PPP")}</p>
     </div>
   );
 }
-

@@ -16,14 +16,15 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  EmptyState,
-  ErrorState,
-  HealthBar,
-  KpiCard,
-  pct,
-} from "@/components/platform/platform-ui";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { EmptyState, ErrorState, HealthBar, KpiCard, pct } from "@/components/platform/platform-ui";
 import {
   getFeatureAdoption,
   getPlatformActivityTrend,
@@ -39,7 +40,15 @@ export const Route = createFileRoute("/_authenticated/platform/analytics")({
 
 const RANGES = [30, 90, 180, 365];
 
-function Panel({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+function Panel({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <h2 className="text-sm font-semibold">{title}</h2>
@@ -120,7 +129,10 @@ function PlatformAnalyticsPage() {
       </header>
 
       {overview.isError ? (
-        <ErrorState message={(overview.error as Error).message} onRetry={() => overview.refetch()} />
+        <ErrorState
+          message={(overview.error as Error).message}
+          onRetry={() => overview.refetch()}
+        />
       ) : !o ? (
         <div className="grid gap-3 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -136,14 +148,21 @@ function PlatformAnalyticsPage() {
             value={o.stickiness ? `${Math.round(Number(o.stickiness) * 100)}%` : "—"}
             hint="DAU divided by MAU across all gyms."
           />
-          <KpiCard label="Plans created 30d" value={o.plans_30d} hint={`${o.assessments_30d} assessments in the same window`} />
+          <KpiCard
+            label="Plans created 30d"
+            value={o.plans_30d}
+            hint={`${o.assessments_30d} assessments in the same window`}
+          />
         </div>
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="Growth" subtitle={`Gyms and members created, last ${days} days`}>
           {signups.isError ? (
-            <ErrorState message={(signups.error as Error).message} onRetry={() => signups.refetch()} />
+            <ErrorState
+              message={(signups.error as Error).message}
+              onRetry={() => signups.refetch()}
+            />
           ) : signups.isLoading ? (
             <Skeleton className="h-56 rounded-xl" />
           ) : !signupData.some((d) => d.gyms_created + d.members_created > 0) ? (
@@ -152,19 +171,42 @@ function PlatformAnalyticsPage() {
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={signupData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickFormatter={(d) => String(d).slice(5)} />
-                <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} allowDecimals={false} />
+                <XAxis
+                  dataKey="day"
+                  tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                  tickFormatter={(d) => String(d).slice(5)}
+                />
+                <YAxis
+                  tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                  allowDecimals={false}
+                />
                 <RTooltip />
-                <Bar dataKey="members_created" name="Members" fill="var(--primary)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="gyms_created" name="Gyms" fill="var(--secondary)" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="members_created"
+                  name="Members"
+                  fill="var(--primary)"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="gyms_created"
+                  name="Gyms"
+                  fill="var(--secondary)"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           )}
         </Panel>
 
-        <Panel title="Engagement" subtitle={`Workouts, check-ins and active members, last ${days} days`}>
+        <Panel
+          title="Engagement"
+          subtitle={`Workouts, check-ins and active members, last ${days} days`}
+        >
           {activity.isError ? (
-            <ErrorState message={(activity.error as Error).message} onRetry={() => activity.refetch()} />
+            <ErrorState
+              message={(activity.error as Error).message}
+              onRetry={() => activity.refetch()}
+            />
           ) : activity.isLoading ? (
             <Skeleton className="h-56 rounded-xl" />
           ) : !activityData.some((d) => d.workouts + d.checkins > 0) ? (
@@ -173,12 +215,37 @@ function PlatformAnalyticsPage() {
             <ResponsiveContainer width="100%" height={240}>
               <LineChart data={activityData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickFormatter={(d) => String(d).slice(5)} />
-                <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} allowDecimals={false} />
+                <XAxis
+                  dataKey="day"
+                  tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                  tickFormatter={(d) => String(d).slice(5)}
+                />
+                <YAxis
+                  tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                  allowDecimals={false}
+                />
                 <RTooltip />
-                <Line type="monotone" dataKey="workouts" name="Workouts" stroke="var(--primary)" dot={false} />
-                <Line type="monotone" dataKey="checkins" name="Check-ins" stroke="var(--secondary)" dot={false} />
-                <Line type="monotone" dataKey="active_members" name="Active members" stroke="var(--muted-foreground)" dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="workouts"
+                  name="Workouts"
+                  stroke="var(--primary)"
+                  dot={false}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="checkins"
+                  name="Check-ins"
+                  stroke="var(--secondary)"
+                  dot={false}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="active_members"
+                  name="Active members"
+                  stroke="var(--muted-foreground)"
+                  dot={false}
+                />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -186,7 +253,10 @@ function PlatformAnalyticsPage() {
 
         <Panel title="Feature adoption" subtitle="Share of enabled gyms using each feature">
           {adoption.isError ? (
-            <ErrorState message={(adoption.error as Error).message} onRetry={() => adoption.refetch()} />
+            <ErrorState
+              message={(adoption.error as Error).message}
+              onRetry={() => adoption.refetch()}
+            />
           ) : adoption.isLoading ? (
             <Skeleton className="h-56 rounded-xl" />
           ) : !a || a.enabled_gyms === 0 ? (
@@ -199,16 +269,22 @@ function PlatformAnalyticsPage() {
                     <span className="font-medium">{label}</span>
                     <span className="font-numeric text-muted-foreground">{pct(value)}</span>
                   </div>
-                  <Progress value={Math.round((Number(value ?? 0)) * 100)} className="mt-1.5 h-1.5" />
+                  <Progress value={Math.round(Number(value ?? 0) * 100)} className="mt-1.5 h-1.5" />
                 </li>
               ))}
             </ul>
           )}
         </Panel>
 
-        <Panel title="Member retention" subtitle="Share of each signup cohort still active after 1–3 months">
+        <Panel
+          title="Member retention"
+          subtitle="Share of each signup cohort still active after 1–3 months"
+        >
           {retention.isError ? (
-            <ErrorState message={(retention.error as Error).message} onRetry={() => retention.refetch()} />
+            <ErrorState
+              message={(retention.error as Error).message}
+              onRetry={() => retention.refetch()}
+            />
           ) : retention.isLoading ? (
             <Skeleton className="h-56 rounded-xl" />
           ) : cohorts.length === 0 ? (
@@ -228,8 +304,12 @@ function PlatformAnalyticsPage() {
                 <TableBody>
                   {cohorts.map((c) => (
                     <TableRow key={c.cohort_month}>
-                      <TableCell className="text-sm">{String(c.cohort_month).slice(0, 7)}</TableCell>
-                      <TableCell className="font-numeric text-right text-sm">{c.cohort_size}</TableCell>
+                      <TableCell className="text-sm">
+                        {String(c.cohort_month).slice(0, 7)}
+                      </TableCell>
+                      <TableCell className="font-numeric text-right text-sm">
+                        {c.cohort_size}
+                      </TableCell>
                       <TableCell className="font-numeric text-right text-sm">
                         {c.cohort_size ? pct(c.active_m1 / c.cohort_size) : "—"}
                       </TableCell>
@@ -279,10 +359,18 @@ function PlatformAnalyticsPage() {
                         {g.name}
                       </Link>
                     </TableCell>
-                    <TableCell className="font-numeric text-right text-sm">{g.member_count}</TableCell>
-                    <TableCell className="font-numeric text-right text-sm">{g.workouts_30d}</TableCell>
-                    <TableCell className="font-numeric text-right text-sm">{g.checkins_30d}</TableCell>
-                    <TableCell><HealthBar score={g.health_score} memberCount={g.member_count} /></TableCell>
+                    <TableCell className="font-numeric text-right text-sm">
+                      {g.member_count}
+                    </TableCell>
+                    <TableCell className="font-numeric text-right text-sm">
+                      {g.workouts_30d}
+                    </TableCell>
+                    <TableCell className="font-numeric text-right text-sm">
+                      {g.checkins_30d}
+                    </TableCell>
+                    <TableCell>
+                      <HealthBar score={g.health_score} memberCount={g.member_count} />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

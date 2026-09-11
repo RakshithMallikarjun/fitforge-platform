@@ -107,17 +107,37 @@ function AttendanceReportPage() {
         ) : (
           <>
             <section className="grid gap-4 md:grid-cols-3">
-              <BentoStatCard variant="dark" label="Total check-ins" value={data.totalCheckIns.toLocaleString()} footer="In selected range" />
-              <BentoStatCard label="Unique members" value={data.uniqueMembers.toLocaleString()} footer="Distinct visitors" />
-              <BentoStatCard label="Avg per day" value={data.avgPerDay.toString()} footer="Across range" />
+              <BentoStatCard
+                variant="dark"
+                label="Total check-ins"
+                value={data.totalCheckIns.toLocaleString()}
+                footer="In selected range"
+              />
+              <BentoStatCard
+                label="Unique members"
+                value={data.uniqueMembers.toLocaleString()}
+                footer="Distinct visitors"
+              />
+              <BentoStatCard
+                label="Avg per day"
+                value={data.avgPerDay.toString()}
+                footer="Across range"
+              />
             </section>
 
             <ChartCard title="Daily check-ins">
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={data.daily}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} tickFormatter={(v) => format(new Date(v), "MMM d")} />
-                  <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} allowDecimals={false} />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    tickFormatter={(v) => format(new Date(v), "MMM d")}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    allowDecimals={false}
+                  />
                   <Tooltip />
                   <Bar dataKey="count" fill="var(--primary)" radius={[6, 6, 0, 0]} />
                 </BarChart>
@@ -128,10 +148,20 @@ function AttendanceReportPage() {
               <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={data.daily}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} tickFormatter={(v) => format(new Date(v), "MMM d")} />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    tickFormatter={(v) => format(new Date(v), "MMM d")}
+                  />
                   <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="rolling7" stroke="var(--primary)" strokeWidth={2} dot={false} />
+                  <Line
+                    type="monotone"
+                    dataKey="rolling7"
+                    stroke="var(--primary)"
+                    strokeWidth={2}
+                    dot={false}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -140,7 +170,11 @@ function AttendanceReportPage() {
               <ResponsiveContainer width="100%" height={Math.max(240, data.peakHours.length * 24)}>
                 <BarChart data={data.peakHours} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} allowDecimals={false} />
+                  <XAxis
+                    type="number"
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    allowDecimals={false}
+                  />
                   <YAxis
                     dataKey="hour"
                     type="category"

@@ -2,14 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  ArrowLeft,
-  CalendarClock,
-  CheckCircle2,
-  Mail,
-  Phone,
-  ShieldAlert,
-} from "lucide-react";
+import { ArrowLeft, CalendarClock, CheckCircle2, Mail, Phone, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import {
   CartesianGrid,
@@ -42,7 +35,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   CopyButton,
   EmptyState,
@@ -80,7 +80,15 @@ const PAYMENT_STATUSES: PaymentStatus[] = [
 ];
 const PLANS: SubscriptionPlan[] = ["starter", "growth", "pro", "chain"];
 
-function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
+function Section({
+  title,
+  children,
+  action,
+}: {
+  title: string;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+}) {
   return (
     <section className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <div className="flex items-center justify-between gap-3">
@@ -211,7 +219,10 @@ function PlatformGymDetailPage() {
 
   return (
     <main className="mx-auto max-w-[1200px] space-y-5 px-6 py-8">
-      <Link to="/platform/gyms" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+      <Link
+        to="/platform/gyms"
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="h-3.5 w-3.5" /> All gyms
       </Link>
 
@@ -244,11 +255,18 @@ function PlatformGymDetailPage() {
               }}
             />
           </div>
-          <Select value={g.subscription_plan} onValueChange={(v) => planMutation.mutate(v as SubscriptionPlan)}>
-            <SelectTrigger className="w-32 capitalize"><SelectValue /></SelectTrigger>
+          <Select
+            value={g.subscription_plan}
+            onValueChange={(v) => planMutation.mutate(v as SubscriptionPlan)}
+          >
+            <SelectTrigger className="w-32 capitalize">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               {PLANS.map((p) => (
-                <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>
+                <SelectItem key={p} value={p} className="capitalize">
+                  {p}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -256,11 +274,27 @@ function PlatformGymDetailPage() {
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Members" value={`${g.active_member_count}/${g.member_count}`} hint="Active of total accounts" />
+        <KpiCard
+          label="Members"
+          value={`${g.active_member_count}/${g.member_count}`}
+          hint="Active of total accounts"
+        />
         <KpiCard label="Staff" value={`${g.admin_count} admin · ${g.trainer_count} trainer`} />
-        <KpiCard label="Workouts 30d" value={g.workouts_30d} hint={`${g.workouts_7d} in the last 7 days`} />
-        <KpiCard label="Check-ins 30d" value={g.checkins_30d} hint={`${g.checkins_7d} in the last 7 days`} />
-        <KpiCard label="Plan coverage" value={pct(g.plan_coverage)} hint="Active members with an active plan" />
+        <KpiCard
+          label="Workouts 30d"
+          value={g.workouts_30d}
+          hint={`${g.workouts_7d} in the last 7 days`}
+        />
+        <KpiCard
+          label="Check-ins 30d"
+          value={g.checkins_30d}
+          hint={`${g.checkins_7d} in the last 7 days`}
+        />
+        <KpiCard
+          label="Plan coverage"
+          value={pct(g.plan_coverage)}
+          hint="Active members with an active plan"
+        />
         <KpiCard label="Assessed (90d)" value={pct(g.assessed_90d_ratio)} />
         <KpiCard label="Workouts / active member" value={num(g.workouts_per_active_member_30d)} />
         <KpiCard label="Members per trainer" value={num(g.members_per_trainer)} />
@@ -287,7 +321,9 @@ function PlatformGymDetailPage() {
           <dl className="space-y-2 text-sm">
             <div className="flex items-center justify-between gap-3">
               <dt className="text-xs text-muted-foreground">Status</dt>
-              <dd><PaymentChip status={g.payment_status} /></dd>
+              <dd>
+                <PaymentChip status={g.payment_status} />
+              </dd>
             </div>
             <div className="flex items-center justify-between gap-3">
               <dt className="text-xs text-muted-foreground">Monthly</dt>
@@ -301,7 +337,13 @@ function PlatformGymDetailPage() {
             </div>
             <div className="flex items-center justify-between gap-3">
               <dt className="text-xs text-muted-foreground">Next due</dt>
-              <dd className={g.next_due_at && g.next_due_at < new Date().toISOString().slice(0, 10) ? "text-destructive" : ""}>
+              <dd
+                className={
+                  g.next_due_at && g.next_due_at < new Date().toISOString().slice(0, 10)
+                    ? "text-destructive"
+                    : ""
+                }
+              >
                 {fmtDate(g.next_due_at)}
               </dd>
             </div>
@@ -313,7 +355,9 @@ function PlatformGymDetailPage() {
             </div>
           </dl>
           {g.internal_note && (
-            <p className="mt-3 rounded-xl bg-muted p-3 text-xs text-muted-foreground">{g.internal_note}</p>
+            <p className="mt-3 rounded-xl bg-muted p-3 text-xs text-muted-foreground">
+              {g.internal_note}
+            </p>
           )}
         </Section>
 
@@ -331,7 +375,7 @@ function PlatformGymDetailPage() {
         </Section>
       </div>
 
-      <Section title="Activity" >
+      <Section title="Activity">
         {trend.isError ? (
           <ErrorState message={(trend.error as Error).message} onRetry={() => trend.refetch()} />
         ) : trend.isLoading ? (
@@ -342,11 +386,30 @@ function PlatformGymDetailPage() {
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={trendData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="day" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickFormatter={(d) => String(d).slice(5)} />
-              <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} allowDecimals={false} />
+              <XAxis
+                dataKey="day"
+                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                tickFormatter={(d) => String(d).slice(5)}
+              />
+              <YAxis
+                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                allowDecimals={false}
+              />
               <RTooltip />
-              <Line type="monotone" dataKey="workouts" name="Workouts" stroke="var(--primary)" dot={false} />
-              <Line type="monotone" dataKey="checkins" name="Check-ins" stroke="var(--secondary)" dot={false} />
+              <Line
+                type="monotone"
+                dataKey="workouts"
+                name="Workouts"
+                stroke="var(--primary)"
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="checkins"
+                name="Check-ins"
+                stroke="var(--secondary)"
+                dot={false}
+              />
             </LineChart>
           </ResponsiveContainer>
         )}
@@ -372,20 +435,30 @@ function PlatformGymDetailPage() {
                   <TableRow key={`${s.user_id}-${s.role}`}>
                     <TableCell className="font-medium">
                       {s.display_name ?? "—"}
-                      {!s.active && <Badge variant="secondary" className="ml-2">Inactive</Badge>}
+                      {!s.active && (
+                        <Badge variant="secondary" className="ml-2">
+                          Inactive
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="capitalize text-sm">{s.role}</TableCell>
                     <TableCell className="text-sm">
-                      <span className="inline-flex items-center gap-1">{s.email} <CopyButton value={s.email} /></span>
+                      <span className="inline-flex items-center gap-1">
+                        {s.email} <CopyButton value={s.email} />
+                      </span>
                     </TableCell>
                     <TableCell className="text-sm">
                       {s.phone ? (
-                        <span className="inline-flex items-center gap-1">{s.phone} <CopyButton value={s.phone} /></span>
+                        <span className="inline-flex items-center gap-1">
+                          {s.phone} <CopyButton value={s.phone} />
+                        </span>
                       ) : (
                         "—"
                       )}
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{relTime(s.last_sign_in_at)}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {relTime(s.last_sign_in_at)}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -410,7 +483,9 @@ function PlatformGymDetailPage() {
               <li key={a.id} className="flex flex-wrap items-center gap-2 py-2">
                 <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
                 <span className="font-medium">{a.action.replace(/_/g, " ")}</span>
-                <span className="text-xs text-muted-foreground">{a.actor_email ?? "platform admin"}</span>
+                <span className="text-xs text-muted-foreground">
+                  {a.actor_email ?? "platform admin"}
+                </span>
                 <span className="ml-auto inline-flex items-center gap-1 text-xs text-muted-foreground">
                   <CalendarClock className="h-3 w-3" /> {relTime(a.created_at)}
                 </span>
@@ -428,7 +503,9 @@ function PlatformGymDetailPage() {
       <Dialog open={toggleOpen} onOpenChange={setToggleOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{g.is_enabled ? "Disable" : "Enable"} {g.name}</DialogTitle>
+            <DialogTitle>
+              {g.is_enabled ? "Disable" : "Enable"} {g.name}
+            </DialogTitle>
             <DialogDescription>
               {g.is_enabled
                 ? "Members and staff lose access and see a contact-your-gym message. Nothing is deleted and you can re-enable at any time."
@@ -437,12 +514,16 @@ function PlatformGymDetailPage() {
           </DialogHeader>
           {g.is_enabled && (
             <div className="space-y-1.5">
-              <Label htmlFor="reason" className="text-xs">Reason (required)</Label>
+              <Label htmlFor="reason" className="text-xs">
+                Reason (required)
+              </Label>
               <Textarea id="reason" value={reason} onChange={(e) => setReason(e.target.value)} />
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setToggleOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setToggleOpen(false)}>
+              Cancel
+            </Button>
             <Button
               variant={g.is_enabled ? "destructive" : "default"}
               disabled={(g.is_enabled && !reason.trim()) || toggleMutation.isPending}
@@ -471,37 +552,75 @@ function PlatformGymDetailPage() {
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-xs">Payment status</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as PaymentStatus)}>
-                <SelectTrigger className="capitalize"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="capitalize">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {PAYMENT_STATUSES.map((s) => (
-                    <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                    <SelectItem key={s} value={s} className="capitalize">
+                      {s}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="lastpay" className="text-xs">Last payment</Label>
-              <Input id="lastpay" type="date" value={lastPaymentAt} onChange={(e) => setLastPaymentAt(e.target.value)} />
+              <Label htmlFor="lastpay" className="text-xs">
+                Last payment
+              </Label>
+              <Input
+                id="lastpay"
+                type="date"
+                value={lastPaymentAt}
+                onChange={(e) => setLastPaymentAt(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="nextdue" className="text-xs">Next due</Label>
-              <Input id="nextdue" type="date" value={nextDueAt} onChange={(e) => setNextDueAt(e.target.value)} />
+              <Label htmlFor="nextdue" className="text-xs">
+                Next due
+              </Label>
+              <Input
+                id="nextdue"
+                type="date"
+                value={nextDueAt}
+                onChange={(e) => setNextDueAt(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="amount" className="text-xs">Monthly amount</Label>
-              <Input id="amount" type="number" min="0" step="1" value={amount} onChange={(e) => setAmount(e.target.value)} />
+              <Label htmlFor="amount" className="text-xs">
+                Monthly amount
+              </Label>
+              <Input
+                id="amount"
+                type="number"
+                min="0"
+                step="1"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="currency" className="text-xs">Currency</Label>
-              <Input id="currency" value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} maxLength={3} />
+              <Label htmlFor="currency" className="text-xs">
+                Currency
+              </Label>
+              <Input
+                id="currency"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                maxLength={3}
+              />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="note" className="text-xs">Internal note (optional)</Label>
+              <Label htmlFor="note" className="text-xs">
+                Internal note (optional)
+              </Label>
               <Textarea id="note" value={note} onChange={(e) => setNote(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBillingOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setBillingOpen(false)}>
+              Cancel
+            </Button>
             <Button disabled={billingMutation.isPending} onClick={() => billingMutation.mutate()}>
               Save billing
             </Button>
