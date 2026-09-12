@@ -1,6 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { dateStringInZone, dateStringRange, resolveGymTimezone } from "@/lib/gym-date";
+import {
+  dateStringInZone,
+  dateStringRange,
+  resolveGymTimezone,
+  zonedMonthStartISO,
+} from "@/lib/gym-date";
 import { isMembershipCurrent } from "@/lib/membership";
 
 export type AdminStats = {
@@ -61,7 +66,7 @@ export const getAdminStats = createServerFn({ method: "GET" })
     const now = new Date();
     // "Today" is the gym's calendar day, matching how workout_logs.date is stamped.
     const todayStr = dateStringInZone(timeZone, now);
-    const monthStart = `${todayStr.slice(0, 7)}-01T00:00:00.000Z`;
+    const monthStart = zonedMonthStartISO(timeZone, todayStr);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 86400_000).toISOString();
 
     let activeMemberships = 0;

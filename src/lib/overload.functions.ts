@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { dateStringInZone, resolveGymTimezone, zonedDayStartISO } from "@/lib/gym-date";
 
 export type ExerciseSuggestion = {
   exerciseId: string;
@@ -74,8 +75,9 @@ export const suggestOverload = createServerFn({ method: "POST" })
       if (!staff || !me?.gym_id || me.gym_id !== them?.gym_id) throw new Error("Forbidden");
     }
 
-    // --- Cache: one AI answer per (member, exercise set) per day ---
-    const today = new Date().toISOString().slice(0, 10);
+    // --- Cache: one AI answer per (member, exercise set) per gym-local day ---
+    const { timeZone } = await resolveGymTimezone(supabase, userId);
+    const today = dateStringInZone(timeZone);
     const cacheKey = `${today}:${[...data.exerciseIds].sort().join(",")}`;
     const { data: cached } = await supabase
       .from("ai_overload_cache")
@@ -85,14 +87,13 @@ export const suggestOverload = createServerFn({ method: "POST" })
       .maybeSingle();
     if (cached?.payload) return cached.payload as unknown as ExerciseSuggestion[];
 
-    // --- Per-user daily call ceiling ---
-    const dayStart = new Date();
-    dayStart.setUTCHours(0, 0, 0, 0);
+    // --- Per-user daily call ceiling, rolling over at the gym's midnight ---
+    const dayStart = zonedDayStartISO(timeZone, today);
     const { count: callsToday } = await supabase
       .from("ai_overload_cache")
       .select("id", { count: "exact", head: true })
       .eq("requested_by", userId)
-      .gte("created_at", dayStart.toISOString());
+      .gte("created_at", dayStart);
     if ((callsToday ?? 0) >= DAILY_CALL_CEILING) {
       throw new Error("Daily AI suggestion limit reached — try again tomorrow.");
     }
