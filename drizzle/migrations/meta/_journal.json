@@ -85,6 +85,13 @@
       "when": 1789132501477,
       "tag": "0011_restore_is_gym_staff_user_for_member_visibility",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789193065041,
+      "tag": "0012_gyms_column_grants_and_definer_revokes",
+      "breakpoints": true
     }
   ]
 }
