@@ -190,7 +190,17 @@ export const logSet = createServerFn({ method: "POST" })
     }) => d,
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    // Defence in depth: RLS already scopes exercise_logs through workout_logs,
+    // but never write against a log id the caller does not own.
+    const { data: ownLog } = await supabase
+      .from("workout_logs")
+      .select("id")
+      .eq("id", data.logId)
+      .eq("member_id", userId)
+      .maybeSingle();
+    if (!ownLog) throw new Error("Workout log not found");
+
     // Manual upsert: find existing row for (log_id, exercise_id, set_number)
     const { data: existing } = await supabase
       .from("exercise_logs")
@@ -244,10 +254,12 @@ export const completeWorkout = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: logRow, error: logErr } = await supabase
       .from("workout_logs")
-      .select("id, member_id, gym_id, date")
+      .select("id, member_id, gym_id, date, completed_at")
       .eq("id", data.logId)
+      .eq("member_id", userId)
       .maybeSingle();
     if (logErr || !logRow) throw new Error(logErr?.message ?? "Log not found");
+    if ((logRow as any).completed_at) throw new Error("This session is already completed");
 
     const { error } = await supabase
       .from("workout_logs")
