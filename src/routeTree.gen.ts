@@ -9,67 +9,51 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as ManifestDotwebmanifestRouteImport } from './routes/manifest[.]webmanifest'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedPlatformRouteRouteImport } from './routes/_authenticated/platform/route'
-import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticated/app/route'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ManifestDotwebmanifestRouteImport } from './routes/manifest[.]webmanifest'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
-import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform/index'
-import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
+import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticated/app/route'
+import { Route as AuthenticatedPlatformRouteRouteImport } from './routes/_authenticated/platform/route'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
-import { Route as AuthenticatedPlatformContactsRouteImport } from './routes/_authenticated/platform/contacts'
-import { Route as AuthenticatedPlatformAnalyticsRouteImport } from './routes/_authenticated/platform/analytics'
-import { Route as AuthenticatedAppWorkoutsRouteImport } from './routes/_authenticated/app/workouts'
-import { Route as AuthenticatedAppProgressRouteImport } from './routes/_authenticated/app/progress'
-import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authenticated/app/profile'
-import { Route as AuthenticatedAppMessagesRouteImport } from './routes/_authenticated/app/messages'
-import { Route as AuthenticatedAppCheckinRouteImport } from './routes/_authenticated/app/checkin'
-import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
-import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin/staff'
-import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
-import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
-import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin/members'
-import { Route as AuthenticatedAdminExercisesRouteImport } from './routes/_authenticated/admin/exercises'
 import { Route as AuthenticatedAdminCheckinRouteImport } from './routes/_authenticated/admin/checkin'
+import { Route as AuthenticatedAdminExercisesRouteImport } from './routes/_authenticated/admin/exercises'
+import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin/members'
+import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
+import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin/staff'
+import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
+import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
+import { Route as AuthenticatedAppCheckinRouteImport } from './routes/_authenticated/app/checkin'
+import { Route as AuthenticatedAppMessagesRouteImport } from './routes/_authenticated/app/messages'
+import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authenticated/app/profile'
+import { Route as AuthenticatedAppProgressRouteImport } from './routes/_authenticated/app/progress'
+import { Route as AuthenticatedAppWorkoutsRouteImport } from './routes/_authenticated/app/workouts'
+import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform/index'
+import { Route as AuthenticatedPlatformAnalyticsRouteImport } from './routes/_authenticated/platform/analytics'
+import { Route as AuthenticatedPlatformContactsRouteImport } from './routes/_authenticated/platform/contacts'
 import { Route as AuthenticatedPlatformGymsRouteRouteImport } from './routes/_authenticated/platform/gyms.route'
+import { Route as AuthenticatedAdminMembersMemberIdRouteImport } from './routes/_authenticated/admin/members.$memberId'
+import { Route as AuthenticatedAdminPlansPlanIdRouteImport } from './routes/_authenticated/admin/plans.$planId'
+import { Route as AuthenticatedAdminPlansNewRouteImport } from './routes/_authenticated/admin/plans.new'
+import { Route as AuthenticatedAdminReportsAttendanceRouteImport } from './routes/_authenticated/admin/reports.attendance'
+import { Route as AuthenticatedAdminReportsEngagementRouteImport } from './routes/_authenticated/admin/reports.engagement'
+import { Route as AuthenticatedAppWorkoutDayIdRouteImport } from './routes/_authenticated/app/workout.$dayId'
 import { Route as AuthenticatedPlatformGymsIndexRouteImport } from './routes/_authenticated/platform/gyms.index'
 import { Route as AuthenticatedPlatformGymsGymIdRouteImport } from './routes/_authenticated/platform/gyms.$gymId'
-import { Route as AuthenticatedAppWorkoutDayIdRouteImport } from './routes/_authenticated/app/workout.$dayId'
-import { Route as AuthenticatedAdminReportsEngagementRouteImport } from './routes/_authenticated/admin/reports.engagement'
-import { Route as AuthenticatedAdminReportsAttendanceRouteImport } from './routes/_authenticated/admin/reports.attendance'
-import { Route as AuthenticatedAdminPlansNewRouteImport } from './routes/_authenticated/admin/plans.new'
-import { Route as AuthenticatedAdminPlansPlanIdRouteImport } from './routes/_authenticated/admin/plans.$planId'
-import { Route as AuthenticatedAdminMembersMemberIdRouteImport } from './routes/_authenticated/admin/members.$memberId'
 
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ManifestDotwebmanifestRoute = ManifestDotwebmanifestRouteImport.update({
-  id: '/manifest.webmanifest',
-  path: '/manifest.webmanifest',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -77,14 +61,40 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const ManifestDotwebmanifestRoute = ManifestDotwebmanifestRouteImport.update({
+  id: '/manifest.webmanifest',
+  path: '/manifest.webmanifest',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAppRouteRoute = AuthenticatedAppRouteRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPlatformRouteRoute =
   AuthenticatedPlatformRouteRouteImport.update({
@@ -92,98 +102,15 @@ const AuthenticatedPlatformRouteRoute =
     path: '/platform',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAppRouteRoute = AuthenticatedAppRouteRouteImport.update({
-  id: '/app',
-  path: '/app',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPlatformIndexRoute =
-  AuthenticatedPlatformIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedPlatformRouteRoute,
-  } as any)
-const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
-const AuthenticatedPlatformContactsRoute =
-  AuthenticatedPlatformContactsRouteImport.update({
-    id: '/contacts',
-    path: '/contacts',
-    getParentRoute: () => AuthenticatedPlatformRouteRoute,
-  } as any)
-const AuthenticatedPlatformAnalyticsRoute =
-  AuthenticatedPlatformAnalyticsRouteImport.update({
-    id: '/analytics',
-    path: '/analytics',
-    getParentRoute: () => AuthenticatedPlatformRouteRoute,
-  } as any)
-const AuthenticatedAppWorkoutsRoute =
-  AuthenticatedAppWorkoutsRouteImport.update({
-    id: '/workouts',
-    path: '/workouts',
-    getParentRoute: () => AuthenticatedAppRouteRoute,
-  } as any)
-const AuthenticatedAppProgressRoute =
-  AuthenticatedAppProgressRouteImport.update({
-    id: '/progress',
-    path: '/progress',
-    getParentRoute: () => AuthenticatedAppRouteRoute,
-  } as any)
-const AuthenticatedAppProfileRoute = AuthenticatedAppProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any)
-const AuthenticatedAppMessagesRoute =
-  AuthenticatedAppMessagesRouteImport.update({
-    id: '/messages',
-    path: '/messages',
-    getParentRoute: () => AuthenticatedAppRouteRoute,
-  } as any)
-const AuthenticatedAppCheckinRoute = AuthenticatedAppCheckinRouteImport.update({
-  id: '/checkin',
-  path: '/checkin',
-  getParentRoute: () => AuthenticatedAppRouteRoute,
-} as any)
-const AuthenticatedAdminTemplatesRoute =
-  AuthenticatedAdminTemplatesRouteImport.update({
-    id: '/templates',
-    path: '/templates',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
-  id: '/staff',
-  path: '/staff',
-  getParentRoute: () => AuthenticatedAdminRouteRoute,
-} as any)
-const AuthenticatedAdminSettingsRoute =
-  AuthenticatedAdminSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminPlansRoute = AuthenticatedAdminPlansRouteImport.update({
-  id: '/plans',
-  path: '/plans',
-  getParentRoute: () => AuthenticatedAdminRouteRoute,
-} as any)
-const AuthenticatedAdminMembersRoute =
-  AuthenticatedAdminMembersRouteImport.update({
-    id: '/members',
-    path: '/members',
+const AuthenticatedAdminCheckinRoute =
+  AuthenticatedAdminCheckinRouteImport.update({
+    id: '/checkin',
+    path: '/checkin',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminExercisesRoute =
@@ -192,17 +119,126 @@ const AuthenticatedAdminExercisesRoute =
     path: '/exercises',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
-const AuthenticatedAdminCheckinRoute =
-  AuthenticatedAdminCheckinRouteImport.update({
-    id: '/checkin',
-    path: '/checkin',
+const AuthenticatedAdminMembersRoute =
+  AuthenticatedAdminMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminPlansRoute = AuthenticatedAdminPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const AuthenticatedAdminTemplatesRoute =
+  AuthenticatedAdminTemplatesRouteImport.update({
+    id: '/templates',
+    path: '/templates',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
+const AuthenticatedAppCheckinRoute = AuthenticatedAppCheckinRouteImport.update({
+  id: '/checkin',
+  path: '/checkin',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
+const AuthenticatedAppMessagesRoute =
+  AuthenticatedAppMessagesRouteImport.update({
+    id: '/messages',
+    path: '/messages',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppProfileRoute = AuthenticatedAppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedAppRouteRoute,
+} as any)
+const AuthenticatedAppProgressRoute =
+  AuthenticatedAppProgressRouteImport.update({
+    id: '/progress',
+    path: '/progress',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppWorkoutsRoute =
+  AuthenticatedAppWorkoutsRouteImport.update({
+    id: '/workouts',
+    path: '/workouts',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedPlatformIndexRoute =
+  AuthenticatedPlatformIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedPlatformRouteRoute,
+  } as any)
+const AuthenticatedPlatformAnalyticsRoute =
+  AuthenticatedPlatformAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => AuthenticatedPlatformRouteRoute,
+  } as any)
+const AuthenticatedPlatformContactsRoute =
+  AuthenticatedPlatformContactsRouteImport.update({
+    id: '/contacts',
+    path: '/contacts',
+    getParentRoute: () => AuthenticatedPlatformRouteRoute,
   } as any)
 const AuthenticatedPlatformGymsRouteRoute =
   AuthenticatedPlatformGymsRouteRouteImport.update({
     id: '/gyms',
     path: '/gyms',
     getParentRoute: () => AuthenticatedPlatformRouteRoute,
+  } as any)
+const AuthenticatedAdminMembersMemberIdRoute =
+  AuthenticatedAdminMembersMemberIdRouteImport.update({
+    id: '/$memberId',
+    path: '/$memberId',
+    getParentRoute: () => AuthenticatedAdminMembersRoute,
+  } as any)
+const AuthenticatedAdminPlansPlanIdRoute =
+  AuthenticatedAdminPlansPlanIdRouteImport.update({
+    id: '/$planId',
+    path: '/$planId',
+    getParentRoute: () => AuthenticatedAdminPlansRoute,
+  } as any)
+const AuthenticatedAdminPlansNewRoute =
+  AuthenticatedAdminPlansNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedAdminPlansRoute,
+  } as any)
+const AuthenticatedAdminReportsAttendanceRoute =
+  AuthenticatedAdminReportsAttendanceRouteImport.update({
+    id: '/reports/attendance',
+    path: '/reports/attendance',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminReportsEngagementRoute =
+  AuthenticatedAdminReportsEngagementRouteImport.update({
+    id: '/reports/engagement',
+    path: '/reports/engagement',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAppWorkoutDayIdRoute =
+  AuthenticatedAppWorkoutDayIdRouteImport.update({
+    id: '/workout/$dayId',
+    path: '/workout/$dayId',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
 const AuthenticatedPlatformGymsIndexRoute =
   AuthenticatedPlatformGymsIndexRouteImport.update({
@@ -215,42 +251,6 @@ const AuthenticatedPlatformGymsGymIdRoute =
     id: '/$gymId',
     path: '/$gymId',
     getParentRoute: () => AuthenticatedPlatformGymsRouteRoute,
-  } as any)
-const AuthenticatedAppWorkoutDayIdRoute =
-  AuthenticatedAppWorkoutDayIdRouteImport.update({
-    id: '/workout/$dayId',
-    path: '/workout/$dayId',
-    getParentRoute: () => AuthenticatedAppRouteRoute,
-  } as any)
-const AuthenticatedAdminReportsEngagementRoute =
-  AuthenticatedAdminReportsEngagementRouteImport.update({
-    id: '/reports/engagement',
-    path: '/reports/engagement',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminReportsAttendanceRoute =
-  AuthenticatedAdminReportsAttendanceRouteImport.update({
-    id: '/reports/attendance',
-    path: '/reports/attendance',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminPlansNewRoute =
-  AuthenticatedAdminPlansNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => AuthenticatedAdminPlansRoute,
-  } as any)
-const AuthenticatedAdminPlansPlanIdRoute =
-  AuthenticatedAdminPlansPlanIdRouteImport.update({
-    id: '/$planId',
-    path: '/$planId',
-    getParentRoute: () => AuthenticatedAdminPlansRoute,
-  } as any)
-const AuthenticatedAdminMembersMemberIdRoute =
-  AuthenticatedAdminMembersMemberIdRouteImport.update({
-    id: '/$memberId',
-    path: '/$memberId',
-    getParentRoute: () => AuthenticatedAdminMembersRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -492,46 +492,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/manifest.webmanifest': {
-      id: '/manifest.webmanifest'
-      path: '/manifest.webmanifest'
-      fullPath: '/manifest.webmanifest'
-      preLoaderRoute: typeof ManifestDotwebmanifestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -541,18 +506,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/platform': {
-      id: '/_authenticated/platform'
-      path: '/platform'
-      fullPath: '/platform'
-      preLoaderRoute: typeof AuthenticatedPlatformRouteRouteImport
+    '/manifest.webmanifest': {
+      id: '/manifest.webmanifest'
+      path: '/manifest.webmanifest'
+      fullPath: '/manifest.webmanifest'
+      preLoaderRoute: typeof ManifestDotwebmanifestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app': {
@@ -562,123 +562,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+    '/_authenticated/platform': {
+      id: '/_authenticated/platform'
+      path: '/platform'
+      fullPath: '/platform'
+      preLoaderRoute: typeof AuthenticatedPlatformRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/': {
-      id: '/_authenticated/platform/'
-      path: '/'
-      fullPath: '/platform/'
-      preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
-      parentRoute: typeof AuthenticatedPlatformRouteRoute
-    }
-    '/_authenticated/app/': {
-      id: '/_authenticated/app/'
-      path: '/'
-      fullPath: '/app/'
-      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
-      parentRoute: typeof AuthenticatedAppRouteRoute
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/platform/contacts': {
-      id: '/_authenticated/platform/contacts'
-      path: '/contacts'
-      fullPath: '/platform/contacts'
-      preLoaderRoute: typeof AuthenticatedPlatformContactsRouteImport
-      parentRoute: typeof AuthenticatedPlatformRouteRoute
-    }
-    '/_authenticated/platform/analytics': {
-      id: '/_authenticated/platform/analytics'
-      path: '/analytics'
-      fullPath: '/platform/analytics'
-      preLoaderRoute: typeof AuthenticatedPlatformAnalyticsRouteImport
-      parentRoute: typeof AuthenticatedPlatformRouteRoute
-    }
-    '/_authenticated/app/workouts': {
-      id: '/_authenticated/app/workouts'
-      path: '/workouts'
-      fullPath: '/app/workouts'
-      preLoaderRoute: typeof AuthenticatedAppWorkoutsRouteImport
-      parentRoute: typeof AuthenticatedAppRouteRoute
-    }
-    '/_authenticated/app/progress': {
-      id: '/_authenticated/app/progress'
-      path: '/progress'
-      fullPath: '/app/progress'
-      preLoaderRoute: typeof AuthenticatedAppProgressRouteImport
-      parentRoute: typeof AuthenticatedAppRouteRoute
-    }
-    '/_authenticated/app/profile': {
-      id: '/_authenticated/app/profile'
-      path: '/profile'
-      fullPath: '/app/profile'
-      preLoaderRoute: typeof AuthenticatedAppProfileRouteImport
-      parentRoute: typeof AuthenticatedAppRouteRoute
-    }
-    '/_authenticated/app/messages': {
-      id: '/_authenticated/app/messages'
-      path: '/messages'
-      fullPath: '/app/messages'
-      preLoaderRoute: typeof AuthenticatedAppMessagesRouteImport
-      parentRoute: typeof AuthenticatedAppRouteRoute
-    }
-    '/_authenticated/app/checkin': {
-      id: '/_authenticated/app/checkin'
-      path: '/checkin'
-      fullPath: '/app/checkin'
-      preLoaderRoute: typeof AuthenticatedAppCheckinRouteImport
-      parentRoute: typeof AuthenticatedAppRouteRoute
-    }
-    '/_authenticated/admin/templates': {
-      id: '/_authenticated/admin/templates'
-      path: '/templates'
-      fullPath: '/admin/templates'
-      preLoaderRoute: typeof AuthenticatedAdminTemplatesRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/staff': {
-      id: '/_authenticated/admin/staff'
-      path: '/staff'
-      fullPath: '/admin/staff'
-      preLoaderRoute: typeof AuthenticatedAdminStaffRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/settings': {
-      id: '/_authenticated/admin/settings'
-      path: '/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/plans': {
-      id: '/_authenticated/admin/plans'
-      path: '/plans'
-      fullPath: '/admin/plans'
-      preLoaderRoute: typeof AuthenticatedAdminPlansRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/members': {
-      id: '/_authenticated/admin/members'
-      path: '/members'
-      fullPath: '/admin/members'
-      preLoaderRoute: typeof AuthenticatedAdminMembersRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/exercises': {
-      id: '/_authenticated/admin/exercises'
-      path: '/exercises'
-      fullPath: '/admin/exercises'
-      preLoaderRoute: typeof AuthenticatedAdminExercisesRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/checkin': {
@@ -688,12 +583,159 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCheckinRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/exercises': {
+      id: '/_authenticated/admin/exercises'
+      path: '/exercises'
+      fullPath: '/admin/exercises'
+      preLoaderRoute: typeof AuthenticatedAdminExercisesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/members': {
+      id: '/_authenticated/admin/members'
+      path: '/members'
+      fullPath: '/admin/members'
+      preLoaderRoute: typeof AuthenticatedAdminMembersRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/plans': {
+      id: '/_authenticated/admin/plans'
+      path: '/plans'
+      fullPath: '/admin/plans'
+      preLoaderRoute: typeof AuthenticatedAdminPlansRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/staff': {
+      id: '/_authenticated/admin/staff'
+      path: '/staff'
+      fullPath: '/admin/staff'
+      preLoaderRoute: typeof AuthenticatedAdminStaffRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/templates': {
+      id: '/_authenticated/admin/templates'
+      path: '/templates'
+      fullPath: '/admin/templates'
+      preLoaderRoute: typeof AuthenticatedAdminTemplatesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/app/': {
+      id: '/_authenticated/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/checkin': {
+      id: '/_authenticated/app/checkin'
+      path: '/checkin'
+      fullPath: '/app/checkin'
+      preLoaderRoute: typeof AuthenticatedAppCheckinRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/messages': {
+      id: '/_authenticated/app/messages'
+      path: '/messages'
+      fullPath: '/app/messages'
+      preLoaderRoute: typeof AuthenticatedAppMessagesRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/profile': {
+      id: '/_authenticated/app/profile'
+      path: '/profile'
+      fullPath: '/app/profile'
+      preLoaderRoute: typeof AuthenticatedAppProfileRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/progress': {
+      id: '/_authenticated/app/progress'
+      path: '/progress'
+      fullPath: '/app/progress'
+      preLoaderRoute: typeof AuthenticatedAppProgressRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/workouts': {
+      id: '/_authenticated/app/workouts'
+      path: '/workouts'
+      fullPath: '/app/workouts'
+      preLoaderRoute: typeof AuthenticatedAppWorkoutsRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/platform/': {
+      id: '/_authenticated/platform/'
+      path: '/'
+      fullPath: '/platform/'
+      preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
+      parentRoute: typeof AuthenticatedPlatformRouteRoute
+    }
+    '/_authenticated/platform/analytics': {
+      id: '/_authenticated/platform/analytics'
+      path: '/analytics'
+      fullPath: '/platform/analytics'
+      preLoaderRoute: typeof AuthenticatedPlatformAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedPlatformRouteRoute
+    }
+    '/_authenticated/platform/contacts': {
+      id: '/_authenticated/platform/contacts'
+      path: '/contacts'
+      fullPath: '/platform/contacts'
+      preLoaderRoute: typeof AuthenticatedPlatformContactsRouteImport
+      parentRoute: typeof AuthenticatedPlatformRouteRoute
+    }
     '/_authenticated/platform/gyms': {
       id: '/_authenticated/platform/gyms'
       path: '/gyms'
       fullPath: '/platform/gyms'
       preLoaderRoute: typeof AuthenticatedPlatformGymsRouteRouteImport
       parentRoute: typeof AuthenticatedPlatformRouteRoute
+    }
+    '/_authenticated/admin/members/$memberId': {
+      id: '/_authenticated/admin/members/$memberId'
+      path: '/$memberId'
+      fullPath: '/admin/members/$memberId'
+      preLoaderRoute: typeof AuthenticatedAdminMembersMemberIdRouteImport
+      parentRoute: typeof AuthenticatedAdminMembersRoute
+    }
+    '/_authenticated/admin/plans/$planId': {
+      id: '/_authenticated/admin/plans/$planId'
+      path: '/$planId'
+      fullPath: '/admin/plans/$planId'
+      preLoaderRoute: typeof AuthenticatedAdminPlansPlanIdRouteImport
+      parentRoute: typeof AuthenticatedAdminPlansRoute
+    }
+    '/_authenticated/admin/plans/new': {
+      id: '/_authenticated/admin/plans/new'
+      path: '/new'
+      fullPath: '/admin/plans/new'
+      preLoaderRoute: typeof AuthenticatedAdminPlansNewRouteImport
+      parentRoute: typeof AuthenticatedAdminPlansRoute
+    }
+    '/_authenticated/admin/reports/attendance': {
+      id: '/_authenticated/admin/reports/attendance'
+      path: '/reports/attendance'
+      fullPath: '/admin/reports/attendance'
+      preLoaderRoute: typeof AuthenticatedAdminReportsAttendanceRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/reports/engagement': {
+      id: '/_authenticated/admin/reports/engagement'
+      path: '/reports/engagement'
+      fullPath: '/admin/reports/engagement'
+      preLoaderRoute: typeof AuthenticatedAdminReportsEngagementRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/app/workout/$dayId': {
+      id: '/_authenticated/app/workout/$dayId'
+      path: '/workout/$dayId'
+      fullPath: '/app/workout/$dayId'
+      preLoaderRoute: typeof AuthenticatedAppWorkoutDayIdRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
     }
     '/_authenticated/platform/gyms/': {
       id: '/_authenticated/platform/gyms/'
@@ -708,48 +750,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/platform/gyms/$gymId'
       preLoaderRoute: typeof AuthenticatedPlatformGymsGymIdRouteImport
       parentRoute: typeof AuthenticatedPlatformGymsRouteRoute
-    }
-    '/_authenticated/app/workout/$dayId': {
-      id: '/_authenticated/app/workout/$dayId'
-      path: '/workout/$dayId'
-      fullPath: '/app/workout/$dayId'
-      preLoaderRoute: typeof AuthenticatedAppWorkoutDayIdRouteImport
-      parentRoute: typeof AuthenticatedAppRouteRoute
-    }
-    '/_authenticated/admin/reports/engagement': {
-      id: '/_authenticated/admin/reports/engagement'
-      path: '/reports/engagement'
-      fullPath: '/admin/reports/engagement'
-      preLoaderRoute: typeof AuthenticatedAdminReportsEngagementRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/reports/attendance': {
-      id: '/_authenticated/admin/reports/attendance'
-      path: '/reports/attendance'
-      fullPath: '/admin/reports/attendance'
-      preLoaderRoute: typeof AuthenticatedAdminReportsAttendanceRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/plans/new': {
-      id: '/_authenticated/admin/plans/new'
-      path: '/new'
-      fullPath: '/admin/plans/new'
-      preLoaderRoute: typeof AuthenticatedAdminPlansNewRouteImport
-      parentRoute: typeof AuthenticatedAdminPlansRoute
-    }
-    '/_authenticated/admin/plans/$planId': {
-      id: '/_authenticated/admin/plans/$planId'
-      path: '/$planId'
-      fullPath: '/admin/plans/$planId'
-      preLoaderRoute: typeof AuthenticatedAdminPlansPlanIdRouteImport
-      parentRoute: typeof AuthenticatedAdminPlansRoute
-    }
-    '/_authenticated/admin/members/$memberId': {
-      id: '/_authenticated/admin/members/$memberId'
-      path: '/$memberId'
-      fullPath: '/admin/members/$memberId'
-      preLoaderRoute: typeof AuthenticatedAdminMembersMemberIdRouteImport
-      parentRoute: typeof AuthenticatedAdminMembersRoute
     }
   }
 }
