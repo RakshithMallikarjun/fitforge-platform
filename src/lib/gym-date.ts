@@ -42,6 +42,52 @@ export function hourInZone(timeZone: string, at: Date = new Date()): number {
   }
 }
 
+/** Offset in ms between `timeZone` wall-clock and UTC at instant `at`. */
+function zoneOffsetMs(timeZone: string, at: Date): number {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(at);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+  const asUtc = Date.UTC(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour") % 24,
+    get("minute"),
+    get("second"),
+  );
+  return asUtc - at.getTime();
+}
+
+/**
+ * ISO instant of local midnight on `dateStr` in `timeZone`.
+ * Use this whenever a gym-local calendar boundary is compared to a timestamptz
+ * column — a bare `${dateStr}T00:00:00.000Z` is the UTC boundary, not the gym's.
+ */
+export function zonedDayStartISO(timeZone: string, dateStr: string): string {
+  const guess = Date.parse(`${dateStr}T00:00:00Z`);
+  if (!Number.isFinite(guess)) return new Date().toISOString();
+  try {
+    let offset = zoneOffsetMs(timeZone, new Date(guess));
+    offset = zoneOffsetMs(timeZone, new Date(guess - offset));
+    return new Date(guess - offset).toISOString();
+  } catch {
+    return new Date(guess).toISOString();
+  }
+}
+
+/** ISO instant of local midnight on the 1st of `dateStr`'s month. */
+export function zonedMonthStartISO(timeZone: string, dateStr: string): string {
+  return zonedDayStartISO(timeZone, `${dateStr.slice(0, 7)}-01`);
+}
+
 /** Shift a YYYY-MM-DD string by whole days without touching timezones. */
 export function shiftDateString(dateStr: string, days: number): string {
   const [y, m, d] = dateStr.split("-").map(Number);

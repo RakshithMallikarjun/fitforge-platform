@@ -341,7 +341,32 @@ export const getMemberSnapshot = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ memberId: z.string().uuid() }).parse(data))
   .handler(async ({ context, data }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+
+    // Defence in depth: RLS covers this, but never read a member row on the
+    // strength of a client-supplied id alone.
+    if (data.memberId !== userId) {
+      const { gymId, isAdmin, isTrainer } = await getRolesAndGym(supabase, userId);
+      if (!gymId || (!isAdmin && !isTrainer)) throw new Error("Forbidden");
+      const { data: member } = await supabase
+        .from("users")
+        .select("gym_id")
+        .eq("id", data.memberId)
+        .maybeSingle();
+      if (!member || (member as any).gym_id !== gymId) throw new Error("Forbidden");
+      if (!isAdmin) {
+        const { data: assignment } = await supabase
+          .from("trainer_assignments")
+          .select("id")
+          .eq("gym_id", gymId)
+          .eq("trainer_id", userId)
+          .eq("member_id", data.memberId)
+          .eq("active", true)
+          .maybeSingle();
+        if (!assignment) throw new Error("Forbidden");
+      }
+    }
+
     const { data: row } = await supabase
       .from("fitness_assessments")
       .select("date, weight, body_fat_pct, bench_1rm, squat_1rm, deadlift_1rm")
