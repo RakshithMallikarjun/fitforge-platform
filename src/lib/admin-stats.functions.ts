@@ -149,12 +149,7 @@ export const getTrainerStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<TrainerStat[]> => {
     const { supabase, userId } = context;
-    const { data: me } = await supabase
-      .from("users")
-      .select("gym_id")
-      .eq("id", userId)
-      .maybeSingle();
-    const gymId = (me as any)?.gym_id as string | null;
+    const { timeZone, gymId } = await resolveGymTimezone(supabase, userId);
     if (!gymId) return [];
 
     // trainer_assignments / plans / assessments are RLS-scoped to the caller, so a
