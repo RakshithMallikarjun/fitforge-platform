@@ -8,9 +8,28 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  *
  * Public sign-up never grants admin — this is the controlled bootstrap path.
  */
-export const gymHasAdmin = createServerFn({ method: "GET" })
+
+/** The slug the caller signed up against, read from their own auth metadata. */
+async function callerGymSlug(claims: any, userId: string): Promise<string | null> {
+  const fromClaims = claims?.user_metadata?.gym_slug;
+  if (typeof fromClaims === "string" && fromClaims.length > 0) return fromClaims;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
+  const slug = (data?.user?.user_metadata as any)?.gym_slug;
+  return typeof slug === "string" && slug.length > 0 ? slug : null;
+}
+
+export const gymHasAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { gymSlug: string }) => z.object({ gymSlug: z.string().min(1) }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Only ever answer for the caller's own gym slug — otherwise this endpoint
+    // becomes a tenant-slug enumeration oracle for any signed-in user.
+    const ownSlug = await callerGymSlug(context.claims, context.userId);
+    if (!ownSlug || ownSlug !== data.gymSlug) {
+      return { gymExists: false, hasAdmin: false, gymId: null as string | null };
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: gym } = await supabaseAdmin
       .from("gyms")
