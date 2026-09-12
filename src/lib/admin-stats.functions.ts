@@ -179,7 +179,8 @@ export const getTrainerStats = createServerFn({ method: "GET" })
       .select("id, display_name, email")
       .in("id", trainerIds);
 
-    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+    // Month boundary at the gym's midnight, not the server's.
+    const monthStart = zonedMonthStartISO(timeZone, dateStringInZone(timeZone));
 
     const [{ data: assigns }, { data: plans }, { data: assess }] = await Promise.all([
       supabase
