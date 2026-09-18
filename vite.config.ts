@@ -48,23 +48,31 @@ export default defineConfig({
           globDirectory: "dist/client",
           swDest: "dist/client/sw.js",
           modifyURLPrefix: { "client/": "", "server/": "" },
+          cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          skipWaiting: true,
+          // The offline page is only a fallback inside the member app scope.
+          // Never let it stand in for SSR marketing/auth/admin navigations.
           navigateFallback: "/offline.html",
+          navigateFallbackAllowlist: [/^\/app(\/|$)/],
           navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//, /^\/admin/, /^\/auth/],
-          globPatterns: ["offline.html", "**/*.{js,css,html,svg,png,ico,webmanifest}"],
+          globPatterns: ["offline.html", "**/*.{js,css,svg,png,ico,webmanifest}"],
           // Custom bootstrap script hooked into the generated SW — enables
           // Background Sync fan-out to open clients for offline queue flush.
           importScripts: ["/sw-sync.js"],
           runtimeCaching: [
             {
               urlPattern: ({ request, url }) =>
-                request.mode === "navigate" && !url.pathname.startsWith("/~oauth"),
+                request.mode === "navigate" &&
+                url.pathname.startsWith("/app") &&
+                !url.pathname.startsWith("/~oauth"),
               handler: "NetworkFirst",
               options: {
                 cacheName: "pages",
-                networkTimeoutSeconds: 4,
                 expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 },
               },
             },
+
             {
               urlPattern: ({ url, sameOrigin }) =>
                 sameOrigin && /\.(?:png|jpg|jpeg|svg|webp|gif|ico)$/.test(url.pathname),
