@@ -4,87 +4,9 @@
 //     componentTagger (dev-only), VITE_* env injection, @ path alias, React/TanStack dedupe,
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
-  },
-  vite: {
-    plugins: [
-      VitePWA({
-        registerType: "autoUpdate",
-        injectRegister: null, // we register from our own guarded wrapper
-        devOptions: { enabled: false },
-        filename: "sw.js",
-        manifest: {
-          name: "FitForge — Member",
-          short_name: "FitForge",
-          description: "Your gym in your pocket — workouts, plans, and progress.",
-          theme_color: "#059669",
-          background_color: "#F8FAFC",
-          display: "standalone",
-          orientation: "portrait",
-          scope: "/app",
-          start_url: "/app",
-          id: "/app",
-          icons: [
-            { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-            { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-            {
-              src: "/icons/icon-maskable-512.png",
-              sizes: "512x512",
-              type: "image/png",
-              purpose: "maskable",
-            },
-          ],
-        },
-        // Nitro emits the browser-served files to dist/client (served at "/"),
-        // so both the precache manifest and sw.js must target that folder.
-        outDir: "dist/client",
-        workbox: {
-          // Generate the manifest against the actually-served directory so URLs
-          // are root-relative ("assets/...", "offline.html") — not "client/...".
-          globDirectory: "dist/client",
-          swDest: "dist/client/sw.js",
-          modifyURLPrefix: { "client/": "", "server/": "" },
-          cleanupOutdatedCaches: true,
-          clientsClaim: true,
-          skipWaiting: true,
-          // The offline page is only a fallback inside the member app scope.
-          // Never let it stand in for SSR marketing/auth/admin navigations.
-          navigateFallback: "/offline.html",
-          navigateFallbackAllowlist: [/^\/app(\/|$)/],
-          navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//, /^\/admin/, /^\/auth/],
-          globPatterns: ["offline.html", "**/*.{js,css,svg,png,ico,webmanifest}"],
-          // Custom bootstrap script hooked into the generated SW — enables
-          // Background Sync fan-out to open clients for offline queue flush.
-          importScripts: ["/sw-sync.js"],
-          runtimeCaching: [
-            {
-              urlPattern: ({ request, url }) =>
-                request.mode === "navigate" &&
-                url.pathname.startsWith("/app") &&
-                !url.pathname.startsWith("/~oauth"),
-              handler: "NetworkFirst",
-              options: {
-                cacheName: "pages",
-                expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 },
-              },
-            },
-
-            {
-              urlPattern: ({ url, sameOrigin }) =>
-                sameOrigin && /\.(?:png|jpg|jpeg|svg|webp|gif|ico)$/.test(url.pathname),
-              handler: "CacheFirst",
-              options: {
-                cacheName: "images",
-                expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              },
-            },
-          ],
-        },
-      }),
-    ],
   },
 });
