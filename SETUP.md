@@ -14,8 +14,6 @@ console could provision them. It only works for a gym whose
 that gym has no admin. Once every gym has an admin, unset the secret — new gyms
 should always be created and claimed through the console.
 
-
-
 ## AI (progressive overload suggestions)
 
 Uses **Lovable AI Gateway** (`google/gemini-2.5-flash` by default). The

@@ -18,7 +18,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  * Public sign-up never grants admin — this is the controlled bootstrap path.
  */
 
-
 /** The slug the caller signed up against, read from their own auth metadata. */
 async function callerGymSlug(claims: any, userId: string): Promise<string | null> {
   const fromClaims = claims?.user_metadata?.gym_slug;
@@ -98,14 +97,13 @@ export const claimGymAdmin = createServerFn({ method: "POST" })
     }
     const callerEmail =
       typeof (context.claims as { email?: unknown } | null)?.email === "string"
-        ? ((context.claims as { email: string }).email).trim().toLowerCase()
+        ? (context.claims as { email: string }).email.trim().toLowerCase()
         : null;
     if (!callerEmail || callerEmail !== pending) {
       throw new Error(
         "This gym is not open for owner claim — ask the platform admin to send you an invite.",
       );
     }
-
 
     const { data: existing } = await supabaseAdmin
       .from("user_roles")

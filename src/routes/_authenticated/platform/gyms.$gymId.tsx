@@ -224,8 +224,6 @@ function PlatformGymDetailPage() {
     (detail.data?.staff ?? []).find((s) => s.role === "admin")?.email ??
     "an admin";
 
-
-
   if (detail.isError) {
     return (
       <main className="mx-auto max-w-[1200px] px-6 py-8">
@@ -412,7 +410,6 @@ function PlatformGymDetailPage() {
             </p>
           </div>
         </Section>
-
 
         <Section
           title="Billing"
@@ -767,6 +764,5 @@ function PlatformGymDetailPage() {
         </DialogContent>
       </Dialog>
     </main>
-
   );
 }

@@ -375,7 +375,12 @@ export const checkGymSlug = createServerFn({ method: "POST" })
  * the admin client.
  */
 async function inviteOwner(
-  supabase: { rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message?: string; code?: string } | null }> },
+  supabase: {
+    rpc: (
+      fn: string,
+      args?: Record<string, unknown>,
+    ) => Promise<{ data: unknown; error: { message?: string; code?: string } | null }>;
+  },
   gymId: string,
   email: string,
   allowExisting: boolean,
@@ -493,4 +498,3 @@ export const createGym = createServerFn({ method: "POST" })
       }
     },
   );
-

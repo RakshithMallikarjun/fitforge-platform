@@ -175,7 +175,6 @@ function PlatformGymsPage() {
 
       <NewGymDialog open={newOpen} onOpenChange={setNewOpen} />
 
-
       <div className="flex flex-wrap items-center gap-2">
         <Input
           value={search}

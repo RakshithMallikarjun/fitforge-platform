@@ -60,7 +60,13 @@ function localValidation(slug: string): string | null {
   return null;
 }
 
-export function NewGymDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+export function NewGymDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const submitGym = useServerFn(createGym);
