@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Building2, LayoutDashboard, LineChart, LogOut, Users2 } from "lucide-react";
+import { Building2, LayoutDashboard, LineChart, LogOut, Megaphone, Users2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { isPlatformAdmin } from "@/lib/platform.functions";
@@ -30,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/platform")({
 const NAV = [
   { to: "/platform", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/platform/gyms", label: "Gyms", icon: Building2 },
+  { to: "/platform/ads", label: "Ads", icon: Megaphone },
   { to: "/platform/analytics", label: "Analytics", icon: LineChart },
   { to: "/platform/contacts", label: "Contacts", icon: Users2 },
 ];

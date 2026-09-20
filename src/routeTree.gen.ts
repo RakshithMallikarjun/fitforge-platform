@@ -26,6 +26,7 @@ import { Route as AuthenticatedAdminExercisesRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin/members'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
+import { Route as AuthenticatedAdminSponsorsRouteImport } from './routes/_authenticated/admin/sponsors'
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin/staff'
 import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
@@ -134,6 +135,12 @@ const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminSponsorsRoute =
+  AuthenticatedAdminSponsorsRouteImport.update({
+    id: '/sponsors',
+    path: '/sponsors',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
@@ -270,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/sponsors': typeof AuthenticatedAdminSponsorsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/app/checkin': typeof AuthenticatedAppCheckinRoute
@@ -304,6 +312,7 @@ export interface FileRoutesByTo {
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/sponsors': typeof AuthenticatedAdminSponsorsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/app/checkin': typeof AuthenticatedAppCheckinRoute
@@ -344,6 +353,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/admin/sponsors': typeof AuthenticatedAdminSponsorsRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/_authenticated/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/_authenticated/app/checkin': typeof AuthenticatedAppCheckinRoute
@@ -384,6 +394,7 @@ export interface FileRouteTypes {
     | '/admin/members'
     | '/admin/plans'
     | '/admin/settings'
+    | '/admin/sponsors'
     | '/admin/staff'
     | '/admin/templates'
     | '/app/checkin'
@@ -418,6 +429,7 @@ export interface FileRouteTypes {
     | '/admin/members'
     | '/admin/plans'
     | '/admin/settings'
+    | '/admin/sponsors'
     | '/admin/staff'
     | '/admin/templates'
     | '/app/checkin'
@@ -457,6 +469,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/members'
     | '/_authenticated/admin/plans'
     | '/_authenticated/admin/settings'
+    | '/_authenticated/admin/sponsors'
     | '/_authenticated/admin/staff'
     | '/_authenticated/admin/templates'
     | '/_authenticated/app/checkin'
@@ -609,6 +622,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/admin/settings'
       preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/sponsors': {
+      id: '/_authenticated/admin/sponsors'
+      path: '/sponsors'
+      fullPath: '/admin/sponsors'
+      preLoaderRoute: typeof AuthenticatedAdminSponsorsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/staff': {
@@ -791,6 +811,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRouteWithChildren
   AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRouteWithChildren
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedAdminSponsorsRoute: typeof AuthenticatedAdminSponsorsRoute
   AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
   AuthenticatedAdminTemplatesRoute: typeof AuthenticatedAdminTemplatesRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -805,6 +826,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRouteWithChildren,
     AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRouteWithChildren,
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
+    AuthenticatedAdminSponsorsRoute: AuthenticatedAdminSponsorsRoute,
     AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
     AuthenticatedAdminTemplatesRoute: AuthenticatedAdminTemplatesRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
