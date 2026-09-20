@@ -98,6 +98,9 @@ export type PlatformGymDetail = PlatformGymRow & {
   support_phone: string | null;
   internal_note: string | null;
   disabled_reason: string | null;
+  pending_owner_email: string | null;
+  owner_invited_at: string | null;
+  owner_claimed_at: string | null;
   staff: PlatformStaff[];
 };
 
