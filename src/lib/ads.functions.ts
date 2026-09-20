@@ -459,6 +459,40 @@ export const updatePlatformAd = createServerFn({ method: "POST" })
     const { created_by: _ignored, ...patch } = adRecord(rest as AdInput, null, userId);
     const { error } = await supabase.from("ads").update(patch).eq("id", id).is("gym_id", null);
     if (error) fail(error);
+    await supabase.rpc("platform_audit_ad", { _ad_id: id, _action: "update_platform_ad" });
+    return { ok: true };
+  });
+
+export const setPlatformAdStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ id: z.string().uuid(), status: statusSchema }).parse(data),
+  )
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { supabase } = context;
+    await requirePlatform(supabase);
+    const { error } = await supabase
+      .from("ads")
+      .update({ status: data.status })
+      .eq("id", data.id)
+      .is("gym_id", null);
+    if (error) fail(error);
+    await supabase.rpc("platform_audit_ad", {
+      _ad_id: data.id,
+      _action: "set_platform_ad_status",
+    });
+    return { ok: true };
+  });
+
+export const deletePlatformAd = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { supabase } = context;
+    await requirePlatform(supabase);
+    await supabase.rpc("platform_audit_ad", { _ad_id: data.id, _action: "delete_platform_ad" });
+    const { error } = await supabase.from("ads").delete().eq("id", data.id).is("gym_id", null);
+    if (error) fail(error);
     return { ok: true };
   });
 
