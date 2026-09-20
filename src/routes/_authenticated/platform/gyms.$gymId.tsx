@@ -128,6 +128,8 @@ function PlatformGymDetailPage() {
   const [toggleOpen, setToggleOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [billingOpen, setBillingOpen] = useState(false);
+  const [ownerOpen, setOwnerOpen] = useState(false);
+  const [ownerEmail, setOwnerEmail] = useState("");
   const [status, setStatus] = useState<PaymentStatus>("trialing");
   const [lastPaymentAt, setLastPaymentAt] = useState("");
   const [nextDueAt, setNextDueAt] = useState("");
@@ -191,6 +193,33 @@ function PlatformGymDetailPage() {
     },
     onError: (e) => toast.error((e as Error).message || "Could not update the plan"),
   });
+
+  const resendMutation = useMutation({
+    mutationFn: (email: string) => resendInvite({ data: { gymId, email } }),
+    onSuccess: () => {
+      toast.success("Invite email sent");
+      invalidate();
+    },
+    onError: (e) => toast.error((e as Error).message || "Could not send the invite"),
+  });
+
+  const inviteMutation = useMutation({
+    mutationFn: (email: string) => sendInvite({ data: { gymId, email } }),
+    onSuccess: () => {
+      toast.success("Owner invited");
+      setOwnerOpen(false);
+      invalidate();
+    },
+    onError: (e) => toast.error((e as Error).message || "Could not invite the owner"),
+  });
+
+  const hasAdmin = (detail.data?.staff ?? []).some((s) => s.role === "admin");
+  const adminName =
+    (detail.data?.staff ?? []).find((s) => s.role === "admin")?.display_name ??
+    (detail.data?.staff ?? []).find((s) => s.role === "admin")?.email ??
+    "an admin";
+
+
 
   if (detail.isError) {
     return (
