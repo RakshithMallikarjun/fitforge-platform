@@ -231,6 +231,20 @@ export const getMember = createServerFn({ method: "GET" })
       "photo_url" as any,
     );
 
+    // Billing currency is a restricted gyms column — read it with the
+    // service-role client only for verified admins (same pattern as
+    // getGymSettings), never for trainers.
+    let currency: string | null = null;
+    if (isAdmin) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: gym } = await supabaseAdmin
+        .from("gyms")
+        .select("currency")
+        .eq("id", gymId)
+        .maybeSingle();
+      currency = (gym as any)?.currency ?? null;
+    }
+
     return {
       user: signedUser,
       profile,
@@ -238,6 +252,7 @@ export const getMember = createServerFn({ method: "GET" })
       assessments: assessments ?? [],
       plans: plansWithCounts,
       attendance: attendance ?? [],
+      currency,
     };
   });
 
