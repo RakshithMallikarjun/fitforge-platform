@@ -92,6 +92,13 @@
       "when": 1789193065041,
       "tag": "0012_gyms_column_grants_and_definer_revokes",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789882044580,
+      "tag": "0013_platform_create_gym",
+      "breakpoints": true
     }
   ]
 }
