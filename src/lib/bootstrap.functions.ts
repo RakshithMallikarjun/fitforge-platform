@@ -82,10 +82,30 @@ export const claimGymAdmin = createServerFn({ method: "POST" })
 
     const { data: gym, error: gErr } = await supabaseAdmin
       .from("gyms")
-      .select("id, slug")
+      .select("id, slug, pending_owner_email")
       .eq("slug", data.gymSlug)
       .maybeSingle();
     if (gErr || !gym) throw new Error("Gym not found");
+
+    // The token is platform-wide, so the claim is additionally bound to the
+    // address the platform admin invited. Without that, one leaked token would
+    // open every admin-less gym.
+    const pending = gym.pending_owner_email?.trim().toLowerCase() ?? null;
+    if (!pending) {
+      throw new Error(
+        "This gym is not open for owner claim — ask the platform admin to send you an invite.",
+      );
+    }
+    const callerEmail =
+      typeof (context.claims as { email?: unknown } | null)?.email === "string"
+        ? ((context.claims as { email: string }).email).trim().toLowerCase()
+        : null;
+    if (!callerEmail || callerEmail !== pending) {
+      throw new Error(
+        "This gym is not open for owner claim — ask the platform admin to send you an invite.",
+      );
+    }
+
 
     const { data: existing } = await supabaseAdmin
       .from("user_roles")
