@@ -31,6 +31,7 @@ import { AssessmentsTab } from "@/components/assessments/assessments-tab";
 import { AttendanceHeatmap } from "@/components/members/attendance-heatmap";
 import { ThreadView } from "@/components/messages/thread-view";
 import { formatDateTime, formatShortDate, formatTime } from "@/lib/format-date";
+import { formatMoney } from "@/lib/format-money";
 
 export const Route = createFileRoute("/_authenticated/admin/members/$memberId")({
   component: MemberProfile,
