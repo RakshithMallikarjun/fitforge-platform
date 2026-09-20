@@ -36,6 +36,7 @@ import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppProgressRouteImport } from './routes/_authenticated/app/progress'
 import { Route as AuthenticatedAppWorkoutsRouteImport } from './routes/_authenticated/app/workouts'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform/index'
+import { Route as AuthenticatedPlatformAdsRouteImport } from './routes/_authenticated/platform/ads'
 import { Route as AuthenticatedPlatformAnalyticsRouteImport } from './routes/_authenticated/platform/analytics'
 import { Route as AuthenticatedPlatformContactsRouteImport } from './routes/_authenticated/platform/contacts'
 import { Route as AuthenticatedPlatformGymsRouteRouteImport } from './routes/_authenticated/platform/gyms.route'
@@ -193,6 +194,12 @@ const AuthenticatedPlatformIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedPlatformRouteRoute,
   } as any)
+const AuthenticatedPlatformAdsRoute =
+  AuthenticatedPlatformAdsRouteImport.update({
+    id: '/ads',
+    path: '/ads',
+    getParentRoute: () => AuthenticatedPlatformRouteRoute,
+  } as any)
 const AuthenticatedPlatformAnalyticsRoute =
   AuthenticatedPlatformAnalyticsRouteImport.update({
     id: '/analytics',
@@ -285,6 +292,7 @@ export interface FileRoutesByFullPath {
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/progress': typeof AuthenticatedAppProgressRoute
   '/app/workouts': typeof AuthenticatedAppWorkoutsRoute
+  '/platform/ads': typeof AuthenticatedPlatformAdsRoute
   '/platform/analytics': typeof AuthenticatedPlatformAnalyticsRoute
   '/platform/contacts': typeof AuthenticatedPlatformContactsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -320,6 +328,7 @@ export interface FileRoutesByTo {
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/progress': typeof AuthenticatedAppProgressRoute
   '/app/workouts': typeof AuthenticatedAppWorkoutsRoute
+  '/platform/ads': typeof AuthenticatedPlatformAdsRoute
   '/platform/analytics': typeof AuthenticatedPlatformAnalyticsRoute
   '/platform/contacts': typeof AuthenticatedPlatformContactsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -361,6 +370,7 @@ export interface FileRoutesById {
   '/_authenticated/app/profile': typeof AuthenticatedAppProfileRoute
   '/_authenticated/app/progress': typeof AuthenticatedAppProgressRoute
   '/_authenticated/app/workouts': typeof AuthenticatedAppWorkoutsRoute
+  '/_authenticated/platform/ads': typeof AuthenticatedPlatformAdsRoute
   '/_authenticated/platform/analytics': typeof AuthenticatedPlatformAnalyticsRoute
   '/_authenticated/platform/contacts': typeof AuthenticatedPlatformContactsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -402,6 +412,7 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/progress'
     | '/app/workouts'
+    | '/platform/ads'
     | '/platform/analytics'
     | '/platform/contacts'
     | '/admin/'
@@ -437,6 +448,7 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/progress'
     | '/app/workouts'
+    | '/platform/ads'
     | '/platform/analytics'
     | '/platform/contacts'
     | '/admin'
@@ -477,6 +489,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/profile'
     | '/_authenticated/app/progress'
     | '/_authenticated/app/workouts'
+    | '/_authenticated/platform/ads'
     | '/_authenticated/platform/analytics'
     | '/_authenticated/platform/contacts'
     | '/_authenticated/admin/'
@@ -694,6 +707,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
       parentRoute: typeof AuthenticatedPlatformRouteRoute
     }
+    '/_authenticated/platform/ads': {
+      id: '/_authenticated/platform/ads'
+      path: '/ads'
+      fullPath: '/platform/ads'
+      preLoaderRoute: typeof AuthenticatedPlatformAdsRouteImport
+      parentRoute: typeof AuthenticatedPlatformRouteRoute
+    }
     '/_authenticated/platform/analytics': {
       id: '/_authenticated/platform/analytics'
       path: '/analytics'
@@ -884,6 +904,7 @@ const AuthenticatedPlatformGymsRouteRouteWithChildren =
 
 interface AuthenticatedPlatformRouteRouteChildren {
   AuthenticatedPlatformGymsRouteRoute: typeof AuthenticatedPlatformGymsRouteRouteWithChildren
+  AuthenticatedPlatformAdsRoute: typeof AuthenticatedPlatformAdsRoute
   AuthenticatedPlatformAnalyticsRoute: typeof AuthenticatedPlatformAnalyticsRoute
   AuthenticatedPlatformContactsRoute: typeof AuthenticatedPlatformContactsRoute
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
@@ -893,6 +914,7 @@ const AuthenticatedPlatformRouteRouteChildren: AuthenticatedPlatformRouteRouteCh
   {
     AuthenticatedPlatformGymsRouteRoute:
       AuthenticatedPlatformGymsRouteRouteWithChildren,
+    AuthenticatedPlatformAdsRoute: AuthenticatedPlatformAdsRoute,
     AuthenticatedPlatformAnalyticsRoute: AuthenticatedPlatformAnalyticsRoute,
     AuthenticatedPlatformContactsRoute: AuthenticatedPlatformContactsRoute,
     AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
