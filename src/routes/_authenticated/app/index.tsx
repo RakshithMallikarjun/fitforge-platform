@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { SponsoredSlot } from "@/components/ads/sponsored-card";
 import { BentoStatCard } from "@/components/bento-stat-card";
 import { Button } from "@/components/ui/button";
 import { getMemberHome } from "@/lib/member-home.functions";
@@ -103,6 +104,8 @@ function MemberHome() {
           }
         />
       </div>
+
+      <SponsoredSlot placement="home_feed" />
 
       {/* Last workout */}
       <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">

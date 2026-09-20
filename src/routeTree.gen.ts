@@ -26,6 +26,7 @@ import { Route as AuthenticatedAdminExercisesRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin/members'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
+import { Route as AuthenticatedAdminSponsorsRouteImport } from './routes/_authenticated/admin/sponsors'
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin/staff'
 import { Route as AuthenticatedAdminTemplatesRouteImport } from './routes/_authenticated/admin/templates'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
@@ -35,6 +36,7 @@ import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppProgressRouteImport } from './routes/_authenticated/app/progress'
 import { Route as AuthenticatedAppWorkoutsRouteImport } from './routes/_authenticated/app/workouts'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform/index'
+import { Route as AuthenticatedPlatformAdsRouteImport } from './routes/_authenticated/platform/ads'
 import { Route as AuthenticatedPlatformAnalyticsRouteImport } from './routes/_authenticated/platform/analytics'
 import { Route as AuthenticatedPlatformContactsRouteImport } from './routes/_authenticated/platform/contacts'
 import { Route as AuthenticatedPlatformGymsRouteRouteImport } from './routes/_authenticated/platform/gyms.route'
@@ -136,6 +138,12 @@ const AuthenticatedAdminSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminSponsorsRoute =
+  AuthenticatedAdminSponsorsRouteImport.update({
+    id: '/sponsors',
+    path: '/sponsors',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
   id: '/staff',
   path: '/staff',
@@ -184,6 +192,12 @@ const AuthenticatedPlatformIndexRoute =
   AuthenticatedPlatformIndexRouteImport.update({
     id: '/',
     path: '/',
+    getParentRoute: () => AuthenticatedPlatformRouteRoute,
+  } as any)
+const AuthenticatedPlatformAdsRoute =
+  AuthenticatedPlatformAdsRouteImport.update({
+    id: '/ads',
+    path: '/ads',
     getParentRoute: () => AuthenticatedPlatformRouteRoute,
   } as any)
 const AuthenticatedPlatformAnalyticsRoute =
@@ -270,6 +284,7 @@ export interface FileRoutesByFullPath {
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/sponsors': typeof AuthenticatedAdminSponsorsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/app/checkin': typeof AuthenticatedAppCheckinRoute
@@ -277,6 +292,7 @@ export interface FileRoutesByFullPath {
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/progress': typeof AuthenticatedAppProgressRoute
   '/app/workouts': typeof AuthenticatedAppWorkoutsRoute
+  '/platform/ads': typeof AuthenticatedPlatformAdsRoute
   '/platform/analytics': typeof AuthenticatedPlatformAnalyticsRoute
   '/platform/contacts': typeof AuthenticatedPlatformContactsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -304,6 +320,7 @@ export interface FileRoutesByTo {
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/sponsors': typeof AuthenticatedAdminSponsorsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/app/checkin': typeof AuthenticatedAppCheckinRoute
@@ -311,6 +328,7 @@ export interface FileRoutesByTo {
   '/app/profile': typeof AuthenticatedAppProfileRoute
   '/app/progress': typeof AuthenticatedAppProgressRoute
   '/app/workouts': typeof AuthenticatedAppWorkoutsRoute
+  '/platform/ads': typeof AuthenticatedPlatformAdsRoute
   '/platform/analytics': typeof AuthenticatedPlatformAnalyticsRoute
   '/platform/contacts': typeof AuthenticatedPlatformContactsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -344,6 +362,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/admin/sponsors': typeof AuthenticatedAdminSponsorsRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/_authenticated/admin/templates': typeof AuthenticatedAdminTemplatesRoute
   '/_authenticated/app/checkin': typeof AuthenticatedAppCheckinRoute
@@ -351,6 +370,7 @@ export interface FileRoutesById {
   '/_authenticated/app/profile': typeof AuthenticatedAppProfileRoute
   '/_authenticated/app/progress': typeof AuthenticatedAppProgressRoute
   '/_authenticated/app/workouts': typeof AuthenticatedAppWorkoutsRoute
+  '/_authenticated/platform/ads': typeof AuthenticatedPlatformAdsRoute
   '/_authenticated/platform/analytics': typeof AuthenticatedPlatformAnalyticsRoute
   '/_authenticated/platform/contacts': typeof AuthenticatedPlatformContactsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -384,6 +404,7 @@ export interface FileRouteTypes {
     | '/admin/members'
     | '/admin/plans'
     | '/admin/settings'
+    | '/admin/sponsors'
     | '/admin/staff'
     | '/admin/templates'
     | '/app/checkin'
@@ -391,6 +412,7 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/progress'
     | '/app/workouts'
+    | '/platform/ads'
     | '/platform/analytics'
     | '/platform/contacts'
     | '/admin/'
@@ -418,6 +440,7 @@ export interface FileRouteTypes {
     | '/admin/members'
     | '/admin/plans'
     | '/admin/settings'
+    | '/admin/sponsors'
     | '/admin/staff'
     | '/admin/templates'
     | '/app/checkin'
@@ -425,6 +448,7 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/progress'
     | '/app/workouts'
+    | '/platform/ads'
     | '/platform/analytics'
     | '/platform/contacts'
     | '/admin'
@@ -457,6 +481,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/members'
     | '/_authenticated/admin/plans'
     | '/_authenticated/admin/settings'
+    | '/_authenticated/admin/sponsors'
     | '/_authenticated/admin/staff'
     | '/_authenticated/admin/templates'
     | '/_authenticated/app/checkin'
@@ -464,6 +489,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/profile'
     | '/_authenticated/app/progress'
     | '/_authenticated/app/workouts'
+    | '/_authenticated/platform/ads'
     | '/_authenticated/platform/analytics'
     | '/_authenticated/platform/contacts'
     | '/_authenticated/admin/'
@@ -611,6 +637,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/sponsors': {
+      id: '/_authenticated/admin/sponsors'
+      path: '/sponsors'
+      fullPath: '/admin/sponsors'
+      preLoaderRoute: typeof AuthenticatedAdminSponsorsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/staff': {
       id: '/_authenticated/admin/staff'
       path: '/staff'
@@ -672,6 +705,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/platform/'
       preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
+      parentRoute: typeof AuthenticatedPlatformRouteRoute
+    }
+    '/_authenticated/platform/ads': {
+      id: '/_authenticated/platform/ads'
+      path: '/ads'
+      fullPath: '/platform/ads'
+      preLoaderRoute: typeof AuthenticatedPlatformAdsRouteImport
       parentRoute: typeof AuthenticatedPlatformRouteRoute
     }
     '/_authenticated/platform/analytics': {
@@ -791,6 +831,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRouteWithChildren
   AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRouteWithChildren
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedAdminSponsorsRoute: typeof AuthenticatedAdminSponsorsRoute
   AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
   AuthenticatedAdminTemplatesRoute: typeof AuthenticatedAdminTemplatesRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -805,6 +846,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRouteWithChildren,
     AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRouteWithChildren,
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
+    AuthenticatedAdminSponsorsRoute: AuthenticatedAdminSponsorsRoute,
     AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
     AuthenticatedAdminTemplatesRoute: AuthenticatedAdminTemplatesRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
@@ -862,6 +904,7 @@ const AuthenticatedPlatformGymsRouteRouteWithChildren =
 
 interface AuthenticatedPlatformRouteRouteChildren {
   AuthenticatedPlatformGymsRouteRoute: typeof AuthenticatedPlatformGymsRouteRouteWithChildren
+  AuthenticatedPlatformAdsRoute: typeof AuthenticatedPlatformAdsRoute
   AuthenticatedPlatformAnalyticsRoute: typeof AuthenticatedPlatformAnalyticsRoute
   AuthenticatedPlatformContactsRoute: typeof AuthenticatedPlatformContactsRoute
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
@@ -871,6 +914,7 @@ const AuthenticatedPlatformRouteRouteChildren: AuthenticatedPlatformRouteRouteCh
   {
     AuthenticatedPlatformGymsRouteRoute:
       AuthenticatedPlatformGymsRouteRouteWithChildren,
+    AuthenticatedPlatformAdsRoute: AuthenticatedPlatformAdsRoute,
     AuthenticatedPlatformAnalyticsRoute: AuthenticatedPlatformAnalyticsRoute,
     AuthenticatedPlatformContactsRoute: AuthenticatedPlatformContactsRoute,
     AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,

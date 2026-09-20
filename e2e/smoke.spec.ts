@@ -93,3 +93,35 @@ test("platform admin opens the New gym dialog and sees code validation", async (
   await page.getByLabel("Gym code").fill(code);
   await expect(page.getByText("Available")).toBeVisible({ timeout: 15_000 });
 });
+
+/**
+ * Gym admin: the Sponsors page loads, ads are opt-in, and a sponsor can be
+ * drafted with an https-only link. Requires ADMIN_EMAIL / ADMIN_PASSWORD.
+ */
+test("gym admin opens Sponsors and drafts a sponsor", async ({ page }) => {
+  const email = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
+  test.skip(!email || !password, "ADMIN_EMAIL / ADMIN_PASSWORD not configured");
+
+  await page.goto("/auth");
+  await page.getByLabel(/email/i).fill(email!);
+  await page.getByLabel(/^password/i).fill(password!);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.waitForURL(/\/admin/, { timeout: 30_000 });
+
+  await page.goto("/admin/sponsors");
+  await expect(page.getByRole("heading", { name: /sponsors/i })).toBeVisible();
+  await expect(page.getByText(/ads enabled/i)).toBeVisible();
+
+  await page.getByRole("button", { name: /new sponsor/i }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.getByLabel("Advertiser").fill("Smoke Test Sponsor");
+  await page.getByLabel(/^headline/i).fill("Smoke test headline");
+
+  // http links are refused; https is accepted.
+  await page.getByLabel("Link").fill("http://example.com");
+  await expect(page.getByText(/must start with https/i)).toBeVisible();
+  await expect(page.getByRole("button", { name: /create sponsor/i })).toBeDisabled();
+  await page.getByLabel("Link").fill("https://example.com");
+  await expect(page.getByRole("button", { name: /create sponsor/i })).toBeEnabled();
+});
