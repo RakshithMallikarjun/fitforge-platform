@@ -268,15 +268,31 @@ function PlatformGymsPage() {
               {rows.map((g) => (
                 <TableRow key={g.id}>
                   <TableCell>
-                    <Link
-                      to="/platform/gyms/$gymId"
-                      params={{ gymId: g.id }}
-                      className="font-medium hover:underline"
-                    >
-                      {g.name}
-                    </Link>
+                    <span className="flex items-center gap-1.5">
+                      {g.admin_count === 0 && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              aria-label="No admin — nobody can sign in to this gym"
+                              className="h-2 w-2 shrink-0 rounded-full bg-amber-500"
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            No admin yet — nobody can sign in to this gym. Invite an owner.
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      <Link
+                        to="/platform/gyms/$gymId"
+                        params={{ gymId: g.id }}
+                        className="font-medium hover:underline"
+                      >
+                        {g.name}
+                      </Link>
+                    </span>
                     <p className="text-[11px] text-muted-foreground">{g.slug}</p>
                   </TableCell>
+
                   <TableCell>
                     <Switch
                       checked={g.is_enabled}
