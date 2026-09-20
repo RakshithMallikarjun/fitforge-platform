@@ -13,6 +13,9 @@ import {
   Activity,
   Globe2,
   Megaphone,
+  Layers,
+  Wallet,
+  TrendingUp,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,6 +24,7 @@ import { useTheme } from "@/lib/theme-provider";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { isPlatformAdmin } from "@/lib/platform.functions";
 import { getGymSettings } from "@/lib/gym-theme.functions";
+import { getDuesSummary } from "@/lib/membership-plans.functions";
 
 type NavItem = {
   to: string;
@@ -29,6 +33,8 @@ type NavItem = {
   exact?: boolean;
   adminOnly?: boolean;
   group?: string;
+  /** Shows the count of members who need chasing. */
+  duesBadge?: boolean;
 };
 const NAV: NavItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -38,6 +44,21 @@ const NAV: NavItem[] = [
   { to: "/admin/plans", label: "Plans", icon: ClipboardList },
   { to: "/admin/templates", label: "Templates", icon: ClipboardList },
   { to: "/admin/checkin", label: "Check-in", icon: ScanLine },
+  {
+    to: "/admin/membership-plans",
+    label: "Membership tiers",
+    icon: Layers,
+    adminOnly: true,
+    group: "Billing",
+  },
+  { to: "/admin/dues", label: "Dues", icon: Wallet, group: "Billing", duesBadge: true },
+  {
+    to: "/admin/reports/revenue",
+    label: "Revenue",
+    icon: TrendingUp,
+    adminOnly: true,
+    group: "Billing",
+  },
   { to: "/admin/reports/attendance", label: "Attendance", icon: CalendarClock, group: "Reports" },
   { to: "/admin/reports/engagement", label: "Engagement", icon: Activity, group: "Reports" },
   { to: "/admin/sponsors", label: "Sponsors", icon: Megaphone, adminOnly: true },
@@ -73,6 +94,17 @@ export function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
     if (!p) return null;
     return p.charAt(0).toUpperCase() + p.slice(1);
   })();
+  const { data: duesSummary } = useQuery({
+    queryKey: ["dues-summary"],
+    queryFn: () => getDuesSummary(),
+    enabled: !!me,
+    staleTime: 60_000,
+  });
+  const duesToChase =
+    (duesSummary?.overdue_count ?? 0) +
+    (duesSummary?.due_today_count ?? 0) +
+    (duesSummary?.due_soon_count ?? 0);
+
   const { data: isPlatformAdminUser } = useQuery({
     queryKey: ["is-platform-admin"],
     queryFn: () => isPlatformAdmin(),
@@ -141,7 +173,12 @@ export function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
                 ].join(" ")}
               >
                 <Icon className="h-4 w-4" />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {item.duesBadge && duesToChase > 0 && (
+                  <span className="rounded-full bg-destructive px-2 py-0.5 text-[10px] font-semibold text-destructive-foreground">
+                    {duesToChase}
+                  </span>
+                )}
               </Link>,
             );
           });

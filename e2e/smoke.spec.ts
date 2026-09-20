@@ -125,3 +125,42 @@ test("gym admin opens Sponsors and drafts a sponsor", async ({ page }) => {
   await page.getByLabel("Link").fill("https://example.com");
   await expect(page.getByRole("button", { name: /create sponsor/i })).toBeEnabled();
 });
+
+/**
+ * Gym admin: membership tiers and dues. Recording a payment is the only way a
+ * member gets a tier, so the tier page must be reachable and the dues list must
+ * render its buckets. Requires ADMIN_EMAIL / ADMIN_PASSWORD.
+ */
+test("gym admin manages membership tiers and reviews dues", async ({ page }) => {
+  const email = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
+  test.skip(!email || !password, "ADMIN_EMAIL / ADMIN_PASSWORD not configured");
+
+  await page.goto("/auth");
+  await page.getByLabel(/email/i).fill(email!);
+  await page.getByLabel(/^password/i).fill(password!);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.waitForURL(/\/admin/, { timeout: 30_000 });
+
+  // Tiers: the page loads and a new tier can be drafted.
+  await page.goto("/admin/membership-plans");
+  await expect(page.getByRole("heading", { name: /membership tiers/i })).toBeVisible();
+  await page.getByRole("button", { name: /new tier/i }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.getByRole("button", { name: /save tier/i })).toBeDisabled();
+  await page.getByLabel("Name").fill(`Smoke ${Date.now().toString(36)}`);
+  await expect(page.getByRole("button", { name: /save tier/i })).toBeEnabled();
+  await page.keyboard.press("Escape");
+
+  // Dues: totals and the chase list render.
+  await page.goto("/admin/dues");
+  await expect(page.getByRole("heading", { name: /^dues$/i })).toBeVisible();
+  await expect(page.getByText(/overdue/i).first()).toBeVisible();
+  await page.getByRole("button", { name: /reminder settings/i }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  // Revenue report renders without a chart error.
+  await page.goto("/admin/reports/revenue");
+  await expect(page.getByRole("heading", { name: /^revenue$/i })).toBeVisible();
+});

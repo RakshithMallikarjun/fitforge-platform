@@ -25,6 +25,8 @@ import { logAttendanceManual } from "@/lib/checkin.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { AssignTrainersDialog } from "@/components/members/assign-trainers-dialog";
 import { EditMembershipDialog } from "@/components/members/edit-membership-dialog";
+import { RecordPaymentDialog } from "@/components/membership/record-payment-dialog";
+import { MemberBillingPanel } from "@/components/membership/member-billing-panel";
 import { StatusBadge, getMembershipStatus } from "@/components/members/status-badge";
 import { MemberNotes } from "@/components/members/member-notes";
 import { AssessmentsTab } from "@/components/assessments/assessments-tab";
@@ -43,6 +45,7 @@ function MemberProfile() {
   const isAdmin = me?.roles.includes("admin");
   const [assignOpen, setAssignOpen] = useState(false);
   const [membershipOpen, setMembershipOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
   const qc = useQueryClient();
   const logManual = useServerFn(logAttendanceManual);
 
@@ -125,13 +128,16 @@ function MemberProfile() {
           </div>
           {isAdmin && (
             <div className="flex flex-wrap gap-2">
+              <Button size="sm" className="rounded-lg" onClick={() => setPayOpen(true)}>
+                <CreditCard className="mr-1.5 h-4 w-4" /> Record payment
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
                 className="rounded-lg"
                 onClick={() => setMembershipOpen(true)}
               >
-                <CreditCard className="mr-1.5 h-4 w-4" /> Edit membership
+                Adjust end date
               </Button>
               <Button
                 variant="outline"
@@ -231,55 +237,12 @@ function MemberProfile() {
               </div>
             </div>
 
-            {isAdmin &&
-              (() => {
-                const p: any = profile ?? {};
-                const cycleLabel =
-                  (
-                    {
-                      monthly: "Monthly",
-                      quarterly: "Quarterly",
-                      half_year: "Half-year",
-                      annual: "Annual",
-                    } as any
-                  )[p.billing_cycle] ?? "—";
-                const confirmed = !!p.payment_confirmed;
-                return (
-                  <div className="rounded-2xl border border-border bg-card p-5">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold tracking-tight">Payment</h3>
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${confirmed ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-red-500/15 text-red-600 dark:text-red-400"}`}
-                      >
-                        {confirmed ? "✓ Confirmed" : "✗ Unconfirmed"}
-                      </span>
-                    </div>
-                    <dl className="mt-3 grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <dt className="text-muted-foreground text-xs">Billing cycle</dt>
-                        <dd className="mt-0.5 font-medium">{cycleLabel}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground text-xs">Last payment</dt>
-                        <dd className="mt-0.5 font-medium">
-                          {p.last_payment_date ? formatShortDate(p.last_payment_date) : "—"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground text-xs">Amount</dt>
-                        <dd className="mt-0.5 font-medium">
-                          {formatMoney(p.last_payment_amount, currency)}
-                        </dd>
-                      </div>
-                    </dl>
-                    {p.payment_notes && (
-                      <p className="mt-3 whitespace-pre-wrap text-xs text-muted-foreground">
-                        {p.payment_notes}
-                      </p>
-                    )}
-                  </div>
-                );
-              })()}
+            <MemberBillingPanel
+              memberId={memberId}
+              memberName={user.display_name ?? user.email}
+              currency={currency}
+              canManage={!!isAdmin}
+            />
 
             {profile?.goals && (
               <div className="rounded-2xl border border-border bg-card p-5">
@@ -454,6 +417,12 @@ function MemberProfile() {
             memberId={memberId}
             memberName={user.display_name ?? user.email}
             initialTrainerIds={trainers.map((t: any) => t.id)}
+          />
+          <RecordPaymentDialog
+            open={payOpen}
+            onOpenChange={setPayOpen}
+            memberId={memberId}
+            memberName={user.display_name ?? user.email}
           />
           <EditMembershipDialog
             open={membershipOpen}

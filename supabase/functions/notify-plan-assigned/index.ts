@@ -57,10 +57,15 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Generic push carrier: callers may override the copy (dues reminders and
+    // the staff dues digest use this so VAPID keys stay in one place).
     const notification = {
-      title: "New workout plan 💪",
-      body: "Your trainer assigned you a new plan. Tap to view it.",
-      data: { url: "/app/workouts" },
+      title: typeof payload?.title === "string" ? payload.title : "New workout plan 💪",
+      body:
+        typeof payload?.body === "string"
+          ? payload.body
+          : "Your trainer assigned you a new plan. Tap to view it.",
+      data: { url: typeof payload?.url === "string" ? payload.url : "/app/workouts" },
     };
 
     try {

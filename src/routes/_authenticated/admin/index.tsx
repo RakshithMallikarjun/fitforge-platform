@@ -5,6 +5,7 @@ import { AlertTriangle, ArrowUpDown, ArrowUpRight, LifeBuoy } from "lucide-react
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { GlassHeader } from "@/components/glass-header";
+import { getDuesSummary } from "@/lib/membership-plans.functions";
 import { BentoStatCard } from "@/components/bento-stat-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,6 +46,16 @@ function AdminDashboard() {
     enabled: !!user,
   });
   // Trainers only get data for their own members; say so on every tile.
+  const { data: duesSummary } = useQuery({
+    queryKey: ["dues-summary"],
+    queryFn: () => getDuesSummary(),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+  const duesToChase =
+    (duesSummary?.overdue_count ?? 0) +
+    (duesSummary?.due_today_count ?? 0) +
+    (duesSummary?.due_soon_count ?? 0);
   const scopeLabel = stats?.activityScope === "assigned" ? "Your members" : "Gym-wide";
 
   return (
@@ -55,6 +66,23 @@ function AdminDashboard() {
       />
 
       <main className="mx-auto max-w-[1280px] space-y-8 px-8 py-8">
+        {/* Dues nudge — only shown when somebody actually needs chasing. */}
+        {duesToChase > 0 && (
+          <Link
+            to="/admin/dues"
+            className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-accent/40 px-4 py-3 text-sm"
+          >
+            <span className="font-semibold">
+              {duesToChase} {duesToChase === 1 ? "member" : "members"} to chase
+            </span>
+            <span className="text-muted-foreground">
+              {duesSummary?.overdue_count ?? 0} overdue · {duesSummary?.due_today_count ?? 0} due
+              today · {duesSummary?.due_soon_count ?? 0} due soon
+            </span>
+            <span className="ml-auto text-primary">Open dues →</span>
+          </Link>
+        )}
+
         {/* Stats grid */}
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {statsLoading || !stats ? (

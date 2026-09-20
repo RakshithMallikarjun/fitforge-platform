@@ -280,6 +280,7 @@ function MembersPage() {
                       Status <ArrowUpDown className="h-3 w-3" />
                     </button>
                   </TableHead>
+                  <TableHead>Tier</TableHead>
                   <TableHead>Trainers</TableHead>
                   <TableHead>Expiry</TableHead>
                   <TableHead>
@@ -334,6 +335,13 @@ function MembersPage() {
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={status} />
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {m.profile?.membership_type ? (
+                          <span className="text-foreground">{m.profile.membership_type}</span>
+                        ) : (
+                          <span className="text-muted-foreground">No tier</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {m.trainers.length === 0 ? (

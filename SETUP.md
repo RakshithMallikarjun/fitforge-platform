@@ -45,6 +45,39 @@ failure is logged and never fails the assignment.
 Push and offline support only work on the published site, where the service
 worker registers; they do not work in the editor preview.
 
+## Membership tiers, payments and dues
+
+Each gym defines its own tiers (Bronze / Silver / Gold to start) under
+**/admin/membership tiers**, with a price per term (monthly, quarterly,
+half-yearly, annual). Recording a payment is what puts a member on a tier and
+moves their expiry date — there is no free-text membership type any more.
+
+- **/admin/dues** — who to chase, with one-click reminders (in-app message +
+  push) and "Record payment" inline.
+- **/admin/reports/revenue** — collections by month, tier and term.
+- Reminder lead time, grace days, auto-reminders and the daily email hour live
+  behind **Reminder settings** on the dues page.
+
+### Daily email summary + dues digest
+
+| Secret                  | Purpose                                                |
+| ----------------------- | ------------------------------------------------------ |
+| `RESEND_API_KEY`        | Sends the daily collection email through Resend        |
+| `SUMMARY_FROM_EMAIL`    | Verified sender, e.g. `FitForge <billing@yourgym.com>` |
+| `NOTIFY_WEBHOOK_SECRET` | Shared secret for the scheduled endpoints below        |
+
+Schedule both endpoints **hourly** (pg_cron or any scheduler) — each gym is only
+served when its own local hour matches, so every timezone works from one job:
+
+```
+POST https://project--<project-id>.lovable.app/api/public/daily-summary
+POST https://project--<project-id>.lovable.app/api/public/dues-digest
+header: x-webhook-secret: <NOTIFY_WEBHOOK_SECRET>
+```
+
+Admins can also send themselves today's summary from **Reminder settings →
+Email me today's summary**.
+
 ## White-label branding
 
 Each gym stores branding on the `gyms` row:
