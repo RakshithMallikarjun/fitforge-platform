@@ -352,6 +352,7 @@ export type Database = {
         Row: {
           billing_email: string | null
           created_at: string
+          created_by: string | null
           currency: string
           custom_domain: string | null
           disabled_at: string | null
@@ -366,7 +367,10 @@ export type Database = {
           monthly_amount: number | null
           name: string
           next_due_at: string | null
+          owner_claimed_at: string | null
+          owner_invited_at: string | null
           payment_status: Database["public"]["Enums"]["gym_payment_status"]
+          pending_owner_email: string | null
           primary_color: string | null
           secondary_color: string | null
           slug: string
@@ -378,6 +382,7 @@ export type Database = {
         Insert: {
           billing_email?: string | null
           created_at?: string
+          created_by?: string | null
           currency?: string
           custom_domain?: string | null
           disabled_at?: string | null
@@ -392,7 +397,10 @@ export type Database = {
           monthly_amount?: number | null
           name: string
           next_due_at?: string | null
+          owner_claimed_at?: string | null
+          owner_invited_at?: string | null
           payment_status?: Database["public"]["Enums"]["gym_payment_status"]
+          pending_owner_email?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           slug: string
@@ -404,6 +412,7 @@ export type Database = {
         Update: {
           billing_email?: string | null
           created_at?: string
+          created_by?: string | null
           currency?: string
           custom_domain?: string | null
           disabled_at?: string | null
@@ -418,7 +427,10 @@ export type Database = {
           monthly_amount?: number | null
           name?: string
           next_due_at?: string | null
+          owner_claimed_at?: string | null
+          owner_invited_at?: string | null
           payment_status?: Database["public"]["Enums"]["gym_payment_status"]
+          pending_owner_email?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           slug?: string
@@ -1254,6 +1266,7 @@ export type Database = {
       is_gym_staff_user: { Args: { _user_id: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
       is_trainer_of: { Args: { _member_id: string }; Returns: boolean }
+      is_valid_gym_slug: { Args: { _slug: string }; Returns: boolean }
       my_gym_enabled: { Args: never; Returns: boolean }
       platform_activity_trend: {
         Args: { _days?: number }
@@ -1276,6 +1289,21 @@ export type Database = {
           gym_name: string
           id: number
         }[]
+      }
+      platform_create_gym: {
+        Args: {
+          _currency?: string
+          _internal_note?: string
+          _name: string
+          _owner_email?: string
+          _primary_color?: string
+          _slug: string
+          _subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          _support_email?: string
+          _support_phone?: string
+          _timezone?: string
+        }
+        Returns: string
       }
       platform_feature_adoption: { Args: never; Returns: Json }
       platform_gym_activity_trend: {
@@ -1341,6 +1369,10 @@ export type Database = {
           workouts_per_active_member_30d: number
         }[]
       }
+      platform_mark_owner_invited: {
+        Args: { _email: string; _gym_id: string }
+        Returns: undefined
+      }
       platform_overview: { Args: never; Returns: Json }
       platform_retention_cohorts: {
         Args: { _months?: number }
@@ -1383,6 +1415,7 @@ export type Database = {
           members_created: number
         }[]
       }
+      platform_slug_available: { Args: { _slug: string }; Returns: boolean }
       touch_last_sign_in: { Args: never; Returns: undefined }
       verify_join_code: {
         Args: { _code: string; _slug: string }

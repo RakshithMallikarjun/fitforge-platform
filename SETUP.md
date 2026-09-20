@@ -1,5 +1,19 @@
 # FitForge — Setup
 
+## Creating gyms
+
+Platform admins create gyms from **/platform/gyms → New gym**. That flow picks
+the gym code, sends the owner an invite email, and makes them an admin of that
+gym only. No database access is needed.
+
+### `BOOTSTRAP_ADMIN_TOKEN` (legacy)
+
+`BOOTSTRAP_ADMIN_TOKEN` is the **legacy** path for gyms created before the
+console could provision them. It only works for a gym whose
+`pending_owner_email` matches the signed-in caller's own email, and only while
+that gym has no admin. Once every gym has an admin, unset the secret — new gyms
+should always be created and claimed through the console.
+
 ## AI (progressive overload suggestions)
 
 Uses **Lovable AI Gateway** (`google/gemini-2.5-flash` by default). The

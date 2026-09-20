@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,7 @@ import {
   fmtDate,
   relTime,
 } from "@/components/platform/platform-ui";
+import { NewGymDialog } from "@/components/platform/new-gym-dialog";
 import { listPlatformGyms, setGymEnabled, type PlatformGymRow } from "@/lib/platform.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/gyms/")({
@@ -82,6 +83,7 @@ function PlatformGymsPage() {
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [pending, setPending] = useState<{ gym: PlatformGymRow; enable: boolean } | null>(null);
   const [reason, setReason] = useState("");
+  const [newOpen, setNewOpen] = useState(false);
 
   const mutation = useMutation({
     mutationFn: (v: { gymId: string; enabled: boolean; reason?: string }) =>
@@ -159,12 +161,19 @@ function PlatformGymsPage() {
 
   return (
     <main className="mx-auto max-w-[1400px] space-y-5 px-6 py-8">
-      <header>
-        <h1 className="text-lg font-bold tracking-tight">Gyms</h1>
-        <p className="text-xs text-muted-foreground">
-          Enablement and billing state are operator-entered — no payment gateway is connected.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-bold tracking-tight">Gyms</h1>
+          <p className="text-xs text-muted-foreground">
+            Enablement and billing state are operator-entered — no payment gateway is connected.
+          </p>
+        </div>
+        <Button onClick={() => setNewOpen(true)}>
+          <Plus className="mr-1.5 h-4 w-4" /> New gym
+        </Button>
       </header>
+
+      <NewGymDialog open={newOpen} onOpenChange={setNewOpen} />
 
       <div className="flex flex-wrap items-center gap-2">
         <Input
@@ -258,15 +267,31 @@ function PlatformGymsPage() {
               {rows.map((g) => (
                 <TableRow key={g.id}>
                   <TableCell>
-                    <Link
-                      to="/platform/gyms/$gymId"
-                      params={{ gymId: g.id }}
-                      className="font-medium hover:underline"
-                    >
-                      {g.name}
-                    </Link>
+                    <span className="flex items-center gap-1.5">
+                      {g.admin_count === 0 && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              aria-label="No admin — nobody can sign in to this gym"
+                              className="h-2 w-2 shrink-0 rounded-full bg-amber-500"
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            No admin yet — nobody can sign in to this gym. Invite an owner.
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      <Link
+                        to="/platform/gyms/$gymId"
+                        params={{ gymId: g.id }}
+                        className="font-medium hover:underline"
+                      >
+                        {g.name}
+                      </Link>
+                    </span>
                     <p className="text-[11px] text-muted-foreground">{g.slug}</p>
                   </TableCell>
+
                   <TableCell>
                     <Switch
                       checked={g.is_enabled}

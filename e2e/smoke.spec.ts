@@ -63,3 +63,33 @@ test("member signs in, completes a workout and the streak increments", async ({ 
   const after = Number(afterText?.match(/\d+/)?.[0] ?? "0");
   expect(after).toBeGreaterThanOrEqual(Math.max(before, 1));
 });
+
+/**
+ * Platform console: the New gym dialog validates the gym code before it will
+ * submit. Requires PLATFORM_EMAIL / PLATFORM_PASSWORD for a platform admin.
+ */
+test("platform admin opens the New gym dialog and sees code validation", async ({ page }) => {
+  const pEmail = process.env.PLATFORM_EMAIL;
+  const pPassword = process.env.PLATFORM_PASSWORD;
+  test.skip(!pEmail || !pPassword, "PLATFORM_EMAIL / PLATFORM_PASSWORD not configured");
+
+  await page.goto("/auth");
+  await page.getByLabel(/email/i).fill(pEmail!);
+  await page.getByLabel(/^password/i).fill(pPassword!);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.waitForURL(/\/platform/, { timeout: 30_000 });
+
+  await page.goto("/platform/gyms");
+  await page.getByRole("button", { name: /new gym/i }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+
+  // A reserved code must never be accepted.
+  await page.getByLabel("Gym code").fill("admin");
+  await expect(page.getByRole("button", { name: /^create gym$/i })).toBeDisabled();
+
+  // A fresh random code becomes available and enables submit.
+  const code = `smoke-${Date.now().toString(36)}`;
+  await page.getByLabel("Gym name").fill("Smoke Test Gym");
+  await page.getByLabel("Gym code").fill(code);
+  await expect(page.getByText("Available")).toBeVisible({ timeout: 15_000 });
+});

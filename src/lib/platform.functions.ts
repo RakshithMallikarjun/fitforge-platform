@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
@@ -97,6 +98,9 @@ export type PlatformGymDetail = PlatformGymRow & {
   support_phone: string | null;
   internal_note: string | null;
   disabled_reason: string | null;
+  pending_owner_email: string | null;
+  owner_invited_at: string | null;
+  owner_claimed_at: string | null;
   staff: PlatformStaff[];
 };
 
@@ -317,3 +321,180 @@ export const setGymPlan = createServerFn({ method: "POST" })
     if (error) fail(error);
     return { ok: true };
   });
+
+/* ============================ gym provisioning ============================ */
+
+const slugSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(3, "Gym code must be at least 3 characters")
+  .max(32, "Gym code must be at most 32 characters")
+  .regex(/^[a-z0-9]([a-z0-9-]{1,30})[a-z0-9]$/, "Use lowercase letters, numbers and hyphens");
+
+const createGymSchema = z.object({
+  name: z.string().trim().min(1, "Gym name is required").max(80),
+  slug: slugSchema,
+  timezone: z.string().trim().min(1),
+  currency: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z]{3}$/, "Currency must be a 3-letter code"),
+  ownerEmail: z.string().trim().toLowerCase().email().optional().or(z.literal("")),
+  subscriptionPlan: z.enum(["starter", "growth", "pro", "chain"]),
+  primaryColor: z
+    .string()
+    .trim()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Use a #rrggbb colour")
+    .optional()
+    .or(z.literal("")),
+  supportEmail: z.string().trim().toLowerCase().email().optional().or(z.literal("")),
+  supportPhone: z.string().trim().max(32).optional().or(z.literal("")),
+  internalNote: z.string().trim().max(2000).optional().or(z.literal("")),
+});
+
+export const checkGymSlug = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { slug: string }) => z.object({ slug: z.string() }).parse(input))
+  .handler(async ({ context, data: input }): Promise<{ available: boolean }> => {
+    const { data, error } = await context.supabase.rpc("platform_slug_available", {
+      _slug: input.slug.trim().toLowerCase(),
+    });
+    if (error) fail(error);
+    return { available: data === true };
+  });
+
+/**
+ * Invite the owner of a gym. This is the one place the service role is
+ * genuinely required: creating an auth user and sending the invite email is
+ * only possible through the Auth Admin API.
+ *
+ * The authorisation gate is still the user-scoped `platform_gym_detail` RPC —
+ * if the caller is not a platform admin, it raises 42501 before we ever reach
+ * the admin client.
+ */
+async function inviteOwner(
+  supabase: {
+    rpc: (
+      fn: string,
+      args?: Record<string, unknown>,
+    ) => Promise<{ data: unknown; error: { message?: string; code?: string } | null }>;
+  },
+  gymId: string,
+  email: string,
+  allowExisting: boolean,
+): Promise<{ ok: true }> {
+  const { data: detail, error: dErr } = await supabase.rpc("platform_gym_detail", {
+    _gym_id: gymId,
+  });
+  if (dErr) fail(dErr);
+  const gym = detail as { slug?: string } | null;
+  if (!gym?.slug) throw new Error("Gym not found");
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const { data: existingUser } = await supabaseAdmin
+    .from("users")
+    .select("id, gym_id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (existingUser && !allowExisting && existingUser.gym_id !== gymId) {
+    throw new Error("That email already has a FitForge account");
+  }
+
+  const localPart = email.split("@")[0] ?? email;
+  const { data: invited, error: iErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+    data: { gym_slug: gym.slug, display_name: localPart },
+  });
+
+  if (iErr) {
+    const already = /already/i.test(iErr.message ?? "");
+    if (!(already && allowExisting)) {
+      throw new Error(iErr.message || "Could not send the invite email");
+    }
+  }
+
+  const userId = invited?.user?.id ?? existingUser?.id ?? null;
+
+  if (userId) {
+    // An owner is staff, not a member: drop the member profile the signup
+    // trigger created and replace the hardcoded 'member' role with 'admin'.
+    await supabaseAdmin.from("member_profiles").delete().eq("user_id", userId);
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
+    const { error: rErr } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: userId, gym_id: gymId, role: "admin" });
+    if (rErr && !/duplicate key/i.test(rErr.message)) throw new Error(rErr.message);
+    await supabaseAdmin.from("users").update({ gym_id: gymId }).eq("id", userId);
+  }
+
+  const { error: mErr } = await supabase.rpc("platform_mark_owner_invited", {
+    _gym_id: gymId,
+    _email: email,
+  });
+  if (mErr) fail(mErr);
+
+  return { ok: true };
+}
+
+const inviteSchema = z.object({
+  gymId: z.string().uuid(),
+  email: z.string().trim().toLowerCase().email(),
+});
+
+export const inviteGymOwner = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { gymId: string; email: string }) => inviteSchema.parse(input))
+  .handler(async ({ context, data: input }): Promise<{ ok: true }> => {
+    return inviteOwner(context.supabase as never, input.gymId, input.email, false);
+  });
+
+export const resendGymOwnerInvite = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { gymId: string; email: string }) => inviteSchema.parse(input))
+  .handler(async ({ context, data: input }): Promise<{ ok: true }> => {
+    return inviteOwner(context.supabase as never, input.gymId, input.email, true);
+  });
+
+export const createGym = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => createGymSchema.parse(input))
+  .handler(
+    async ({
+      context,
+      data: input,
+    }): Promise<{ gymId: string; ownerInvited: boolean; inviteError: string | null }> => {
+      const { data, error } = await context.supabase.rpc("platform_create_gym", {
+        _name: input.name,
+        _slug: input.slug,
+        _timezone: input.timezone,
+        _currency: input.currency,
+        _owner_email: input.ownerEmail || undefined,
+        _subscription_plan: input.subscriptionPlan,
+        _primary_color: input.primaryColor || undefined,
+        _support_email: input.supportEmail || undefined,
+        _support_phone: input.supportPhone || undefined,
+        _internal_note: input.internalNote || undefined,
+      });
+      if (error) fail(error);
+      const gymId = data as unknown as string;
+
+      if (!input.ownerEmail) return { gymId, ownerInvited: false, inviteError: null };
+
+      // The gym exists now. If the invite fails we deliberately keep it and
+      // report the reason — a half-created gym the console can fix beats a
+      // silent orphan or a rollback that loses the operator's input.
+      try {
+        await inviteOwner(context.supabase as never, gymId, input.ownerEmail, false);
+        return { gymId, ownerInvited: true, inviteError: null };
+      } catch (e) {
+        return {
+          gymId,
+          ownerInvited: false,
+          inviteError: (e as Error).message || "Could not send the invite email",
+        };
+      }
+    },
+  );

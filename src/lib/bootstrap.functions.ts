@@ -3,8 +3,17 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
- * One-time bootstrap: lets the FIRST user against a gym claim admin.
- * Once any admin exists for that gym, this path locks out.
+ * LEGACY one-time bootstrap: lets a named user claim admin of a gym that has
+ * no admin yet. Only for gyms created before the platform console could
+ * provision gyms and invite owners itself.
+ *
+ * Two gates, both required:
+ *  1. BOOTSTRAP_ADMIN_TOKEN — a shared secret configured out-of-band, so a
+ *     signed-in user cannot race to claim an unclaimed gym slug.
+ *  2. gyms.pending_owner_email must equal the caller's own email. The token
+ *     alone used to be platform-wide, which meant anyone who learned it could
+ *     claim ANY admin-less gym. Binding the claim to the invited address makes
+ *     the token useless without the platform admin naming the owner first.
  *
  * Public sign-up never grants admin — this is the controlled bootstrap path.
  */
@@ -72,10 +81,29 @@ export const claimGymAdmin = createServerFn({ method: "POST" })
 
     const { data: gym, error: gErr } = await supabaseAdmin
       .from("gyms")
-      .select("id, slug")
+      .select("id, slug, pending_owner_email")
       .eq("slug", data.gymSlug)
       .maybeSingle();
     if (gErr || !gym) throw new Error("Gym not found");
+
+    // The token is platform-wide, so the claim is additionally bound to the
+    // address the platform admin invited. Without that, one leaked token would
+    // open every admin-less gym.
+    const pending = gym.pending_owner_email?.trim().toLowerCase() ?? null;
+    if (!pending) {
+      throw new Error(
+        "This gym is not open for owner claim — ask the platform admin to send you an invite.",
+      );
+    }
+    const callerEmail =
+      typeof (context.claims as { email?: unknown } | null)?.email === "string"
+        ? (context.claims as { email: string }).email.trim().toLowerCase()
+        : null;
+    if (!callerEmail || callerEmail !== pending) {
+      throw new Error(
+        "This gym is not open for owner claim — ask the platform admin to send you an invite.",
+      );
+    }
 
     const { data: existing } = await supabaseAdmin
       .from("user_roles")
