@@ -14,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -62,6 +63,8 @@ import {
   setGymEnabled,
   setGymPlan,
   setPaymentStatus,
+  inviteGymOwner,
+  resendGymOwnerInvite,
   type PaymentStatus,
   type SubscriptionPlan,
 } from "@/lib/platform.functions";
@@ -109,6 +112,8 @@ function PlatformGymDetailPage() {
   const updateGymEnabled = useServerFn(setGymEnabled);
   const updatePaymentStatus = useServerFn(setPaymentStatus);
   const updateGymPlan = useServerFn(setGymPlan);
+  const sendInvite = useServerFn(inviteGymOwner);
+  const resendInvite = useServerFn(resendGymOwnerInvite);
 
   const detail = useQuery({
     queryKey: ["platform-gym", gymId],
