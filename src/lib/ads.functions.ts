@@ -443,7 +443,7 @@ export const createPlatformAd = createServerFn({ method: "POST" })
       .single();
     if (error) fail(error);
     const id = (row as { id: string }).id;
-    await supabase.rpc("platform_set_gym_ad_note" as any, {} as any).catch(() => {});
+    await supabase.rpc("platform_audit_ad", { _ad_id: id, _action: "create_platform_ad" });
     return { id };
   });
 
