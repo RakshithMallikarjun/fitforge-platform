@@ -731,6 +731,42 @@ function PlatformGymDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={ownerOpen} onOpenChange={setOwnerOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Invite the owner of {g.name}</DialogTitle>
+            <DialogDescription>
+              They get an email to set a password and become an admin of {g.name} only. The address
+              must not already have a FitForge account.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="owner-email" className="text-xs">
+              Owner email
+            </Label>
+            <Input
+              id="owner-email"
+              type="email"
+              value={ownerEmail}
+              onChange={(e) => setOwnerEmail(e.target.value)}
+              placeholder="owner@gym.com"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOwnerOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!ownerEmail.trim() || inviteMutation.isPending}
+              onClick={() => inviteMutation.mutate(ownerEmail.trim())}
+            >
+              {inviteMutation.isPending ? "Sending…" : "Send invite"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
+
   );
 }
