@@ -31,6 +31,7 @@ import { AssessmentsTab } from "@/components/assessments/assessments-tab";
 import { AttendanceHeatmap } from "@/components/members/attendance-heatmap";
 import { ThreadView } from "@/components/messages/thread-view";
 import { formatDateTime, formatShortDate, formatTime } from "@/lib/format-date";
+import { formatMoney } from "@/lib/format-money";
 
 export const Route = createFileRoute("/_authenticated/admin/members/$memberId")({
   component: MemberProfile,
@@ -78,7 +79,7 @@ function MemberProfile() {
     );
   }
 
-  const { user, profile, trainers, assessments, plans, attendance } = data;
+  const { user, profile, trainers, assessments, plans, attendance, currency } = data;
   const status = getMembershipStatus(user.active, profile?.membership_expires_at);
   const initials = (user.display_name ?? user.email ?? "??").slice(0, 2).toUpperCase();
 
@@ -267,9 +268,7 @@ function MemberProfile() {
                       <div>
                         <dt className="text-muted-foreground text-xs">Amount</dt>
                         <dd className="mt-0.5 font-medium">
-                          {p.last_payment_amount != null
-                            ? `₹${Number(p.last_payment_amount).toLocaleString()}`
-                            : "—"}
+                          {formatMoney(p.last_payment_amount, currency)}
                         </dd>
                       </div>
                     </dl>
