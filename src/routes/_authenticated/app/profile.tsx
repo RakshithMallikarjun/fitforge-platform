@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMemberProfile, updateMyDisplayName } from "@/lib/profile.functions";
 import { subscribePush, unsubscribePush, getPushStatus } from "@/lib/push.functions";
 import { formatShortDate } from "@/lib/format-date";
+import { MyMembershipCard } from "@/components/membership/my-membership-card";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -124,6 +125,8 @@ function ProfilePage() {
           {data.email}
         </p>
       </div>
+
+      <MyMembershipCard />
 
       <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-between">
