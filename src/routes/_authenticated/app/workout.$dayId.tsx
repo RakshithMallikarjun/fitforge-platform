@@ -51,6 +51,7 @@ import {
   type ExerciseRow,
 } from "@/lib/exercises.functions";
 import { enqueueLog } from "@/lib/pwa/offline-queue";
+import { SponsoredSlot } from "@/components/ads/sponsored-card";
 
 function isOfflineError(e: unknown): boolean {
   if (typeof navigator !== "undefined" && !navigator.onLine) return true;

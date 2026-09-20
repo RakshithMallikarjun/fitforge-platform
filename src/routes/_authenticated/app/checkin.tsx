@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { issueCheckinToken, selfCheckin } from "@/lib/checkin.functions";
 import { useMembership } from "@/lib/membership-context";
+import { SponsoredSlot } from "@/components/ads/sponsored-card";
 
 export const Route = createFileRoute("/_authenticated/app/checkin")({
   component: CheckinPage,
@@ -162,6 +163,7 @@ function GymQrTab() {
 function HomeSessionTab() {
   const navigate = useNavigate();
   const checkin = useServerFn(selfCheckin);
+  const [done, setDone] = useState(false);
 
   const mutation = useMutation({
     mutationFn: () => checkin({ data: { locationType: "home" as const } }),
@@ -169,10 +171,30 @@ function HomeSessionTab() {
       toast.success(
         res?.alreadyCheckedIn ? "Today's session is already logged ✓" : "Home session logged ✓",
       );
-      navigate({ to: "/app" });
+      setDone(true);
     },
     onError: (e: any) => toast.error("Couldn't log your session", { description: e?.message }),
   });
+
+  if (done) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-3xl border border-border bg-card p-6 text-center shadow-[var(--shadow-card)]">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary-soft text-primary">
+            <Home className="h-7 w-7" />
+          </div>
+          <p className="mt-4 text-base font-semibold">You're checked in</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Today's home session is saved to your progress.
+          </p>
+        </div>
+        <SponsoredSlot placement="checkin_success" />
+        <Button className="w-full rounded-xl" onClick={() => navigate({ to: "/app" })}>
+          Back to home
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
