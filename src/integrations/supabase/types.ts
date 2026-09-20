@@ -1506,6 +1506,10 @@ export type Database = {
           starts_on: string
         }[]
       }
+      platform_audit_ad: {
+        Args: { _action: string; _ad_id: string }
+        Returns: undefined
+      }
       platform_audit_recent: {
         Args: { _gym_id?: string; _limit?: number }
         Returns: {
