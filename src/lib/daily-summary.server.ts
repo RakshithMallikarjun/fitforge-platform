@@ -91,12 +91,7 @@ function esc(v: unknown) {
   );
 }
 
-function rowsTable(
-  title: string,
-  headers: string[],
-  rows: string[][],
-  note?: string,
-): string {
+function rowsTable(title: string, headers: string[], rows: string[][], note?: string): string {
   if (!rows.length) return "";
   return `
   <tr><td style="padding:20px 24px 6px;font:600 14px Arial,sans-serif;color:#111">${esc(title)}</td></tr>
@@ -226,7 +221,8 @@ export function renderSummaryEmail(a: Activity, duesUrl: string) {
     "",
     "Collected by:",
     ...(a.by_staff ?? []).map(
-      (s: any) => `  ${s.recorded_by_name}: ${s.payment_count} × ${money(Number(s.total), a.currency)}`,
+      (s: any) =>
+        `  ${s.recorded_by_name}: ${s.payment_count} × ${money(Number(s.total), a.currency)}`,
     ),
     "",
     "Manually recorded by your staff — FitForge does not process payments.",
@@ -356,7 +352,12 @@ export async function runDailySummary(opts: {
       await supabaseAdmin
         .from("daily_summary_log")
         .upsert(
-          { gym_id: gym.id, summary_date: today, skipped_reason: "no_activity", recipient_count: 0 },
+          {
+            gym_id: gym.id,
+            summary_date: today,
+            skipped_reason: "no_activity",
+            recipient_count: 0,
+          },
           { onConflict: "gym_id,summary_date" },
         );
       push({ outcome: "skipped", reason: "no_activity" });
