@@ -99,6 +99,13 @@
       "when": 1789882044580,
       "tag": "0013_platform_create_gym",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789907074718,
+      "tag": "0014_sponsor_ads",
+      "breakpoints": true
     }
   ]
 }

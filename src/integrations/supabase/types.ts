@@ -14,6 +14,107 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_daily_stats: {
+        Row: {
+          ad_id: string
+          clicks: number
+          day: string
+          gym_id: string
+          impressions: number
+        }
+        Insert: {
+          ad_id: string
+          clicks?: number
+          day: string
+          gym_id: string
+          impressions?: number
+        }
+        Update: {
+          ad_id?: string
+          clicks?: number
+          day?: string
+          gym_id?: string
+          impressions?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_daily_stats_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_daily_stats_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ads: {
+        Row: {
+          advertiser_name: string
+          body: string | null
+          created_at: string
+          created_by: string | null
+          cta_label: string | null
+          cta_url: string | null
+          ends_on: string | null
+          gym_id: string | null
+          headline: string
+          id: string
+          image_path: string | null
+          placement: Database["public"]["Enums"]["ad_placement"]
+          priority: number
+          starts_on: string
+          status: Database["public"]["Enums"]["ad_status"]
+        }
+        Insert: {
+          advertiser_name: string
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string | null
+          cta_url?: string | null
+          ends_on?: string | null
+          gym_id?: string | null
+          headline: string
+          id?: string
+          image_path?: string | null
+          placement?: Database["public"]["Enums"]["ad_placement"]
+          priority?: number
+          starts_on: string
+          status?: Database["public"]["Enums"]["ad_status"]
+        }
+        Update: {
+          advertiser_name?: string
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string | null
+          cta_url?: string | null
+          ends_on?: string | null
+          gym_id?: string | null
+          headline?: string
+          id?: string
+          image_path?: string | null
+          placement?: Database["public"]["Enums"]["ad_placement"]
+          priority?: number
+          starts_on?: string
+          status?: Database["public"]["Enums"]["ad_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ads_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_overload_cache: {
         Row: {
           cache_key: string
@@ -344,6 +445,74 @@ export type Database = {
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_ad_blocklist: {
+        Row: {
+          ad_id: string
+          created_at: string
+          gym_id: string
+        }
+        Insert: {
+          ad_id: string
+          created_at?: string
+          gym_id: string
+        }
+        Update: {
+          ad_id?: string
+          created_at?: string
+          gym_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_ad_blocklist_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_ad_blocklist_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_ad_settings: {
+        Row: {
+          ads_enabled: boolean
+          allow_platform_fill: boolean
+          gym_id: string
+          max_per_member_day: number
+          revenue_note: string | null
+          updated_at: string
+        }
+        Insert: {
+          ads_enabled?: boolean
+          allow_platform_fill?: boolean
+          gym_id: string
+          max_per_member_day?: number
+          revenue_note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ads_enabled?: boolean
+          allow_platform_fill?: boolean
+          gym_id?: string
+          max_per_member_day?: number
+          revenue_note?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_ad_settings_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: true
+            referencedRelation: "gyms"
             referencedColumns: ["id"]
           },
         ]
@@ -1246,6 +1415,26 @@ export type Database = {
       }
     }
     Functions: {
+      ad_record_event: {
+        Args: { _ad_id: string; _event: string }
+        Returns: undefined
+      }
+      ad_serve: {
+        Args: {
+          _limit?: number
+          _placement: Database["public"]["Enums"]["ad_placement"]
+        }
+        Returns: {
+          advertiser_name: string
+          body: string
+          cta_label: string
+          cta_url: string
+          headline: string
+          id: string
+          image_path: string
+          is_platform: boolean
+        }[]
+      }
       attendance_buckets: {
         Args: { _end: string; _gym_id: string; _start: string }
         Returns: {
@@ -1256,6 +1445,29 @@ export type Database = {
         }[]
       }
       current_gym_id: { Args: never; Returns: string }
+      gym_ad_daily: {
+        Args: { _days?: number }
+        Returns: {
+          clicks: number
+          day: string
+          impressions: number
+        }[]
+      }
+      gym_ad_report: {
+        Args: { _days?: number }
+        Returns: {
+          ad_id: string
+          advertiser_name: string
+          clicks: number
+          ctr: number
+          ends_on: string
+          headline: string
+          impressions: number
+          placement: Database["public"]["Enums"]["ad_placement"]
+          starts_on: string
+          status: Database["public"]["Enums"]["ad_status"]
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1275,6 +1487,23 @@ export type Database = {
           checkins: number
           day: string
           workouts: number
+        }[]
+      }
+      platform_ad_report: { Args: { _days?: number }; Returns: Json }
+      platform_ads_for_gym: {
+        Args: never
+        Returns: {
+          advertiser_name: string
+          blocked: boolean
+          body: string
+          cta_label: string
+          cta_url: string
+          ends_on: string
+          headline: string
+          id: string
+          image_path: string
+          placement: Database["public"]["Enums"]["ad_placement"]
+          starts_on: string
         }[]
       }
       platform_audit_recent: {
@@ -1384,6 +1613,10 @@ export type Database = {
           cohort_size: number
         }[]
       }
+      platform_set_gym_ad_note: {
+        Args: { _gym_id: string; _note: string }
+        Returns: undefined
+      }
       platform_set_gym_enabled: {
         Args: { _enabled: boolean; _gym_id: string; _reason?: string }
         Returns: undefined
@@ -1423,6 +1656,8 @@ export type Database = {
       }
     }
     Enums: {
+      ad_placement: "home_feed" | "workout_complete" | "checkin_success"
+      ad_status: "draft" | "active" | "paused" | "archived"
       app_role: "admin" | "trainer" | "member"
       gym_payment_status:
         | "trialing"
@@ -1560,6 +1795,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ad_placement: ["home_feed", "workout_complete", "checkin_success"],
+      ad_status: ["draft", "active", "paused", "archived"],
       app_role: ["admin", "trainer", "member"],
       gym_payment_status: [
         "trialing",
