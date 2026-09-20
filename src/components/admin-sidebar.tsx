@@ -12,6 +12,7 @@ import {
   CalendarClock,
   Activity,
   Globe2,
+  Megaphone,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -39,6 +40,7 @@ const NAV: NavItem[] = [
   { to: "/admin/checkin", label: "Check-in", icon: ScanLine },
   { to: "/admin/reports/attendance", label: "Attendance", icon: CalendarClock, group: "Reports" },
   { to: "/admin/reports/engagement", label: "Engagement", icon: Activity, group: "Reports" },
+  { to: "/admin/sponsors", label: "Sponsors", icon: Megaphone, adminOnly: true },
   { to: "/admin/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];
 
