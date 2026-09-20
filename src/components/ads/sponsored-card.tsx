@@ -183,7 +183,8 @@ export function SponsoredSlot({ placement }: { placement: AdPlacement }) {
     return (
       candidates.find(
         (a) =>
-          !dismissed.includes(a.id) && (seen.ids.includes(a.id) || seen.ids.length < Math.max(0, cap)),
+          !dismissed.includes(a.id) &&
+          (seen.ids.includes(a.id) || seen.ids.length < Math.max(0, cap)),
       ) ?? null
     );
   }, [data, dismissed]);

@@ -136,7 +136,11 @@ export const listGymAds = createServerFn({ method: "GET" })
     const gymId = await requireAdminGym(supabase, userId);
 
     const [adsRes, statsRes] = await Promise.all([
-      supabase.from("ads").select("*").eq("gym_id", gymId).order("created_at", { ascending: false }),
+      supabase
+        .from("ads")
+        .select("*")
+        .eq("gym_id", gymId)
+        .order("created_at", { ascending: false }),
       supabase.rpc("gym_ad_report", { _days: 30 }),
     ]);
     if (adsRes.error) fail(adsRes.error);
@@ -175,9 +179,7 @@ export const createGymAd = createServerFn({ method: "POST" })
 
 export const updateGymAd = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
-    adInputSchema.extend({ id: z.string().uuid() }).parse(data),
-  )
+  .inputValidator((data: unknown) => adInputSchema.extend({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
     const { supabase, userId } = context;
     const gymId = await requireAdminGym(supabase, userId);
@@ -449,9 +451,7 @@ export const createPlatformAd = createServerFn({ method: "POST" })
 
 export const updatePlatformAd = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
-    adInputSchema.extend({ id: z.string().uuid() }).parse(data),
-  )
+  .inputValidator((data: unknown) => adInputSchema.extend({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
     const { supabase, userId } = context;
     await requirePlatform(supabase);
@@ -590,9 +590,7 @@ export const serveAds = createServerFn({ method: "POST" })
 export const recordAdEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z
-      .object({ adId: z.string().uuid(), event: z.enum(["impression", "click"]) })
-      .parse(data),
+    z.object({ adId: z.string().uuid(), event: z.enum(["impression", "click"]) }).parse(data),
   )
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
     try {

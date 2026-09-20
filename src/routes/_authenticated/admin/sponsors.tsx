@@ -148,11 +148,13 @@ function SponsorsPage() {
 
   const s = settings.data;
 
-  function patchSettings(patch: Partial<{
-    adsEnabled: boolean;
-    allowPlatformFill: boolean;
-    maxPerMemberDay: number;
-  }>) {
+  function patchSettings(
+    patch: Partial<{
+      adsEnabled: boolean;
+      allowPlatformFill: boolean;
+      maxPerMemberDay: number;
+    }>,
+  ) {
     if (!s) return;
     settingsMutation.mutate({
       adsEnabled: s.ads_enabled,
@@ -250,9 +252,7 @@ function SponsorsPage() {
       <Tabs defaultValue="mine">
         <TabsList>
           <TabsTrigger value="mine">Your sponsors</TabsTrigger>
-          {s?.allow_platform_fill && (
-            <TabsTrigger value="platform">Platform campaigns</TabsTrigger>
-          )}
+          {s?.allow_platform_fill && <TabsTrigger value="platform">Platform campaigns</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="mine" className="mt-4 space-y-6">

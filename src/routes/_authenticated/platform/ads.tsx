@@ -51,7 +51,8 @@ export const Route = createFileRoute("/_authenticated/platform/ads")({
       { title: "Ad campaigns · FitForge platform" },
       {
         name: "description",
-        content: "Platform sponsor campaigns, reach across opted-in gyms, and addressable inventory.",
+        content:
+          "Platform sponsor campaigns, reach across opted-in gyms, and addressable inventory.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -350,9 +351,7 @@ function GymInventoryCard({ report }: { report: ReturnType<typeof useQuery<any>>
                           className="h-8 min-w-[180px]"
                           placeholder="e.g. 70/30 split, invoiced monthly"
                           value={notes[g.gym_id] ?? g.revenue_note ?? ""}
-                          onChange={(e) =>
-                            setNotes((n) => ({ ...n, [g.gym_id]: e.target.value }))
-                          }
+                          onChange={(e) => setNotes((n) => ({ ...n, [g.gym_id]: e.target.value }))}
                         />
                         <Button
                           size="sm"
@@ -376,9 +375,7 @@ function GymInventoryCard({ report }: { report: ReturnType<typeof useQuery<any>>
           </div>
         )}
         <div className="p-4">
-          <Badge variant="outline">
-            Manually recorded — FitForge does not process ad payments
-          </Badge>
+          <Badge variant="outline">Manually recorded — FitForge does not process ad payments</Badge>
         </div>
       </CardContent>
     </Card>
