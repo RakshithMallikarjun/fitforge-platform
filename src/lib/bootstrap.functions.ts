@@ -3,11 +3,21 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
- * One-time bootstrap: lets the FIRST user against a gym claim admin.
- * Once any admin exists for that gym, this path locks out.
+ * LEGACY one-time bootstrap: lets a named user claim admin of a gym that has
+ * no admin yet. Only for gyms created before the platform console could
+ * provision gyms and invite owners itself.
+ *
+ * Two gates, both required:
+ *  1. BOOTSTRAP_ADMIN_TOKEN — a shared secret configured out-of-band, so a
+ *     signed-in user cannot race to claim an unclaimed gym slug.
+ *  2. gyms.pending_owner_email must equal the caller's own email. The token
+ *     alone used to be platform-wide, which meant anyone who learned it could
+ *     claim ANY admin-less gym. Binding the claim to the invited address makes
+ *     the token useless without the platform admin naming the owner first.
  *
  * Public sign-up never grants admin — this is the controlled bootstrap path.
  */
+
 
 /** The slug the caller signed up against, read from their own auth metadata. */
 async function callerGymSlug(claims: any, userId: string): Promise<string | null> {
