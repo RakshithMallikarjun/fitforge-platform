@@ -349,17 +349,15 @@ export async function runDailySummary(opts: {
       Number(a?.refund_count ?? 0) === 0;
 
     if (quiet && !opts.test) {
-      await supabaseAdmin
-        .from("daily_summary_log")
-        .upsert(
-          {
-            gym_id: gym.id,
-            summary_date: today,
-            skipped_reason: "no_activity",
-            recipient_count: 0,
-          },
-          { onConflict: "gym_id,summary_date" },
-        );
+      await supabaseAdmin.from("daily_summary_log").upsert(
+        {
+          gym_id: gym.id,
+          summary_date: today,
+          skipped_reason: "no_activity",
+          recipient_count: 0,
+        },
+        { onConflict: "gym_id,summary_date" },
+      );
       push({ outcome: "skipped", reason: "no_activity" });
       continue;
     }
