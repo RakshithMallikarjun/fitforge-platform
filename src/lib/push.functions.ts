@@ -37,8 +37,7 @@ function isValidPushSubscription(sub: unknown): boolean {
   // auth is a 16-byte secret (~22-24 chars). Allow reasonable slack only.
   if (!BASE64URL_RE.test(keys.p256dh) || keys.p256dh.length < 80 || keys.p256dh.length > 96)
     return false;
-  if (!BASE64URL_RE.test(keys.auth) || keys.auth.length < 16 || keys.auth.length > 64)
-    return false;
+  if (!BASE64URL_RE.test(keys.auth) || keys.auth.length < 16 || keys.auth.length > 64) return false;
   return true;
 }
 

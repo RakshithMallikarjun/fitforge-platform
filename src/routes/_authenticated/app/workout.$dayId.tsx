@@ -1047,8 +1047,6 @@ function CompletionScreen({
 
       {finished && <SponsoredSlot placement="workout_complete" />}
 
-
-
       {finished ? (
         <Button className="w-full rounded-xl" onClick={onDone}>
           Done
