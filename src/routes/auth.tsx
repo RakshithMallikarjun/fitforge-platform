@@ -15,6 +15,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { friendlyAuthError, scorePassword } from "@/lib/auth-errors";
 import { verifyGymJoinCode } from "@/lib/join-code.functions";
+import { getAuthRedirectUrl } from "@/lib/authRedirect";
 
 type AuthSearch = { deactivated?: boolean; gymDisabled?: boolean };
 
@@ -273,7 +274,7 @@ function SignInForm() {
     setError(null);
     setLoading(true);
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: getAuthRedirectUrl("/reset-password"),
     });
     setLoading(false);
     if (err) {
@@ -414,7 +415,7 @@ function SignUpForm() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: getAuthRedirectUrl("/auth/callback"),
         data: { display_name: displayName, gym_slug: gymSlug.trim(), role: "member" },
       },
     });
