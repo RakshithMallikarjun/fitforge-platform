@@ -83,6 +83,7 @@ export type QueuedItem = {
 export type DeadItem = QueuedItem & { deadAt: number; reason: string };
 
 async function readQueue(): Promise<QueuedItem[]> {
+  await mergeLegacyStores();
   const raw = (await get<QueuedItem[]>(QUEUE_KEY)) ?? [];
   // Tolerate items written by an older version without attempt bookkeeping.
   return raw.map((i) => ({
@@ -98,6 +99,7 @@ async function writeQueue(items: QueuedItem[]) {
 }
 
 export async function readDeadLetter(): Promise<DeadItem[]> {
+  await mergeLegacyStores();
   return (await get<DeadItem[]>(DEAD_KEY)) ?? [];
 }
 
