@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getGymAuthRedirectUrl } from "@/lib/authRedirect";
 
 type Role = "admin" | "trainer" | "member";
 
@@ -28,7 +29,7 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
 
     const { data: gym, error: gErr } = await supabaseAdmin
       .from("gyms")
-      .select("slug")
+      .select("slug, custom_domain")
       .eq("id", gymId)
       .maybeSingle();
     if (gErr || !gym) throw new Error("Gym not found");
@@ -41,6 +42,7 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
           role: data.role,
           display_name: data.displayName,
         },
+        redirectTo: getGymAuthRedirectUrl(gym, "/auth/callback"),
       },
     );
     if (invErr || !invited.user) throw new Error(invErr?.message ?? "Invite failed");

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getGymAuthRedirectUrl } from "@/lib/authRedirect";
 
 /**
  * Platform (site-owner) console data access.
@@ -389,7 +390,7 @@ async function inviteOwner(
     _gym_id: gymId,
   });
   if (dErr) fail(dErr);
-  const gym = detail as { slug?: string } | null;
+  const gym = detail as { slug?: string; custom_domain?: string | null } | null;
   if (!gym?.slug) throw new Error("Gym not found");
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -407,6 +408,7 @@ async function inviteOwner(
   const localPart = email.split("@")[0] ?? email;
   const { data: invited, error: iErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
     data: { gym_slug: gym.slug, display_name: localPart },
+    redirectTo: getGymAuthRedirectUrl(gym, "/auth/callback"),
   });
 
   if (iErr) {

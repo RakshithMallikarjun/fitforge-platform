@@ -164,3 +164,11 @@ test("gym admin manages membership tiers and reviews dues", async ({ page }) => 
   await page.goto("/admin/reports/revenue");
   await expect(page.getByRole("heading", { name: /^revenue$/i })).toBeVisible();
 });
+
+test("auth callback shows a clear error for an expired link", async ({ page }) => {
+  await page.goto(
+    "/auth/callback?error_description=Email%20link%20is%20invalid%20or%20has%20expired",
+  );
+  await expect(page.getByRole("heading", { name: /this link didn't work/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /send a new link/i })).toBeVisible();
+});

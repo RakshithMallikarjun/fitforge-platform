@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getGymAuthRedirectUrl } from "@/lib/authRedirect";
 
 type Role = "admin" | "trainer" | "member";
 
@@ -342,10 +343,10 @@ async function assertAdmin(supabase: any, userId: string) {
 
 async function inviteOneMember(input: MemberInput, gymId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  // Need gym slug for handle_new_user trigger metadata
+  // Need gym slug for handle_new_user trigger metadata + the invite redirect host
   const { data: gym, error: gErr } = await supabaseAdmin
     .from("gyms")
-    .select("slug")
+    .select("slug, custom_domain")
     .eq("id", gymId)
     .maybeSingle();
   if (gErr || !gym) throw new Error("Gym not found");
@@ -358,6 +359,7 @@ async function inviteOneMember(input: MemberInput, gymId: string) {
         role: "member",
         display_name: input.name,
       },
+      redirectTo: getGymAuthRedirectUrl(gym, "/auth/callback"),
     },
   );
   if (invErr || !invited.user) throw new Error(invErr?.message ?? "Invite failed");
@@ -580,7 +582,7 @@ export const resendMemberInvite = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: gym } = await supabaseAdmin
       .from("gyms")
-      .select("slug")
+      .select("slug, custom_domain")
       .eq("id", gymId)
       .maybeSingle();
     if (!gym) throw new Error("Gym not found");
@@ -592,6 +594,7 @@ export const resendMemberInvite = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(member.email, {
       data: { gym_slug: gym.slug, role: "member", display_name: member.display_name ?? undefined },
+      redirectTo: getGymAuthRedirectUrl(gym, "/auth/callback"),
     });
     if (error) throw new Error(error.message);
     return { ok: true, email: member.email };
