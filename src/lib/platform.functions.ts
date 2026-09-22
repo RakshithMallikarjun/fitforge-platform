@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getGymAuthRedirectUrl } from "@/lib/authRedirect";
 
 /**
  * Platform (site-owner) console data access.
