@@ -296,7 +296,7 @@ function WorkoutPlayer() {
   const fetchAlts = useServerFn(getExerciseAlternatives);
   const swapExerciseFn = useServerFn(substituteExercise);
 
-  const cacheKey = `fitforge:day:${dayId}`;
+  const cacheKey = `fitfoundry:day:${dayId}`;
   const [offlineFallback, setOfflineFallback] = useState(false);
   const [swapOpen, setSwapOpen] = useState(false);
 

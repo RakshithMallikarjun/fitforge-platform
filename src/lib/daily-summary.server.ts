@@ -195,7 +195,7 @@ export function renderSummaryEmail(a: Activity, duesUrl: string) {
      ]),
    )}
    <tr><td style="padding:16px 24px 24px;font:400 12px Arial,sans-serif;color:#666;border-top:1px solid #f1f5f9">
-     Manually recorded by your staff — FitForge does not process payments.
+     Manually recorded by your staff — Fit Foundry does not process payments.
      <br /><a href="${esc(duesUrl)}" style="color:#2563eb">Open payments due</a>
    </td></tr>
   </table>
@@ -225,7 +225,7 @@ export function renderSummaryEmail(a: Activity, duesUrl: string) {
         `  ${s.recorded_by_name}: ${s.payment_count} × ${money(Number(s.total), a.currency)}`,
     ),
     "",
-    "Manually recorded by your staff — FitForge does not process payments.",
+    "Manually recorded by your staff — Fit Foundry does not process payments.",
   ].join("\n");
 
   const subject = `${a.gym_name} — ${a.new_count + a.renewal_count} memberships today, ${money(a.total_collected, a.currency)} collected`;

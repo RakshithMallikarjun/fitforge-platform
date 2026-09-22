@@ -3,7 +3,7 @@ import { Download, Share, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme-provider";
 
-const DISMISS_KEY = "fitforge:install-dismissed-at";
+const DISMISS_KEY = "fitfoundry:install-dismissed-at";
 const DISMISS_DAYS = 7;
 
 type BIPEvent = Event & {

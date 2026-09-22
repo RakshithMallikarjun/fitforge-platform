@@ -3,8 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
 const DEFAULTS = {
-  name: "FitForge — Member",
-  short_name: "FitForge",
+  name: "Fit Foundry — Member",
+  short_name: "Fit Foundry",
   description: "Your gym in your pocket — workouts, plans, and progress.",
   theme_color: "#059669",
   background_color: "#F8FAFC",

@@ -3,16 +3,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy · FitForge" },
+      { title: "Privacy Policy · Fit Foundry" },
       {
         name: "description",
         content:
-          "How FitForge collects, stores and protects member health metrics, progress photos and payment records.",
+          "How Fit Foundry collects, stores and protects member health metrics, progress photos and payment records.",
       },
-      { property: "og:title", content: "Privacy Policy · FitForge" },
+      { property: "og:title", content: "Privacy Policy · Fit Foundry" },
       {
         property: "og:description",
-        content: "How FitForge handles member health data, progress photos and payment records.",
+        content: "How Fit Foundry handles member health data, progress photos and payment records.",
       },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },

@@ -25,7 +25,7 @@ import { formatShortDate } from "@/lib/format-date";
 export const Route = createFileRoute("/_authenticated/app")({
   head: () => ({
     meta: [
-      { title: "My training · FitForge" },
+      { title: "My training · Fit Foundry" },
       { name: "description", content: "Your workouts, progress and messages with your trainer." },
       { name: "robots", content: "noindex" },
     ],

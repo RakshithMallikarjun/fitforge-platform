@@ -64,7 +64,7 @@ import {
 export const Route = createFileRoute("/_authenticated/admin/sponsors")({
   head: () => ({
     meta: [
-      { title: "Sponsors · FitForge" },
+      { title: "Sponsors · Fit Foundry" },
       {
         name: "description",
         content: "Sell local sponsorships in your member app and track impressions and clicks.",
@@ -205,7 +205,7 @@ function SponsorsPage() {
                     <Label className="text-sm font-semibold">Ads enabled</Label>
                     <p className="mt-1 max-w-xl text-xs text-muted-foreground">
                       Your members will start seeing sponsored cards. You keep 100% of what you
-                      charge your sponsors — FitForge takes nothing and shares nothing with
+                      charge your sponsors — Fit Foundry takes nothing and shares nothing with
                       advertisers.
                     </p>
                   </div>
@@ -217,7 +217,7 @@ function SponsorsPage() {
 
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <Label className="text-sm font-semibold">Let FitForge fill empty slots</Label>
+                    <Label className="text-sm font-semibold">Let Fit Foundry fill empty slots</Label>
                     <p className="mt-1 max-w-xl text-xs text-muted-foreground">
                       Only ever shows when you have no active ad of your own.
                     </p>
@@ -403,7 +403,7 @@ function SponsorsPage() {
                 </div>
               )}
               <p className="mt-3 text-xs text-muted-foreground">
-                Impressions and clicks are counted in daily totals. FitForge does not record which
+                Impressions and clicks are counted in daily totals. Fit Foundry does not record which
                 member saw which ad.
               </p>
             </CardContent>
@@ -477,7 +477,7 @@ function PlatformCampaignsTab() {
         <CardContent className="p-10 text-center">
           <p className="text-sm font-semibold">No platform campaigns right now</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            When FitForge has inventory, it will appear here so you can block anything you don't
+            When Fit Foundry has inventory, it will appear here so you can block anything you don't
             want.
           </p>
         </CardContent>

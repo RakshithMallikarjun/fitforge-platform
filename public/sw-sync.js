@@ -6,10 +6,10 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data.json();
   } catch {
-    data = { title: "FitForge", body: event.data.text() };
+    data = { title: "Fit Foundry", body: event.data.text() };
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || "FitForge", {
+    self.registration.showNotification(data.title || "Fit Foundry", {
       body: data.body || "",
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
@@ -37,12 +37,12 @@ self.addEventListener("notificationclick", (event) => {
 });
 // Listens for Background Sync fires and notifies open clients to flush the offline queue.
 self.addEventListener("sync", (event) => {
-  if (event.tag !== "fitforge-log-sync") return;
+  if (event.tag !== "fitfoundry-log-sync") return;
   event.waitUntil(
     (async () => {
       const clients = await self.clients.matchAll({ includeUncontrolled: true, type: "window" });
       for (const client of clients) {
-        client.postMessage({ type: "FITFORGE_FLUSH_QUEUE" });
+        client.postMessage({ type: "FITFOUNDRY_FLUSH_QUEUE" });
       }
     })(),
   );

@@ -13,12 +13,12 @@ export const Route = createFileRoute("/reset-password")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Choose a new password · FitForge" },
-      { name: "description", content: "Set a new password for your FitForge member account." },
-      { property: "og:title", content: "Reset your FitForge password" },
+      { title: "Choose a new password · Fit Foundry" },
+      { name: "description", content: "Set a new password for your Fit Foundry member account." },
+      { property: "og:title", content: "Reset your Fit Foundry password" },
       {
         property: "og:description",
-        content: "Set a new password for your FitForge member account.",
+        content: "Set a new password for your Fit Foundry member account.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -86,7 +86,7 @@ function ResetPasswordPage() {
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-primary-foreground">
             <Dumbbell className="h-5 w-5" />
           </div>
-          <span className="font-display text-lg font-bold">FitForge</span>
+          <span className="font-display text-lg font-bold">Fit Foundry</span>
         </Link>
 
         <div className="rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)] md:p-8">

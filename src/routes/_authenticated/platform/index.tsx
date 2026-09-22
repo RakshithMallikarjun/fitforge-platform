@@ -88,7 +88,7 @@ function PlatformOverviewPage() {
       <header>
         <h1 className="text-lg font-bold tracking-tight">Platform overview</h1>
         <p className="text-xs text-muted-foreground">
-          Every gym on FitForge. Aggregates only — no member data is shown here.
+          Every gym on Fit Foundry. Aggregates only — no member data is shown here.
         </p>
       </header>
 

@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "FitForge — White-label fitness platform" },
+      { title: "Fit Foundry — White-label fitness platform" },
       {
         name: "description",
         content: "Branded member apps, trainer tools, and analytics for modern gyms.",
       },
-      { property: "og:title", content: "FitForge" },
+      { property: "og:title", content: "Fit Foundry" },
       {
         property: "og:description",
         content: "Branded member apps, trainer tools, and analytics for modern gyms.",
@@ -45,7 +45,7 @@ function Landing() {
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-primary-foreground">
               <Dumbbell className="h-5 w-5" />
             </div>
-            <span className="font-display text-lg font-bold tracking-tight">FitForge</span>
+            <span className="font-display text-lg font-bold tracking-tight">Fit Foundry</span>
           </div>
           <Link to="/auth">
             <Button variant="ghost" className="rounded-xl">
@@ -65,7 +65,7 @@ function Landing() {
             The operating system for <span className="text-primary">modern gyms.</span>
           </h1>
           <p className="mt-6 max-w-2xl text-base text-muted-foreground md:text-lg">
-            FitForge gives gym owners a branded member app, gives trainers a programming toolkit,
+            Fit Foundry gives gym owners a branded member app, gives trainers a programming toolkit,
             and gives members a beautifully clean place to train — all on one multi-tenant backbone
             you can fully white-label.
           </p>
@@ -106,7 +106,7 @@ function Landing() {
 
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-8 py-10 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} FitForge. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Fit Foundry. All rights reserved.</p>
           <nav className="flex flex-wrap gap-6">
             <Link to="/privacy" className="hover:text-foreground">
               Privacy Policy

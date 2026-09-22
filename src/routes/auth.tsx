@@ -25,10 +25,10 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Sign in · FitForge" },
-      { name: "description", content: "Sign in to FitForge or create a member account." },
-      { property: "og:title", content: "Sign in to FitForge" },
-      { property: "og:description", content: "Sign in to FitForge or create a member account." },
+      { title: "Sign in · Fit Foundry" },
+      { name: "description", content: "Sign in to Fit Foundry or create a member account." },
+      { property: "og:title", content: "Sign in to Fit Foundry" },
+      { property: "og:description", content: "Sign in to Fit Foundry or create a member account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -169,7 +169,7 @@ function AuthPage() {
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-primary-foreground">
             <Dumbbell className="h-5 w-5" />
           </div>
-          <span className="font-display text-lg font-bold">FitForge</span>
+          <span className="font-display text-lg font-bold">Fit Foundry</span>
         </Link>
 
         {pageError && (
@@ -371,7 +371,7 @@ function SignUpForm() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [gymSlug, setGymSlug] = useState("fitforge");
+  const [gymSlug, setGymSlug] = useState("fitfoundry");
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -481,10 +481,10 @@ function SignUpForm() {
           required
           value={gymSlug}
           onChange={(e) => setGymSlug(e.target.value)}
-          placeholder="fitforge"
+          placeholder="fitfoundry"
         />
         <p className="text-xs text-muted-foreground">
-          Use the code your gym gave you. The demo gym is <code>fitforge</code>.
+          Use the code your gym gave you. The demo gym is <code>fitfoundry</code>.
         </p>
       </div>
       <div className="space-y-2">

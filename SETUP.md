@@ -1,4 +1,4 @@
-# FitForge — Setup
+# Fit Foundry — Setup
 
 ## Creating gyms
 
@@ -63,7 +63,7 @@ moves their expiry date — there is no free-text membership type any more.
 | Secret                  | Purpose                                                |
 | ----------------------- | ------------------------------------------------------ |
 | `RESEND_API_KEY`        | Sends the daily collection email through Resend        |
-| `SUMMARY_FROM_EMAIL`    | Verified sender, e.g. `FitForge <billing@yourgym.com>` |
+| `SUMMARY_FROM_EMAIL`    | Verified sender, e.g. `Fit Foundry <billing@yourgym.com>` |
 | `NOTIFY_WEBHOOK_SECRET` | Shared secret for the scheduled endpoints below        |
 
 Schedule both endpoints **hourly** (pg_cron or any scheduler) — each gym is only
@@ -97,12 +97,12 @@ app (see `src/lib/gym-theme.functions.ts` + `theme-provider.tsx`).
 `/manifest.webmanifest` reads the request host, extracts the subdomain
 (or matches `custom_domain`), and returns a gym-branded PWA manifest.
 
-DNS setup for `{slug}.fitforge.app`:
+DNS setup for `{slug}.fitfoundry.in`:
 
 1. In your DNS provider, add a wildcard `CNAME`:
-   `*.fitforge.app` → your Lovable published URL
+   `*.fitfoundry.in` → your Lovable published URL
 2. Add each `gyms.slug` row in the database.
-3. Members visiting `acmegym.fitforge.app` will get the Acme Gym
+3. Members visiting `acmegym.fitfoundry.in` will get the Acme Gym
    manifest, theme, and logo automatically.
 
 For a fully custom domain:

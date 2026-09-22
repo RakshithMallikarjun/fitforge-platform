@@ -735,7 +735,7 @@ function PlatformGymDetailPage() {
             <DialogTitle>Invite the owner of {g.name}</DialogTitle>
             <DialogDescription>
               They get an email to set a password and become an admin of {g.name} only. The address
-              must not already have a FitForge account.
+              must not already have a Fit Foundry account.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">

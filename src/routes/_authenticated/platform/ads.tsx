@@ -48,7 +48,7 @@ import {
 export const Route = createFileRoute("/_authenticated/platform/ads")({
   head: () => ({
     meta: [
-      { title: "Ad campaigns · FitForge platform" },
+      { title: "Ad campaigns · Fit Foundry platform" },
       {
         name: "description",
         content:
@@ -375,7 +375,7 @@ function GymInventoryCard({ report }: { report: ReturnType<typeof useQuery<any>>
           </div>
         )}
         <div className="p-4">
-          <Badge variant="outline">Manually recorded — FitForge does not process ad payments</Badge>
+          <Badge variant="outline">Manually recorded — Fit Foundry does not process ad payments</Badge>
         </div>
       </CardContent>
     </Card>

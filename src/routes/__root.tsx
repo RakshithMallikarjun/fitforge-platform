@@ -19,7 +19,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 function NotFoundComponent() {
   useEffect(() => {
-    document.title = "Page not found · FitForge";
+    document.title = "Page not found · Fit Foundry";
   }, []);
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -80,14 +80,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "FitForge — White-label fitness platform for gyms & trainers" },
+      { title: "Fit Foundry — White-label fitness platform for gyms & trainers" },
       {
         name: "description",
         content:
-          "FitForge is the all-in-one platform for modern gyms: branded member app, trainer tools, workout plans, and analytics.",
+          "Fit Foundry is the all-in-one platform for modern gyms: branded member app, trainer tools, workout plans, and analytics.",
       },
-      { name: "author", content: "FitForge" },
-      { property: "og:title", content: "FitForge" },
+      { name: "author", content: "Fit Foundry" },
+      { property: "og:title", content: "Fit Foundry" },
       { property: "og:description", content: "White-label fitness platform for gyms & trainers." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
