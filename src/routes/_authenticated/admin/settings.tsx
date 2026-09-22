@@ -11,6 +11,7 @@ import {
   updateGymOperations,
   updateGymSettings,
 } from "@/lib/gym-theme.functions";
+import { PLATFORM_DOMAIN, gymSubdomain } from "@/lib/platform-brand";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
