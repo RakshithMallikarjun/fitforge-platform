@@ -142,6 +142,10 @@ function AuthListener() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // One-time carry-over of pre-rebrand browser-storage keys.
+  useEffect(() => {
+    migrateLegacyStorageKeys();
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
