@@ -23,7 +23,7 @@ const DEFAULT_THEME: GymTheme = {
   secondaryColor: null,
   logoUrl: null,
   fontFamily: "Satoshi",
-  name: "FitForge",
+  name: "Fit Foundry",
   supportEmail: null,
   supportPhone: null,
 };

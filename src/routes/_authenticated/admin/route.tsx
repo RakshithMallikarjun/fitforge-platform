@@ -15,7 +15,7 @@ import { isPlatformAdmin } from "@/lib/platform.functions";
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Gym console · FitForge" },
+      { title: "Gym console · Fit Foundry" },
       {
         name: "description",
         content: "Manage members, plans, check-ins and reports for your gym.",

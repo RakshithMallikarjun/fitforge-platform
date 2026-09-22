@@ -12,8 +12,8 @@ import { recordAdEvent, serveAds, type AdPlacement, type ServedAd } from "@/lib/
  * nothing at all when there is no ad (or when the lookup fails).
  */
 
-const DISMISS_KEY = "fitforge.ads.dismissed";
-const SEEN_KEY = "fitforge.ads.seen";
+const DISMISS_KEY = "fitfoundry.ads.dismissed";
+const SEEN_KEY = "fitfoundry.ads.seen";
 
 function safeSessionGet(): string[] {
   try {

@@ -3,16 +3,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms of Service · FitForge" },
+      { title: "Terms of Service · Fit Foundry" },
       {
         name: "description",
         content:
-          "The terms covering use of FitForge by gyms, trainers and members, including health disclaimers and billing.",
+          "The terms covering use of Fit Foundry by gyms, trainers and members, including health disclaimers and billing.",
       },
-      { property: "og:title", content: "Terms of Service · FitForge" },
+      { property: "og:title", content: "Terms of Service · Fit Foundry" },
       {
         property: "og:description",
-        content: "Terms covering gym, trainer and member use of FitForge.",
+        content: "Terms covering gym, trainer and member use of Fit Foundry.",
       },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
@@ -39,7 +39,7 @@ function Terms() {
         <section>
           <h2 className="font-display text-lg font-semibold">Health disclaimer</h2>
           <p className="mt-2">
-            FitForge is a training and record-keeping tool, not medical advice. Workout plans,
+            Fit Foundry is a training and record-keeping tool, not medical advice. Workout plans,
             assessments and AI-generated load suggestions are guidance only. Consult a qualified
             professional before starting or changing a training programme, and stop if you feel
             unwell.

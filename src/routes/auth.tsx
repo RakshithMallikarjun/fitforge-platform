@@ -25,10 +25,10 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Sign in · FitForge" },
-      { name: "description", content: "Sign in to FitForge or create a member account." },
-      { property: "og:title", content: "Sign in to FitForge" },
-      { property: "og:description", content: "Sign in to FitForge or create a member account." },
+      { title: "Sign in · Fit Foundry" },
+      { name: "description", content: "Sign in to Fit Foundry or create a member account." },
+      { property: "og:title", content: "Sign in to Fit Foundry" },
+      { property: "og:description", content: "Sign in to Fit Foundry or create a member account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -169,7 +169,7 @@ function AuthPage() {
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-primary-foreground">
             <Dumbbell className="h-5 w-5" />
           </div>
-          <span className="font-display text-lg font-bold">FitForge</span>
+          <span className="font-display text-lg font-bold">Fit Foundry</span>
         </Link>
 
         {pageError && (

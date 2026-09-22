@@ -17,8 +17,35 @@
 import { get, set, del } from "idb-keyval";
 import { logSet, completeWorkout } from "@/lib/workout-player.functions";
 
-const QUEUE_KEY = "fitforge:offline-queue";
-const DEAD_KEY = "fitforge:offline-dead-letter";
+const QUEUE_KEY = "fitfoundry:offline-queue";
+const DEAD_KEY = "fitfoundry:offline-dead-letter";
+// Pre-rebrand keys — merged forward on first read so no queued log is lost.
+const LEGACY_QUEUE_KEY = "fitforge:offline-queue";
+const LEGACY_DEAD_KEY = "fitforge:offline-dead-letter";
+
+let legacyMerged = false;
+async function mergeLegacyStores() {
+  if (legacyMerged) return;
+  legacyMerged = true;
+  try {
+    const oldQueue = (await get<QueuedItem[]>(LEGACY_QUEUE_KEY)) ?? [];
+    if (oldQueue.length) {
+      const current = (await get<QueuedItem[]>(QUEUE_KEY)) ?? [];
+      const seen = new Set(current.map((i) => i.id));
+      await set(QUEUE_KEY, [...current, ...oldQueue.filter((i) => !seen.has(i.id))]);
+    }
+    await del(LEGACY_QUEUE_KEY);
+
+    const oldDead = (await get<DeadItem[]>(LEGACY_DEAD_KEY)) ?? [];
+    if (oldDead.length) {
+      const current = (await get<DeadItem[]>(DEAD_KEY)) ?? [];
+      await set(DEAD_KEY, [...current, ...oldDead].slice(-200));
+    }
+    await del(LEGACY_DEAD_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 export const MAX_ATTEMPTS = 5;
 export const MAX_QUEUE_SIZE = 500;
@@ -56,6 +83,7 @@ export type QueuedItem = {
 export type DeadItem = QueuedItem & { deadAt: number; reason: string };
 
 async function readQueue(): Promise<QueuedItem[]> {
+  await mergeLegacyStores();
   const raw = (await get<QueuedItem[]>(QUEUE_KEY)) ?? [];
   // Tolerate items written by an older version without attempt bookkeeping.
   return raw.map((i) => ({
@@ -71,6 +99,7 @@ async function writeQueue(items: QueuedItem[]) {
 }
 
 export async function readDeadLetter(): Promise<DeadItem[]> {
+  await mergeLegacyStores();
   return (await get<DeadItem[]>(DEAD_KEY)) ?? [];
 }
 

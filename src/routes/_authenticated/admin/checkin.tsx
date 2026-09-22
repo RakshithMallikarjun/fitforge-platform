@@ -31,7 +31,7 @@ function AdminCheckin() {
     if (scanning) return;
     const mod = await import("html5-qrcode");
     const { Html5Qrcode } = mod;
-    const id = "fitforge-qr-reader";
+    const id = "fitfoundry-qr-reader";
     if (!containerRef.current) return;
     containerRef.current.id = id;
     const scanner = new Html5Qrcode(id);

@@ -401,7 +401,7 @@ async function inviteOwner(
     .maybeSingle();
 
   if (existingUser && !allowExisting && existingUser.gym_id !== gymId) {
-    throw new Error("That email already has a FitForge account");
+    throw new Error("That email already has a Fit Foundry account");
   }
 
   const localPart = email.split("@")[0] ?? email;

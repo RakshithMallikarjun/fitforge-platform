@@ -11,6 +11,7 @@ import {
   updateGymOperations,
   updateGymSettings,
 } from "@/lib/gym-theme.functions";
+import { PLATFORM_DOMAIN, gymSubdomain } from "@/lib/platform-brand";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -202,7 +203,7 @@ function SettingsPage() {
   const slug = joinInfo?.slug ?? gym?.slug ?? "";
   const joinCode = joinInfo?.joinCode ?? "";
   const appOrigin = typeof window !== "undefined" ? window.location.origin : "";
-  const signupMessage = `Join ${name || "our gym"} on FitForge 💪
+  const signupMessage = `Join ${name || "our gym"} on Fit Foundry 💪
 
 1. Open ${appOrigin}/auth
 2. Tap "Create account"
@@ -543,15 +544,15 @@ See you at the gym!`;
             <div className="rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
               <p className="mb-2 font-semibold text-foreground">DNS setup</p>
               <p className="mb-2">
-                Subdomain option: add a wildcard <code>CNAME</code> for <code>*.fitforge.app</code>{" "}
-                pointing at your published FitForge URL. Members visiting{" "}
-                <code>{slug || "yourgym"}.fitforge.app</code> get your theme, logo and app icon
+                Subdomain option: add a wildcard <code>CNAME</code> for <code>*.{PLATFORM_DOMAIN}</code>{" "}
+                pointing at your published Fit Foundry URL. Members visiting{" "}
+                <code>{gymSubdomain(slug || "yourgym")}</code> get your theme, logo and app icon
                 automatically.
               </p>
               <p>
                 Fully custom domain: save it here, add a <code>CNAME</code> from{" "}
-                <code>{customDomain || "app.yourgym.com"}</code> to your published FitForge URL,
-                then ask FitForge support to attach the domain to your project.
+                <code>{customDomain || "app.yourgym.com"}</code> to your published Fit Foundry URL,
+                then ask Fit Foundry support to attach the domain to your project.
               </p>
             </div>
           </div>
@@ -567,7 +568,7 @@ See you at the gym!`;
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              Managed by FitForge — contact support to change.
+              Managed by Fit Foundry — contact support to change.
             </p>
           </div>
 

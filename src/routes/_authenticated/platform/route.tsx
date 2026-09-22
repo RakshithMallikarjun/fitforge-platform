@@ -16,7 +16,7 @@ import { isPlatformAdmin } from "@/lib/platform.functions";
 export const Route = createFileRoute("/_authenticated/platform")({
   head: () => ({
     meta: [
-      { title: "Platform console · FitForge" },
+      { title: "Platform console · Fit Foundry" },
       {
         name: "description",
         content: "Site-owner console: all gyms, enablement, billing state and platform analytics.",
@@ -67,7 +67,7 @@ function PlatformShell() {
     <div className="min-h-screen bg-background">
       <div className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-3 px-6 py-3">
-          <span className="font-display text-sm font-bold tracking-tight">FitForge Platform</span>
+          <span className="font-display text-sm font-bold tracking-tight">Fit Foundry Platform</span>
           <nav className="flex flex-1 flex-wrap items-center gap-1">
             {NAV.map((item) => {
               const active = item.exact ? path === item.to : path.startsWith(item.to);
