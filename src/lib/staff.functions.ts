@@ -42,6 +42,7 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
           role: data.role,
           display_name: data.displayName,
         },
+        redirectTo: getGymAuthRedirectUrl(gym, "/auth/callback"),
       },
     );
     if (invErr || !invited.user) throw new Error(invErr?.message ?? "Invite failed");
