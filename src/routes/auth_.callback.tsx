@@ -37,8 +37,7 @@ function AuthCallbackPage() {
       try {
         const url = new URL(window.location.href);
         const code = url.searchParams.get("code");
-        const errDesc =
-          url.searchParams.get("error_description") ?? url.searchParams.get("error");
+        const errDesc = url.searchParams.get("error_description") ?? url.searchParams.get("error");
         const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
 
         if (errDesc) {
