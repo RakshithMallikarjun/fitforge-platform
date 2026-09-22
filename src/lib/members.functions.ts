@@ -582,7 +582,7 @@ export const resendMemberInvite = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: gym } = await supabaseAdmin
       .from("gyms")
-      .select("slug")
+      .select("slug, custom_domain")
       .eq("id", gymId)
       .maybeSingle();
     if (!gym) throw new Error("Gym not found");
@@ -594,6 +594,7 @@ export const resendMemberInvite = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(member.email, {
       data: { gym_slug: gym.slug, role: "member", display_name: member.display_name ?? undefined },
+      redirectTo: getGymAuthRedirectUrl(gym, "/auth/callback"),
     });
     if (error) throw new Error(error.message);
     return { ok: true, email: member.email };

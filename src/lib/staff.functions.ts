@@ -29,7 +29,7 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
 
     const { data: gym, error: gErr } = await supabaseAdmin
       .from("gyms")
-      .select("slug")
+      .select("slug, custom_domain")
       .eq("id", gymId)
       .maybeSingle();
     if (gErr || !gym) throw new Error("Gym not found");
