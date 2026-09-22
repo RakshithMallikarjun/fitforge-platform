@@ -127,6 +127,13 @@
       "when": 1789910429732,
       "tag": "0017_membership_tiers_payments_dues",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790092043205,
+      "tag": "0018_rebrand_fit_foundry_domain",
+      "breakpoints": true
     }
   ]
 }
