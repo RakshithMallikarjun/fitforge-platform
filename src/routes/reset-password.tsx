@@ -75,8 +75,9 @@ function ResetPasswordPage() {
       setError(friendlyAuthError(err, "We couldn't update your password."));
       return;
     }
-    toast.success("Password updated");
-    navigate({ to: "/app", replace: true });
+    toast.success("Password updated — sign in with your new password");
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
   }
 
   return (
@@ -99,10 +100,11 @@ function ResetPasswordPage() {
           {ready === "invalid" && (
             <div className="mt-4 space-y-4">
               <p className="text-sm text-muted-foreground">
-                This reset link is invalid or has expired. Request a new one from the sign-in page.
+                This reset link is invalid or has expired. Request a fresh one and we'll email it
+                straight away.
               </p>
               <Button asChild className="h-11 w-full rounded-xl">
-                <Link to="/auth">Back to sign in</Link>
+                <Link to="/auth">Send a new link</Link>
               </Button>
             </div>
           )}
