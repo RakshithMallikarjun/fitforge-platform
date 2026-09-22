@@ -37,7 +37,7 @@ self.addEventListener("notificationclick", (event) => {
 });
 // Listens for Background Sync fires and notifies open clients to flush the offline queue.
 self.addEventListener("sync", (event) => {
-  if (event.tag !== "fitfoundry-log-sync") return;
+  if (event.tag !== "fitfoundry-log-sync" && event.tag !== "fitforge-log-sync") return;
   event.waitUntil(
     (async () => {
       const clients = await self.clients.matchAll({ includeUncontrolled: true, type: "window" });

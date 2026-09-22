@@ -1,3 +1,4 @@
+import { gymSubdomain } from "@/lib/platform-brand";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -220,7 +221,7 @@ export function NewGymDialog({
               placeholder="iron-works"
             />
             <p className="text-xs text-muted-foreground">
-              {effectiveSlug ? `${effectiveSlug}.fitfoundry.in` : "Fills in from the gym name."}
+              {effectiveSlug ? gymSubdomain(effectiveSlug) : "Fills in from the gym name."}
             </p>
             {effectiveSlug && localError ? (
               <p className="flex items-center gap-1 text-xs font-medium text-destructive">

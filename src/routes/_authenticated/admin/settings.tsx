@@ -543,9 +543,9 @@ See you at the gym!`;
             <div className="rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
               <p className="mb-2 font-semibold text-foreground">DNS setup</p>
               <p className="mb-2">
-                Subdomain option: add a wildcard <code>CNAME</code> for <code>*.fitfoundry.in</code>{" "}
+                Subdomain option: add a wildcard <code>CNAME</code> for <code>*.{PLATFORM_DOMAIN}</code>{" "}
                 pointing at your published Fit Foundry URL. Members visiting{" "}
-                <code>{slug || "yourgym"}.fitfoundry.in</code> get your theme, logo and app icon
+                <code>{gymSubdomain(slug || "yourgym")}</code> get your theme, logo and app icon
                 automatically.
               </p>
               <p>

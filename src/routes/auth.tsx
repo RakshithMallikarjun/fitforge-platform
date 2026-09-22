@@ -371,7 +371,7 @@ function SignUpForm() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [gymSlug, setGymSlug] = useState("fitfoundry");
+  const [gymSlug, setGymSlug] = useState("fitforge");
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -481,10 +481,10 @@ function SignUpForm() {
           required
           value={gymSlug}
           onChange={(e) => setGymSlug(e.target.value)}
-          placeholder="fitfoundry"
+          placeholder="fitforge"
         />
         <p className="text-xs text-muted-foreground">
-          Use the code your gym gave you. The demo gym is <code>fitfoundry</code>.
+          Use the code your gym gave you. The demo gym is <code>fitforge</code>.
         </p>
       </div>
       <div className="space-y-2">
