@@ -343,10 +343,10 @@ async function assertAdmin(supabase: any, userId: string) {
 
 async function inviteOneMember(input: MemberInput, gymId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  // Need gym slug for handle_new_user trigger metadata
+  // Need gym slug for handle_new_user trigger metadata + the invite redirect host
   const { data: gym, error: gErr } = await supabaseAdmin
     .from("gyms")
-    .select("slug")
+    .select("slug, custom_domain")
     .eq("id", gymId)
     .maybeSingle();
   if (gErr || !gym) throw new Error("Gym not found");
@@ -359,6 +359,7 @@ async function inviteOneMember(input: MemberInput, gymId: string) {
         role: "member",
         display_name: input.name,
       },
+      redirectTo: getGymAuthRedirectUrl(gym, "/auth/callback"),
     },
   );
   if (invErr || !invited.user) throw new Error(invErr?.message ?? "Invite failed");
