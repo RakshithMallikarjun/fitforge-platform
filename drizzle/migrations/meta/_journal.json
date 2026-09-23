@@ -141,6 +141,13 @@
       "when": 1790136557407,
       "tag": "0019_ad_creatives_admin_only_read",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1790173425747,
+      "tag": "0020_member_training_profiles",
+      "breakpoints": true
     }
   ]
 }

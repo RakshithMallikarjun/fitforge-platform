@@ -142,6 +142,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_plan_generations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          gym_day: string
+          gym_id: string
+          id: string
+          member_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          gym_day: string
+          gym_id: string
+          id?: string
+          member_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          gym_day?: string
+          gym_id?: string
+          id?: string
+          member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_plan_generations_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_plan_generations_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_logs: {
         Row: {
           check_in_at: string
@@ -993,6 +1035,63 @@ export type Database = {
             columns: ["superseded_by"]
             isOneToOne: false
             referencedRelation: "member_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_training_profiles: {
+        Row: {
+          created_at: string
+          days_per_week: number
+          equipment: string[]
+          experience: string
+          goals: string
+          gym_id: string
+          limitations: string
+          member_id: string
+          session_minutes: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          days_per_week?: number
+          equipment?: string[]
+          experience?: string
+          goals?: string
+          gym_id: string
+          limitations?: string
+          member_id: string
+          session_minutes?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          days_per_week?: number
+          equipment?: string[]
+          experience?: string
+          goals?: string
+          gym_id?: string
+          limitations?: string
+          member_id?: string
+          session_minutes?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_training_profiles_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_training_profiles_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
