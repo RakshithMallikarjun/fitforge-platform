@@ -1,18 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-const FALLBACK_ORIGIN = "https://fitfinity-nexus.lovable.app";
-
-/** Sitemaps require fully-qualified URLs, so derive the origin from the request host. */
-function resolveOrigin(request: Request): string {
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  const host = forwardedHost || request.headers.get("host");
-  if (!host) return FALLBACK_ORIGIN;
-  const proto =
-    request.headers.get("x-forwarded-proto") ||
-    (host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https");
-  return `${proto}://${host}`;
-}
+/** Sitemap entries must always point at the public site, never a preview host. */
+const BASE_URL = "https://fitfoundry.in";
 
 const ENTRIES: { path: string; changefreq: string; priority: string }[] = [
   // /auth is disallowed in robots.txt, so it must not be advertised here.

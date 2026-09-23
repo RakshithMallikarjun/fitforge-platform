@@ -173,6 +173,10 @@ function AuthPage() {
           <span className="font-display text-lg font-bold">Fit Foundry</span>
         </Link>
 
+        <h1 className="mb-6 text-center font-display text-2xl font-bold tracking-tight">
+          Sign in to Fit Foundry
+        </h1>
+
         {pageError && (
           <div className="mb-4">
             <ErrorBanner>{pageError}</ErrorBanner>

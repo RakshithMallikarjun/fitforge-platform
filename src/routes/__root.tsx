@@ -88,7 +88,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Fit Foundry is the all-in-one platform for modern gyms: branded member app, trainer tools, workout plans, and analytics.",
       },
       { name: "author", content: "Fit Foundry" },
-      { property: "og:title", content: "Fit Foundry" },
+      {
+        property: "og:title",
+        content: "Fit Foundry — White-label fitness platform for gyms & trainers",
+      },
       { property: "og:description", content: "White-label fitness platform for gyms & trainers." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
