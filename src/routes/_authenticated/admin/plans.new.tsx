@@ -407,6 +407,19 @@ function PlanBuilder() {
         </div>
       </main>
 
+      {memberId && (
+        <AiPlanDialog
+          open={aiOpen}
+          onOpenChange={setAiOpen}
+          memberId={memberId}
+          memberName={
+            (members.find((m: any) => m.id === memberId)?.display_name as string | undefined) ??
+            undefined
+          }
+          onDraft={applyDraft}
+        />
+      )}
+
       <ExercisePickerDialog
         open={!!pickerForDay}
         onOpenChange={(v) => !v && setPickerForDay(null)}
