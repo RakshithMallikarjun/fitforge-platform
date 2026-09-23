@@ -36,8 +36,8 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
   .inputValidator((d: { dayId: string }) => d)
   .handler(async ({ data, context }): Promise<WorkoutDayData> => {
     const { supabase, userId } = context;
-    const { data: day, error: dayErr } = await supabase
     await requireActiveMembership(supabase, userId);
+    const { data: day, error: dayErr } = await supabase
       .from("workout_days")
       .select("id, day_label, order, plan_id, block_type, workout_plans:plan_id(id, name)")
       .eq("id", data.dayId)
@@ -256,8 +256,8 @@ export const completeWorkout = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }): Promise<{ ok: true; newPRs: NewPR[] }> => {
     const { supabase, userId } = context;
-    const { data: logRow, error: logErr } = await supabase
     await requireActiveMembership(supabase, userId);
+    const { data: logRow, error: logErr } = await supabase
       .from("workout_logs")
       .select("id, member_id, gym_id, date, completed_at")
       .eq("id", data.logId)
@@ -366,8 +366,8 @@ export const getWorkoutsBrowser = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<WorkoutsBrowserData> => {
     const { supabase, userId } = context;
 
-    const { data: plans } = await supabase
     await requireActiveMembership(supabase, userId);
+    const { data: plans } = await supabase
       .from("workout_plans")
       .select("id, name")
       .eq("member_id", userId)
@@ -447,8 +447,8 @@ export const listPersonalRecords = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<PersonalRecord[]> => {
     const { supabase, userId } = context;
     const { data, error } = await supabase
-      .from("personal_records")
     await requireActiveMembership(supabase, userId);
+      .from("personal_records")
       .select("id, exercise_id, weight, reps, achieved_at, exercises:exercise_id(name)")
       .eq("member_id", userId)
       .order("achieved_at", { ascending: false });
@@ -519,8 +519,8 @@ export const getSessionSummary = createServerFn({ method: "GET" })
   .inputValidator((d: { logId: string }) => d)
   .handler(async ({ data, context }): Promise<SessionSummary | null> => {
     const { supabase, userId } = context;
-    const { data: log, error } = await supabase
     await requireActiveMembership(supabase, userId);
+    const { data: log, error } = await supabase
       .from("workout_logs")
       .select("id, date, effort_rating, notes, member_id, workout_days:workout_day_id(day_label)")
       .eq("id", data.logId)
