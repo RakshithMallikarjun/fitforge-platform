@@ -69,9 +69,6 @@ export function EditMembershipDialog({
     currentExpiresAt ? currentExpiresAt.slice(0, 10) : "",
   );
   const [cycle, setCycle] = useState<Cycle>((currentBillingCycle as Cycle) ?? "monthly");
-  const [amount, setAmount] = useState<string>(
-    currentPaymentAmount != null ? String(currentPaymentAmount) : "",
-  );
   const [payDate, setPayDate] = useState<string>(
     currentPaymentDate ? currentPaymentDate.slice(0, 10) : "",
   );
@@ -86,7 +83,6 @@ export function EditMembershipDialog({
           membershipType: type,
           membershipExpiresAt: expiresAt || null,
           billingCycle: cycle,
-          lastPaymentAmount: amount === "" ? null : Number(amount),
           lastPaymentDate: payDate || null,
           paymentConfirmed: confirmed,
           paymentNotes: notes || null,
@@ -142,18 +138,7 @@ export function EditMembershipDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Last payment amount (₹)</Label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-              />
-            </div>
+          <div className="grid grid-cols-1 gap-3">
             <div className="space-y-1.5">
               <Label>Last payment date</Label>
               <Input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} />

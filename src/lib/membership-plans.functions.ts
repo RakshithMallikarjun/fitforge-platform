@@ -453,11 +453,28 @@ export const recordPayment = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
+    // The recorded amount is derived from the gym's configured plan price, so a
+    // caller cannot grant a membership period for an amount of their choosing.
+    const { data: priceRow, error: priceErr } = await supabase
+      .from("membership_plan_prices")
+      .select("price, is_enabled")
+      .eq("plan_id", data.planId)
+      .eq("period", data.period)
+      .maybeSingle();
+    if (priceErr) fail(priceErr);
+    const configuredPrice =
+      priceRow && (priceRow as any).is_enabled ? Number((priceRow as any).price) : null;
+    if (configuredPrice == null) {
+      throw new Error("That plan has no price set for this term. Set the price first.");
+    }
+    if (data.amount != null && Number(data.amount) !== configuredPrice) {
+      throw new Error(`The amount must match the plan price (${configuredPrice}).`);
+    }
     const { data: res, error } = await supabase.rpc("record_member_payment", {
       _member_id: data.memberId,
       _plan_id: data.planId,
       _period: data.period,
-      _amount: data.amount ?? undefined,
+      _amount: configuredPrice,
       _paid_on: data.paidOn ?? undefined,
       _method: data.method ?? "cash",
       _reference: data.reference ?? undefined,
