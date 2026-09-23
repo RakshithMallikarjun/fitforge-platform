@@ -204,6 +204,23 @@ function PlanBuilder() {
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-6">
+            {!isTemplate && (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
+                <div>
+                  <p className="flex items-center gap-2 text-sm font-semibold">
+                    <Sparkles className="h-4 w-4 text-primary" /> Draft this plan with AI
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {memberId
+                      ? "Enter goals, limitations and equipment — you can edit everything before saving."
+                      : "Pick a member first to generate a personalized draft."}
+                  </p>
+                </div>
+                <Button variant="outline" disabled={!memberId} onClick={() => setAiOpen(true)}>
+                  Generate with AI
+                </Button>
+              </div>
+            )}
             {step === 1 && (
               <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
                 <div>
