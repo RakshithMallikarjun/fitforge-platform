@@ -134,6 +134,13 @@
       "when": 1790092043205,
       "tag": "0018_rebrand_fit_foundry_domain",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790136557407,
+      "tag": "0019_ad_creatives_admin_only_read",
+      "breakpoints": true
     }
   ]
 }
