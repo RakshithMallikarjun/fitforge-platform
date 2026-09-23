@@ -22,6 +22,50 @@ test("landing page renders with legal links and no broken images", async ({ page
   expect(broken).toBe(0);
 });
 
+test("gym management software page renders copy, FAQ and structured data", async ({ page }) => {
+  await page.goto("/gym-management-software");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/gym management software/i);
+  await expect(page.getByRole("link", { name: /get started free/i }).first()).toBeVisible();
+
+  // FAQ opens.
+  await page.getByRole("button", { name: /what does gym management software actually do/i }).click();
+  await expect(page.getByText(/replaces the spreadsheets/i)).toBeVisible();
+
+  // JSON-LD present for SoftwareApplication + FAQPage.
+  const types = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('script[type="application/ld+json"]')).map((s) => {
+      try {
+        return (JSON.parse(s.textContent ?? "{}") as { "@type"?: string })["@type"];
+      } catch {
+        return null;
+      }
+    }),
+  );
+  expect(types).toContain("SoftwareApplication");
+  expect(types).toContain("FAQPage");
+  expect(types).toContain("Organization");
+});
+
+test("trainer can open the AI plan generator in the plan builder", async ({ page }) => {
+  const staffEmail = process.env.SMOKE_STAFF_EMAIL;
+  const staffPassword = process.env.SMOKE_STAFF_PASSWORD;
+  test.skip(
+    !staffEmail || !staffPassword,
+    "SMOKE_STAFF_EMAIL / SMOKE_STAFF_PASSWORD not configured",
+  );
+
+  await page.goto("/auth");
+  await page.getByLabel(/email/i).fill(staffEmail!);
+  await page.getByLabel(/^password/i).fill(staffPassword!);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.waitForURL(/\/admin/, { timeout: 30_000 });
+
+  await page.goto("/admin/plans/new");
+  await expect(page.getByText(/draft this plan with ai/i)).toBeVisible();
+  await page.getByRole("button", { name: /generate with ai/i }).click();
+  await expect(page.getByRole("dialog")).toContainText(/goals/i);
+});
+
 test("member signs in, completes a workout and the streak increments", async ({ page }) => {
   test.skip(!email || !password, "SMOKE_EMAIL / SMOKE_PASSWORD not configured");
 
