@@ -40,6 +40,8 @@ import { listMembers } from "@/lib/members.functions";
 import { createPlan, getMemberSnapshot } from "@/lib/plans.functions";
 import { suggestOverload, type ExerciseSuggestion } from "@/lib/overload.functions";
 import { ExercisePickerDialog } from "@/components/exercises/exercise-picker-dialog";
+import { AiPlanDialog } from "@/components/plans/ai-plan-dialog";
+import type { PlanDraft } from "@/lib/plan-ai.functions";
 import type { ExerciseRow } from "@/lib/exercises.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/plans/new")({
