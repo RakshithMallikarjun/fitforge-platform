@@ -7,6 +7,9 @@ const BASE_URL = "https://fitfoundry.in";
 const ENTRIES: { path: string; changefreq: string; priority: string }[] = [
   // /auth is disallowed in robots.txt, so it must not be advertised here.
   { path: "/", changefreq: "weekly", priority: "1.0" },
+  { path: "/gym-management-software", changefreq: "weekly", priority: "0.9" },
+  { path: "/privacy", changefreq: "yearly", priority: "0.3" },
+  { path: "/terms", changefreq: "yearly", priority: "0.3" },
 ];
 
 export const Route = createFileRoute("/sitemap.xml")({

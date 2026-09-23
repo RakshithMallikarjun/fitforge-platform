@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { ArrowRight, Dumbbell, ShieldCheck, Sparkles } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Button } from "@/components/ui/button";
+import { jsonLdScript, softwareApplicationSchema } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/")({
         content: "Branded member apps, trainer tools, and analytics for modern gyms.",
       },
     ],
+    scripts: [jsonLdScript(softwareApplicationSchema())],
   }),
   component: Landing,
 });
