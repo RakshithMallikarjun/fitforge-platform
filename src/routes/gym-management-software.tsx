@@ -100,7 +100,6 @@ export const Route = createFileRoute("/gym-management-software")({
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { rel: "canonical", href: PAGE_URL } as never,
     ],
     links: [{ rel: "canonical", href: PAGE_URL }],
     scripts: [
