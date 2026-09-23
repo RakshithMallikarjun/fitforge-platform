@@ -18,6 +18,13 @@ function fail(error: { message?: string; code?: string } | null): never {
   throw new Error(msg);
 }
 
+/** Handler-level platform-admin gate, in addition to each RPC's own guard. */
+async function requirePlatformAdmin(supabase: any): Promise<void> {
+  const { data, error } = await supabase.rpc("is_platform_admin");
+  if (error) fail(error);
+  if (!data) throw new Error("Forbidden");
+}
+
 export type PlatformOverview = {
   total_gyms: number;
   enabled_gyms: number;
@@ -177,6 +184,7 @@ export const getPlatformOverview = createServerFn({ method: "GET" })
 export const listPlatformGyms = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<PlatformGymRow[]> => {
+    await requirePlatformAdmin(context.supabase);
     const { data, error } = await context.supabase.rpc("platform_gyms");
     if (error) fail(error);
     return (data ?? []) as unknown as PlatformGymRow[];
@@ -227,6 +235,7 @@ export const getPlatformGymActivityTrend = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { gymId: string; days?: number }) => input)
   .handler(async ({ context, data: input }): Promise<GymActivityPoint[]> => {
+    await requirePlatformAdmin(context.supabase);
     const { data, error } = await context.supabase.rpc("platform_gym_activity_trend", {
       _gym_id: input.gymId,
       _days: input.days ?? 30,

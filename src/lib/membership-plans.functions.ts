@@ -593,6 +593,15 @@ export const getBillingSettings = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { gymId, timeZone } = await gymOf(supabase, userId);
     if (!gymId) throw new Error("Forbidden");
+    // Billing configuration and admin contacts are for gym administrators only.
+    const { data: adminRole } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("user_id", userId)
+      .eq("gym_id", gymId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!adminRole) throw new Error("Forbidden");
 
     const { data: row, error } = await supabase.rpc("gym_billing_settings_ensure");
     if (error) fail(error);

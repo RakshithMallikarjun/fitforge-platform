@@ -324,6 +324,8 @@ export const getEngagementReport = createServerFn({ method: "GET" })
       const roles = (myRoles ?? []).map((r: any) => r.role as string);
       const isAdmin = roles.includes("admin");
       const isTrainer = roles.includes("trainer");
+      // Engagement data covers other members: staff only.
+      if (!isAdmin && !isTrainer) throw new Error("Forbidden");
 
       const { data: memberRoles } = await supabase
         .from("user_roles")

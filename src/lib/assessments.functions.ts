@@ -243,7 +243,6 @@ export const exportAssessmentReport = createServerFn({ method: "POST" })
       ? '<p style="color:#6b7280">No assessments recorded.</p>'
       : `<table><thead><tr><th style="text-align:left">Metric</th>${headerCells}</tr></thead><tbody>${rowsHtml}</tbody></table>`
   }
-  <script>window.addEventListener("message",function(e){if(e.data==="print")window.print();});</script>
 </body></html>`;
 
     return { html, memberName };
