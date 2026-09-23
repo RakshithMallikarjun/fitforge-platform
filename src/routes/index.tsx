@@ -12,7 +12,7 @@ export const Route = createFileRoute("/")({
         name: "description",
         content: "Branded member apps, trainer tools, and analytics for modern gyms.",
       },
-      { property: "og:title", content: "Fit Foundry" },
+      { property: "og:title", content: "Fit Foundry — White-label fitness platform for gyms" },
       {
         property: "og:description",
         content: "Branded member apps, trainer tools, and analytics for modern gyms.",

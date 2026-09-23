@@ -3,3 +3,5 @@ Allow: /
 Disallow: /admin
 Disallow: /app
 Disallow: /auth
+
+Sitemap: https://fitfoundry.in/sitemap.xml
