@@ -216,8 +216,9 @@ export const generatePlanDraft = createServerFn({ method: "POST" })
       .order("name", { ascending: true })
       .limit(MAX_CATALOG);
     if (data.equipment.length) q = q.overlaps("equipment", data.equipment);
-    let { data: catalog, error: catErr } = await q;
-    if (catErr) throw new Error(catErr.message);
+    const first = await q;
+    if (first.error) throw new Error(first.error.message);
+    let catalog = first.data;
     // Equipment filter can be too narrow (e.g. bodyweight work stored with no
     // equipment at all) — fall back to the full library rather than fail.
     if (!catalog?.length && data.equipment.length) {
