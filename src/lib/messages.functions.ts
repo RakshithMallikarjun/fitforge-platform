@@ -60,7 +60,14 @@ export const listThreads = createServerFn({ method: "GET" })
 
 export const getThread = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { otherUserId: string }) => d)
+  .inputValidator((d: { otherUserId: string }) => {
+    // Must be a bare UUID: the value is used inside a PostgREST `or` filter.
+    const id = String(d?.otherUserId ?? "");
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      throw new Error("Invalid conversation");
+    }
+    return { otherUserId: id };
+  })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: msgs, error } = await supabase

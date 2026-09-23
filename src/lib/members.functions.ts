@@ -27,6 +27,8 @@ export const listMembers = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { gymId, isAdmin, isTrainer } = await getRolesAndGym(supabase, userId);
     if (!gymId) return [];
+    // Member directories carry other people's personal details: staff only.
+    if (!isAdmin && !isTrainer) throw new Error("Forbidden");
 
     // Members of this gym (role = member)
     const { data: roleRows } = await supabase
@@ -464,7 +466,6 @@ const membershipUpdateSchema = z.object({
   membershipType: z.string(),
   membershipExpiresAt: z.string().nullable(),
   billingCycle: z.enum(["monthly", "quarterly", "half_year", "annual"]).nullable().optional(),
-  lastPaymentAmount: z.number().nullable().optional(),
   lastPaymentDate: z.string().nullable().optional(),
   paymentConfirmed: z.boolean().optional(),
   paymentNotes: z.string().max(300).nullable().optional(),
@@ -493,7 +494,7 @@ export const updateMemberMembership = createServerFn({ method: "POST" })
       membership_expires_at: data.membershipExpiresAt || null,
     };
     if (data.billingCycle !== undefined) patch.billing_cycle = data.billingCycle;
-    if (data.lastPaymentAmount !== undefined) patch.last_payment_amount = data.lastPaymentAmount;
+    // last_payment_amount is derived from the payment ledger, never from the caller.
     if (data.lastPaymentDate !== undefined) patch.last_payment_date = data.lastPaymentDate || null;
     if (data.paymentConfirmed !== undefined) patch.payment_confirmed = data.paymentConfirmed;
     if (data.paymentNotes !== undefined) patch.payment_notes = data.paymentNotes;

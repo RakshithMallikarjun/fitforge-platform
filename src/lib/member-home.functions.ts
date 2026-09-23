@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { rankMuscleGroups } from "./muscle-groups";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { dateStringInZone, shiftDateString, startOfWeekString } from "@/lib/gym-date";
+import { hasActiveMembership } from "@/lib/entitlement.server";
 
 export type MemberHomeData = {
   gym: { name: string; primary_color: string | null; logo_url: string | null } | null;
@@ -21,12 +22,16 @@ export type MemberHomeData = {
     muscleGroups: string[];
   } | null;
   latestNote: { body: string; created_at: string; author: string | null } | null;
+  /** False when the member's membership has lapsed — paid content is withheld. */
+  entitled: boolean;
 };
 
 export const getMemberHome = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<MemberHomeData> => {
     const { supabase, userId } = context;
+    // Paid training content is gated on the server, not just in the client.
+    const entitled = await hasActiveMembership(supabase, userId);
 
     const [{ data: userRow }, { data: logs }, { data: plans }, { data: notes }] = await Promise.all(
       [
@@ -165,8 +170,9 @@ export const getMemberHome = createServerFn({ method: "GET" })
       weekCompleted,
       weekTarget: 4,
       weeklyConsistency,
-      activePlan,
-      nextWorkout,
-      latestNote,
+      activePlan: entitled ? activePlan : null,
+      nextWorkout: entitled ? nextWorkout : null,
+      latestNote: entitled ? latestNote : null,
+      entitled,
     };
   });

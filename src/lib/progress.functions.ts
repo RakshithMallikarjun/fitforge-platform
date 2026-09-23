@@ -327,13 +327,22 @@ export type ProgressPhoto = {
   created_at: string;
 };
 
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+const PHOTO_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+/** Progress photos are capped server-side; the file picker is only a hint. */
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
 const uploadPhotoSchema = z.object({
   member_id: z.string().uuid(),
   assessment_id: z.string().uuid().nullable().optional(),
   taken_at: z.string().nullable().optional(),
   file_base64: z.string().min(10),
-  content_type: z.string().default("image/jpeg"),
-  file_ext: z.string().default("jpg"),
+  content_type: z.enum(PHOTO_TYPES, { message: "Use a JPEG, PNG or WebP image" }),
+  file_ext: z.string().optional(),
 });
 
 function base64ToBytes(b64: string): Uint8Array {
@@ -375,14 +384,17 @@ export const uploadProgressPhoto = createServerFn({ method: "POST" })
       if (!r.includes("admin") && !assign) throw new Error("Forbidden");
     }
 
-    const ext = (data.file_ext || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+    // Extension follows the validated content type, never caller-supplied text.
+    const ext = PHOTO_EXT[data.content_type];
     const key = `${memberRow.gym_id}/${crypto.randomUUID()}.${ext}`;
     const bytes = base64ToBytes(data.file_base64);
+    if (bytes.byteLength === 0) throw new Error("That file looks empty");
+    if (bytes.byteLength > MAX_PHOTO_BYTES) throw new Error("Photos must be 5MB or smaller");
 
     const { error: upErr } = await supabase.storage.from("member-photos").upload(key, bytes, {
       cacheControl: "3600",
       upsert: false,
-      contentType: data.content_type || "image/jpeg",
+      contentType: data.content_type,
     });
     if (upErr) throw new Error(upErr.message);
 

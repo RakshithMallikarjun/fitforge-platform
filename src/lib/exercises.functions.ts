@@ -122,8 +122,9 @@ export const updateExercise = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const { gymId } = await getRolesAndGym(supabase, userId);
+    const { gymId, isAdmin, isTrainer } = await getRolesAndGym(supabase, userId);
     if (!gymId) throw new Error("No gym");
+    if (!isAdmin && !isTrainer) throw new Error("Forbidden");
     const { error } = await supabase
       .from("exercises")
       .update(data.patch)
