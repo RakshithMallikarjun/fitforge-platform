@@ -217,7 +217,9 @@ function SponsorsPage() {
 
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <Label className="text-sm font-semibold">Let Fit Foundry fill empty slots</Label>
+                    <Label className="text-sm font-semibold">
+                      Let Fit Foundry fill empty slots
+                    </Label>
                     <p className="mt-1 max-w-xl text-xs text-muted-foreground">
                       Only ever shows when you have no active ad of your own.
                     </p>
@@ -403,8 +405,8 @@ function SponsorsPage() {
                 </div>
               )}
               <p className="mt-3 text-xs text-muted-foreground">
-                Impressions and clicks are counted in daily totals. Fit Foundry does not record which
-                member saw which ad.
+                Impressions and clicks are counted in daily totals. Fit Foundry does not record
+                which member saw which ad.
               </p>
             </CardContent>
           </Card>

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { ArrowRight, Dumbbell, ShieldCheck, Sparkles } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Button } from "@/components/ui/button";
+import { jsonLdScript, softwareApplicationSchema } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/")({
         content: "Branded member apps, trainer tools, and analytics for modern gyms.",
       },
     ],
+    scripts: [jsonLdScript(softwareApplicationSchema())],
   }),
   component: Landing,
 });
@@ -102,12 +104,23 @@ function Landing() {
             body="Row-level isolation between gyms, per-gym theming, and a single codebase you don't have to rebuild."
           />
         </div>
+
+        <p className="mt-12 text-sm text-muted-foreground">
+          Looking for{" "}
+          <Link to="/gym-management-software" className="text-primary hover:underline">
+            gym management software
+          </Link>{" "}
+          for your own gym? See how Fit Foundry handles memberships, dues and attendance.
+        </p>
       </section>
 
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-8 py-10 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Fit Foundry. All rights reserved.</p>
           <nav className="flex flex-wrap gap-6">
+            <Link to="/gym-management-software" className="hover:text-foreground">
+              Gym management software
+            </Link>
             <Link to="/privacy" className="hover:text-foreground">
               Privacy Policy
             </Link>

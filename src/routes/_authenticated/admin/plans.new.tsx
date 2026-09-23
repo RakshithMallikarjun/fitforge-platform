@@ -40,6 +40,8 @@ import { listMembers } from "@/lib/members.functions";
 import { createPlan, getMemberSnapshot } from "@/lib/plans.functions";
 import { suggestOverload, type ExerciseSuggestion } from "@/lib/overload.functions";
 import { ExercisePickerDialog } from "@/components/exercises/exercise-picker-dialog";
+import { AiPlanDialog } from "@/components/plans/ai-plan-dialog";
+import type { PlanDraft } from "@/lib/plan-ai.functions";
 import type { ExerciseRow } from "@/lib/exercises.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/plans/new")({
@@ -109,6 +111,35 @@ function PlanBuilder() {
     { uid: uid(), label: "Day 1", block_type: "main", exercises: [] },
   ]);
   const [pickerForDay, setPickerForDay] = useState<string | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
+
+  /** Loads an AI draft into the builder. Nothing is persisted until Save. */
+  const applyDraft = (draft: PlanDraft) => {
+    setDays(
+      draft.days.map((d) => ({
+        uid: uid(),
+        label: d.day_label,
+        block_type: d.block_type,
+        exercises: d.exercises.map((e) => ({
+          uid: uid(),
+          exercise: { id: e.exercise_id, name: e.exercise_name } as ExerciseRow,
+          sets: e.sets,
+          reps: e.reps,
+          rest_seconds: e.rest_seconds,
+          tempo: "",
+          notes: e.notes,
+        })),
+      })),
+    );
+    if (!name.trim()) setName(draft.plan_name);
+    if (!notes.trim() && draft.notes) setNotes(draft.notes);
+    if (draft.skipped.length) {
+      toast.info("Some suggestions were skipped", {
+        description: `Not in your exercise library: ${draft.skipped.join(", ")}`,
+      });
+    }
+    setStep(2);
+  };
 
   const { data: members = [] } = useQuery({ queryKey: ["members"], queryFn: () => listMembers() });
   const { data: snapshot } = useQuery({
@@ -173,6 +204,23 @@ function PlanBuilder() {
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-6">
+            {!isTemplate && (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
+                <div>
+                  <p className="flex items-center gap-2 text-sm font-semibold">
+                    <Sparkles className="h-4 w-4 text-primary" /> Draft this plan with AI
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {memberId
+                      ? "Enter goals, limitations and equipment — you can edit everything before saving."
+                      : "Pick a member first to generate a personalized draft."}
+                  </p>
+                </div>
+                <Button variant="outline" disabled={!memberId} onClick={() => setAiOpen(true)}>
+                  Generate with AI
+                </Button>
+              </div>
+            )}
             {step === 1 && (
               <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
                 <div>
@@ -358,6 +406,19 @@ function PlanBuilder() {
           </aside>
         </div>
       </main>
+
+      {memberId && (
+        <AiPlanDialog
+          open={aiOpen}
+          onOpenChange={setAiOpen}
+          memberId={memberId}
+          memberName={
+            (members.find((m: any) => m.id === memberId)?.display_name as string | undefined) ??
+            undefined
+          }
+          onDraft={applyDraft}
+        />
+      )}
 
       <ExercisePickerDialog
         open={!!pickerForDay}
