@@ -12,8 +12,8 @@ const ENTRIES: { path: string; changefreq: string; priority: string }[] = [
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
-      GET: async ({ request }) => {
-        const origin = resolveOrigin(request);
+      GET: async () => {
+        const origin = BASE_URL;
         const xml = [
           `<?xml version="1.0" encoding="UTF-8"?>`,
           `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
