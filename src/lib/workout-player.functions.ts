@@ -446,8 +446,8 @@ export const listPersonalRecords = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<PersonalRecord[]> => {
     const { supabase, userId } = context;
-    const { data, error } = await supabase
     await requireActiveMembership(supabase, userId);
+    const { data, error } = await supabase
       .from("personal_records")
       .select("id, exercise_id, weight, reps, achieved_at, exercises:exercise_id(name)")
       .eq("member_id", userId)
