@@ -28,7 +28,9 @@ test("gym management software page renders copy, FAQ and structured data", async
   await expect(page.getByRole("link", { name: /get started free/i }).first()).toBeVisible();
 
   // FAQ opens.
-  await page.getByRole("button", { name: /what does gym management software actually do/i }).click();
+  await page
+    .getByRole("button", { name: /what does gym management software actually do/i })
+    .click();
   await expect(page.getByText(/replaces the spreadsheets/i)).toBeVisible();
 
   // JSON-LD present for SoftwareApplication + FAQPage.

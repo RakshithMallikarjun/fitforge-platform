@@ -73,7 +73,10 @@ const aiDraftSchema = z.object({
             z.object({
               name: z.string().min(1).max(120),
               sets: z.number().finite().optional().nullable(),
-              reps: z.union([z.string().max(20), z.number()]).optional().nullable(),
+              reps: z
+                .union([z.string().max(20), z.number()])
+                .optional()
+                .nullable(),
               rest_seconds: z.number().finite().optional().nullable(),
               notes: z.string().max(200).optional().nullable(),
             }),
