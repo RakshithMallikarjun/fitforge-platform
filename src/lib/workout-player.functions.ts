@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { rankMuscleGroups } from "./muscle-groups";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { dateStringInZone, resolveGymTimezone } from "@/lib/gym-date";
+import { requireActiveMembership } from "@/lib/entitlement.server";
 
 export type WorkoutDayExercise = {
   id: string; // workout_exercises.id
@@ -36,6 +37,7 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
   .handler(async ({ data, context }): Promise<WorkoutDayData> => {
     const { supabase, userId } = context;
     const { data: day, error: dayErr } = await supabase
+    await requireActiveMembership(supabase, userId);
       .from("workout_days")
       .select("id, day_label, order, plan_id, block_type, workout_plans:plan_id(id, name)")
       .eq("id", data.dayId)
@@ -111,7 +113,8 @@ export const getPreviousSetValues = createServerFn({ method: "GET" })
   .inputValidator((d: { exerciseId: string }) => d)
   .handler(async ({ data, context }): Promise<PrevSet[]> => {
     const { supabase, userId } = context;
-    // exercise_logs has no member_id — join via workout_logs to filter to this member.
+    // exercise_logs has no member_id
+    await requireActiveMembership(supabase, userId); — join via workout_logs to filter to this member.
     const { data: rows, error } = await supabase
       .from("exercise_logs")
       .select("set_number, weight, reps, created_at, workout_logs!inner(member_id)")
@@ -191,7 +194,8 @@ export const logSet = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    // Defence in depth: RLS already scopes exercise_logs through workout_logs,
+    // Defence in depth: RLS already scopes exercise_logs
+    await requireActiveMembership(supabase, userId); through workout_logs,
     // but never write against a log id the caller does not own.
     const { data: ownLog } = await supabase
       .from("workout_logs")
@@ -253,6 +257,7 @@ export const completeWorkout = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ ok: true; newPRs: NewPR[] }> => {
     const { supabase, userId } = context;
     const { data: logRow, error: logErr } = await supabase
+    await requireActiveMembership(supabase, userId);
       .from("workout_logs")
       .select("id, member_id, gym_id, date, completed_at")
       .eq("id", data.logId)
@@ -362,6 +367,7 @@ export const getWorkoutsBrowser = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
 
     const { data: plans } = await supabase
+    await requireActiveMembership(supabase, userId);
       .from("workout_plans")
       .select("id, name")
       .eq("member_id", userId)
@@ -442,6 +448,7 @@ export const listPersonalRecords = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data, error } = await supabase
       .from("personal_records")
+    await requireActiveMembership(supabase, userId);
       .select("id, exercise_id, weight, reps, achieved_at, exercises:exercise_id(name)")
       .eq("member_id", userId)
       .order("achieved_at", { ascending: false });
@@ -470,6 +477,7 @@ export const listPastWorkouts = createServerFn({ method: "GET" })
   .handler(async ({ data, context }): Promise<{ rows: PastWorkoutRow[]; hasMore: boolean }> => {
     const { supabase, userId } = context;
     const limit = Math.min(Math.max(data.limit ?? 10, 1), 50);
+    await requireActiveMembership(supabase, userId);
     const offset = Math.max(data.offset ?? 0, 0);
     const { data: logs, error } = await supabase
       .from("workout_logs")
@@ -512,6 +520,7 @@ export const getSessionSummary = createServerFn({ method: "GET" })
   .handler(async ({ data, context }): Promise<SessionSummary | null> => {
     const { supabase, userId } = context;
     const { data: log, error } = await supabase
+    await requireActiveMembership(supabase, userId);
       .from("workout_logs")
       .select("id, date, effort_rating, notes, member_id, workout_days:workout_day_id(day_label)")
       .eq("id", data.logId)
