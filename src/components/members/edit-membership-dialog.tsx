@@ -46,7 +46,6 @@ export function EditMembershipDialog({
   currentType,
   currentExpiresAt,
   currentBillingCycle,
-  currentPaymentAmount,
   currentPaymentDate,
   currentPaymentConfirmed,
   currentPaymentNotes,
@@ -57,7 +56,6 @@ export function EditMembershipDialog({
   currentType: string | null;
   currentExpiresAt: string | null;
   currentBillingCycle?: string | null;
-  currentPaymentAmount?: number | null;
   currentPaymentDate?: string | null;
   currentPaymentConfirmed?: boolean | null;
   currentPaymentNotes?: string | null;
