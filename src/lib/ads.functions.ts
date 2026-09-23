@@ -588,7 +588,7 @@ export const serveAds = createServerFn({ method: "POST" })
           advertiserName: a.advertiser_name as string,
           headline: a.headline as string,
           body: (a.body ?? null) as string | null,
-          imageUrl: await signPath(supabase, a.image_path ?? null),
+          imageUrl: await signServedPath(a.image_path ?? null),
           ctaLabel: (a.cta_label ?? null) as string | null,
           ctaUrl: (a.cta_url ?? null) as string | null,
           isPlatform: Boolean(a.is_platform),
