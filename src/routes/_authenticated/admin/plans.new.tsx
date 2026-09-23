@@ -111,6 +111,35 @@ function PlanBuilder() {
     { uid: uid(), label: "Day 1", block_type: "main", exercises: [] },
   ]);
   const [pickerForDay, setPickerForDay] = useState<string | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
+
+  /** Loads an AI draft into the builder. Nothing is persisted until Save. */
+  const applyDraft = (draft: PlanDraft) => {
+    setDays(
+      draft.days.map((d) => ({
+        uid: uid(),
+        label: d.day_label,
+        block_type: d.block_type,
+        exercises: d.exercises.map((e) => ({
+          uid: uid(),
+          exercise: { id: e.exercise_id, name: e.exercise_name } as ExerciseRow,
+          sets: e.sets,
+          reps: e.reps,
+          rest_seconds: e.rest_seconds,
+          tempo: "",
+          notes: e.notes,
+        })),
+      })),
+    );
+    if (!name.trim()) setName(draft.plan_name);
+    if (!notes.trim() && draft.notes) setNotes(draft.notes);
+    if (draft.skipped.length) {
+      toast.info("Some suggestions were skipped", {
+        description: `Not in your exercise library: ${draft.skipped.join(", ")}`,
+      });
+    }
+    setStep(2);
+  };
 
   const { data: members = [] } = useQuery({ queryKey: ["members"], queryFn: () => listMembers() });
   const { data: snapshot } = useQuery({
