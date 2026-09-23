@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { migrateLegacyStorageKeys } from "@/lib/platform-brand";
+import { jsonLdScript, organizationSchema } from "@/lib/structured-data";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -112,6 +113,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&f[]=general-sans@500,600,700&display=swap",
       },
     ],
+    // Site-wide publisher identity. Page-level schemas live on their own routes.
+    scripts: [jsonLdScript(organizationSchema())],
   }),
 
   shellComponent: RootShell,
