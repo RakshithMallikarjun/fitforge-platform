@@ -1,96 +1,67 @@
-# Step 2 — Admin Member Management
+# AI plan generator, a new landing page, and search-visibility markup
 
-Build the full member management module in the Admin PWA. Covers directory, CRUD, trainer assignment, and the Member 360 profile view.
+Three separate pieces of work.
 
-## Routes
+## 1. AI-generated workout plans for trainers
 
-```
-src/routes/_authenticated/admin/
-  members.tsx              directory (list + filters + Add Member dialog + bulk import)
-  members.$memberId.tsx    Member 360 (tabbed profile)
-```
+Trainers get a "Generate with AI" button in the plan builder. It opens a short form:
 
-Add "Members" link to `AdminSidebar`.
+- Member goals (free text, e.g. "lose 6kg, build upper-body strength")
+- Limitations / injuries (free text, e.g. "left knee, no overhead press")
+- Available equipment (multi-select drawn from the gym's own exercise library)
+- Days per week, session length, experience level
 
-## 2.1 — Member Directory (`/admin/members`)
+The answers are saved against the member, so a trainer filling them once sees them
+pre-filled next time. Generating produces a full draft — training days, exercises,
+sets, reps, rest — loaded straight into the existing builder, where the trainer can
+edit or delete anything before saving. Nothing is written to the member's plan until
+the trainer presses Save, exactly as today.
 
-**Table** (shadcn `<Table>` + TanStack Query):
+Guardrails: only exercises that already exist in that gym's library can appear in a
+draft, requests are limited to staff of the member's own gym, and there is a daily
+generation cap per gym so a stuck loop cannot run up cost. Every state is handled —
+loading, empty, and a plain error message with a retry.
 
-- Columns: photo + name, email, status badge (active / inactive / expiring soon), assigned trainer(s), join date, last login.
-- Search: name/email (client-side filter on fetched list).
-- Filters: status select, trainer select.
-- Sortable headers: name, join date, last login.
-- Row click → `/admin/members/$memberId`.
+## 2. "Gym management software" landing page
 
-Status derivation: `users.active=false` → inactive; `member_profiles.membership_expires_at` within 14d → expiring soon; else active.
+A new page at `/gym-management-software` aimed at gym owners searching that term:
+headline and sub-headline using the phrase naturally, a problem/solution section,
+a feature grid (member app, plans and programming, attendance, billing and dues,
+reports, white-label branding), a short "how it works" sequence, an FAQ block, and
+two calls to action (Get started, Sign in) repeated at top and bottom. Internal
+links to the home page, privacy, and terms; the home page links to it too. Added to
+the sitemap.
 
-**Add Member dialog** — react-hook-form + zod:
+## 3. Structured data on the marketing pages
 
-- Fields: name, email, phone, goals (textarea), experience level (select: beginner/intermediate/advanced), medical history (textarea), photo upload (Supabase Storage `member-photos` bucket).
-- Server function `inviteMember` (admin-only, `requireSupabaseAuth` + `has_role` check, loads `supabaseAdmin` inside handler):
-  1. `supabaseAdmin.auth.admin.inviteUserByEmail(email, { data: { gym_slug, role: 'member', display_name }})` — trigger creates `users` + `user_roles` + empty `member_profile` row.
-  2. Update `users` (phone, photo_url), update `member_profile` (goals, experience, medical_history).
-- Toast on success, invalidate `['members']`.
+Machine-readable markup so Google can show richer results:
 
-**CSV bulk import**:
+- Organization (name, URL, logo, support email) site-wide
+- SoftwareApplication (category, description, offer) on the home page and the new page
+- FAQ on the new page, matching its visible FAQ text
 
-- Dialog with file input, parse with PapaParse client-side, preview table, "Import" calls `inviteMembersBulk` server fn (loops `inviteMember` logic), shows per-row success/error.
+## Technical notes
 
-**Soft delete (Remove Member)**:
-
-- Row action menu → confirm dialog → `deactivateMember` server fn sets `users.active=false` and `trainer_assignments.active=false`. Historical data preserved.
-
-**Trainer Assignment**:
-
-- In member detail (and as row action): "Manage trainers" dialog — multi-select of gym's trainers, writes to `trainer_assignments` (insert new active rows, mark removed ones inactive).
-
-## 2.2 — Member 360 (`/admin/members/$memberId`)
-
-Header card: photo, name, status badge, contact, "Edit" + "Assign trainer" actions.
-
-**Tabs** (shadcn `Tabs`):
-
-1. **Overview** — demographics (DOB, gender, height, weight from `member_profile`), goals, experience, medical history, membership type & expiry, assigned trainers, contact info. Inline edit dialog.
-2. **Assessments** — list `fitness_assessments` rows (date, weight, body fat, key metrics). Empty state "No assessments yet — form coming in Step 3".
-3. **Workout Plans** — list `workout_plans` with status badge, day count, "View" link (deferred page).
-4. **Attendance** — `attendance_logs` table + simple monthly count.
-5. **Notes** — trainer notes (timestamped, author, body). Requires new `member_notes` table.
-
-## Data layer
-
-**New migration**: `member_notes` table
-
-```
-member_notes(id, gym_id, member_id, author_id, body text, created_at, updated_at)
-```
-
-RLS: admin full CRUD in gym; trainer can SELECT/INSERT/UPDATE/DELETE own notes for assigned members; member cannot read. GRANTs to `authenticated` + `service_role`.
-
-**Storage bucket**: `member-photos` (public read, authenticated write within own gym path). Migration creates bucket + policies.
-
-**Server functions** (`src/lib/members.functions.ts`):
-
-- `listMembers()` — admin/trainer scoped; joins `users`, `member_profiles`, latest `trainer_assignments` (with trainer names), last sign-in via `supabaseAdmin.auth.admin.listUsers` (admin only).
-- `getMember(memberId)` — single member with profile, trainers, recent assessments/plans/attendance/notes.
-- `inviteMember(input)`, `inviteMembersBulk(rows)`, `deactivateMember(id)`, `updateMember(id, patch)`.
-- `assignTrainers(memberId, trainerIds[])`.
-- `listTrainers()` — gym's trainers for selectors.
-- `listMemberNotes(memberId)`, `createMemberNote(memberId, body)`, `deleteMemberNote(id)`.
-
-All gated by `requireSupabaseAuth` + role check via `has_role` RPC.
-
-## Components
-
-- `src/components/members/member-table.tsx`
-- `src/components/members/add-member-dialog.tsx`
-- `src/components/members/bulk-import-dialog.tsx`
-- `src/components/members/assign-trainers-dialog.tsx`
-- `src/components/members/member-notes.tsx`
-- `src/components/members/status-badge.tsx`
-
-## Out of scope (later steps)
-
-- Email-template customization (uses default Supabase invite email for now).
-- Fitness assessment form (Step 3).
-- Workout plan builder (Step 4).
-- Check-in flow (Step 5).
+- Migration `drizzle/migrations/0020_member_training_profiles.sql`: new
+  `member_training_profiles` table (gym_id, member_id, goals, limitations,
+  equipment text[], days_per_week, session_minutes, experience), RLS enabled with
+  `gym_id = public.current_gym_id()` in USING and WITH CHECK and staff writes via
+  `public.has_role`; members may read their own row. GRANTs included. Types
+  regenerated afterwards.
+- `src/lib/plan-ai.functions.ts`: `getTrainingProfile`, `saveTrainingProfile`,
+  `generatePlanDraft` — all `createServerFn` + `requireSupabaseAuth`, zod-validated,
+  gym/role checks mirroring `plans.functions.ts`. Generation uses the existing
+  `chatCompletion` helper (Lovable AI Gateway, JSON response) with the model reply
+  validated by zod and exercise names resolved against the gym's `exercises` rows;
+  unknown names are dropped. Daily cap counted per gym-local day via
+  `src/lib/gym-date.ts`.
+- `src/components/plans/ai-plan-dialog.tsx` wired into
+  `src/routes/_authenticated/admin/plans.new.tsx`; draft maps onto the builder's
+  existing `days`/`ExerciseInput` state.
+- `src/lib/structured-data.ts` returns JSON-LD objects; injected through each
+  route's `head()` `scripts`. Organization on `__root`, SoftwareApplication on
+  `/` and the new route, FAQPage on the new route only.
+- New route `src/routes/gym-management-software.tsx` with its own title,
+  description, og:title/og:description; added to `sitemap[.]xml.ts`.
+- `e2e/smoke.spec.ts` gains a happy path for the landing page and for opening the
+  AI generator dialog.
