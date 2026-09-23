@@ -113,8 +113,8 @@ export const getPreviousSetValues = createServerFn({ method: "GET" })
   .inputValidator((d: { exerciseId: string }) => d)
   .handler(async ({ data, context }): Promise<PrevSet[]> => {
     const { supabase, userId } = context;
-    // exercise_logs has no member_id
-    await requireActiveMembership(supabase, userId); — join via workout_logs to filter to this member.
+    await requireActiveMembership(supabase, userId);
+    // exercise_logs has no member_id — join via workout_logs to filter to this member.
     const { data: rows, error } = await supabase
       .from("exercise_logs")
       .select("set_number, weight, reps, created_at, workout_logs!inner(member_id)")
@@ -194,8 +194,8 @@ export const logSet = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    // Defence in depth: RLS already scopes exercise_logs
-    await requireActiveMembership(supabase, userId); through workout_logs,
+    await requireActiveMembership(supabase, userId);
+    // Defence in depth: RLS already scopes exercise_logs through workout_logs,
     // but never write against a log id the caller does not own.
     const { data: ownLog } = await supabase
       .from("workout_logs")
