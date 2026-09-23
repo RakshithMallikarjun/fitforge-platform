@@ -14,10 +14,7 @@ export const MEMBERSHIP_EXPIRED_MESSAGE =
 
 /** Throws when the caller is a member whose membership has lapsed. */
 export async function requireActiveMembership(supabase: any, userId: string): Promise<void> {
-  const { data: roleRows } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId);
+  const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   const roles = ((roleRows ?? []) as { role: string }[]).map((r) => r.role);
   if (roles.includes("admin") || roles.includes("trainer")) return;
 

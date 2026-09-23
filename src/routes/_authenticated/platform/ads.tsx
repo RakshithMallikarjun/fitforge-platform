@@ -375,7 +375,9 @@ function GymInventoryCard({ report }: { report: ReturnType<typeof useQuery<any>>
           </div>
         )}
         <div className="p-4">
-          <Badge variant="outline">Manually recorded — Fit Foundry does not process ad payments</Badge>
+          <Badge variant="outline">
+            Manually recorded — Fit Foundry does not process ad payments
+          </Badge>
         </div>
       </CardContent>
     </Card>
