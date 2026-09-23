@@ -95,6 +95,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "White-label fitness platform for gyms & trainers." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      {
+        name: "google-site-verification",
+        content: "LybY34bCjE8LVtJrK6hy2xehOgsv5TWqSD8ZH5m_ffQ",
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
