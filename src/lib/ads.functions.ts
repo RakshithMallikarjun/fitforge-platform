@@ -127,6 +127,23 @@ async function signPath(supabase: any, path: string | null): Promise<string | nu
   return data?.signedUrl ?? null;
 }
 
+/**
+ * Member-facing signing. Members have no direct read on the ad-creatives
+ * bucket, so sign with the privileged client — and only ever for paths that
+ * came back from the guarded ad_serve() RPC, which already enforces gym
+ * scoping, opt-in and blocklists.
+ */
+async function signServedPath(path: string | null): Promise<string | null> {
+  if (!path) return null;
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_TTL);
+    return data?.signedUrl ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ======================= gym admin: inventory =======================
 
 export const listGymAds = createServerFn({ method: "GET" })
