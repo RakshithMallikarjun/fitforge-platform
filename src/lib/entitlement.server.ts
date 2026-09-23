@@ -35,3 +35,13 @@ export async function requireActiveMembership(supabase: any, userId: string): Pr
 
   if (isMembershipExpired(expiresAt, today)) throw new Error(MEMBERSHIP_EXPIRED_MESSAGE);
 }
+
+/** Non-throwing variant for surfaces that stay usable without paid content. */
+export async function hasActiveMembership(supabase: any, userId: string): Promise<boolean> {
+  try {
+    await requireActiveMembership(supabase, userId);
+    return true;
+  } catch {
+    return false;
+  }
+}
