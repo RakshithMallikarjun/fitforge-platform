@@ -289,13 +289,8 @@ export const searchMembersForCheckin = createServerFn({ method: "POST" })
     const { timeZone } = await resolveGymTimezone(supabase, userId);
     const today = dateStringInZone(timeZone);
     const soon = shiftDateString(today, 7);
-    const { data: profiles } = ids.length
-      ? await supabase
-          .from("member_profiles")
-          .select("user_id, membership_expires_at")
-          .in("user_id", ids)
-      : { data: [] as any[] };
-    const exp = new Map((profiles ?? []).map((p: any) => [p.user_id, p.membership_expires_at]));
+    const { ledgerEndsOn } = await import("@/lib/membership-ledger.server");
+    const exp = await ledgerEndsOn(supabase, ids);
 
     return {
       members: rows.map((u: any) => {

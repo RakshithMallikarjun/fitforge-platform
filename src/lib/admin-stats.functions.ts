@@ -73,22 +73,17 @@ export const getAdminStats = createServerFn({ method: "GET" })
     let activeAccounts = 0;
     let newThisMonth = 0;
     if (memberIds.length) {
-      const [{ data: activeRows }, { count: nm }, { data: profiles }] = await Promise.all([
+      const { ledgerEndsOn } = await import("@/lib/membership-ledger.server");
+      const [{ data: activeRows }, { count: nm }, expiryByUser] = await Promise.all([
         supabase.from("users").select("id").in("id", memberIds).eq("active", true),
         supabase
           .from("users")
           .select("id", { count: "exact", head: true })
           .in("id", memberIds)
           .gte("created_at", monthStart),
-        supabase
-          .from("member_profiles")
-          .select("user_id, membership_expires_at")
-          .in("user_id", memberIds),
+        ledgerEndsOn(supabase, memberIds),
       ]);
       // A lapsed membership is not an active membership, even if the login is enabled.
-      const expiryByUser = new Map<string, string | null>(
-        (profiles ?? []).map((p: any) => [p.user_id as string, p.membership_expires_at ?? null]),
-      );
       activeAccounts = (activeRows ?? []).length;
       activeMemberships = (activeRows ?? []).filter((u: any) =>
         isMembershipCurrent(expiryByUser.get(u.id) ?? null, todayStr),

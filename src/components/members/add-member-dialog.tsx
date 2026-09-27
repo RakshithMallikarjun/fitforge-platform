@@ -36,8 +36,6 @@ const empty: MemberInput = {
   experience_level: "beginner",
   medical_history: "",
   photo_url: "",
-  membership_type: "Monthly",
-  membership_expires_at: "",
 };
 
 export function AddMemberDialog({ open, onOpenChange }: Props) {
@@ -161,25 +159,9 @@ export function AddMemberDialog({ open, onOpenChange }: Props) {
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label htmlFor="mtype">Membership type</Label>
-            <Input
-              id="mtype"
-              value={form.membership_type ?? ""}
-              onChange={(e) => update("membership_type", e.target.value)}
-              placeholder="Monthly, Annual…"
-            />
-          </div>
-          <div>
-            <Label htmlFor="exp-date">Membership expires</Label>
-            <Input
-              id="exp-date"
-              type="date"
-              value={form.membership_expires_at ?? ""}
-              onChange={(e) => update("membership_expires_at", e.target.value)}
-            />
-          </div>
-
+          <p className="self-end text-xs text-muted-foreground">
+            Put them on a tier afterwards with Record payment on their profile.
+          </p>
           <div className="md:col-span-2">
             <Label htmlFor="goals">Goals</Label>
             <Textarea

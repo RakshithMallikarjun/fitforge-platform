@@ -18,19 +18,15 @@ export const getMembershipStatus = createServerFn({ method: "GET" })
     const { timeZone, gymId } = await resolveGymTimezone(supabase, userId);
     const today = dateStringInZone(timeZone);
 
-    const [{ data: profile }, { data: gym }] = await Promise.all([
-      supabase
-        .from("member_profiles")
-        .select("membership_expires_at")
-        .eq("user_id", userId)
-        .maybeSingle(),
+    const { ledgerEndsOn } = await import("@/lib/membership-ledger.server");
+    const [ends, { data: gym }] = await Promise.all([
+      ledgerEndsOn(supabase, [userId]),
       gymId
         ? supabase.from("gyms").select("name").eq("id", gymId).maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
 
-    const expiresAt =
-      (profile as { membership_expires_at?: string | null } | null)?.membership_expires_at ?? null;
+    const expiresAt = ends.get(userId) ?? null;
 
     return {
       expiresAt,

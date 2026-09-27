@@ -38,3 +38,21 @@ export async function ledgerMemberships(
   }
   return out;
 }
+
+/** memberId -> latest ledger end date (active or lapsed), null when never on a plan. */
+export async function ledgerEndsOn(
+  supabase: any,
+  memberIds: string[],
+): Promise<Map<string, string | null>> {
+  const out = new Map<string, string | null>();
+  if (!memberIds.length) return out;
+  const { data } = await supabase
+    .from("member_subscriptions")
+    .select("member_id, ends_on")
+    .in("member_id", memberIds)
+    .in("state", ["active", "expired"])
+    .order("ends_on", { ascending: false });
+  for (const s of (data ?? []) as any[]) if (!out.has(s.member_id)) out.set(s.member_id, s.ends_on);
+  for (const id of memberIds) if (!out.has(id)) out.set(id, null);
+  return out;
+}
