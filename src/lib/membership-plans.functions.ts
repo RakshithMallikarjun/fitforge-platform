@@ -106,6 +106,16 @@ async function requireGymRole(supabase: any, userId: string, allowed: GymRole[])
   throw new Error("Forbidden");
 }
 
+async function assertPlanInGym(supabase: any, planId: string, gymId: string) {
+  const { data } = await supabase
+    .from("membership_plans")
+    .select("id")
+    .eq("id", planId)
+    .eq("gym_id", gymId)
+    .maybeSingle();
+  if (!data) throw new Error("Forbidden");
+}
+
 async function requireAdmin(supabase: any, userId: string) {
   return requireGymRole(supabase, userId, ["admin"]);
 }
@@ -202,7 +212,8 @@ export const updatePlan = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => planInput.partial().extend({ id: uuid }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    await requireAdmin(supabase, userId);
+    const gymId = await requireAdmin(supabase, userId);
+    await assertPlanInGym(supabase, data.id, gymId);
     const patch = {
       ...(data.name !== undefined ? { name: data.name } : {}),
       ...(data.description !== undefined ? { description: data.description } : {}),
@@ -223,7 +234,8 @@ export const archivePlan = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: uuid }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    await requireAdmin(supabase, userId);
+    const gymId = await requireAdmin(supabase, userId);
+    await assertPlanInGym(supabase, data.id, gymId);
 
     const { count } = await supabase
       .from("member_subscriptions")
@@ -274,7 +286,8 @@ export const setPlanPrice = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    await requireAdmin(supabase, userId);
+    const gymId = await requireAdmin(supabase, userId);
+    await assertPlanInGym(supabase, data.planId, gymId);
     const { error } = await supabase.from("membership_plan_prices").upsert(
       {
         plan_id: data.planId,
@@ -293,7 +306,8 @@ export const removePlanPrice = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ planId: uuid, period: periodSchema }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    await requireAdmin(supabase, userId);
+    const gymId = await requireAdmin(supabase, userId);
+    await assertPlanInGym(supabase, data.planId, gymId);
     const { error } = await supabase
       .from("membership_plan_prices")
       .delete()

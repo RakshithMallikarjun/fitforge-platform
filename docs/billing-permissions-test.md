@@ -19,5 +19,5 @@ Steps
    expiry preview → Save → expiry/status update; payment shows in Dues, Revenue, Payment history.
 4. Trainer: steps 1–2 show the admin-only message; step 3 works.
 5. Member (call any billing action): Forbidden.
-6. Cross-gym: as admin of gym A, call `updatePlan` with a tier id from gym B → the row is not
-   visible under RLS, so nothing changes (tier ids from another gym are never writable).
+6. Cross-gym: as admin of gym A, call `updatePlan`/`setPlanPrice`/`archivePlan` with a tier id
+   from gym B → Forbidden.
