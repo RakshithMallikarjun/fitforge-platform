@@ -65,6 +65,7 @@ import {
   setPaymentStatus,
   inviteGymOwner,
   resendGymOwnerInvite,
+  getOwnerAccessStatus,
   type PaymentStatus,
   type SubscriptionPlan,
 } from "@/lib/platform.functions";
@@ -114,6 +115,11 @@ function PlatformGymDetailPage() {
   const updateGymPlan = useServerFn(setGymPlan);
   const sendInvite = useServerFn(inviteGymOwner);
   const resendInvite = useServerFn(resendGymOwnerInvite);
+  const fetchOwnerStatus = useServerFn(getOwnerAccessStatus);
+  const ownerStatus = useQuery({
+    queryKey: ["platform-gym-owner", gymId],
+    queryFn: () => fetchOwnerStatus({ data: { gymId } }),
+  });
 
   const detail = useQuery({
     queryKey: ["platform-gym", gymId],
@@ -204,6 +210,7 @@ function PlatformGymDetailPage() {
     onSuccess: () => {
       toast.success("Invite email sent");
       invalidate();
+      qc.invalidateQueries({ queryKey: ["platform-gym-owner", gymId] });
     },
     onError: (e) => toast.error((e as Error).message || "Could not send the invite"),
   });
@@ -214,15 +221,13 @@ function PlatformGymDetailPage() {
       toast.success("Owner invited");
       setOwnerOpen(false);
       invalidate();
+      qc.invalidateQueries({ queryKey: ["platform-gym-owner", gymId] });
     },
     onError: (e) => toast.error((e as Error).message || "Could not invite the owner"),
   });
 
-  const hasAdmin = (detail.data?.staff ?? []).some((s) => s.role === "admin");
-  const adminName =
-    (detail.data?.staff ?? []).find((s) => s.role === "admin")?.display_name ??
-    (detail.data?.staff ?? []).find((s) => s.role === "admin")?.email ??
-    "an admin";
+  const os = ownerStatus.data;
+  const hasAdmin = os?.state === "claimed";
 
   if (detail.isError) {
     return (
@@ -359,48 +364,34 @@ function PlatformGymDetailPage() {
             )
           }
         >
-          {hasAdmin ? (
+          {ownerStatus.isLoading ? (
+            <div className="h-10 animate-pulse rounded-xl bg-muted" />
+          ) : ownerStatus.isError ? (
+            <p className="text-xs text-destructive">Couldn't load owner status.</p>
+          ) : os?.state === "claimed" ? (
             <p className="flex items-start gap-2 rounded-xl bg-emerald-500/10 p-3 text-xs font-medium text-emerald-700 dark:text-emerald-400">
               <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              Claimed by {adminName}
-              {g.owner_claimed_at ? ` on ${fmtDate(g.owner_claimed_at)}` : ""}.
+              Claimed by {os.name} on {fmtDate(os.claimedAt)}.
             </p>
-          ) : g.pending_owner_email && g.owner_invited_at ? (
+          ) : os?.state === "invited" ? (
             <div className="space-y-3">
               <p className="flex items-start gap-2 rounded-xl bg-amber-500/10 p-3 text-xs font-medium text-amber-700 dark:text-amber-400">
                 <CalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                Invite sent to {g.pending_owner_email} on {fmtDate(g.owner_invited_at)}. Nobody has
-                signed in as an admin yet.
+                Invited — not accepted yet. {os.email}
+                {os.invitedAt ? ` · sent ${relTime(os.invitedAt)}` : " · invite email not sent"}
               </p>
               <Button
                 size="sm"
                 variant="outline"
                 disabled={resendMutation.isPending}
-                onClick={() => resendMutation.mutate(g.pending_owner_email!)}
-              >
-                {resendMutation.isPending ? "Sending…" : "Resend invite"}
-              </Button>
-            </div>
-          ) : g.pending_owner_email ? (
-            <div className="space-y-3">
-              <Alert variant="destructive">
-                <AlertTitle>The owner was never emailed</AlertTitle>
-                <AlertDescription className="text-xs">
-                  {g.pending_owner_email} is set as the owner, but the invite email did not go out.
-                  Send it now — nobody can sign in to this gym until they do.
-                </AlertDescription>
-              </Alert>
-              <Button
-                size="sm"
-                disabled={resendMutation.isPending}
-                onClick={() => resendMutation.mutate(g.pending_owner_email!)}
+                onClick={() => resendMutation.mutate(os.email)}
               >
                 {resendMutation.isPending ? "Sending…" : "Resend invite"}
               </Button>
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">
-              No owner invited yet — nobody can sign in to this gym.
+              No owner invited — nobody can sign in to this gym.
             </p>
           )}
           <div className="mt-4 space-y-1.5">
