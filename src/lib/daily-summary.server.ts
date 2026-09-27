@@ -23,6 +23,7 @@ type Activity = {
   new: any[];
   renewals: any[];
   refunds: any[];
+  adjustments?: any[];
   by_staff: any[];
   by_tier: any[];
   by_term: any[];
@@ -167,6 +168,18 @@ export function renderSummaryEmail(a: Activity, duesUrl: string) {
      ]),
    )}
    ${rowsTable(
+     "Expiry adjustments (no money taken)",
+     ["Member", "Tier", "Was", "Now", "Reason", "Adjusted by"],
+     (a.adjustments ?? []).map((p) => [
+       esc(p.member_name),
+       esc(p.plan_name),
+       esc(p.previous_ends_on),
+       esc(p.ends_on),
+       esc(p.note ?? "—"),
+       esc(p.recorded_by_name),
+     ]),
+   )}
+   ${rowsTable(
      "Collected by",
      ["Staff member", "Payments", "Total"],
      (a.by_staff ?? []).map((s) => [
@@ -217,6 +230,10 @@ export function renderSummaryEmail(a: Activity, duesUrl: string) {
     ),
     ...(a.refunds ?? []).map(
       (p: any) => `REF  ${p.member_name} — ${money(Number(p.amount), a.currency)} ${p.note ?? ""}`,
+    ),
+    ...(a.adjustments ?? []).map(
+      (p: any) =>
+        `ADJ  ${p.member_name} — expiry ${p.previous_ends_on} -> ${p.ends_on}: ${p.note ?? ""} (by ${p.recorded_by_name})`,
     ),
     "",
     "Collected by:",
