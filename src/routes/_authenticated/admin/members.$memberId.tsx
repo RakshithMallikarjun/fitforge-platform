@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatServerError } from \"@/lib/format-error\";
+import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";

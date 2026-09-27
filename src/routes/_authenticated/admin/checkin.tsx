@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { formatServerError } from \"@/lib/format-error\";
+import { formatServerError } from "@/lib/format-error";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, XCircle, ScanLine } from "lucide-react";

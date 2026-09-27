@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { formatServerError } from \"@/lib/format-error\";
+import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";

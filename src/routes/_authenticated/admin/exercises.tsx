@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { formatServerError } from \"@/lib/format-error\";
+import { formatServerError } from "@/lib/format-error";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, Dumbbell, MoreHorizontal, Pencil, Trash2, Lock } from "lucide-react";
