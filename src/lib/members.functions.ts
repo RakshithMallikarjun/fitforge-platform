@@ -342,18 +342,36 @@ async function assertAdmin(supabase: any, userId: string) {
   return gymId;
 }
 
+type ExistingAccount = { state: "new" } | { state: "this_gym" } | { state: "other_gym" };
+
+async function existingAccount(email: string, gymId: string): Promise<ExistingAccount> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("users")
+    .select("id, gym_id")
+    .eq("email", email.trim().toLowerCase())
+    .maybeSingle();
+  if (!data) return { state: "new" };
+  return data.gym_id === gymId ? { state: "this_gym" } : { state: "other_gym" };
+}
+
+/**
+ * Creates a NEW member and sends the invite. Never touches an existing
+ * account's profile: callers must check existingAccount() first.
+ */
 async function inviteOneMember(input: MemberInput, gymId: string, inviterId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { sendAccountInvite, inviterName } = await import("@/lib/invites.server");
-  const { userId: newId } = await sendAccountInvite({
+  const { userId: newId, resend } = await sendAccountInvite({
     email: input.email,
     gymId,
     role: "member",
     invitedByName: await inviterName(inviterId),
     displayName: input.name,
   });
+  // Only a freshly created account gets its profile filled in.
+  if (resend) return newId;
 
-  // Update user fields (trigger created the row already)
   await supabaseAdmin
     .from("users")
     .update({
@@ -382,24 +400,115 @@ export const inviteMember = createServerFn({ method: "POST" })
   .inputValidator((d: MemberInput) => memberInputSchema.parse(d))
   .handler(async ({ data, context }) => {
     const gymId = await assertAdmin(context.supabase, context.userId);
+    const ex = await existingAccount(data.email, gymId);
+    if (ex.state === "this_gym") throw new Error("This person is already a member of your gym.");
+    if (ex.state === "other_gym") throw new Error("This email is registered with another gym.");
     const id = await inviteOneMember(data, gymId, context.userId);
     return { id };
   });
 
-export const inviteMembersBulk = createServerFn({ method: "POST" })
+/** Emails from a CSV preview that already belong to a member of the caller's gym. */
+export const checkImportEmails = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { members: MemberInput[] }) => ({
-    members: z.array(memberInputSchema).parse(d.members),
-  }))
+  .inputValidator((d: unknown) =>
+    z.object({ emails: z.array(z.string().max(320)).max(2000) }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const gymId = await assertAdmin(context.supabase, context.userId);
-    const results: { email: string; ok: boolean; error?: string }[] = [];
-    for (const m of data.members) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const emails = Array.from(new Set(data.emails.map((e) => e.trim().toLowerCase()))).filter(
+      Boolean,
+    );
+    if (!emails.length) return { thisGym: [] as string[], otherGym: [] as string[] };
+    const { data: rows } = await supabaseAdmin
+      .from("users")
+      .select("email, gym_id")
+      .in("email", emails);
+    const thisGym: string[] = [];
+    const otherGym: string[] = [];
+    for (const r of rows ?? []) (r.gym_id === gymId ? thisGym : otherGym).push(r.email);
+    return { thisGym, otherGym };
+  });
+
+export type BulkRowResult = {
+  row: number;
+  email: string;
+  name: string;
+  status: "invited" | "skipped" | "failed";
+  reason?: string;
+};
+
+export const inviteMembersBulk = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  // Rows are validated one by one in the handler so one bad row never rejects the file.
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        members: z
+          .array(z.object({ row: z.number().int().min(1), member: z.record(z.string(), z.any()) }))
+          .max(1000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const gymId = await assertAdmin(context.supabase, context.userId);
+    const results: BulkRowResult[] = [];
+    const seen = new Set<string>();
+    for (const { row, member } of data.members) {
+      const email = String(member.email ?? "").trim().toLowerCase();
+      const name = String(member.name ?? "").trim();
+      const parsed = memberInputSchema.safeParse({ ...member, email, name });
+      if (!parsed.success) {
+        const issue = parsed.error.issues[0];
+        const field = String(issue?.path?.[0] ?? "");
+        results.push({
+          row,
+          email,
+          name,
+          status: "failed",
+          reason:
+            field === "email"
+              ? "Invalid email"
+              : field === "name"
+                ? "Name missing"
+                : `Invalid ${field.replace(/_/g, " ") || "row"}`,
+        });
+        continue;
+      }
+      if (seen.has(email)) {
+        results.push({ row, email, name, status: "skipped", reason: "Duplicate in this file" });
+        continue;
+      }
+      seen.add(email);
       try {
-        await inviteOneMember(m, gymId, context.userId);
-        results.push({ email: m.email, ok: true });
+        const ex = await existingAccount(email, gymId);
+        if (ex.state === "this_gym") {
+          results.push({ row, email, name, status: "skipped", reason: "Already a member" });
+          continue;
+        }
+        if (ex.state === "other_gym") {
+          results.push({
+            row,
+            email,
+            name,
+            status: "failed",
+            reason: "This email is registered with another gym",
+          });
+          continue;
+        }
+        await inviteOneMember(parsed.data, gymId, context.userId);
+        results.push({ row, email, name, status: "invited" });
       } catch (e: any) {
-        results.push({ email: m.email, ok: false, error: e?.message ?? "Failed" });
+        console.error("[bulk-import] row", row, e);
+        results.push({
+          row,
+          email,
+          name,
+          status: "failed",
+          reason: /[{}[\]]|violates|row-level/i.test(e?.message ?? "")
+            ? "Couldn't invite this person"
+            : (e?.message ?? "Couldn't invite this person"),
+        });
       }
     }
     return { results };
