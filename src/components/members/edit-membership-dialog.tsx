@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatServerError } from \"@/lib/format-error\";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -92,7 +93,7 @@ export function EditMembershipDialog({
       qc.invalidateQueries({ queryKey: ["members"] });
       onOpenChange(false);
     },
-    onError: (e: any) => toast.error("Update failed", { description: e?.message }),
+    onError: (e: any) => toast.error("Update failed", { description: formatServerError(e) }),
   });
 
   return (

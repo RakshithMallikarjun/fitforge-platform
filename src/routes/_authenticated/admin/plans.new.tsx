@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatServerError } from \"@/lib/format-error\";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -177,7 +178,7 @@ function PlanBuilder() {
       if (isTemplate) navigate({ to: "/admin/templates" });
       else navigate({ to: "/admin/plans/$planId", params: { planId: r.id } });
     },
-    onError: (e: any) => toast.error("Save failed", { description: e?.message }),
+    onError: (e: any) => toast.error("Save failed", { description: formatServerError(e) }),
   });
 
   const canStep2 = name && (isTemplate || memberId);
@@ -722,7 +723,7 @@ function AiSuggestionsPanel({
   const suggestFn = useServerFn(suggestOverload);
   const mutation = useMutation({
     mutationFn: () => suggestFn({ data: { memberId, exerciseIds } }),
-    onError: (e: any) => toast.error("Suggestions failed", { description: e?.message }),
+    onError: (e: any) => toast.error("Suggestions failed", { description: formatServerError(e) }),
   });
 
   const suggestions: ExerciseSuggestion[] = mutation.data ?? [];

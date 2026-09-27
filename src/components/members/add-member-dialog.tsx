@@ -1,4 +1,5 @@
 import { useState, type ChangeEvent } from "react";
+import { formatServerError } from \"@/lib/format-error\";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2, Upload } from "lucide-react";
@@ -57,7 +58,7 @@ export function AddMemberDialog({ open, onOpenChange }: Props) {
       onOpenChange(false);
     },
     onError: (e: any) =>
-      toast.error("Could not invite member", { description: e?.message ?? "Unknown error" }),
+      toast.error("Could not invite member", { description: formatServerError(e) }),
   });
 
   function update<K extends keyof MemberInput>(k: K, v: MemberInput[K]) {
@@ -73,7 +74,7 @@ export function AddMemberDialog({ open, onOpenChange }: Props) {
       update("photo_url", path);
       setPreviewUrl(await signMemberPhotoForDisplay(path));
     } catch (err: any) {
-      toast.error("Upload failed", { description: err?.message });
+      toast.error("Upload failed", { description: formatServerError(err) });
     } finally {
       setUploading(false);
     }

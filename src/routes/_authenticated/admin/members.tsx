@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatServerError } from \"@/lib/format-error\";
 import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -121,13 +122,13 @@ function MembersPage() {
       toast.success(vars.active ? "Member reactivated" : "Member deactivated");
       qc.invalidateQueries({ queryKey: ["members"] });
     },
-    onError: (e: any) => toast.error("Action failed", { description: e?.message }),
+    onError: (e: any) => toast.error("Action failed", { description: formatServerError(e) }),
   });
 
   const resendInvite = useMutation({
     mutationFn: (memberId: string) => resendMemberInvite({ data: { memberId } }),
     onSuccess: (res: any) => toast.success(`Invite re-sent to ${res?.email ?? "member"}`),
-    onError: (e: any) => toast.error("Couldn't re-send the invite", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't re-send the invite", { description: formatServerError(e) }),
   });
 
   const rows = useMemo(() => {

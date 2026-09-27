@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { formatServerError } from \"@/lib/format-error\";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -175,7 +176,7 @@ export function NewAssessmentSheet({
       setPhotoFile(null);
       setPhotoPreview(null);
     },
-    onError: (e: any) => toast.error(e.message ?? "Failed to save assessment"),
+    onError: (e: any) => toast.error(formatServerError(e, {}, "Failed to save assessment")),
   });
 
   const onSubmit = (v: FormValues) => {

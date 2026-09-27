@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatServerError } from \"@/lib/format-error\";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -112,7 +113,7 @@ function DuesPage() {
       toast.success("Reminder sent");
       qc.invalidateQueries({ queryKey: ["dues"] });
     },
-    onError: (e: any) => toast.error("Reminder not sent", { description: e?.message }),
+    onError: (e: any) => toast.error("Reminder not sent", { description: formatServerError(e) }),
   });
 
   const remindMany = useMutation({
@@ -124,7 +125,7 @@ function DuesPage() {
       setSelected({});
       qc.invalidateQueries({ queryKey: ["dues"] });
     },
-    onError: (e: any) => toast.error("Couldn't send reminders", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't send reminders", { description: formatServerError(e) }),
   });
 
   const currency = summary.data?.currency;
@@ -432,13 +433,13 @@ function BillingSettingsDialog({
       qc.invalidateQueries({ queryKey: ["dues"] });
       onOpenChange(false);
     },
-    onError: (e: any) => toast.error("Couldn't save settings", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't save settings", { description: formatServerError(e) }),
   });
 
   const testEmail = useMutation({
     mutationFn: () => sendDailySummaryNow(),
     onSuccess: (res: any) => toast.success(`Summary sent to ${res?.sentTo ?? "your email"}`),
-    onError: (e: any) => toast.error("Couldn't send the summary", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't send the summary", { description: formatServerError(e) }),
   });
 
   return (

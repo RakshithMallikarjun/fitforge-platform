@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatServerError } from \"@/lib/format-error\";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -61,7 +62,7 @@ function MemberProfile() {
 
       qc.invalidateQueries({ queryKey: ["member", memberId] });
     },
-    onError: (e: any) => toast.error("Could not log check-in", { description: e?.message }),
+    onError: (e: any) => toast.error("Could not log check-in", { description: formatServerError(e) }),
   });
 
   if (isLoading) {

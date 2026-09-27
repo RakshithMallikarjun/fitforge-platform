@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatServerError } from \"@/lib/format-error\";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -87,7 +88,7 @@ function PlatformAdsPage() {
       toast.success("Status updated");
       void qc.invalidateQueries({ queryKey: ["platform-ads"] });
     },
-    onError: (e: any) => toast.error("Couldn't change the status", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't change the status", { description: formatServerError(e) }),
   });
 
   const deleteMutation = useMutation({
@@ -97,7 +98,7 @@ function PlatformAdsPage() {
       setPendingDelete(null);
       void qc.invalidateQueries({ queryKey: ["platform-ads"] });
     },
-    onError: (e: any) => toast.error("Couldn't delete this campaign", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't delete this campaign", { description: formatServerError(e) }),
   });
 
   const statsByAd = new Map((report.data?.campaigns ?? []).map((c) => [c.ad_id, c]));
@@ -280,7 +281,7 @@ function GymInventoryCard({ report }: { report: ReturnType<typeof useQuery<any>>
       toast.success("Note saved");
       void qc.invalidateQueries({ queryKey: ["platform-ad-report"] });
     },
-    onError: (e: any) => toast.error("Couldn't save the note", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't save the note", { description: formatServerError(e) }),
   });
 
   const gyms = (report.data?.gyms ?? []) as {

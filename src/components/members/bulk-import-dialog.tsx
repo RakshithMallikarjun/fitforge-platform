@@ -1,4 +1,5 @@
 import { useState, type ChangeEvent } from "react";
+import { formatServerError } from \"@/lib/format-error\";
 import Papa from "papaparse";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -43,7 +44,7 @@ export function BulkImportDialog({ open, onOpenChange }: Props) {
       setFilename("");
       onOpenChange(false);
     },
-    onError: (e: any) => toast.error("Import failed", { description: e?.message }),
+    onError: (e: any) => toast.error("Import failed", { description: formatServerError(e) }),
   });
 
   function onFile(e: ChangeEvent<HTMLInputElement>) {

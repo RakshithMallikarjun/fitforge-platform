@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatServerError } from \"@/lib/format-error\";
 import { AdminOnly } from "@/components/admin-only";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -127,7 +128,7 @@ function SponsorsPage() {
     },
     onError: (e: any, _v, ctx) => {
       qc.setQueryData(["gym-ad-settings"], ctx?.prev);
-      toast.error("Couldn't save your ad settings", { description: e?.message });
+      toast.error("Couldn't save your ad settings", { description: formatServerError(e) });
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["gym-ad-settings"] }),
   });
@@ -138,7 +139,7 @@ function SponsorsPage() {
       toast.success("Status updated");
       void qc.invalidateQueries({ queryKey: ["gym-ads"] });
     },
-    onError: (e: any) => toast.error("Couldn't change the status", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't change the status", { description: formatServerError(e) }),
   });
 
   const deleteMutation = useMutation({
@@ -148,7 +149,7 @@ function SponsorsPage() {
       setPendingDelete(null);
       void qc.invalidateQueries({ queryKey: ["gym-ads"] });
     },
-    onError: (e: any) => toast.error("Couldn't delete this sponsor", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't delete this sponsor", { description: formatServerError(e) }),
   });
 
   const s = settings.data;
@@ -465,7 +466,7 @@ function PlatformCampaignsTab() {
   const mutation = useMutation({
     mutationFn: (v: { adId: string; blocked: boolean }) => setBlocked({ data: v }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["platform-ads-for-gym"] }),
-    onError: (e: any) => toast.error("Couldn't update this campaign", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't update this campaign", { description: formatServerError(e) }),
   });
 
   if (isLoading) return <Skeleton className="h-40 w-full" />;

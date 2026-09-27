@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatServerError } from \"@/lib/format-error\";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -50,7 +51,7 @@ function ProfilePage() {
       qc.invalidateQueries({ queryKey: ["current-user"] });
       setEditing(false);
     },
-    onError: (e: any) => toast.error("Could not update", { description: e?.message }),
+    onError: (e: any) => toast.error("Could not update", { description: formatServerError(e) }),
   });
 
   async function signOut() {
@@ -253,7 +254,7 @@ function PushNotificationsSection() {
       qc.invalidateQueries({ queryKey: ["push-status"] });
       toast.success("Notifications enabled");
     } catch (e: any) {
-      toast.error("Could not enable notifications", { description: e?.message });
+      toast.error("Could not enable notifications", { description: formatServerError(e) });
     } finally {
       setBusy(false);
     }
@@ -271,7 +272,7 @@ function PushNotificationsSection() {
       qc.invalidateQueries({ queryKey: ["push-status"] });
       toast.success("Notifications disabled");
     } catch (e: any) {
-      toast.error("Could not disable", { description: e?.message });
+      toast.error("Could not disable", { description: formatServerError(e) });
     } finally {
       setBusy(false);
     }
