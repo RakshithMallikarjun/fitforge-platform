@@ -110,7 +110,7 @@ export const listMembers = createServerFn({ method: "GET" })
     return signedUsers.map((u: any) => ({
       ...u,
       profile: profileMap.get(u.id) ?? null,
-      membership: ledger.get(u.id)!,
+      membership: ledger.get(u.id) ?? null,
       trainers: signedAssignMap.get(u.id) ?? [],
       last_sign_in_at: u.last_sign_in_at ?? null,
     }));

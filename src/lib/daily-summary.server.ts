@@ -363,7 +363,8 @@ export async function runDailySummary(opts: {
     const quiet =
       Number(a?.new_count ?? 0) === 0 &&
       Number(a?.renewal_count ?? 0) === 0 &&
-      Number(a?.refund_count ?? 0) === 0;
+      Number(a?.refund_count ?? 0) === 0 &&
+      Number(a?.adjustment_count ?? 0) === 0;
 
     if (quiet && !opts.test) {
       await supabaseAdmin.from("daily_summary_log").upsert(
