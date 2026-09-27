@@ -64,7 +64,6 @@ import { BulkImportDialog } from "@/components/members/bulk-import-dialog";
 import { AssignTrainersDialog } from "@/components/members/assign-trainers-dialog";
 import {
   StatusBadge,
-  getMembershipStatus,
   type MembershipStatus,
 } from "@/components/members/status-badge";
 import { formatShortDate } from "@/lib/format-date";
@@ -341,7 +340,7 @@ function MembersPage() {
                       <TableCell className="text-xs">
                         {m.membership?.planName ? (
                           <span className="inline-flex items-center gap-1.5 text-foreground">
-                            {m.membership.legacy ? "Legacy" : m.membership.planName}
+                            {m.membership.legacy ? "Imported" : m.membership.planName}
                             {m.membership.legacy && (
                               <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                                 Legacy

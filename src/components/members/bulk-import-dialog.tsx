@@ -32,7 +32,7 @@ import {
 type Props = { open: boolean; onOpenChange: (v: boolean) => void };
 
 const TEMPLATE = `name,email,phone,goals,experience_level,medical_history
-Jane Doe,jane@example.com,+15555550100,Build strength,beginner,None,Monthly,2026-12-31
+Jane Doe,jane@example.com,+15555550100,Build strength,beginner,None
 `;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
