@@ -16,6 +16,7 @@ import {
   zonedDayStartISO,
 } from "@/lib/gym-date";
 
+const uuid = z.string().uuid();
 const TOKEN_TTL_SECONDS = 5 * 60;
 
 /** Unique index attendance_logs_member_day_uidx allows one check-in per member per day. */
@@ -201,7 +202,6 @@ export const selfCheckin = createServerFn({ method: "POST" })
     return { ok: true as const, locationType: data.locationType, alreadyCheckedIn: duplicate };
   });
 
-const uuid = z.string().uuid();
 
 async function staffContext(supabase: any, userId: string) {
   const [{ data: me }, { data: roles }] = await Promise.all([
