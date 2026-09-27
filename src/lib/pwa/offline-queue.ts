@@ -133,7 +133,12 @@ export async function enqueueLog<T extends QueuedItem["type"]>(
   payload: Extract<QueuedItem, { type: T }>["payload"],
 ): Promise<void> {
   const item = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    // Client-generated idempotency key. Replays are also safe server-side:
+    // sets upsert on their (log, exercise, set) slot and a completion is stored once.
+    id:
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
     type,
     payload,
     queuedAt: Date.now(),
@@ -147,6 +152,29 @@ export async function enqueueLog<T extends QueuedItem["type"]>(
     await addDeadLetter(overflow.map((i) => ({ ...i, deadAt: Date.now(), reason: "Queue full" })));
   }
   await writeQueue(q);
+  notifyQueueChanged();
+  void requestBackgroundSync();
+}
+
+export const QUEUE_EVENT = "fitfoundry:queue-changed";
+export function notifyQueueChanged() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(QUEUE_EVENT));
+}
+
+async function requestBackgroundSync() {
+  try {
+    const reg = await navigator.serviceWorker?.getRegistration();
+    const sync = (reg as any)?.sync;
+    if (sync) await sync.register("fitfoundry-log-sync");
+  } catch {
+    /* unsupported */
+  }
+}
+
+/** Number of queued set logs (for the offline banner). */
+export async function getQueuedSetCount(): Promise<number> {
+  const q = await readQueue();
+  return q.filter((i) => i.type === "logSet").length;
 }
 
 export async function getQueueSize(): Promise<number> {
@@ -267,10 +295,15 @@ export async function flushQueue(): Promise<{ ok: number; failed: number; dead: 
       }
     }
 
-    await writeQueue(remaining.slice(-MAX_QUEUE_SIZE));
+    await writeQueueAndNotify(remaining.slice(-MAX_QUEUE_SIZE));
     await addDeadLetter(dead);
   } finally {
     flushing = false;
   }
   return { ok, failed, dead: dead.length };
+}
+
+async function writeQueueAndNotify(items: QueuedItem[]) {
+  await writeQueue(items);
+  notifyQueueChanged();
 }

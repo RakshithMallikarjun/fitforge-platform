@@ -11,7 +11,13 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { getMemberProfile, updateMyDisplayName } from "@/lib/profile.functions";
-import { subscribePush, unsubscribePush, getPushStatus } from "@/lib/push.functions";
+import {
+  subscribePush,
+  unsubscribePush,
+  getPushStatus,
+  getVapidPublicKey,
+} from "@/lib/push.functions";
+import { registerSW, swAllowed } from "@/lib/pwa/register-sw";
 import { formatShortDate } from "@/lib/format-date";
 import { MyMembershipCard } from "@/components/membership/my-membership-card";
 
@@ -182,27 +188,6 @@ function ProfilePage() {
   );
 }
 
-/**
- * `navigator.serviceWorker.ready` never settles when no worker is registered,
- * so awaiting it directly leaves the toggle spinning forever. Race a timeout.
- */
-async function getServiceWorkerRegistration(timeoutMs = 5000): Promise<ServiceWorkerRegistration> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      navigator.serviceWorker.ready,
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(
-          () => reject(new Error("Offline mode isn't ready yet — reload the app and try again.")),
-          timeoutMs,
-        );
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-}
-
 function PushNotificationsSection() {
   const qc = useQueryClient();
   const statusFn = useServerFn(getPushStatus);
@@ -219,33 +204,44 @@ function PushNotificationsSection() {
   const supported =
     typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
 
-  const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+  const keyFn = useServerFn(getVapidPublicKey);
+  const { data: keyData } = useQuery({
+    queryKey: ["vapid-public-key"],
+    queryFn: () => keyFn(),
+    staleTime: Infinity,
+  });
+  const vapidKey = keyData?.key ?? undefined;
   const configured = !!vapidKey;
+  const allowedHere = swAllowed();
 
   async function requireRegistration(): Promise<ServiceWorkerRegistration | null> {
-    const existing = await navigator.serviceWorker.getRegistration();
-    if (!existing) {
-      toast.error("Offline mode isn't active yet", {
-        description:
-          "Reload the app (or install it to your home screen) so notifications can be set up.",
+    const reg = (await navigator.serviceWorker.getRegistration()) ?? (await registerSW());
+    if (!reg) {
+      toast.error("Notifications can't be set up here", {
+        description: "Open the app in its own browser tab (not inside the editor preview).",
       });
       return null;
     }
-    return getServiceWorkerRegistration();
+    return navigator.serviceWorker.ready;
+  }
+
+  function blockedToast() {
+    toast.error("Notifications are blocked for this site in your browser settings", {
+      description:
+        "Click the lock icon next to the address bar, set Notifications to Allow, then turn this on again.",
+    });
   }
 
   async function enable() {
     setBusy(true);
     try {
+      if (Notification.permission === "denied") return blockedToast();
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") return blockedToast();
       const reg = await requireRegistration();
       if (!reg) return;
-      const perm = await Notification.requestPermission();
-      if (perm !== "granted") {
-        toast.error("Notifications blocked", {
-          description: "Enable them in your browser settings to receive reminders.",
-        });
-        return;
-      }
+      const old = await reg.pushManager.getSubscription();
+      if (old) await old.unsubscribe();
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidKey!).buffer as ArrayBuffer,
@@ -263,7 +259,7 @@ function PushNotificationsSection() {
   async function disable() {
     setBusy(true);
     try {
-      const reg = await requireRegistration();
+      const reg = await navigator.serviceWorker.getRegistration();
       if (reg) {
         const sub = await reg.pushManager.getSubscription();
         if (sub) await sub.unsubscribe();
@@ -280,9 +276,11 @@ function PushNotificationsSection() {
 
   const hint = !supported
     ? "Not supported on this device"
-    : !configured
-      ? "Push notifications aren't configured for this gym yet"
-      : "Workout & plan reminders";
+    : !allowedHere
+      ? "Open the app in its own tab to turn these on"
+      : !configured
+        ? "Push notifications aren't configured for this gym yet"
+        : "Workout & plan reminders";
 
   return (
     <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
@@ -296,7 +294,7 @@ function PushNotificationsSection() {
         </div>
         <Switch
           checked={enabled}
-          disabled={!supported || !configured || busy}
+          disabled={!supported || !configured || !allowedHere || busy}
           onCheckedChange={(v) => (v ? enable() : disable())}
         />
       </div>

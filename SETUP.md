@@ -33,7 +33,7 @@ Required secrets:
 
 | Secret                  | Purpose                                                                                                                             |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `VAPID_PUBLIC_KEY`      | Public application server key (also needed in the browser as `VITE_VAPID_PUBLIC_KEY`; the Profile toggle stays disabled without it) |
+| `VAPID_PUBLIC_KEY`      | Public application server key (served to the browser by a server function; the Profile toggle stays disabled without it) |
 | `VAPID_PRIVATE_KEY`     | Signs push messages (server only)                                                                                                   |
 | `VAPID_SUBJECT`         | Contact for push services, e.g. `mailto:you@yourgym.com`                                                                            |
 | `NOTIFY_WEBHOOK_SECRET` | Shared secret sent as `x-webhook-secret` when the server calls `notify-plan-assigned`                                               |
