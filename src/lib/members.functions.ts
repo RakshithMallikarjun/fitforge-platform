@@ -166,7 +166,11 @@ export const getMember = createServerFn({ method: "GET" })
       { data: attendance },
     ] = await Promise.all([
       supabase.from("users").select("*").eq("id", data.memberId).maybeSingle(),
-      supabase.from("member_profiles").select("*").eq("user_id", data.memberId).maybeSingle(),
+      supabase
+        .from("member_profiles")
+        .select("user_id, dob, gender, health_notes, goals, emergency_contact, experience_level, created_at")
+        .eq("user_id", data.memberId)
+        .maybeSingle(),
       supabase
         .from("trainer_assignments")
         .select("id, trainer_id, active, assigned_at")
