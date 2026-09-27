@@ -162,6 +162,13 @@
       "when": 1790531408050,
       "tag": "0022_gyms_currency_readable",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790532572112,
+      "tag": "0023_staff_attendance_checkin",
+      "breakpoints": true
     }
   ]
 }
