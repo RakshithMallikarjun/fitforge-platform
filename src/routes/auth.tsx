@@ -17,12 +17,14 @@ import { friendlyAuthError, scorePassword } from "@/lib/auth-errors";
 import { verifyGymJoinCode } from "@/lib/join-code.functions";
 import { getAuthRedirectUrl } from "@/lib/authRedirect";
 
-type AuthSearch = { deactivated?: boolean; gymDisabled?: boolean };
+type AuthSearch = { deactivated?: boolean; gymDisabled?: boolean; forgot?: boolean; email?: string };
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): AuthSearch => ({
     deactivated: search.deactivated === true || search.deactivated === "true" ? true : undefined,
     gymDisabled: search.gymDisabled === true || search.gymDisabled === "true" ? true : undefined,
+    forgot: search.forgot === true || search.forgot === "true" ? true : undefined,
+    email: typeof search.email === "string" ? search.email.slice(0, 200) : undefined,
   }),
   head: () => ({
     meta: [
@@ -230,8 +232,9 @@ function AuthPage() {
 }
 
 function SignInForm() {
-  const [mode, setMode] = useState<"signin" | "forgot">("signin");
-  const [email, setEmail] = useState("");
+  const search = Route.useSearch();
+  const [mode, setMode] = useState<"signin" | "forgot">(search.forgot ? "forgot" : "signin");
+  const [email, setEmail] = useState(search.email ?? "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
