@@ -264,7 +264,11 @@ export const completeWorkout = createServerFn({ method: "POST" })
       .eq("member_id", userId)
       .maybeSingle();
     if (logErr || !logRow) throw new Error(logErr?.message ?? "Log not found");
-    if ((logRow as any).completed_at) throw new Error("This session is already completed");
+    if ((logRow as any).completed_at) {
+      // Idempotent replay of an offline completion: already stored, no new PRs.
+      if (data.syncedOffline) return { ok: true, newPRs: [] };
+      throw new Error("This session is already completed");
+    }
 
     const { error } = await supabase
       .from("workout_logs")
