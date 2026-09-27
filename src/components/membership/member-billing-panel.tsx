@@ -158,7 +158,7 @@ export function MemberBillingPanel({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {payments.data!.map((p) => (
+              {(payments.data ?? []).map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="text-xs">{formatShortDate(p.paid_on)}</TableCell>
                   <TableCell className="text-xs">
@@ -172,7 +172,13 @@ export function MemberBillingPanel({
                     {formatShortDate(p.covers_from)} – {formatShortDate(p.covers_to)}
                   </TableCell>
                   <TableCell className="text-xs font-semibold">
-                    {formatMoney(p.amount, p.currency ?? currency)}
+                    {p.kind === "adjustment" ? (
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        Adjustment{p.note ? ` · ${p.note}` : ""}
+                      </span>
+                    ) : (
+                      formatMoney(p.amount, p.currency ?? currency)
+                    )}
                     {p.state === "refunded" && (
                       <span className="ml-1 text-muted-foreground">(refunded)</span>
                     )}
@@ -183,7 +189,7 @@ export function MemberBillingPanel({
                     {p.recorded_by_name ?? "—"}
                   </TableCell>
                   <TableCell>
-                    {canManage && p.state === "recorded" && !p.refund_of && (
+                    {canManage && p.kind !== "adjustment" && p.state === "recorded" && !p.refund_of && (
                       <Button
                         variant="ghost"
                         size="sm"

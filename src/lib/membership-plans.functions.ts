@@ -1058,6 +1058,8 @@ export type MyMembership = {
     covers_from: string;
     covers_to: string;
     method: PaymentMethod;
+    kind: "payment" | "adjustment";
+    note: string | null;
   }[];
   currency: string;
   today: string;
