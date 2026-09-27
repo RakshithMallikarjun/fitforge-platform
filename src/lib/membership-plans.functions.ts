@@ -67,25 +67,47 @@ export type MembershipPlan = {
   currency: string;
 };
 
-async function gymOf(supabase: any, userId: string) {
-  const { data } = await supabase
-    .from("users")
-    .select("gym_id, gyms(currency, name, timezone)")
-    .eq("id", userId)
-    .maybeSingle();
+async function gymOf(supabase: any, _userId: string) {
+  // Resolve the gym from the caller's JWT (current_gym_id), never from a join
+  // that can fail on column grants and silently null the gym.
+  const { data: gymId } = await supabase.rpc("current_gym_id");
+  const { data: g } = gymId
+    ? await supabase.from("gyms").select("currency, name, timezone").eq("id", gymId).maybeSingle()
+    : { data: null };
   return {
-    gymId: (data as any)?.gym_id as string | null,
-    currency: ((data as any)?.gyms?.currency as string | null) ?? "INR",
-    gymName: ((data as any)?.gyms?.name as string | null) ?? "your gym",
-    timeZone: ((data as any)?.gyms?.timezone as string | null) ?? "UTC",
+    gymId: (gymId as string | null) ?? null,
+    currency: ((g as any)?.currency as string | null) ?? "INR",
+    gymName: ((g as any)?.name as string | null) ?? "your gym",
+    timeZone: ((g as any)?.timezone as string | null) ?? "UTC",
   };
 }
 
+export type GymRole = "admin" | "trainer";
+
+/**
+ * The one billing guard. Caller from the JWT (userId via requireSupabaseAuth,
+ * queries run with their token), gym from public.current_gym_id(), and an
+ * EXISTS check on user_roles for that gym and any allowed role.
+ */
+async function requireGymRole(supabase: any, userId: string, allowed: GymRole[]) {
+  const { data: gymId, error: gErr } = await supabase.rpc("current_gym_id");
+  if (gErr || !gymId) throw new Error("Forbidden");
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("gym_id", gymId)
+    .in("role", ["admin", "trainer"]);
+  if (error) throw new Error("Forbidden");
+  const roles = ((data ?? []) as any[]).map((r) => r.role as string);
+  if (roles.some((r) => (allowed as string[]).includes(r))) return gymId as string;
+  if (roles.includes("trainer") && !allowed.includes("trainer"))
+    throw new Error("Only admins can change prices, tiers and billing settings.");
+  throw new Error("Forbidden");
+}
+
 async function requireAdmin(supabase: any, userId: string) {
-  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-  const roles = (data ?? []).map((r: any) => r.role);
-  if (!roles.includes("admin")) throw new Error("Forbidden");
-  return roles as string[];
+  return requireGymRole(supabase, userId, ["admin"]);
 }
 
 // =================== tiers ===================
@@ -420,7 +442,8 @@ export const previewPayment = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ context, data }): Promise<PaymentPreview> => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    await requireGymRole(supabase, userId, ["admin", "trainer"]);
     const { data: res, error } = await supabase.rpc("preview_member_payment", {
       _member_id: data.memberId,
       _plan_id: data.planId,
@@ -452,7 +475,8 @@ export const recordPayment = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    await requireGymRole(supabase, userId, ["admin", "trainer"]);
     // The recorded amount is derived from the gym's configured plan price, so a
     // caller cannot grant a membership period for an amount of their choosing.
     const { data: priceRow, error: priceErr } = await supabase
@@ -498,7 +522,8 @@ export const refundPayment = createServerFn({ method: "POST" })
     z.object({ paymentId: uuid, note: z.string().trim().max(500).optional() }).parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    await requireGymRole(supabase, userId, ["admin"]);
     const { data: res, error } = await supabase.rpc("refund_member_payment", {
       _payment_id: data.paymentId,
       _note: data.note ?? "",
@@ -513,7 +538,8 @@ export const cancelSubscription = createServerFn({ method: "POST" })
     z.object({ subscriptionId: uuid, reason: z.string().trim().max(300).optional() }).parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    await requireGymRole(supabase, userId, ["admin"]);
     const { error } = await supabase.rpc("cancel_member_subscription", {
       _subscription_id: data.subscriptionId,
       _reason: data.reason ?? "",
@@ -552,7 +578,8 @@ export const getDues = createServerFn({ method: "GET" })
       .parse(d ?? { bucket: "all" }),
   )
   .handler(async ({ context, data }): Promise<DuesRow[]> => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    await requireGymRole(supabase, userId, ["admin", "trainer"]);
     const { data: rows, error } = await supabase.rpc("gym_dues", { _bucket: data.bucket });
     if (error) fail(error);
     return ((rows ?? []) as any[]).map((r) => ({ ...r, amount_due: Number(r.amount_due) }));
@@ -573,7 +600,8 @@ export type DuesSummary = {
 export const getDuesSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<DuesSummary> => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    await requireGymRole(supabase, userId, ["admin", "trainer"]);
     const { data, error } = await supabase.rpc("gym_dues_summary");
     if (error) fail(error);
     const r = (data ?? {}) as any;
@@ -608,17 +636,8 @@ export const getBillingSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<BillingSettings> => {
     const { supabase, userId } = context;
-    const { gymId, timeZone } = await gymOf(supabase, userId);
-    if (!gymId) throw new Error("Forbidden");
-    // Billing configuration and admin contacts are for gym administrators only.
-    const { data: adminRole } = await supabase
-      .from("user_roles")
-      .select("user_id")
-      .eq("user_id", userId)
-      .eq("gym_id", gymId)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!adminRole) throw new Error("Forbidden");
+    const gymId = await requireGymRole(supabase, userId, ["admin"]);
+    const { timeZone } = await gymOf(supabase, userId);
 
     const { data: row, error } = await supabase.rpc("gym_billing_settings_ensure");
     if (error) fail(error);
@@ -811,6 +830,7 @@ export const sendMemberReminder = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    await requireGymRole(supabase, userId, ["admin", "trainer"]);
     const ctx = await reminderContext(supabase, userId);
     const row = ctx.dues.find((r) => r.member_id === data.memberId);
     if (!row) throw new Error("That member has nothing due right now");
@@ -837,6 +857,7 @@ export const sendBulkReminders = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    await requireGymRole(supabase, userId, ["admin", "trainer"]);
     const ctx = await reminderContext(supabase, userId);
     let sent = 0;
     let skipped = 0;
