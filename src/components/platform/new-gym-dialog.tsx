@@ -1,3 +1,4 @@
+import { formatServerError } from "@/lib/format-error";
 import { gymSubdomain } from "@/lib/platform-brand";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
@@ -152,7 +153,7 @@ export function NewGymDialog({
       qc.invalidateQueries({ queryKey: ["platform-gyms"] });
       qc.invalidateQueries({ queryKey: ["platform-overview"] });
       if (r.inviteError) {
-        toast.error(`Gym created, but the owner invite failed: ${r.inviteError}`);
+        toast.error(`Gym created, but the owner invite failed: ${formatServerError(r.inviteError)}`);
       } else if (r.ownerInvited) {
         toast.success("Gym created and the owner has been invited");
       } else {
@@ -164,7 +165,7 @@ export function NewGymDialog({
     },
     onError: (e) => {
       setStep(null);
-      toast.error((e as Error).message || "Could not create the gym");
+      toast.error(formatServerError(e, {ownerEmail:"Owner email",primaryColor:"Primary colour",supportEmail:"Support email",slug:"Web address"}, "Could not create the gym"));
     },
   });
 

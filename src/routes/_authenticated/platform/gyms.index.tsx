@@ -1,3 +1,4 @@
+import { formatServerError } from "@/lib/format-error";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -98,7 +99,7 @@ function PlatformGymsPage() {
     },
     onError: (err, _v, ctx) => {
       if (ctx?.prev) qc.setQueryData(["platform-gyms"], ctx.prev);
-      toast.error((err as Error).message || "Could not update the gym");
+      toast.error(formatServerError(err, {ownerEmail:"Owner email",primaryColor:"Primary colour",supportEmail:"Support email",slug:"Web address"}, "Could not update the gym"));
     },
     onSuccess: (_r, v) => {
       toast.success(v.enabled ? "Gym enabled" : "Gym disabled");

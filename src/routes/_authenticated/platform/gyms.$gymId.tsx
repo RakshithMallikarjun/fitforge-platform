@@ -1,3 +1,4 @@
+import { formatServerError } from "@/lib/format-error";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -171,7 +172,7 @@ function PlatformGymDetailPage() {
       toast.success(v.enabled ? "Gym enabled" : "Gym disabled");
       invalidate();
     },
-    onError: (e) => toast.error((e as Error).message || "Could not update the gym"),
+    onError: (e) => toast.error(formatServerError(e, {ownerEmail:"Owner email",primaryColor:"Primary colour",supportEmail:"Support email",slug:"Web address"}, "Could not update the gym")),
   });
 
   const billingMutation = useMutation({
@@ -193,7 +194,7 @@ function PlatformGymDetailPage() {
       setNote("");
       invalidate();
     },
-    onError: (e) => toast.error((e as Error).message || "Could not update billing"),
+    onError: (e) => toast.error(formatServerError(e, {ownerEmail:"Owner email",primaryColor:"Primary colour",supportEmail:"Support email",slug:"Web address"}, "Could not update billing")),
   });
 
   const planMutation = useMutation({
@@ -202,7 +203,7 @@ function PlatformGymDetailPage() {
       toast.success("Plan updated");
       invalidate();
     },
-    onError: (e) => toast.error((e as Error).message || "Could not update the plan"),
+    onError: (e) => toast.error(formatServerError(e, {ownerEmail:"Owner email",primaryColor:"Primary colour",supportEmail:"Support email",slug:"Web address"}, "Could not update the plan")),
   });
 
   const resendMutation = useMutation({
@@ -212,7 +213,7 @@ function PlatformGymDetailPage() {
       invalidate();
       qc.invalidateQueries({ queryKey: ["platform-gym-owner", gymId] });
     },
-    onError: (e) => toast.error((e as Error).message || "Could not send the invite"),
+    onError: (e) => toast.error(formatServerError(e, {ownerEmail:"Owner email",primaryColor:"Primary colour",supportEmail:"Support email",slug:"Web address"}, "Could not send the invite")),
   });
 
   const inviteMutation = useMutation({
@@ -223,7 +224,7 @@ function PlatformGymDetailPage() {
       invalidate();
       qc.invalidateQueries({ queryKey: ["platform-gym-owner", gymId] });
     },
-    onError: (e) => toast.error((e as Error).message || "Could not invite the owner"),
+    onError: (e) => toast.error(formatServerError(e, {ownerEmail:"Owner email",primaryColor:"Primary colour",supportEmail:"Support email",slug:"Web address"}, "Could not invite the owner")),
   });
 
   const os = ownerStatus.data;
