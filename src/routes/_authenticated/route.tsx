@@ -1,5 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { registerSW } from "@/lib/pwa/register-sw";
 
 /** Survives the sign-out navigation race so /auth can explain what happened. */
 function noteAuthReason(reason: "deactivated" | "gymDisabled") {
@@ -36,5 +38,12 @@ export const Route = createFileRoute("/_authenticated")({
     }
     return { user: data.user };
   },
-  component: () => <Outlet />,
+  component: SignedInShell,
 });
+
+function SignedInShell() {
+  useEffect(() => {
+    void registerSW();
+  }, []);
+  return <Outlet />;
+}
