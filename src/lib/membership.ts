@@ -27,3 +27,29 @@ export function isMembershipExpired(
 ): boolean {
   return !isMembershipCurrent(membershipExpiresAt, todayInGymZone);
 }
+
+/** The one computed membership view, derived from the tier + payment ledger. */
+export type LedgerStatus = "none" | "active" | "expiring" | "expired" | "inactive";
+export type LedgerMembership = {
+  planName: string | null;
+  endsOn: string | null;
+  legacy: boolean;
+  status: LedgerStatus;
+};
+
+/** Same thresholds as Dues: "expiring" means within the gym's reminder lead days. */
+export function ledgerStatus(
+  accountActive: boolean,
+  endsOn: string | null,
+  today: string,
+  leadDays: number,
+): LedgerStatus {
+  if (!accountActive) return "inactive";
+  if (!endsOn) return "none";
+  if (endsOn < today) return "expired";
+  const days = Math.round(
+    (new Date(`${endsOn}T00:00:00Z`).getTime() - new Date(`${today}T00:00:00Z`).getTime()) /
+      86400000,
+  );
+  return days <= leadDays ? "expiring" : "active";
+}
