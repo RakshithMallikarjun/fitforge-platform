@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AdminOnly } from "@/components/admin-only";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -46,7 +47,11 @@ import { formatMoney } from "@/lib/format-money";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 export const Route = createFileRoute("/_authenticated/admin/membership-plans")({
-  component: MembershipPlansPage,
+  component: () => (
+    <AdminOnly area="Membership tiers">
+      <MembershipPlansPage />
+    </AdminOnly>
+  ),
 });
 
 function MembershipPlansPage() {

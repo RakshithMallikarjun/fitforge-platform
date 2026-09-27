@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminOnly } from "@/components/admin-only";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, subMonths } from "date-fns";
@@ -18,7 +19,11 @@ import { PERIOD_LABEL, getRevenueReport } from "@/lib/membership-plans.functions
 import { formatMoney } from "@/lib/format-money";
 
 export const Route = createFileRoute("/_authenticated/admin/reports/revenue")({
-  component: RevenueReportPage,
+  component: () => (
+    <AdminOnly area="Revenue reports">
+      <RevenueReportPage />
+    </AdminOnly>
+  ),
 });
 
 function RevenueReportPage() {

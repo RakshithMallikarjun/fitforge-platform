@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AdminOnly } from "@/components/admin-only";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -72,7 +73,11 @@ export const Route = createFileRoute("/_authenticated/admin/sponsors")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: SponsorsPage,
+  component: () => (
+    <AdminOnly area="Sponsors">
+      <SponsorsPage />
+    </AdminOnly>
+  ),
 });
 
 const PLACEMENT_LABEL: Record<string, string> = {
