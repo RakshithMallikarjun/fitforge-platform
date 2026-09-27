@@ -114,7 +114,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
     // Site-wide publisher identity. Page-level schemas live on their own routes.
-    scripts: [jsonLdScript(organizationSchema())],
+    scripts: [
+      // Safety net for invite/recovery emails that landed on / or /auth: forward with the token intact.
+      { children: '(function(){try{var l=window.location,p=l.pathname,h=l.hash||"",q=l.search||"";if(p!=="/"&&p!=="/auth")return;var hasTok=/access_token=|error_code=/.test(h),hasCode=/[?&]code=/.test(q);if(!hasTok&&!hasCode)return;if(/type=recovery/.test(h)&&!/type=invite/.test(h)){l.replace("/reset-password"+q+h);return;}if(/type=invite/.test(h)||/error_code=otp_expired/.test(h)||(hasCode&&p==="/")){l.replace("/accept-invite"+q+h);}}catch(e){}})();' },
+      jsonLdScript(organizationSchema()),
+    ],
   }),
 
   shellComponent: RootShell,
