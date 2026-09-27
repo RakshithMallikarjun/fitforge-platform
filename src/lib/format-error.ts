@@ -11,7 +11,10 @@ const FRIENDLY_ISSUE: Record<string, string> = {
 };
 
 function humanize(key: string): string {
-  const s = key.replace(/_/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+  const s = key
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .toLowerCase();
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 

@@ -45,7 +45,12 @@ type RowStatus =
   | "Invalid email"
   | "Name missing";
 
-type PreviewRow = { row: number; member: MemberInput; raw: Record<string, string>; status: RowStatus };
+type PreviewRow = {
+  row: number;
+  member: MemberInput;
+  raw: Record<string, string>;
+  status: RowStatus;
+};
 
 function toMember(r: Record<string, string>): MemberInput {
   const lvl = (r.experience_level ?? "").trim().toLowerCase();
@@ -226,7 +231,15 @@ export function BulkImportDialog({ open, onOpenChange }: Props) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => downloadCsv("members-template.csv", Papa.parse<Record<string, string>>(TEMPLATE, { header: true, skipEmptyLines: true }).data)}
+              onClick={() =>
+                downloadCsv(
+                  "members-template.csv",
+                  Papa.parse<Record<string, string>>(TEMPLATE, {
+                    header: true,
+                    skipEmptyLines: true,
+                  }).data,
+                )
+              }
               className="rounded-lg"
             >
               <Download className="mr-2 h-4 w-4" /> Download CSV template
