@@ -186,7 +186,7 @@ function AdminCheckin() {
             <p className="mt-3 text-sm text-muted-foreground">No check-ins yet today.</p>
           ) : (
             <ul className="mt-3 space-y-2 text-sm">
-              {recentQ.data!.checkins.map((r) => (
+              {(recentQ.data?.checkins ?? []).map((r) => (
                 <li key={r.id} className="flex flex-wrap items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary" />
                   <span className="text-muted-foreground">{formatTime(r.at)}</span>
