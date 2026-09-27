@@ -202,7 +202,6 @@ export const selfCheckin = createServerFn({ method: "POST" })
     return { ok: true as const, locationType: data.locationType, alreadyCheckedIn: duplicate };
   });
 
-
 async function staffContext(supabase: any, userId: string) {
   const [{ data: me }, { data: roles }] = await Promise.all([
     supabase.from("users").select("gym_id").eq("id", userId).maybeSingle(),

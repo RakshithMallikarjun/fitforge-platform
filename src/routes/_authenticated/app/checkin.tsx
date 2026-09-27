@@ -119,7 +119,9 @@ function CheckedInToday({
         <p className="mt-4 text-base font-semibold">
           You're checked in for today — {isHome ? "Home" : "Gym"}, {time}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">Come back tomorrow for your next check-in.</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Come back tomorrow for your next check-in.
+        </p>
       </div>
       <SponsoredSlot placement="checkin_success" />
       <Button className="w-full rounded-xl" onClick={() => navigate({ to: "/app" })}>
@@ -241,7 +243,8 @@ function HomeSessionTab() {
       );
       void qc.invalidateQueries({ queryKey: ["my-checkin-today"] });
     },
-    onError: (e: any) => toast.error("Couldn't log your session", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't log your session", { description: formatServerError(e) }),
   });
 
   return (
