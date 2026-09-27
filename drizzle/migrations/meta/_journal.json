@@ -155,6 +155,13 @@
       "when": 1790527373089,
       "tag": "0021_0021_staff_roles_never_members",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1790531408050,
+      "tag": "0022_gyms_currency_readable",
+      "breakpoints": true
     }
   ]
 }
