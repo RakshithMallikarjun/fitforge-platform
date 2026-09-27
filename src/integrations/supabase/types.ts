@@ -2280,6 +2280,14 @@ export type Database = {
           same_plan_sub: string
         }[]
       }
+      staff_assign_role: {
+        Args: {
+          _display_name: string
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
       sync_member_membership: {
         Args: { _member_id: string }
         Returns: undefined
