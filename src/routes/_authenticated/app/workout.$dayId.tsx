@@ -51,7 +51,7 @@ import {
   getYoutubeEmbedUrl,
   type ExerciseRow,
 } from "@/lib/exercises.functions";
-import { enqueueLog } from "@/lib/pwa/offline-queue";
+import { enqueueLog, getQueuedSetCount, QUEUE_EVENT } from "@/lib/pwa/offline-queue";
 import { SponsoredSlot } from "@/components/ads/sponsored-card";
 
 function isOfflineError(e: unknown): boolean {
@@ -299,6 +299,23 @@ function WorkoutPlayer() {
 
   const cacheKey = `fitfoundry:day:${dayId}`;
   const [offlineFallback, setOfflineFallback] = useState(false);
+  const [online, setOnline] = useState(true);
+  const [queuedSets, setQueuedSets] = useState(0);
+  useEffect(() => {
+    const refresh = () => {
+      setOnline(navigator.onLine);
+      void getQueuedSetCount().then(setQueuedSets).catch(() => {});
+    };
+    refresh();
+    window.addEventListener("online", refresh);
+    window.addEventListener("offline", refresh);
+    window.addEventListener(QUEUE_EVENT, refresh);
+    return () => {
+      window.removeEventListener("online", refresh);
+      window.removeEventListener("offline", refresh);
+      window.removeEventListener(QUEUE_EVENT, refresh);
+    };
+  }, []);
   const [swapOpen, setSwapOpen] = useState(false);
 
   const { data: dayData, isLoading } = useQuery({
@@ -592,10 +609,15 @@ function WorkoutPlayer() {
 
   return (
     <div className="w-full max-w-full space-y-5 overflow-x-hidden pb-8">
-      {offlineFallback && (
-        <div className="flex items-center gap-2 rounded-2xl border border-secondary/30 bg-secondary-soft px-3 py-2 text-xs text-secondary">
+      {(offlineFallback || !online || queuedSets > 0) && (
+        <div
+          role="status"
+          className="flex items-center gap-2 rounded-2xl border border-secondary/30 bg-secondary-soft px-3 py-2 text-xs text-secondary"
+        >
           <CloudOff className="h-3.5 w-3.5" />
-          Offline mode — sets will sync when you're back online.
+          {online
+            ? `Syncing ${queuedSets} saved set${queuedSets === 1 ? "" : "s"}…`
+            : `You're offline — ${queuedSets} set${queuedSets === 1 ? "" : "s"} will sync when you're back online.`}
         </div>
       )}
       <div className="flex items-center justify-between">

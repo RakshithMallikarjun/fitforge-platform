@@ -295,10 +295,15 @@ export async function flushQueue(): Promise<{ ok: number; failed: number; dead: 
       }
     }
 
-    await writeQueue(remaining.slice(-MAX_QUEUE_SIZE));
+    await writeQueueAndNotify(remaining.slice(-MAX_QUEUE_SIZE));
     await addDeadLetter(dead);
   } finally {
     flushing = false;
   }
   return { ok, failed, dead: dead.length };
+}
+
+async function writeQueueAndNotify(items: QueuedItem[]) {
+  await writeQueue(items);
+  notifyQueueChanged();
 }
