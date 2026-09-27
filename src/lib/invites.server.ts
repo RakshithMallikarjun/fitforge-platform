@@ -70,16 +70,18 @@ function buildEmail(opts: {
   inviterName: string | null;
   link: string;
   inviteeEmail: string;
+  inviteeName: string | null;
 }) {
-  const { gym, role, inviterName, link } = opts;
+  const { gym, role, inviterName, link, inviteeName, inviteeEmail } = opts;
+  const who = inviteeName?.trim() || inviteeEmail;
   const roleLabel = ROLE_LABEL[role];
   const color = safeColor(gym.primary_color);
   const stamp = new Date().toISOString().slice(0, 16).replace("T", " ");
   // Unique subject per gym + role + recipient so Gmail never threads different invites.
   const subject =
     role === "owner"
-      ? `Your gym ${gym.name} is ready on ${PLATFORM_NAME}`
-      : `${inviterName || gym.name} invited you to ${gym.name} on ${PLATFORM_NAME} (${roleLabel})`;
+      ? `Your gym ${gym.name} is ready on ${PLATFORM_NAME} (${who})`
+      : `${inviterName || gym.name} invited ${who} to ${gym.name} on ${PLATFORM_NAME} (${roleLabel})`;
   const roleLine =
     role === "owner"
       ? `You've been added as the Owner of ${gym.name}.`
@@ -190,37 +192,32 @@ export async function sendAccountInvite(
         "This person has already signed in — ask them to use Forgot password instead.",
       );
     }
-    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
+    resend = true;
+  }
+
+  // Always issue an invite-type link for unconfirmed accounts, so the newest
+  // email is the one that works. Only fall back to recovery when the account
+  // is already confirmed (invite type is then refused).
+  const { data, error } = await supabaseAdmin.auth.admin.generateLink({
+    type: "invite",
+    email,
+    options: { redirectTo, data: metadata },
+  });
+  if (error && /already|registered|exists/i.test(error.message)) {
+    const r = await supabaseAdmin.auth.admin.generateLink({
       type: "recovery",
       email,
       options: { redirectTo },
     });
-    if (error) throw new Error(error.message);
-    link = data.properties?.action_link;
-    userId = data.user?.id ?? existingRow.id;
+    if (r.error) throw new Error(r.error.message);
+    link = r.data.properties?.action_link;
+    userId = r.data.user?.id;
     resend = true;
+  } else if (error) {
+    throw new Error(error.message);
   } else {
-    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-      type: "invite",
-      email,
-      options: { redirectTo, data: metadata },
-    });
-    if (error && /already|registered|exists/i.test(error.message)) {
-      const r = await supabaseAdmin.auth.admin.generateLink({
-        type: "recovery",
-        email,
-        options: { redirectTo },
-      });
-      if (r.error) throw new Error(r.error.message);
-      link = r.data.properties?.action_link;
-      userId = r.data.user?.id;
-      resend = true;
-    } else if (error) {
-      throw new Error(error.message);
-    } else {
-      link = data.properties?.action_link;
-      userId = data.user?.id;
-    }
+    link = data.properties?.action_link;
+    userId = data.user?.id ?? existingRow?.id;
   }
   if (!link || !userId) throw new Error("Could not create the invite link");
 
@@ -230,6 +227,7 @@ export async function sendAccountInvite(
     inviterName: input.invitedByName ?? null,
     link,
     inviteeEmail: email,
+    inviteeName: input.displayName ?? null,
   });
   await sendViaResend({ to: email, subject, html, text, replyTo: gym.support_email });
 
