@@ -1041,6 +1041,7 @@ export const sendDailySummaryNow = createServerFn({ method: "POST" })
 // =================== member-facing ===================
 
 export type MyMembership = {
+  legacy: boolean;
   plan_name: string | null;
   badge_color: string | null;
   features: string[];
