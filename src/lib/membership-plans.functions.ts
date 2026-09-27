@@ -397,6 +397,7 @@ export type MemberPayment = {
   reference: string | null;
   note: string | null;
   refund_of: string | null;
+  kind: "payment" | "adjustment";
   recorded_by_name: string | null;
 };
 
@@ -1071,22 +1072,25 @@ export const getMyMembership = createServerFn({ method: "GET" })
       supabase
         .from("member_subscriptions")
         .select(
-          "plan_id, plan_name_snapshot, period, ends_on, state, membership_plans(badge_color, features)",
+          "plan_id, plan_name_snapshot, period, ends_on, state, source, membership_plans(badge_color, features)",
         )
         .eq("member_id", userId)
         .order("ends_on", { ascending: false }),
       supabase
         .from("member_payments")
         .select(
-          "id, paid_on, amount, currency, plan_name_snapshot, period_snapshot, covers_from, covers_to, method",
+          "id, paid_on, amount, currency, plan_name_snapshot, period_snapshot, covers_from, covers_to, method, kind, note",
         )
         .eq("member_id", userId)
         .order("paid_on", { ascending: false })
         .limit(30),
     ]);
 
-    const active = ((subs ?? []) as any[]).find((s) => s.state === "active") ?? null;
+    // Same rule as staff screens: the latest active or lapsed ledger row.
+    const active =
+      ((subs ?? []) as any[]).find((s) => s.state === "active" || s.state === "expired") ?? null;
     return {
+      legacy: active?.source === "imported",
       plan_name: active?.plan_name_snapshot ?? null,
       badge_color: active?.membership_plans?.badge_color ?? null,
       features: active?.membership_plans?.features ?? [],
