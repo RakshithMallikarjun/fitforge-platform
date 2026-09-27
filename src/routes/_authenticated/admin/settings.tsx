@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { formatServerError } from "@/lib/format-error";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -167,7 +168,7 @@ function SettingsPage() {
       qc.invalidateQueries({ queryKey: ["gym-theme"] });
       qc.invalidateQueries({ queryKey: ["gym-settings"] });
     },
-    onError: (e: any) => toast.error(e?.message ?? "Failed to save"),
+    onError: (e: any) => toast.error(formatServerError(e, {}, "Failed to save")),
   });
 
   const opsMutation = useMutation({
@@ -177,7 +178,7 @@ function SettingsPage() {
       toast.success("Operations settings saved");
       qc.invalidateQueries({ queryKey: ["gym-settings"] });
     },
-    onError: (e: any) => toast.error(e?.message ?? "Failed to save"),
+    onError: (e: any) => toast.error(formatServerError(e, {}, "Failed to save")),
   });
 
   const { data: joinInfo, isLoading: joinLoading } = useQuery({
@@ -197,7 +198,7 @@ function SettingsPage() {
       setConfirmRotate(false);
       qc.invalidateQueries({ queryKey: ["gym-join-code"] });
     },
-    onError: (e: any) => toast.error(e?.message ?? "Could not regenerate the join code"),
+    onError: (e: any) => toast.error(formatServerError(e, {}, "Could not regenerate the join code")),
   });
 
   const slug = joinInfo?.slug ?? gym?.slug ?? "";

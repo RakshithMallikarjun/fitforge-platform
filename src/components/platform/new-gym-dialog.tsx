@@ -1,3 +1,4 @@
+import { HEX_COLOR, formatServerError } from "@/lib/format-error";
 import { gymSubdomain } from "@/lib/platform-brand";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
@@ -152,7 +153,9 @@ export function NewGymDialog({
       qc.invalidateQueries({ queryKey: ["platform-gyms"] });
       qc.invalidateQueries({ queryKey: ["platform-overview"] });
       if (r.inviteError) {
-        toast.error(`Gym created, but the owner invite failed: ${r.inviteError}`);
+        toast.error(
+          `Gym created, but the owner invite failed: ${formatServerError(r.inviteError)}`,
+        );
       } else if (r.ownerInvited) {
         toast.success("Gym created and the owner has been invited");
       } else {
@@ -164,19 +167,44 @@ export function NewGymDialog({
     },
     onError: (e) => {
       setStep(null);
-      toast.error((e as Error).message || "Could not create the gym");
+      toast.error(
+        formatServerError(
+          e,
+          {
+            ownerEmail: "Owner email",
+            primaryColor: "Primary colour",
+            supportEmail: "Support email",
+            slug: "Web address",
+          },
+          "Could not create the gym",
+        ),
+      );
     },
   });
 
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const ownerEmailError =
+    ownerEmail.trim() && !EMAIL_RE.test(ownerEmail.trim()) ? "Enter a valid email address" : null;
+  const supportEmailError =
+    supportEmail.trim() && !EMAIL_RE.test(supportEmail.trim())
+      ? "Enter a valid email address"
+      : null;
+  const colorError =
+    primaryColor.trim() && !HEX_COLOR.test(primaryColor.trim())
+      ? "Use a colour like #059669"
+      : null;
+  const fieldsValid = !ownerEmailError && !supportEmailError && !colorError;
+
   const canSubmit = useMemo(
     () =>
+      fieldsValid &&
       name.trim().length > 0 &&
       !!effectiveSlug &&
       !localError &&
       !checking &&
       available === true &&
       !mutation.isPending,
-    [name, effectiveSlug, localError, checking, available, mutation.isPending],
+    [fieldsValid, name, effectiveSlug, localError, checking, available, mutation.isPending],
   );
 
   return (
@@ -250,7 +278,9 @@ export function NewGymDialog({
               value={ownerEmail}
               onChange={(e) => setOwnerEmail(e.target.value)}
               placeholder="owner@gym.com"
+              aria-invalid={!!ownerEmailError}
             />
+            {ownerEmailError && <p className="text-xs text-destructive">{ownerEmailError}</p>}
             <p className="text-xs text-muted-foreground">
               Optional now — you can invite the owner later from the gym page.
             </p>
@@ -324,7 +354,9 @@ export function NewGymDialog({
                     value={primaryColor}
                     onChange={(e) => setPrimaryColor(e.target.value)}
                     placeholder="#059669"
+                    aria-invalid={!!colorError}
                   />
+                  {colorError && <p className="text-xs text-destructive">{colorError}</p>}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="gym-support-email">Support email</Label>
@@ -333,7 +365,11 @@ export function NewGymDialog({
                     type="email"
                     value={supportEmail}
                     onChange={(e) => setSupportEmail(e.target.value)}
+                    aria-invalid={!!supportEmailError}
                   />
+                  {supportEmailError && (
+                    <p className="text-xs text-destructive">{supportEmailError}</p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="gym-support-phone">Support phone</Label>

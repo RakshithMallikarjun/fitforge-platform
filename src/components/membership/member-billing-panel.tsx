@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatServerError } from "@/lib/format-error";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -77,7 +78,7 @@ export function MemberBillingPanel({
       });
       invalidate();
     },
-    onError: (e: any) => toast.error("Couldn't refund", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't refund", { description: formatServerError(e) }),
   });
 
   const cancel = useMutation({
@@ -86,7 +87,7 @@ export function MemberBillingPanel({
       toast.success("Membership cancelled");
       invalidate();
     },
-    onError: (e: any) => toast.error("Couldn't cancel", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't cancel", { description: formatServerError(e) }),
   });
 
   return (

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { formatServerError } from "@/lib/format-error";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -139,7 +140,7 @@ export function RecordPaymentDialog({
       setReference("");
       setNote("");
     },
-    onError: (e: any) => toast.error("Couldn't record the payment", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't record the payment", { description: formatServerError(e) }),
   });
 
   const currency = quote?.currency ?? null;

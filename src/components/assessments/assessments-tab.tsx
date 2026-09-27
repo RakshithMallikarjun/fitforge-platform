@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
+import { formatServerError } from "@/lib/format-error";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { format, differenceInDays } from "date-fns";
@@ -53,7 +54,7 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
       w.document.close();
       toast.success("Report ready — use the print dialog to save as PDF", { id: tId });
     } catch (e: any) {
-      toast.error(e?.message ?? "Failed to generate report", { id: tId });
+      toast.error(formatServerError(e, {}, "Failed to generate report"), { id: tId });
     } finally {
       setExporting(false);
     }

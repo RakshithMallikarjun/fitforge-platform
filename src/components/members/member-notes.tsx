@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatServerError } from "@/lib/format-error";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
@@ -34,7 +35,7 @@ export function MemberNotes({ memberId }: { memberId: string }) {
       setShareNew(false);
       qc.invalidateQueries({ queryKey: ["member-notes", memberId] });
     },
-    onError: (e: any) => toast.error("Could not save note", { description: e?.message }),
+    onError: (e: any) => toast.error("Could not save note", { description: formatServerError(e) }),
   });
 
   const share = useMutation({
@@ -43,13 +44,13 @@ export function MemberNotes({ memberId }: { memberId: string }) {
       qc.invalidateQueries({ queryKey: ["member-notes", memberId] });
       toast.success(v.shared ? "Note shared with the member" : "Note is private again");
     },
-    onError: (e: any) => toast.error("Could not update note", { description: e?.message }),
+    onError: (e: any) => toast.error("Could not update note", { description: formatServerError(e) }),
   });
 
   const del = useMutation({
     mutationFn: (id: string) => deleteMemberNote({ data: { id } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["member-notes", memberId] }),
-    onError: (e: any) => toast.error("Could not delete note", { description: e?.message }),
+    onError: (e: any) => toast.error("Could not delete note", { description: formatServerError(e) }),
   });
 
   return (

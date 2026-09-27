@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { formatServerError } from "@/lib/format-error";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Send } from "lucide-react";
@@ -96,7 +97,7 @@ export function ThreadView({
       setText("");
       qc.invalidateQueries({ queryKey: ["threads"] });
     },
-    onError: (e: any) => toast.error("Could not send", { description: e?.message }),
+    onError: (e: any) => toast.error("Could not send", { description: formatServerError(e) }),
   });
 
   const grouped = useMemo(() => (data?.messages ?? []) as Msg[], [data]);

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatServerError } from "@/lib/format-error";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, Dumbbell, MoreHorizontal, Pencil, Trash2, Lock } from "lucide-react";
@@ -114,7 +115,7 @@ function ExercisesPage() {
       toast.success("Exercise deleted");
       qc.invalidateQueries({ queryKey: ["exercises"] });
     },
-    onError: (e: any) => toast.error("Delete failed", { description: e?.message }),
+    onError: (e: any) => toast.error("Delete failed", { description: formatServerError(e) }),
   });
 
   return (

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { formatServerError } from "@/lib/format-error";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -144,7 +145,7 @@ export function AdFormDialog({
       onSaved();
     },
     onError: (e: any) =>
-      toast.error("Couldn't save this sponsor", { description: e?.message ?? "Please try again." }),
+      toast.error("Couldn't save this sponsor", { description: formatServerError(e) }),
   });
 
   async function onPickFile(file: File) {
@@ -164,7 +165,7 @@ export function AdFormDialog({
       setImagePath(res.path);
       setImageUrl(res.url);
     } catch (e: any) {
-      toast.error("Upload failed", { description: e?.message });
+      toast.error("Upload failed", { description: formatServerError(e) });
     } finally {
       setUploading(false);
     }

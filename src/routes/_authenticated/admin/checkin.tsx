@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { formatServerError } from "@/lib/format-error";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, XCircle, ScanLine } from "lucide-react";
@@ -67,7 +68,7 @@ function AdminCheckin() {
             setRecent((cur) =>
               [{ at: now, ok: false, message: e?.message ?? "Invalid code" }, ...cur].slice(0, 10),
             );
-            toast.error("Check-in failed", { description: e?.message });
+            toast.error("Check-in failed", { description: formatServerError(e) });
           } finally {
             busyRef.current = false;
           }
@@ -76,7 +77,7 @@ function AdminCheckin() {
       );
       setScanning(true);
     } catch (e: any) {
-      toast.error("Could not start camera", { description: e?.message });
+      toast.error("Could not start camera", { description: formatServerError(e) });
     }
   }
 

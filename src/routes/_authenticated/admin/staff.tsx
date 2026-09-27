@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { formatServerError } from "@/lib/format-error";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, ShieldCheck, UserCog, MoreHorizontal, UserX, UserCheck, Send, XCircle } from "lucide-react";
@@ -85,7 +86,7 @@ function StaffPage() {
       setDisplayName("");
       setRole("trainer");
     },
-    onError: (e: any) => toast.error("Invite failed", { description: e?.message }),
+    onError: (e: any) => toast.error("Invite failed", { description: formatServerError(e) }),
   });
 
   const [deactivateTarget, setDeactivateTarget] = useState<{ id: string; name: string } | null>(
@@ -98,7 +99,7 @@ function StaffPage() {
       qc.invalidateQueries({ queryKey: ["staff"] });
       setDeactivateTarget(null);
     },
-    onError: (e: any) => toast.error("Action failed", { description: e?.message }),
+    onError: (e: any) => toast.error("Action failed", { description: formatServerError(e) }),
   });
 
   const resend = useMutation({
@@ -107,7 +108,7 @@ function StaffPage() {
       toast.success("Invite resent");
       qc.invalidateQueries({ queryKey: ["staff"] });
     },
-    onError: (e: any) => toast.error("Resend failed", { description: e?.message }),
+    onError: (e: any) => toast.error("Resend failed", { description: formatServerError(e) }),
   });
   const [cancelTarget, setCancelTarget] = useState<{ id: string; name: string } | null>(null);
   const cancel = useMutation({
@@ -117,7 +118,7 @@ function StaffPage() {
       qc.invalidateQueries({ queryKey: ["staff"] });
       setCancelTarget(null);
     },
-    onError: (e: any) => toast.error("Cancel failed", { description: e?.message }),
+    onError: (e: any) => toast.error("Cancel failed", { description: formatServerError(e) }),
   });
 
   if (!isAdmin) {

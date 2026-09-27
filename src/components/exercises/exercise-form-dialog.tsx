@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatServerError } from "@/lib/format-error";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -118,7 +119,7 @@ export function ExerciseFormDialog({ open, onOpenChange, initial, globalNames }:
       qc.invalidateQueries({ queryKey: ["exercises"] });
       onOpenChange(false);
     },
-    onError: (e: any) => toast.error("Save failed", { description: e?.message }),
+    onError: (e: any) => toast.error("Save failed", { description: formatServerError(e) }),
   });
 
   return (

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatServerError } from "@/lib/format-error";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2, Check } from "lucide-react";
@@ -49,7 +50,7 @@ export function AssignTrainersDialog({
       qc.invalidateQueries({ queryKey: ["member", memberId] });
       onOpenChange(false);
     },
-    onError: (e: any) => toast.error("Could not update trainers", { description: e?.message }),
+    onError: (e: any) => toast.error("Could not update trainers", { description: formatServerError(e) }),
   });
 
   function toggle(id: string) {

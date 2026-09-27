@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -173,7 +174,7 @@ function HomeSessionTab() {
       );
       setDone(true);
     },
-    onError: (e: any) => toast.error("Couldn't log your session", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't log your session", { description: formatServerError(e) }),
   });
 
   if (done) {

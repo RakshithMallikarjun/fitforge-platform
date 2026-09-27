@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -336,7 +337,7 @@ function WorkoutPlayer() {
       data: { planId: dayData.plan?.id ?? null, workoutDayId: dayData.day.id },
     })
       .then((r) => setLogId(r.logId))
-      .catch((e) => toast.error("Could not start session", { description: e?.message }));
+      .catch((e) => toast.error("Could not start session", { description: formatServerError(e) }));
   }, [dayData, logId, startLog]);
 
   // Seed empty set rows whenever exercises arrive.
@@ -428,7 +429,7 @@ function WorkoutPlayer() {
         throw err;
       }
     },
-    onError: (e: any) => toast.error("Could not save set", { description: e?.message }),
+    onError: (e: any) => toast.error("Could not save set", { description: formatServerError(e) }),
   });
 
   const completeMut = useMutation({
@@ -459,7 +460,7 @@ function WorkoutPlayer() {
         toast.success("Workout logged. Great work.");
       }
     },
-    onError: (e: any) => toast.error("Could not finish", { description: e?.message }),
+    onError: (e: any) => toast.error("Could not finish", { description: formatServerError(e) }),
   });
 
   function updateSet(exId: string, idx: number, patch: Partial<SetState>) {
@@ -821,7 +822,7 @@ function WorkoutPlayer() {
             setSwapOpen(false);
             await queryClient.invalidateQueries({ queryKey: ["workout-day", dayId] });
           } catch (e: any) {
-            toast.error("Could not substitute", { description: e?.message });
+            toast.error("Could not substitute", { description: formatServerError(e) });
           }
         }}
       />

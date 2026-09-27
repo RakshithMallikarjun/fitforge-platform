@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -72,7 +73,7 @@ function TemplatesPage() {
       setQuery("");
       if (r.assigned > 0) navigate({ to: "/admin/plans" });
     },
-    onError: (e: any) => toast.error("Bulk assign failed", { description: e?.message }),
+    onError: (e: any) => toast.error("Bulk assign failed", { description: formatServerError(e) }),
   });
 
   function toggle(id: string) {

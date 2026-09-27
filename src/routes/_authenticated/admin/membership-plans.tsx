@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatServerError } from "@/lib/format-error";
 import { AdminOnly } from "@/components/admin-only";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -85,7 +86,7 @@ function MembershipPlansPage() {
       invalidate();
     },
     onError: (e: any) =>
-      toast.error("Couldn't create the starter tiers", { description: e?.message }),
+      toast.error("Couldn't create the starter tiers", { description: formatServerError(e) }),
   });
 
   const archive = useMutation({
@@ -94,13 +95,13 @@ function MembershipPlansPage() {
       toast.success("Tier archived");
       invalidate();
     },
-    onError: (e: any) => toast.error("Couldn't archive the tier", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't archive the tier", { description: formatServerError(e) }),
   });
 
   const reorder = useMutation({
     mutationFn: (ids: string[]) => reorderPlans({ data: { ids } }),
     onSuccess: invalidate,
-    onError: (e: any) => toast.error("Couldn't reorder", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't reorder", { description: formatServerError(e) }),
   });
 
   const live = (plans ?? []).filter((p) => !p.archived_at);
@@ -272,14 +273,14 @@ function PlanCard({
       toast.success("Price saved");
       qc.invalidateQueries({ queryKey: ["membership-plans"] });
     },
-    onError: (e: any) => toast.error("Couldn't save the price", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't save the price", { description: formatServerError(e) }),
   });
 
   const clearPrice = useMutation({
     mutationFn: (period: (typeof BILLING_PERIODS)[number]) =>
       removePlanPrice({ data: { planId: plan.id, period } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["membership-plans"] }),
-    onError: (e: any) => toast.error("Couldn't remove the price", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't remove the price", { description: formatServerError(e) }),
   });
 
   return (
@@ -428,7 +429,7 @@ function PlanDialog({
       qc.invalidateQueries({ queryKey: ["membership-plans"] });
       onOpenChange(false);
     },
-    onError: (e: any) => toast.error("Couldn't save the tier", { description: e?.message }),
+    onError: (e: any) => toast.error("Couldn't save the tier", { description: formatServerError(e) }),
   });
 
   return (
