@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-export type MembershipStatus = "active" | "inactive" | "expiring" | "expired";
+export type MembershipStatus = "active" | "inactive" | "expiring" | "expired" | "none";
 
 export function getMembershipStatus(active: boolean, expiresAt?: string | null): MembershipStatus {
   if (!active) return "inactive";
@@ -19,6 +19,7 @@ const STYLES: Record<MembershipStatus, string> = {
   inactive: "bg-muted text-muted-foreground",
   expiring: "bg-secondary-soft text-secondary",
   expired: "bg-destructive/10 text-destructive",
+  none: "bg-muted text-muted-foreground",
 };
 
 const LABELS: Record<MembershipStatus, string> = {
@@ -26,6 +27,7 @@ const LABELS: Record<MembershipStatus, string> = {
   inactive: "Inactive",
   expiring: "Expiring soon",
   expired: "Expired",
+  none: "No membership",
 };
 
 export function StatusBadge({
