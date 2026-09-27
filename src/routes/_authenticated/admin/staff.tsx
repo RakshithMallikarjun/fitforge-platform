@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, ShieldCheck, UserCog, MoreHorizontal, UserX, UserCheck } from "lucide-react";
+import { Plus, ShieldCheck, UserCog, MoreHorizontal, UserX, UserCheck, Send, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { inviteStaffMember, listStaff, setStaffActive } from "@/lib/staff.functions";
+import {
+  cancelStaffInvite,
+  inviteStaffMember,
+  listStaff,
+  resendStaffInvite,
+  setStaffActive,
+} from "@/lib/staff.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatShortDate } from "@/lib/format-date";
 
@@ -93,6 +99,25 @@ function StaffPage() {
       setDeactivateTarget(null);
     },
     onError: (e: any) => toast.error("Action failed", { description: e?.message }),
+  });
+
+  const resend = useMutation({
+    mutationFn: (userId: string) => resendStaffInvite({ data: { userId } }),
+    onSuccess: () => {
+      toast.success("Invite resent");
+      qc.invalidateQueries({ queryKey: ["staff"] });
+    },
+    onError: (e: any) => toast.error("Resend failed", { description: e?.message }),
+  });
+  const [cancelTarget, setCancelTarget] = useState<{ id: string; name: string } | null>(null);
+  const cancel = useMutation({
+    mutationFn: (userId: string) => cancelStaffInvite({ data: { userId } }),
+    onSuccess: () => {
+      toast.success("Invite cancelled");
+      qc.invalidateQueries({ queryKey: ["staff"] });
+      setCancelTarget(null);
+    },
+    onError: (e: any) => toast.error("Cancel failed", { description: e?.message }),
   });
 
   if (!isAdmin) {
@@ -154,7 +179,18 @@ function StaffPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {u.active === false ? (
+                        {u.invited ? (
+                          <div className="flex flex-col gap-0.5">
+                            <Badge variant="outline" className="w-fit">
+                              Invited
+                            </Badge>
+                            {u.invited_at && (
+                              <span className="text-xs text-muted-foreground">
+                                sent {timeAgo(u.invited_at)}
+                              </span>
+                            )}
+                          </div>
+                        ) : u.active === false ? (
                           <Badge
                             variant="outline"
                             className="border-destructive/40 text-destructive"
@@ -175,7 +211,24 @@ function StaffPage() {
                               <MoreHorizontal className="h-4 w-4" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              {u.active === false ? (
+                              {u.invited ? (
+                                <>
+                                  <DropdownMenuItem
+                                    disabled={resend.isPending}
+                                    onClick={() => resend.mutate(u.id)}
+                                  >
+                                    <Send className="mr-2 h-4 w-4" /> Resend invite
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onClick={() =>
+                                      setCancelTarget({ id: u.id, name: u.display_name ?? u.email })
+                                    }
+                                  >
+                                    <XCircle className="mr-2 h-4 w-4" /> Cancel invite
+                                  </DropdownMenuItem>
+                                </>
+                              ) : u.active === false ? (
                                 <DropdownMenuItem
                                   onClick={() => setActive.mutate({ userId: u.id, active: true })}
                                 >
@@ -277,6 +330,35 @@ function StaffPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AlertDialog open={!!cancelTarget} onOpenChange={(v) => !v && setCancelTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel invite for {cancelTarget?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Their invite link stops working and they are removed from your team.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep invite</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={cancel.isPending}
+              onClick={() => cancelTarget && cancel.mutate(cancelTarget.id)}
+            >
+              {cancel.isPending ? "Cancelling…" : "Cancel invite"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
+}
+
+function timeAgo(iso: string): string {
+  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const h = Math.round(mins / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.round(h / 24);
+  return `${d} day${d === 1 ? "" : "s"} ago`;
 }
