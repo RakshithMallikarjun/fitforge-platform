@@ -204,6 +204,9 @@ test("gym admin manages membership tiers and reviews dues", async ({ page }) => 
   await expect(page.getByText(/overdue/i).first()).toBeVisible();
   await page.getByRole("button", { name: /reminder settings/i }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
+  // Must load real values, never hang on skeletons or show Forbidden.
+  await expect(page.getByText(/warn this many days before due/i)).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText(/forbidden/i)).toHaveCount(0);
   await page.keyboard.press("Escape");
 
   // Revenue report renders without a chart error.
