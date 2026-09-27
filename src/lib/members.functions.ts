@@ -455,7 +455,9 @@ export const inviteMembersBulk = createServerFn({ method: "POST" })
     const results: BulkRowResult[] = [];
     const seen = new Set<string>();
     for (const { row, member } of data.members) {
-      const email = String(member.email ?? "").trim().toLowerCase();
+      const email = String(member.email ?? "")
+        .trim()
+        .toLowerCase();
       const name = String(member.name ?? "").trim();
       const parsed = memberInputSchema.safeParse({ ...member, email, name });
       if (!parsed.success) {
