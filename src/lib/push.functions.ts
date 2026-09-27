@@ -86,3 +86,11 @@ export const getPushStatus = createServerFn({ method: "GET" })
       .maybeSingle();
     return { enabled: !!(data as any)?.push_subscription };
   });
+
+/** Public VAPID key from secrets, so the browser key always matches the private key. */
+export const getVapidPublicKey = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const key = process.env["VAPID_PUBLIC_KEY"];
+    return { key: key && key.length > 0 ? key : null };
+  });
