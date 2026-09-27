@@ -226,3 +226,24 @@ test("accept-invite shows the expired message for a used link", async ({ page })
   await page.goto("/accept-invite#error=access_denied&error_code=otp_expired");
   await expect(page.getByText(/expired or was already used/i)).toBeVisible();
 });
+
+test("front desk can search for a member without a camera", async ({ page }) => {
+  const staffEmail = process.env.SMOKE_STAFF_EMAIL;
+  const staffPassword = process.env.SMOKE_STAFF_PASSWORD;
+  test.skip(
+    !staffEmail || !staffPassword,
+    "SMOKE_STAFF_EMAIL / SMOKE_STAFF_PASSWORD not configured",
+  );
+
+  await page.goto("/auth");
+  await page.getByLabel(/email/i).fill(staffEmail!);
+  await page.getByLabel(/^password/i).fill(staffPassword!);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.waitForURL(/\/admin/, { timeout: 30_000 });
+
+  await page.goto("/admin/checkin");
+  await expect(page.getByRole("heading", { name: /recent check-ins/i })).toBeVisible();
+  await page.getByLabel(/find member/i).fill("a");
+  await page.getByLabel(/find member/i).fill("ab");
+  await expect(page.getByText(/row-level security/i)).toHaveCount(0);
+});

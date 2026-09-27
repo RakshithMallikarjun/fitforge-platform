@@ -192,6 +192,7 @@ export type Database = {
           id: string
           location_type: string | null
           member_id: string
+          recorded_by: string | null
         }
         Insert: {
           check_in_at?: string
@@ -200,6 +201,7 @@ export type Database = {
           id?: string
           location_type?: string | null
           member_id: string
+          recorded_by?: string | null
         }
         Update: {
           check_in_at?: string
@@ -208,6 +210,7 @@ export type Database = {
           id?: string
           location_type?: string | null
           member_id?: string
+          recorded_by?: string | null
         }
         Relationships: [
           {
