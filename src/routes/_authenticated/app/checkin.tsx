@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
-import { Home, Loader2, RefreshCw } from "lucide-react";
+import { Dumbbell, Home, Loader2, RefreshCw } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { issueCheckinToken, selfCheckin } from "@/lib/checkin.functions";
+import { getMyCheckinToday, issueCheckinToken, selfCheckin } from "@/lib/checkin.functions";
 import { useMembership } from "@/lib/membership-context";
 import { SponsoredSlot } from "@/components/ads/sponsored-card";
 
@@ -18,6 +19,13 @@ export const Route = createFileRoute("/_authenticated/app/checkin")({
 
 function CheckinPage() {
   const membership = useMembership();
+  const todayFn = useServerFn(getMyCheckinToday);
+  const today = useQuery({
+    queryKey: ["my-checkin-today"],
+    queryFn: () => todayFn(),
+    enabled: !membership?.expired,
+    retry: 1,
+  });
   if (membership?.expired) {
     return (
       <main className="mx-auto w-full max-w-lg px-5 py-8 text-center">
@@ -30,8 +38,33 @@ function CheckinPage() {
       </main>
     );
   }
+  if (today.isLoading) {
+    return (
+      <main className="mx-auto w-full max-w-lg space-y-4 px-5 py-8">
+        <Skeleton className="mx-auto h-8 w-40" />
+        <Skeleton className="h-64 w-full rounded-3xl" />
+      </main>
+    );
+  }
+  const existing = today.data?.checkin;
+  if (existing) {
+    return (
+      <main className="mx-auto w-full max-w-lg px-5 py-8">
+        <CheckedInToday
+          at={existing.at}
+          location={existing.location}
+          timeZone={today.data?.timeZone ?? "UTC"}
+        />
+      </main>
+    );
+  }
   return (
     <main className="mx-auto w-full max-w-lg px-5 py-8">
+      {today.isError && (
+        <p className="mb-4 rounded-2xl border border-border bg-muted px-3 py-2 text-center text-xs text-muted-foreground">
+          Couldn't check whether you're already checked in today.
+        </p>
+      )}
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-bold tracking-tight">Check in</h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
@@ -58,6 +91,41 @@ function CheckinPage() {
         </TabsContent>
       </Tabs>
     </main>
+  );
+}
+
+function CheckedInToday({
+  at,
+  location,
+  timeZone,
+}: {
+  at: string;
+  location: string;
+  timeZone: string;
+}) {
+  const navigate = useNavigate();
+  const isHome = location === "home";
+  const time = new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+  }).format(new Date(at));
+  return (
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-border bg-card p-6 text-center shadow-[var(--shadow-card)]">
+        <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary-soft text-primary">
+          {isHome ? <Home className="h-7 w-7" /> : <Dumbbell className="h-7 w-7" />}
+        </div>
+        <p className="mt-4 text-base font-semibold">
+          You're checked in for today — {isHome ? "Home" : "Gym"}, {time}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">Come back tomorrow for your next check-in.</p>
+      </div>
+      <SponsoredSlot placement="checkin_success" />
+      <Button className="w-full rounded-xl" onClick={() => navigate({ to: "/app" })}>
+        Back to home
+      </Button>
+    </div>
   );
 }
 
@@ -162,9 +230,8 @@ function GymQrTab() {
 }
 
 function HomeSessionTab() {
-  const navigate = useNavigate();
   const checkin = useServerFn(selfCheckin);
-  const [done, setDone] = useState(false);
+  const qc = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: () => checkin({ data: { locationType: "home" as const } }),
@@ -172,30 +239,10 @@ function HomeSessionTab() {
       toast.success(
         res?.alreadyCheckedIn ? "Today's session is already logged ✓" : "Home session logged ✓",
       );
-      setDone(true);
+      void qc.invalidateQueries({ queryKey: ["my-checkin-today"] });
     },
     onError: (e: any) => toast.error("Couldn't log your session", { description: formatServerError(e) }),
   });
-
-  if (done) {
-    return (
-      <div className="space-y-4">
-        <div className="rounded-3xl border border-border bg-card p-6 text-center shadow-[var(--shadow-card)]">
-          <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary-soft text-primary">
-            <Home className="h-7 w-7" />
-          </div>
-          <p className="mt-4 text-base font-semibold">You're checked in</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Today's home session is saved to your progress.
-          </p>
-        </div>
-        <SponsoredSlot placement="checkin_success" />
-        <Button className="w-full rounded-xl" onClick={() => navigate({ to: "/app" })}>
-          Back to home
-        </Button>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
