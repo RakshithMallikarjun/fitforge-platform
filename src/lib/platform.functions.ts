@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { getGymAuthRedirectUrl } from "@/lib/authRedirect";
 
 /**
  * Platform (site-owner) console data access.
@@ -415,19 +414,14 @@ async function inviteOwner(
   }
 
   const localPart = email.split("@")[0] ?? email;
-  const { data: invited, error: iErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-    data: { gym_slug: gym.slug, display_name: localPart },
-    redirectTo: getGymAuthRedirectUrl(gym, "/auth/callback"),
+  const { sendAccountInvite } = await import("@/lib/invites.server");
+  const { userId } = await sendAccountInvite({
+    email,
+    gymId,
+    role: "owner",
+    invitedByName: null,
+    displayName: localPart,
   });
-
-  if (iErr) {
-    const already = /already/i.test(iErr.message ?? "");
-    if (!(already && allowExisting)) {
-      throw new Error(iErr.message || "Could not send the invite email");
-    }
-  }
-
-  const userId = invited?.user?.id ?? existingUser?.id ?? null;
 
   if (userId) {
     // An owner is staff, not a member: drop the member profile the signup
