@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { getGymAuthRedirectUrl } from "@/lib/authRedirect";
 
 type Role = "admin" | "trainer" | "member";
 
@@ -343,29 +342,16 @@ async function assertAdmin(supabase: any, userId: string) {
   return gymId;
 }
 
-async function inviteOneMember(input: MemberInput, gymId: string) {
+async function inviteOneMember(input: MemberInput, gymId: string, inviterId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  // Need gym slug for handle_new_user trigger metadata + the invite redirect host
-  const { data: gym, error: gErr } = await supabaseAdmin
-    .from("gyms")
-    .select("slug, custom_domain")
-    .eq("id", gymId)
-    .maybeSingle();
-  if (gErr || !gym) throw new Error("Gym not found");
-
-  const { data: invited, error: invErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-    input.email,
-    {
-      data: {
-        gym_slug: gym.slug,
-        role: "member",
-        display_name: input.name,
-      },
-      redirectTo: getGymAuthRedirectUrl(gym, "/auth/callback"),
-    },
-  );
-  if (invErr || !invited.user) throw new Error(invErr?.message ?? "Invite failed");
-  const newId = invited.user.id;
+  const { sendAccountInvite, inviterName } = await import("@/lib/invites.server");
+  const { userId: newId } = await sendAccountInvite({
+    email: input.email,
+    gymId,
+    role: "member",
+    invitedByName: await inviterName(inviterId),
+    displayName: input.name,
+  });
 
   // Update user fields (trigger created the row already)
   await supabaseAdmin
@@ -396,7 +382,7 @@ export const inviteMember = createServerFn({ method: "POST" })
   .inputValidator((d: MemberInput) => memberInputSchema.parse(d))
   .handler(async ({ data, context }) => {
     const gymId = await assertAdmin(context.supabase, context.userId);
-    const id = await inviteOneMember(data, gymId);
+    const id = await inviteOneMember(data, gymId, context.userId);
     return { id };
   });
 
@@ -410,7 +396,7 @@ export const inviteMembersBulk = createServerFn({ method: "POST" })
     const results: { email: string; ok: boolean; error?: string }[] = [];
     for (const m of data.members) {
       try {
-        await inviteOneMember(m, gymId);
+        await inviteOneMember(m, gymId, context.userId);
         results.push({ email: m.email, ok: true });
       } catch (e: any) {
         results.push({ email: m.email, ok: false, error: e?.message ?? "Failed" });
@@ -580,23 +566,13 @@ export const resendMemberInvite = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!member || member.gym_id !== gymId) throw new Error("Member not found");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: gym } = await supabaseAdmin
-      .from("gyms")
-      .select("slug, custom_domain")
-      .eq("id", gymId)
-      .maybeSingle();
-    if (!gym) throw new Error("Gym not found");
-
-    const { data: existing } = await supabaseAdmin.auth.admin.getUserById(data.memberId);
-    if (existing?.user?.last_sign_in_at) {
-      throw new Error("This member has already signed in — send them a password reset instead.");
-    }
-
-    const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(member.email, {
-      data: { gym_slug: gym.slug, role: "member", display_name: member.display_name ?? undefined },
-      redirectTo: getGymAuthRedirectUrl(gym, "/auth/callback"),
+    const { sendAccountInvite, inviterName } = await import("@/lib/invites.server");
+    await sendAccountInvite({
+      email: member.email,
+      gymId,
+      role: "member",
+      invitedByName: await inviterName(context.userId),
+      displayName: member.display_name,
     });
-    if (error) throw new Error(error.message);
     return { ok: true, email: member.email };
   });

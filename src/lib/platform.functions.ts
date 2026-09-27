@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { getGymAuthRedirectUrl } from "@/lib/authRedirect";
 
 /**
  * Platform (site-owner) console data access.
@@ -415,19 +414,14 @@ async function inviteOwner(
   }
 
   const localPart = email.split("@")[0] ?? email;
-  const { data: invited, error: iErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-    data: { gym_slug: gym.slug, display_name: localPart },
-    redirectTo: getGymAuthRedirectUrl(gym, "/auth/callback"),
+  const { sendAccountInvite } = await import("@/lib/invites.server");
+  const { userId } = await sendAccountInvite({
+    email,
+    gymId,
+    role: "owner",
+    invitedByName: null,
+    displayName: localPart,
   });
-
-  if (iErr) {
-    const already = /already/i.test(iErr.message ?? "");
-    if (!(already && allowExisting)) {
-      throw new Error(iErr.message || "Could not send the invite email");
-    }
-  }
-
-  const userId = invited?.user?.id ?? existingUser?.id ?? null;
 
   if (userId) {
     // An owner is staff, not a member: drop the member profile the signup
@@ -509,3 +503,61 @@ export const createGym = createServerFn({ method: "POST" })
       }
     },
   );
+
+export type OwnerAccessStatus =
+  | { state: "claimed"; name: string; email: string; claimedAt: string }
+  | { state: "invited"; email: string; invitedAt: string | null }
+  | { state: "none" };
+
+/**
+ * Owner access state from the owner's auth record: "claimed" only once an
+ * admin of the gym has actually signed in (last_sign_in_at), never merely
+ * because the invite created the admin role.
+ */
+export const getOwnerAccessStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { gymId: string }) => z.object({ gymId: z.string().uuid() }).parse(input))
+  .handler(async ({ context, data: input }): Promise<OwnerAccessStatus> => {
+    // Authorisation gate: raises for non platform admins.
+    const { data: detail, error: dErr } = await context.supabase.rpc("platform_gym_detail", {
+      _gym_id: input.gymId,
+    });
+    if (dErr) fail(dErr);
+    const g = detail as {
+      pending_owner_email?: string | null;
+      owner_invited_at?: string | null;
+    } | null;
+    if (!g) throw new Error("Gym not found");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roleRows } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("gym_id", input.gymId)
+      .eq("role", "admin");
+    const ids = Array.from(new Set((roleRows ?? []).map((r) => r.user_id)));
+
+    let firstAdminEmail: string | null = null;
+    for (const id of ids) {
+      const { data: au } = await supabaseAdmin.auth.admin.getUserById(id);
+      const u = au?.user;
+      if (!u) continue;
+      firstAdminEmail ??= u.email ?? null;
+      if (u.last_sign_in_at) {
+        const { data: row } = await supabaseAdmin
+          .from("users")
+          .select("display_name")
+          .eq("id", id)
+          .maybeSingle();
+        return {
+          state: "claimed",
+          name: row?.display_name ?? u.email ?? "the owner",
+          email: u.email ?? "",
+          claimedAt: u.last_sign_in_at,
+        };
+      }
+    }
+    const email = g.pending_owner_email ?? firstAdminEmail;
+    if (email) return { state: "invited", email, invitedAt: g.owner_invited_at ?? null };
+    return { state: "none" };
+  });

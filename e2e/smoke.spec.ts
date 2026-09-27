@@ -218,3 +218,8 @@ test("auth callback shows a clear error for an expired link", async ({ page }) =
   await expect(page.getByRole("heading", { name: /this link didn't work/i })).toBeVisible();
   await expect(page.getByRole("link", { name: /send a new link/i })).toBeVisible();
 });
+
+test("accept-invite shows the expired message for a used link", async ({ page }) => {
+  await page.goto("/accept-invite#error=access_denied&error_code=otp_expired");
+  await expect(page.getByText(/expired or was already used/i)).toBeVisible();
+});

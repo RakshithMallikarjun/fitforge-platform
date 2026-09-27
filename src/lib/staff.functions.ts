@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { getGymAuthRedirectUrl } from "@/lib/authRedirect";
 
 type Role = "admin" | "trainer" | "member";
 
@@ -26,34 +25,28 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const gymId = await assertAdminGym(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { sendAccountInvite, inviterName } = await import("@/lib/invites.server");
+    const { userId } = await sendAccountInvite({
+      email: data.email,
+      gymId,
+      role: data.role,
+      invitedByName: await inviterName(context.userId),
+      displayName: data.displayName,
+    });
 
-    const { data: gym, error: gErr } = await supabaseAdmin
-      .from("gyms")
-      .select("slug, custom_domain")
-      .eq("id", gymId)
-      .maybeSingle();
-    if (gErr || !gym) throw new Error("Gym not found");
-
-    const { data: invited, error: invErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      data.email,
-      {
-        data: {
-          gym_slug: gym.slug,
-          role: data.role,
-          display_name: data.displayName,
-        },
-        redirectTo: getGymAuthRedirectUrl(gym, "/auth/callback"),
-      },
-    );
-    if (invErr || !invited.user) throw new Error(invErr?.message ?? "Invite failed");
-
-    // The handle_new_user trigger reads role from metadata, but enforce display_name
+    // The signup trigger always creates a member; staff get their real role here.
+    await supabaseAdmin.from("member_profiles").delete().eq("user_id", userId);
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", userId).eq("role", "member");
+    const { error: rErr } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: userId, gym_id: gymId, role: data.role });
+    if (rErr && !/duplicate key/i.test(rErr.message)) throw new Error(rErr.message);
     await supabaseAdmin
       .from("users")
-      .update({ display_name: data.displayName })
-      .eq("id", invited.user.id);
+      .update({ display_name: data.displayName, gym_id: gymId })
+      .eq("id", userId);
 
-    return { id: invited.user.id };
+    return { id: userId };
   });
 
 export const listStaff = createServerFn({ method: "GET" })
