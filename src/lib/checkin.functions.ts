@@ -7,7 +7,14 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { createHmac, timingSafeEqual } from "crypto";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  dateStringInZone,
+  resolveGymTimezone,
+  shiftDateString,
+  zonedDayStartISO,
+} from "@/lib/gym-date";
 
 const TOKEN_TTL_SECONDS = 5 * 60;
 
@@ -94,6 +101,7 @@ export const verifyAndCheckin = createServerFn({ method: "POST" })
       member_id: body.u,
       check_in_at: now.toISOString(),
       location_type: "gym",
+      recorded_by: userId,
     });
     const duplicate = isDuplicateCheckin(error as any);
     if (error && !duplicate) throw new Error(error.message);
@@ -119,7 +127,7 @@ export const verifyAndCheckin = createServerFn({ method: "POST" })
         upgradedFromHome = existing.location_type === "home";
         await supabase
           .from("attendance_logs")
-          .update({ location_type: "gym", check_in_at: now.toISOString() })
+          .update({ location_type: "gym", check_in_at: now.toISOString(), recorded_by: userId })
           .eq("id", existing.id);
       }
     }
@@ -136,16 +144,11 @@ export const verifyAndCheckin = createServerFn({ method: "POST" })
 /** Manual check-in from Member 360 (admin/trainer front desk). */
 export const logAttendanceManual = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { memberId: string }) => d)
+  .inputValidator((d: unknown) => z.object({ memberId: uuid }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const [{ data: me }, { data: roles }] = await Promise.all([
-      supabase.from("users").select("gym_id").eq("id", userId).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", userId),
-    ]);
-    const rs = new Set((roles ?? []).map((r: any) => r.role));
-    if (!rs.has("admin") && !rs.has("trainer")) throw new Error("Forbidden");
-    if (!me?.gym_id) throw new Error("No gym");
+    const { gymId } = await staffContext(supabase, userId);
+    const me = { gym_id: gymId };
 
     // The target member must belong to the caller's gym.
     const { data: member } = await supabase
@@ -161,6 +164,8 @@ export const logAttendanceManual = createServerFn({ method: "POST" })
       gym_id: me.gym_id,
       member_id: data.memberId,
       check_in_at: new Date().toISOString(),
+      location_type: "gym",
+      recorded_by: userId,
     });
     const duplicate = isDuplicateCheckin(error as any);
     if (error && !duplicate) throw new Error(error.message);
@@ -194,4 +199,161 @@ export const selfCheckin = createServerFn({ method: "POST" })
     const duplicate = isDuplicateCheckin(error as any);
     if (error && !duplicate) throw new Error(error.message);
     return { ok: true as const, locationType: data.locationType, alreadyCheckedIn: duplicate };
+  });
+
+const uuid = z.string().uuid();
+
+async function staffContext(supabase: any, userId: string) {
+  const [{ data: me }, { data: roles }] = await Promise.all([
+    supabase.from("users").select("gym_id").eq("id", userId).maybeSingle(),
+    supabase.from("user_roles").select("role, gym_id").eq("user_id", userId),
+  ]);
+  if (!me?.gym_id) throw new Error("No gym");
+  const rs = new Set(
+    (roles ?? []).filter((r: any) => r.gym_id === me.gym_id).map((r: any) => r.role),
+  );
+  if (!rs.has("admin") && !rs.has("trainer")) throw new Error("Forbidden");
+  return { gymId: me.gym_id as string, isAdmin: rs.has("admin") };
+}
+
+/** Member: today's check-in (gym-local day), if any. */
+export const getMyCheckinToday = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { timeZone } = await resolveGymTimezone(supabase, userId);
+    const today = dateStringInZone(timeZone);
+    const from = zonedDayStartISO(timeZone, today);
+    const to = zonedDayStartISO(timeZone, shiftDateString(today, 1));
+    const { data, error } = await supabase
+      .from("attendance_logs")
+      .select("check_in_at, location_type")
+      .eq("member_id", userId)
+      .gte("check_in_at", from)
+      .lt("check_in_at", to)
+      .order("check_in_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return {
+      checkin: data
+        ? { at: data.check_in_at as string, location: (data.location_type ?? "gym") as string }
+        : null,
+      timeZone,
+    };
+  });
+
+type MemberStatus = "active" | "expiring" | "expired" | "none";
+
+/** Front desk: find a member by name, email or phone. Trainers see assigned members only. */
+export const searchMembersForCheckin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ q: z.string().trim().min(2).max(80) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { gymId, isAdmin } = await staffContext(supabase, userId);
+    const term = data.q.replace(/[%_,()]/g, " ").trim();
+    if (!term) return { members: [] };
+
+    let allowed: string[] | null = null;
+    if (!isAdmin) {
+      const { data: a } = await supabase
+        .from("trainer_assignments")
+        .select("member_id")
+        .eq("trainer_id", userId)
+        .eq("gym_id", gymId)
+        .eq("active", true);
+      allowed = (a ?? []).map((r: any) => r.member_id);
+      if (allowed.length === 0) return { members: [] };
+    }
+
+    const { data: memberRoles } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("gym_id", gymId)
+      .eq("role", "member");
+    const memberIds = new Set((memberRoles ?? []).map((r: any) => r.user_id));
+
+    let query = supabase
+      .from("users")
+      .select("id, display_name, email, phone, photo_url")
+      .eq("gym_id", gymId)
+      .eq("active", true)
+      .or(`display_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`)
+      .limit(20);
+    if (allowed) query = query.in("id", allowed);
+    const { data: users, error } = await query;
+    if (error) throw new Error(error.message);
+    const rows = (users ?? []).filter((u: any) => memberIds.has(u.id));
+    const ids = rows.map((u: any) => u.id);
+
+    const { timeZone } = await resolveGymTimezone(supabase, userId);
+    const today = dateStringInZone(timeZone);
+    const soon = shiftDateString(today, 7);
+    const { data: profiles } = ids.length
+      ? await supabase
+          .from("member_profiles")
+          .select("user_id, membership_expires_at")
+          .in("user_id", ids)
+      : { data: [] as any[] };
+    const exp = new Map((profiles ?? []).map((p: any) => [p.user_id, p.membership_expires_at]));
+
+    return {
+      members: rows.map((u: any) => {
+        const e = exp.get(u.id) as string | null | undefined;
+        const status: MemberStatus = !e
+          ? "none"
+          : e < today
+            ? "expired"
+            : e <= soon
+              ? "expiring"
+              : "active";
+        return {
+          id: u.id as string,
+          name: (u.display_name || u.email) as string,
+          email: u.email as string,
+          phone: (u.phone ?? null) as string | null,
+          photoUrl: (u.photo_url ?? null) as string | null,
+          status,
+          expiresAt: e ?? null,
+        };
+      }),
+    };
+  });
+
+/** Front desk: today's check-ins with who recorded them. */
+export const listRecentCheckins = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { gymId } = await staffContext(supabase, userId);
+    const { timeZone } = await resolveGymTimezone(supabase, userId);
+    const from = zonedDayStartISO(timeZone, dateStringInZone(timeZone));
+    const { data, error } = await supabase
+      .from("attendance_logs")
+      .select("id, member_id, check_in_at, location_type, recorded_by")
+      .eq("gym_id", gymId)
+      .gte("check_in_at", from)
+      .order("check_in_at", { ascending: false })
+      .limit(25);
+    if (error) throw new Error(error.message);
+    const ids = Array.from(
+      new Set((data ?? []).flatMap((r: any) => [r.member_id, r.recorded_by].filter(Boolean))),
+    );
+    const { data: people } = ids.length
+      ? await supabase.from("users").select("id, display_name, email").in("id", ids)
+      : { data: [] as any[] };
+    const name = new Map((people ?? []).map((p: any) => [p.id, p.display_name || p.email]));
+    return {
+      checkins: (data ?? []).map((r: any) => ({
+        id: r.id as string,
+        at: r.check_in_at as string,
+        location: (r.location_type ?? "gym") as string,
+        member: (name.get(r.member_id) ?? "Member") as string,
+        recordedBy:
+          !r.recorded_by || r.recorded_by === r.member_id
+            ? "Self check-in"
+            : ((name.get(r.recorded_by) ?? "Staff") as string),
+      })),
+    };
   });
