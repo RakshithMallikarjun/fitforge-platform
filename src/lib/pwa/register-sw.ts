@@ -21,7 +21,11 @@ function refusedContext(): boolean {
     return true;
   }
   const host = window.location.hostname;
-  if (host === "localhost" || host.startsWith("id-preview--") || host.endsWith(".lovableproject.com"))
+  if (
+    host === "localhost" ||
+    host.startsWith("id-preview--") ||
+    host.endsWith(".lovableproject.com")
+  )
     return true;
   return new URLSearchParams(window.location.search).get("sw") === "off";
 }
@@ -63,9 +67,13 @@ function promptUpdate(worker: ServiceWorker) {
     action: {
       label: "Reload",
       onClick: () => {
-        navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload(), {
-          once: true,
-        });
+        navigator.serviceWorker.addEventListener(
+          "controllerchange",
+          () => window.location.reload(),
+          {
+            once: true,
+          },
+        );
         worker.postMessage({ type: "SKIP_WAITING" });
       },
     },
@@ -75,7 +83,8 @@ function promptUpdate(worker: ServiceWorker) {
 let started: Promise<ServiceWorkerRegistration | null> | null = null;
 
 export function registerSW(): Promise<ServiceWorkerRegistration | null> {
-  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return Promise.resolve(null);
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator))
+    return Promise.resolve(null);
   wireFlushHooks();
   if (started) return started;
   started = (async () => {

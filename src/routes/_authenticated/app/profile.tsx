@@ -278,9 +278,9 @@ function PushNotificationsSection() {
     ? "Not supported on this device"
     : !allowedHere
       ? "Open the app in its own tab to turn these on"
-    : !configured
-      ? "Push notifications aren't configured for this gym yet"
-      : "Workout & plan reminders";
+      : !configured
+        ? "Push notifications aren't configured for this gym yet"
+        : "Workout & plan reminders";
 
   return (
     <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">

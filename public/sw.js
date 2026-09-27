@@ -71,7 +71,8 @@ self.addEventListener("message", (event) => {
 
 function isHashedStatic(url) {
   if (url.origin !== self.location.origin) return false;
-  if (url.pathname.startsWith("/assets/")) return /\.(js|css|woff2?|ttf|png|svg|jpg|webp)$/.test(url.pathname);
+  if (url.pathname.startsWith("/assets/"))
+    return /\.(js|css|woff2?|ttf|png|svg|jpg|webp)$/.test(url.pathname);
   return url.pathname.startsWith("/icons/");
 }
 

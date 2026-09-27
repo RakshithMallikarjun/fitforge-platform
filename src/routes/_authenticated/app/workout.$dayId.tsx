@@ -304,7 +304,9 @@ function WorkoutPlayer() {
   useEffect(() => {
     const refresh = () => {
       setOnline(navigator.onLine);
-      void getQueuedSetCount().then(setQueuedSets).catch(() => {});
+      void getQueuedSetCount()
+        .then(setQueuedSets)
+        .catch(() => {});
     };
     refresh();
     window.addEventListener("online", refresh);

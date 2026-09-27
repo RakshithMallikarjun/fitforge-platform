@@ -128,11 +128,18 @@ export const sendMessage = createServerFn({ method: "POST" })
         .select("role")
         .eq("user_id", userId)
         .eq("gym_id", u.gym_id);
-      const isStaff = (senderRoles ?? []).some((r: any) => r.role === "admin" || r.role === "trainer");
+      const isStaff = (senderRoles ?? []).some(
+        (r: any) => r.role === "admin" || r.role === "trainer",
+      );
       if (isStaff) {
         const { notifyUserPush } = await import("./dues-push.server");
         const preview = body.length > 120 ? `${body.slice(0, 117)}…` : body;
-        await notifyUserPush(data.recipientId, "New message from your gym", preview, "/app/messages");
+        await notifyUserPush(
+          data.recipientId,
+          "New message from your gym",
+          preview,
+          "/app/messages",
+        );
       }
     } catch (e) {
       console.error("[messages] push error", e);
