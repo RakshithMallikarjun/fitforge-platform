@@ -396,7 +396,7 @@ function PaymentHistory() {
             {(data ?? []).map((p: PaymentRow) => (
               <tr key={p.memberId}>
                 <td className="py-4 pl-6 font-medium">{p.name}</td>
-                <td className="py-4 capitalize text-muted-foreground">{p.billingCycle ?? "—"}</td>
+                <td className="py-4 text-muted-foreground">{p.billingCycle ?? "—"}</td>
                 <td className="py-4 font-numeric font-semibold">
                   {p.amount === null ? "—" : p.amount.toLocaleString()}
                 </td>
@@ -412,7 +412,7 @@ function PaymentHistory() {
                         : "bg-secondary-soft text-secondary",
                     ].join(" ")}
                   >
-                    {p.confirmed ? "Paid" : "Pending"}
+                    {p.confirmed ? "Paid" : "Refunded"}
                   </span>
                 </td>
               </tr>

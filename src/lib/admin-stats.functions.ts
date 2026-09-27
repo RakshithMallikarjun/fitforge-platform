@@ -473,28 +473,31 @@ export const getRecentPayments = createServerFn({ method: "GET" })
     const gymId = (me as any)?.gym_id as string | null;
     if (!gymId) return [];
 
-    const { data: gymUsers } = await supabase
-      .from("users")
-      .select("id, display_name, email")
-      .eq("gym_id", gymId);
-    const ids = (gymUsers ?? []).map((u: any) => u.id as string);
-    if (!ids.length) return [];
-
-    const { data: profiles } = await supabase
-      .from("member_profiles")
-      .select("user_id, billing_cycle, last_payment_amount, last_payment_date, payment_confirmed")
-      .in("user_id", ids)
-      .not("last_payment_date", "is", null)
-      .order("last_payment_date", { ascending: false })
+    const { data: pays } = await supabase
+      .from("member_payments")
+      .select("member_id, plan_name_snapshot, period_snapshot, amount, paid_on, state, created_at")
+      .eq("gym_id", gymId)
+      .eq("kind", "payment")
+      .is("refund_of", null)
+      .order("created_at", { ascending: false })
       .limit(5);
-
+    const ids = [...new Set((pays ?? []).map((p: any) => p.member_id as string))];
+    const { data: gymUsers } = ids.length
+      ? await supabase.from("users").select("id, display_name, email").in("id", ids)
+      : { data: [] as any[] };
     const uMap = new Map((gymUsers ?? []).map((u: any) => [u.id, u.display_name ?? u.email]));
-    return (profiles ?? []).map((p: any) => ({
-      memberId: p.user_id,
-      name: uMap.get(p.user_id) ?? "Unknown",
-      billingCycle: p.billing_cycle ?? null,
-      amount: p.last_payment_amount === null ? null : Number(p.last_payment_amount),
-      date: p.last_payment_date ?? null,
-      confirmed: !!p.payment_confirmed,
+    const LABEL: Record<string, string> = {
+      monthly: "Monthly",
+      quarterly: "Quarterly",
+      half_yearly: "Half-yearly",
+      annual: "Annual",
+    };
+    return (pays ?? []).map((p: any) => ({
+      memberId: p.member_id,
+      name: uMap.get(p.member_id) ?? "Unknown",
+      billingCycle: `${p.plan_name_snapshot} · ${LABEL[p.period_snapshot] ?? p.period_snapshot}`,
+      amount: Number(p.amount),
+      date: p.paid_on,
+      confirmed: p.state === "recorded",
     }));
   });

@@ -4,8 +4,8 @@
  * shell, so every surface counts and labels the same thing.
  *
  *   Active account    = users.active = true
- *   Active membership = active account AND (membership_expires_at IS NULL OR
- *                       membership_expires_at >= today in the gym's timezone)
+ *   Active membership = active account AND (no ledger end date OR latest
+ *                       member_subscriptions.ends_on >= today in the gym's timezone)
  */
 
 export const ACTIVE_MEMBERSHIP_DEFINITION =
