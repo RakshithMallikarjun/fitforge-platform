@@ -24,7 +24,6 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
   .inputValidator((d: z.infer<typeof staffInputSchema>) => staffInputSchema.parse(d))
   .handler(async ({ data, context }) => {
     const gymId = await assertAdminGym(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { sendAccountInvite, inviterName } = await import("@/lib/invites.server");
     const { userId } = await sendAccountInvite({
       email: data.email,
