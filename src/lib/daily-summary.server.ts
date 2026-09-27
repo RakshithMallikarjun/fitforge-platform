@@ -20,6 +20,7 @@ type Activity = {
   new_count: number;
   renewal_count: number;
   refund_count: number;
+  adjustment_count?: number;
   new: any[];
   renewals: any[];
   refunds: any[];

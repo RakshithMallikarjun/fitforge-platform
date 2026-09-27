@@ -247,3 +247,13 @@ test("front desk can search for a member without a camera", async ({ page }) => 
   await page.getByLabel(/find member/i).fill("ab");
   await expect(page.getByText(/row-level security/i)).toHaveCount(0);
 });
+
+test("member profile offers ledger-backed Adjust expiry (admin)", async ({ page }) => {
+  test.skip(!process.env.E2E_ADMIN_EMAIL, "needs admin credentials");
+  await page.goto("/admin/members");
+  const first = page.locator("table tbody tr a").first();
+  test.skip((await first.count()) === 0, "no members");
+  await first.click();
+  await expect(page.getByRole("button", { name: /Adjust expiry/i })).toBeVisible();
+  await expect(page.getByText(/Membership type/i)).toHaveCount(0);
+});
