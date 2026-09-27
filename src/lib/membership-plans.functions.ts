@@ -397,6 +397,7 @@ export type MemberPayment = {
   reference: string | null;
   note: string | null;
   refund_of: string | null;
+  kind: "payment" | "adjustment";
   recorded_by_name: string | null;
 };
 
@@ -1040,6 +1041,7 @@ export const sendDailySummaryNow = createServerFn({ method: "POST" })
 // =================== member-facing ===================
 
 export type MyMembership = {
+  legacy: boolean;
   plan_name: string | null;
   badge_color: string | null;
   features: string[];
@@ -1056,6 +1058,8 @@ export type MyMembership = {
     covers_from: string;
     covers_to: string;
     method: PaymentMethod;
+    kind: "payment" | "adjustment";
+    note: string | null;
   }[];
   currency: string;
   today: string;
@@ -1071,22 +1075,25 @@ export const getMyMembership = createServerFn({ method: "GET" })
       supabase
         .from("member_subscriptions")
         .select(
-          "plan_id, plan_name_snapshot, period, ends_on, state, membership_plans(badge_color, features)",
+          "plan_id, plan_name_snapshot, period, ends_on, state, source, membership_plans(badge_color, features)",
         )
         .eq("member_id", userId)
         .order("ends_on", { ascending: false }),
       supabase
         .from("member_payments")
         .select(
-          "id, paid_on, amount, currency, plan_name_snapshot, period_snapshot, covers_from, covers_to, method",
+          "id, paid_on, amount, currency, plan_name_snapshot, period_snapshot, covers_from, covers_to, method, kind, note",
         )
         .eq("member_id", userId)
         .order("paid_on", { ascending: false })
         .limit(30),
     ]);
 
-    const active = ((subs ?? []) as any[]).find((s) => s.state === "active") ?? null;
+    // Same rule as staff screens: the latest active or lapsed ledger row.
+    const active =
+      ((subs ?? []) as any[]).find((s) => s.state === "active" || s.state === "expired") ?? null;
     return {
+      legacy: active?.source === "imported",
       plan_name: active?.plan_name_snapshot ?? null,
       badge_color: active?.membership_plans?.badge_color ?? null,
       features: active?.membership_plans?.features ?? [],
@@ -1097,4 +1104,28 @@ export const getMyMembership = createServerFn({ method: "GET" })
       currency,
       today: dateStringInZone(timeZone),
     };
+  });
+
+/** Admin-only expiry change, written into the payment ledger as an adjustment. */
+export const adjustMemberExpiry = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        memberId: uuid,
+        endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a valid date"),
+        reason: z.string().trim().min(3, "Give a reason").max(300),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await requireGymRole(supabase, userId, ["admin"]);
+    const { data: res, error } = await supabase.rpc("adjust_member_expiry", {
+      _member_id: data.memberId,
+      _ends_on: data.endsOn,
+      _reason: data.reason,
+    });
+    if (error) fail(error);
+    return res as { payment_id: string; previous_ends_on: string; ends_on: string };
   });

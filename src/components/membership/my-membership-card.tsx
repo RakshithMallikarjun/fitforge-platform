@@ -32,7 +32,7 @@ export function MyMembershipCard() {
         </p>
       ) : !data?.plan_name ? (
         <p className="text-sm text-muted-foreground">
-          You're not on a membership plan yet. Ask the gym desk to set you up.
+          No membership yet. Ask the gym desk to set you up.
         </p>
       ) : (
         <div className="space-y-3">
@@ -41,9 +41,14 @@ export function MyMembershipCard() {
               style={data.badge_color ? { backgroundColor: data.badge_color } : undefined}
               className="text-xs"
             >
-              {data.plan_name}
+              {data.legacy ? "Imported membership" : data.plan_name}
             </Badge>
-            {data.period && (
+            {data.legacy && (
+              <Badge variant="outline" className="text-xs">
+                Legacy
+              </Badge>
+            )}
+            {data.period && !data.legacy && (
               <span className="text-xs text-muted-foreground">{PERIOD_LABEL[data.period]}</span>
             )}
           </div>
@@ -85,7 +90,9 @@ export function MyMembershipCard() {
                   <li key={p.id} className="flex items-center justify-between gap-3 px-3 py-2">
                     <div className="min-w-0">
                       <p className="truncate text-xs font-semibold">
-                        {p.plan_name_snapshot} · {PERIOD_LABEL[p.period_snapshot]}
+                        {p.kind === "adjustment"
+                          ? `Expiry adjusted${p.note ? ` · ${p.note}` : ""}`
+                          : `${p.plan_name_snapshot} · ${PERIOD_LABEL[p.period_snapshot]}`}
                       </p>
                       <p className="truncate text-[11px] text-muted-foreground">
                         {formatShortDate(p.covers_from)} – {formatShortDate(p.covers_to)}
@@ -93,7 +100,9 @@ export function MyMembershipCard() {
                     </div>
                     <div className="shrink-0 text-right">
                       <p className="text-xs font-semibold">
-                        {formatMoney(p.amount, p.currency ?? data.currency)}
+                        {p.kind === "adjustment"
+                          ? "Adjustment"
+                          : formatMoney(p.amount, p.currency ?? data.currency)}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
                         {formatShortDate(p.paid_on)}

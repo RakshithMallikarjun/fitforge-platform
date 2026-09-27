@@ -59,7 +59,6 @@ function PlanView() {
               </p>
               <p className="truncate text-xs text-muted-foreground">
                 {plan.users?.email}
-                {plan.membership_type ? ` · ${plan.membership_type}` : ""}
               </p>
             </div>
             <span className="text-xs text-primary">View profile →</span>

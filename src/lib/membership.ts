@@ -4,8 +4,8 @@
  * shell, so every surface counts and labels the same thing.
  *
  *   Active account    = users.active = true
- *   Active membership = active account AND (membership_expires_at IS NULL OR
- *                       membership_expires_at >= today in the gym's timezone)
+ *   Active membership = active account AND (no ledger end date OR latest
+ *                       member_subscriptions.ends_on >= today in the gym's timezone)
  */
 
 export const ACTIVE_MEMBERSHIP_DEFINITION =
@@ -26,4 +26,30 @@ export function isMembershipExpired(
   todayInGymZone: string,
 ): boolean {
   return !isMembershipCurrent(membershipExpiresAt, todayInGymZone);
+}
+
+/** The one computed membership view, derived from the tier + payment ledger. */
+export type LedgerStatus = "none" | "active" | "expiring" | "expired" | "inactive";
+export type LedgerMembership = {
+  planName: string | null;
+  endsOn: string | null;
+  legacy: boolean;
+  status: LedgerStatus;
+};
+
+/** Same thresholds as Dues: "expiring" means within the gym's reminder lead days. */
+export function ledgerStatus(
+  accountActive: boolean,
+  endsOn: string | null,
+  today: string,
+  leadDays: number,
+): LedgerStatus {
+  if (!accountActive) return "inactive";
+  if (!endsOn) return "none";
+  if (endsOn < today) return "expired";
+  const days = Math.round(
+    (new Date(`${endsOn}T00:00:00Z`).getTime() - new Date(`${today}T00:00:00Z`).getTime()) /
+      86400000,
+  );
+  return days <= leadDays ? "expiring" : "active";
 }

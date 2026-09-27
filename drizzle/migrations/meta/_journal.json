@@ -169,6 +169,13 @@
       "when": 1790532572112,
       "tag": "0023_staff_attendance_checkin",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790533949140,
+      "tag": "0024_membership_ledger_single_source",
+      "breakpoints": true
     }
   ]
 }

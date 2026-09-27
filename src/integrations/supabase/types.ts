@@ -801,6 +801,7 @@ export type Database = {
           currency: string
           gym_id: string
           id: string
+          kind: string
           member_id: string
           method: Database["public"]["Enums"]["payment_method"]
           note: string | null
@@ -824,6 +825,7 @@ export type Database = {
           currency: string
           gym_id: string
           id?: string
+          kind?: string
           member_id: string
           method?: Database["public"]["Enums"]["payment_method"]
           note?: string | null
@@ -847,6 +849,7 @@ export type Database = {
           currency?: string
           gym_id?: string
           id?: string
+          kind?: string
           member_id?: string
           method?: Database["public"]["Enums"]["payment_method"]
           note?: string | null
@@ -973,8 +976,9 @@ export type Database = {
           id: string
           member_id: string
           period: Database["public"]["Enums"]["billing_period"]
-          plan_id: string
+          plan_id: string | null
           plan_name_snapshot: string
+          source: string
           started_on: string
           state: Database["public"]["Enums"]["subscription_state"]
           superseded_by: string | null
@@ -989,8 +993,9 @@ export type Database = {
           id?: string
           member_id: string
           period: Database["public"]["Enums"]["billing_period"]
-          plan_id: string
+          plan_id?: string | null
           plan_name_snapshot: string
+          source?: string
           started_on: string
           state?: Database["public"]["Enums"]["subscription_state"]
           superseded_by?: string | null
@@ -1005,8 +1010,9 @@ export type Database = {
           id?: string
           member_id?: string
           period?: Database["public"]["Enums"]["billing_period"]
-          plan_id?: string
+          plan_id?: string | null
           plan_name_snapshot?: string
+          source?: string
           started_on?: string
           state?: Database["public"]["Enums"]["subscription_state"]
           superseded_by?: string | null
@@ -1946,6 +1952,10 @@ export type Database = {
           image_path: string
           is_platform: boolean
         }[]
+      }
+      adjust_member_expiry: {
+        Args: { _ends_on: string; _member_id: string; _reason: string }
+        Returns: Json
       }
       attendance_buckets: {
         Args: { _end: string; _gym_id: string; _start: string }

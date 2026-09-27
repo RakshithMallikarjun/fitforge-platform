@@ -31,8 +31,8 @@ import {
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void };
 
-const TEMPLATE = `name,email,phone,goals,experience_level,medical_history,membership_type,membership_expires_at
-Jane Doe,jane@example.com,+15555550100,Build strength,beginner,None,Monthly,2026-12-31
+const TEMPLATE = `name,email,phone,goals,experience_level,medical_history
+Jane Doe,jane@example.com,+15555550100,Build strength,beginner,None
 `;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -61,8 +61,6 @@ function toMember(r: Record<string, string>): MemberInput {
     goals: r.goals?.trim() || null,
     experience_level: ["beginner", "intermediate", "advanced"].includes(lvl) ? (lvl as any) : null,
     medical_history: r.medical_history?.trim() || null,
-    membership_type: r.membership_type?.trim() || null,
-    membership_expires_at: r.membership_expires_at?.trim() || null,
   };
 }
 

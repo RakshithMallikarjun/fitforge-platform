@@ -21,14 +21,8 @@ export async function requireActiveMembership(supabase: any, userId: string): Pr
   const { timeZone } = await resolveGymTimezone(supabase, userId);
   const today = dateStringInZone(timeZone);
 
-  const { data: profile } = await supabase
-    .from("member_profiles")
-    .select("membership_expires_at")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  const expiresAt =
-    (profile as { membership_expires_at?: string | null } | null)?.membership_expires_at ?? null;
+  const { ledgerEndsOn } = await import("@/lib/membership-ledger.server");
+  const expiresAt = (await ledgerEndsOn(supabase, [userId])).get(userId) ?? null;
 
   if (isMembershipExpired(expiresAt, today)) throw new Error(MEMBERSHIP_EXPIRED_MESSAGE);
 }

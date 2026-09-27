@@ -64,7 +64,6 @@ import { BulkImportDialog } from "@/components/members/bulk-import-dialog";
 import { AssignTrainersDialog } from "@/components/members/assign-trainers-dialog";
 import {
   StatusBadge,
-  getMembershipStatus,
   type MembershipStatus,
 } from "@/components/members/status-badge";
 import { formatShortDate } from "@/lib/format-date";
@@ -136,7 +135,7 @@ function MembersPage() {
     const filtered = (members as any[]).filter((m) => {
       const name = (m.display_name ?? m.email ?? "").toLowerCase();
       if (q && !name.includes(q) && !(m.email ?? "").toLowerCase().includes(q)) return false;
-      const status = getMembershipStatus(m.active, m.profile?.membership_expires_at);
+      const status = (m.membership?.status ?? "none");
       if (statusFilter !== "all" && status !== statusFilter) return false;
       if (trainerFilter !== "all") {
         if (trainerFilter === "none" && m.trainers.length) return false;
@@ -157,8 +156,8 @@ function MembersPage() {
           bv = b.last_sign_in_at ?? "";
           break;
         case "status":
-          av = getMembershipStatus(a.active, a.profile?.membership_expires_at);
-          bv = getMembershipStatus(b.active, b.profile?.membership_expires_at);
+          av = (a.membership?.status ?? "none");
+          bv = (b.membership?.status ?? "none");
           break;
         default:
           av = (a.display_name ?? a.email ?? "").toLowerCase();
@@ -229,6 +228,7 @@ function MembersPage() {
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="expiring">Expiring soon</SelectItem>
               <SelectItem value="expired">Expired</SelectItem>
+              <SelectItem value="none">No membership</SelectItem>
               <SelectItem value="inactive">Inactive</SelectItem>
             </SelectContent>
           </Select>
@@ -305,7 +305,7 @@ function MembersPage() {
               </TableHeader>
               <TableBody>
                 {rows.map((m: any) => {
-                  const status = getMembershipStatus(m.active, m.profile?.membership_expires_at);
+                  const status = (m.membership?.status ?? "none");
                   const initials = (m.display_name ?? m.email ?? "??").slice(0, 2).toUpperCase();
                   return (
                     <TableRow key={m.id}>
@@ -338,10 +338,17 @@ function MembersPage() {
                         <StatusBadge status={status} />
                       </TableCell>
                       <TableCell className="text-xs">
-                        {m.profile?.membership_type ? (
-                          <span className="text-foreground">{m.profile.membership_type}</span>
+                        {m.membership?.planName ? (
+                          <span className="inline-flex items-center gap-1.5 text-foreground">
+                            {m.membership.legacy ? "Imported" : m.membership.planName}
+                            {m.membership.legacy && (
+                              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                                Legacy
+                              </span>
+                            )}
+                          </span>
                         ) : (
-                          <span className="text-muted-foreground">No tier</span>
+                          <span className="text-muted-foreground">No membership</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -367,12 +374,12 @@ function MembersPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-xs">
-                        {m.profile?.membership_expires_at ? (
+                        {m.membership?.endsOn ? (
                           <span className="text-foreground">
-                            {formatShortDate(m.profile.membership_expires_at)}
+                            {formatShortDate(m.membership.endsOn)}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground">No expiry</span>
+                          <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">

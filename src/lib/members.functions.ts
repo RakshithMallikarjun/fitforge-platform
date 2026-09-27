@@ -57,7 +57,7 @@ export const listMembers = createServerFn({ method: "GET" })
       supabase
         .from("member_profiles")
         .select(
-          "user_id, experience_level, membership_type, membership_expires_at, goals, health_notes, dob, gender",
+          "user_id, experience_level, goals, health_notes, dob, gender",
         )
         .in("user_id", memberIds),
       supabase
@@ -105,9 +105,12 @@ export const listMembers = createServerFn({ method: "GET" })
     // silence unused-var lint
     void signPhotoValue;
 
+    const { ledgerMemberships } = await import("./membership-ledger.server");
+    const ledger = await ledgerMemberships(supabase, gymId, (users ?? []) as any[]);
     return signedUsers.map((u: any) => ({
       ...u,
       profile: profileMap.get(u.id) ?? null,
+      membership: ledger.get(u.id) ?? null,
       trainers: signedAssignMap.get(u.id) ?? [],
       last_sign_in_at: u.last_sign_in_at ?? null,
     }));
@@ -163,7 +166,11 @@ export const getMember = createServerFn({ method: "GET" })
       { data: attendance },
     ] = await Promise.all([
       supabase.from("users").select("*").eq("id", data.memberId).maybeSingle(),
-      supabase.from("member_profiles").select("*").eq("user_id", data.memberId).maybeSingle(),
+      supabase
+        .from("member_profiles")
+        .select("user_id, dob, gender, health_notes, goals, emergency_contact, experience_level, created_at")
+        .eq("user_id", data.memberId)
+        .maybeSingle(),
       supabase
         .from("trainer_assignments")
         .select("id, trainer_id, active, assigned_at")
@@ -247,9 +254,14 @@ export const getMember = createServerFn({ method: "GET" })
       currency = (gym as any)?.currency ?? null;
     }
 
+    const { ledgerMemberships } = await import("./membership-ledger.server");
+    const ledger = user
+      ? await ledgerMemberships(supabase, gymId, [{ id: (user as any).id, active: (user as any).active }])
+      : new Map();
     return {
       user: signedUser,
       profile,
+      membership: ledger.get(data.memberId) ?? null,
       trainers: signedTrainers,
       assessments: assessments ?? [],
       plans: plansWithCounts,
@@ -330,8 +342,6 @@ const memberInputSchema = z.object({
   experience_level: z.enum(["beginner", "intermediate", "advanced"]).optional().nullable(),
   medical_history: z.string().optional().nullable(),
   photo_url: z.string().optional().nullable(),
-  membership_type: z.string().optional().nullable(),
-  membership_expires_at: z.string().optional().nullable(),
 });
 export type MemberInput = z.infer<typeof memberInputSchema>;
 
@@ -387,8 +397,6 @@ async function inviteOneMember(input: MemberInput, gymId: string, inviterId: str
       goals: input.goals ?? null,
       experience_level: input.experience_level ?? null,
       health_notes: input.medical_history ?? null,
-      membership_type: input.membership_type ?? null,
-      membership_expires_at: input.membership_expires_at || null,
     })
     .eq("user_id", newId);
 
@@ -549,61 +557,10 @@ export const updateMember = createServerFn({ method: "POST" })
     if (p.goals !== undefined) profPatch.goals = p.goals;
     if (p.experience_level !== undefined) profPatch.experience_level = p.experience_level;
     if (p.medical_history !== undefined) profPatch.health_notes = p.medical_history;
-    if (p.membership_type !== undefined) profPatch.membership_type = p.membership_type;
-    if (p.membership_expires_at !== undefined)
-      profPatch.membership_expires_at = p.membership_expires_at || null;
     if (Object.keys(profPatch).length) {
       await supabase.from("member_profiles").update(profPatch).eq("user_id", data.memberId);
     }
     return { ok: true };
-  });
-
-const membershipUpdateSchema = z.object({
-  memberId: z.string(),
-  membershipType: z.string(),
-  membershipExpiresAt: z.string().nullable(),
-  billingCycle: z.enum(["monthly", "quarterly", "half_year", "annual"]).nullable().optional(),
-  lastPaymentDate: z.string().nullable().optional(),
-  paymentConfirmed: z.boolean().optional(),
-  paymentNotes: z.string().max(300).nullable().optional(),
-});
-
-export const updateMemberMembership = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: z.infer<typeof membershipUpdateSchema>) => membershipUpdateSchema.parse(d))
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { gymId, isAdmin, isTrainer } = await getRolesAndGym(supabase, userId);
-    if (!gymId) throw new Error("No gym");
-    if (!isAdmin) {
-      if (!isTrainer) throw new Error("Forbidden");
-      const { data: a } = await supabase
-        .from("trainer_assignments")
-        .select("id")
-        .eq("trainer_id", userId)
-        .eq("member_id", data.memberId)
-        .eq("active", true)
-        .maybeSingle();
-      if (!a) throw new Error("Forbidden");
-    }
-    const patch: any = {
-      membership_type: data.membershipType,
-      membership_expires_at: data.membershipExpiresAt || null,
-    };
-    if (data.billingCycle !== undefined) patch.billing_cycle = data.billingCycle;
-    // last_payment_amount is derived from the payment ledger, never from the caller.
-    if (data.lastPaymentDate !== undefined) patch.last_payment_date = data.lastPaymentDate || null;
-    if (data.paymentConfirmed !== undefined) patch.payment_confirmed = data.paymentConfirmed;
-    if (data.paymentNotes !== undefined) patch.payment_notes = data.paymentNotes;
-
-    const { data: updated, error } = await supabase
-      .from("member_profiles")
-      .update(patch)
-      .eq("user_id", data.memberId)
-      .select()
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    return updated;
   });
 
 export const setMemberActive = createServerFn({ method: "POST" })
