@@ -25,10 +25,10 @@ import { getMember } from "@/lib/members.functions";
 import { logAttendanceManual } from "@/lib/checkin.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { AssignTrainersDialog } from "@/components/members/assign-trainers-dialog";
-import { EditMembershipDialog } from "@/components/members/edit-membership-dialog";
+import { AdjustExpiryDialog } from "@/components/membership/adjust-expiry-dialog";
 import { RecordPaymentDialog } from "@/components/membership/record-payment-dialog";
 import { MemberBillingPanel } from "@/components/membership/member-billing-panel";
-import { StatusBadge, getMembershipStatus } from "@/components/members/status-badge";
+import { StatusBadge } from "@/components/members/status-badge";
 import { MemberNotes } from "@/components/members/member-notes";
 import { AssessmentsTab } from "@/components/assessments/assessments-tab";
 import { AttendanceHeatmap } from "@/components/members/attendance-heatmap";
@@ -84,7 +84,8 @@ function MemberProfile() {
   }
 
   const { user, profile, trainers, assessments, plans, attendance, currency } = data;
-  const status = getMembershipStatus(user.active, profile?.membership_expires_at);
+  const membership = data.membership;
+  const status = membership?.status ?? "none";
   const initials = (user.display_name ?? user.email ?? "??").slice(0, 2).toUpperCase();
 
   return (
@@ -138,7 +139,7 @@ function MemberProfile() {
                 className="rounded-lg"
                 onClick={() => setMembershipOpen(true)}
               >
-                Adjust end date
+                Adjust expiry
               </Button>
               <Button
                 variant="outline"
@@ -193,13 +194,22 @@ function MemberProfile() {
               <InfoCard
                 title="Membership"
                 rows={[
-                  ["Plan", profile?.membership_type ?? "—"],
                   [
-                    "Expires",
-                    profile?.membership_expires_at
-                      ? formatShortDate(profile.membership_expires_at)
-                      : "—",
+                    "Plan",
+                    membership?.planName ? (
+                      <span key="p" className="inline-flex items-center gap-1.5">
+                        {membership.legacy ? "Imported" : membership.planName}
+                        {membership.legacy && (
+                          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                            Legacy
+                          </span>
+                        )}
+                      </span>
+                    ) : (
+                      "No membership"
+                    ),
                   ],
+                  ["Expires", membership?.endsOn ? formatShortDate(membership.endsOn) : "—"],
                   ["Status", <StatusBadge key="s" status={status} />],
                 ]}
               />
@@ -425,16 +435,13 @@ function MemberProfile() {
             memberId={memberId}
             memberName={user.display_name ?? user.email}
           />
-          <EditMembershipDialog
+          <AdjustExpiryDialog
+            key={membership?.endsOn ?? "none"}
             open={membershipOpen}
             onOpenChange={setMembershipOpen}
             memberId={memberId}
-            currentType={profile?.membership_type ?? null}
-            currentExpiresAt={profile?.membership_expires_at ?? null}
-            currentBillingCycle={(profile as any)?.billing_cycle ?? null}
-            currentPaymentDate={(profile as any)?.last_payment_date ?? null}
-            currentPaymentConfirmed={(profile as any)?.payment_confirmed ?? false}
-            currentPaymentNotes={(profile as any)?.payment_notes ?? null}
+            memberName={user.display_name ?? user.email}
+            currentEndsOn={membership?.endsOn ?? null}
           />
         </>
       )}

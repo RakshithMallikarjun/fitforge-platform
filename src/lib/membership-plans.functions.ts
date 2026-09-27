@@ -1098,3 +1098,27 @@ export const getMyMembership = createServerFn({ method: "GET" })
       today: dateStringInZone(timeZone),
     };
   });
+
+/** Admin-only expiry change, written into the payment ledger as an adjustment. */
+export const adjustMemberExpiry = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        memberId: uuid,
+        endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a valid date"),
+        reason: z.string().trim().min(3, "Give a reason").max(300),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await requireGymRole(supabase, userId, ["admin"]);
+    const { data: res, error } = await supabase.rpc("adjust_member_expiry", {
+      _member_id: data.memberId,
+      _ends_on: data.endsOn,
+      _reason: data.reason,
+    });
+    if (error) fail(error);
+    return res as { payment_id: string; previous_ends_on: string; ends_on: string };
+  });
