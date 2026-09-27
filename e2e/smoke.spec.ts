@@ -188,15 +188,33 @@ test("gym admin manages membership tiers and reviews dues", async ({ page }) => 
   await page.getByRole("button", { name: /sign in/i }).click();
   await page.waitForURL(/\/admin/, { timeout: 30_000 });
 
-  // Tiers: the page loads and a new tier can be drafted.
+  // Tiers: create a disposable tier, save a price, and verify it survives reload.
   await page.goto("/admin/membership-plans");
   await expect(page.getByRole("heading", { name: /membership tiers/i })).toBeVisible();
   await page.getByRole("button", { name: /new tier/i }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.getByRole("button", { name: /save tier/i })).toBeDisabled();
-  await page.getByLabel("Name").fill(`Smoke ${Date.now().toString(36)}`);
+  const tierName = `Smoke ${Date.now().toString(36)}`;
+  await page.getByLabel("Name").fill(tierName);
   await expect(page.getByRole("button", { name: /save tier/i })).toBeEnabled();
-  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: /save tier/i }).click();
+
+  const tier = page.getByRole("article").filter({ hasText: tierName });
+  const monthlyPrice = tier.getByLabel(`Monthly price for ${tierName}`);
+  await monthlyPrice.fill("99");
+  await tier.getByRole("button", { name: `Save Monthly price for ${tierName}` }).click();
+  await expect(page.getByText("Price saved")).toBeVisible();
+  await page.reload();
+
+  const savedTier = page.getByRole("article").filter({ hasText: tierName });
+  await expect(savedTier.getByLabel(`Monthly price for ${tierName}`)).toHaveValue("99");
+  const sellMonthly = savedTier.getByRole("switch", { name: `Sell Monthly for ${tierName}` });
+  await expect(sellMonthly).toBeEnabled();
+  await expect(sellMonthly).toBeChecked();
+  await sellMonthly.click();
+  await expect(savedTier.getByText("Not on sale").first()).toBeVisible();
+  await sellMonthly.click();
+  await expect(sellMonthly).toBeChecked();
 
   // Dues: totals and the chase list render.
   await page.goto("/admin/dues");

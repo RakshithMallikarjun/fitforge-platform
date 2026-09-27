@@ -4,7 +4,7 @@ import { AdminOnly } from "@/components/admin-only";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Archive, ArrowDown, ArrowUp, Layers, Pencil, Plus, Sparkles } from "lucide-react";
+import { Archive, ArrowDown, ArrowUp, Check, Layers, Pencil, Plus, Sparkles } from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -263,14 +263,22 @@ function PlanCard({
   const qc = useQueryClient();
   const [draft, setDraft] = useState<Record<string, string>>({});
 
+  const clearDraft = (period: (typeof BILLING_PERIODS)[number]) => {
+    setDraft((current) => {
+      const { [period]: _removed, ...rest } = current;
+      return rest;
+    });
+  };
+
   const savePrice = useMutation({
     mutationFn: (vars: {
       period: (typeof BILLING_PERIODS)[number];
       price: number;
       isEnabled: boolean;
     }) => setPlanPrice({ data: { planId: plan.id, ...vars } }),
-    onSuccess: () => {
+    onSuccess: (_result, variables) => {
       toast.success("Price saved");
+      clearDraft(variables.period);
       qc.invalidateQueries({ queryKey: ["membership-plans"] });
     },
     onError: (e: any) => toast.error("Couldn't save the price", { description: formatServerError(e) }),
@@ -279,7 +287,11 @@ function PlanCard({
   const clearPrice = useMutation({
     mutationFn: (period: (typeof BILLING_PERIODS)[number]) =>
       removePlanPrice({ data: { planId: plan.id, period } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["membership-plans"] }),
+    onSuccess: (_result, period) => {
+      clearDraft(period);
+      toast.success("Price removed");
+      qc.invalidateQueries({ queryKey: ["membership-plans"] });
+    },
     onError: (e: any) => toast.error("Couldn't remove the price", { description: formatServerError(e) }),
   });
 
@@ -334,50 +346,74 @@ function PlanCard({
         {BILLING_PERIODS.map((period) => {
           const row = plan.prices.find((p) => p.period === period);
           const value = draft[period] ?? (row ? String(row.price) : "");
+          const parsed = value.trim() === "" ? null : Number(value);
+          const valid = parsed !== null && Number.isFinite(parsed) && parsed >= 0;
+          const changed = draft[period] !== undefined && parsed !== row?.price;
+          const pending =
+            (savePrice.isPending && savePrice.variables?.period === period) ||
+            (clearPrice.isPending && clearPrice.variables === period);
+
+          const persistPrice = () => {
+            if (value.trim() === "") {
+              if (row) clearPrice.mutate(period);
+              return;
+            }
+            if (!valid || parsed === null) {
+              toast.error("Enter a valid price");
+              return;
+            }
+            savePrice.mutate({ period, price: parsed, isEnabled: row?.is_enabled ?? true });
+          };
+
           return (
-            <div key={period} className="flex items-center gap-2">
-              <span className="w-24 shrink-0 text-xs text-muted-foreground">
-                {PERIOD_LABEL[period]}
-              </span>
+            <div key={period} className="grid grid-cols-[6rem_minmax(0,1fr)_2.5rem] items-center gap-2">
+              <div className="min-w-0">
+                <Label htmlFor={`${plan.id}-${period}-price`} className="text-xs text-muted-foreground">
+                  {PERIOD_LABEL[period]}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {row?.is_enabled ? "On sale" : "Not on sale"}
+                </p>
+              </div>
               {canEdit ? (
                 <>
-                  <Input
-                    className="h-9"
-                    inputMode="decimal"
-                    placeholder="Not sold"
-                    value={value}
-                    onChange={(e) => setDraft((d) => ({ ...d, [period]: e.target.value }))}
-                    onBlur={() => {
-                      const raw = (draft[period] ?? "").trim();
-                      if (draft[period] === undefined) return;
-                      if (raw === "") {
-                        if (row) clearPrice.mutate(period);
-                        setDraft((d) => {
-                          const { [period]: _drop, ...rest } = d;
-                          return rest;
-                        });
-                        return;
-                      }
-                      const n = Number(raw);
-                      if (!Number.isFinite(n) || n < 0) {
-                        toast.error("Enter a valid price");
-                        return;
-                      }
-                      if (row && n === row.price) return;
-                      savePrice.mutate({ period, price: n, isEnabled: row?.is_enabled ?? true });
-                    }}
-                  />
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Input
+                      id={`${plan.id}-${period}-price`}
+                      className="h-9 min-w-0"
+                      inputMode="decimal"
+                      aria-label={`${PERIOD_LABEL[period]} price for ${plan.name}`}
+                      placeholder="Not priced"
+                      value={value}
+                      onChange={(e) => setDraft((d) => ({ ...d, [period]: e.target.value }))}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && changed && !pending) persistPrice();
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 shrink-0"
+                      disabled={!changed || (!valid && value.trim() !== "") || pending}
+                      onClick={persistPrice}
+                      aria-label={`Save ${PERIOD_LABEL[period]} price for ${plan.name}`}
+                      title="Save price"
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <Switch
                     checked={!!row?.is_enabled}
-                    disabled={!row}
+                    disabled={!row || pending}
                     onCheckedChange={(v) =>
                       row && savePrice.mutate({ period, price: row.price, isEnabled: v })
                     }
-                    aria-label={`Sell ${PERIOD_LABEL[period]}`}
+                    aria-label={`Sell ${PERIOD_LABEL[period]} for ${plan.name}`}
                   />
                 </>
               ) : (
-                <span className="text-sm">
+                <span className="col-span-2 text-sm">
                   {row?.is_enabled ? formatMoney(row.price, plan.currency) : "Not sold"}
                 </span>
               )}
