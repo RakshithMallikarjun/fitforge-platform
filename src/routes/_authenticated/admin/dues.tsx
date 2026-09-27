@@ -382,10 +382,11 @@ function BillingSettingsDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const qc = useQueryClient();
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["billing-settings"],
     queryFn: () => getBillingSettings(),
     enabled: open,
+    retry: false,
   });
 
   const [form, setForm] = useState<{
@@ -450,10 +451,15 @@ function BillingSettingsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading || !state ? (
-          error ? (
-            <p className="text-sm text-destructive">We couldn't load these settings.</p>
-          ) : (
+        {error && !state ? (
+          <div className="grid gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+            <p>Couldn't load reminder settings. {(error as Error).message}</p>
+            <Button size="sm" variant="outline" disabled={isFetching} onClick={() => refetch()}>
+              {isFetching ? "Retrying…" : "Retry"}
+            </Button>
+          </div>
+        ) : isLoading || !state ? (
+          (
             <div className="space-y-3">
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
