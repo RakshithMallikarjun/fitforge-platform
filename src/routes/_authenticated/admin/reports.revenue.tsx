@@ -6,6 +6,7 @@ import { format, subMonths } from "date-fns";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { TrendingUp } from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -35,7 +36,8 @@ function RevenueReportPage() {
     };
   }, []);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
+    retry: false,
     queryKey: ["revenue-report", range.from, range.to],
     queryFn: () => getRevenueReport({ data: range }),
   });
@@ -53,7 +55,10 @@ function RevenueReportPage() {
           </div>
         ) : error ? (
           <p className="rounded-2xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-            We couldn't load the revenue report. Refresh to try again.
+            We couldn't load the revenue report. {(error as Error).message}{" "}
+            <Button size="sm" variant="outline" className="ml-2" onClick={() => refetch()}>
+              Retry
+            </Button>
           </p>
         ) : !data || data.monthly.length === 0 ? (
           <div className="grid place-items-center gap-2 rounded-2xl border border-border bg-card py-16 text-sm text-muted-foreground">

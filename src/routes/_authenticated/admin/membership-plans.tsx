@@ -67,7 +67,9 @@ function MembershipPlansPage() {
     data: plans,
     isLoading,
     error,
+    refetch,
   } = useQuery({
+    retry: false,
     queryKey: ["membership-plans"],
     queryFn: () => listPlans(),
   });
@@ -151,7 +153,10 @@ function MembershipPlansPage() {
           </div>
         ) : error ? (
           <p className="rounded-2xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-            We couldn't load your tiers. Refresh the page to try again.
+            We couldn't load your tiers. {(error as Error).message}{" "}
+            <Button size="sm" variant="outline" className="ml-2" onClick={() => refetch()}>
+              Retry
+            </Button>
           </p>
         ) : live.length === 0 ? (
           <div className="grid place-items-center gap-3 rounded-2xl border border-border bg-card py-16 text-center">
