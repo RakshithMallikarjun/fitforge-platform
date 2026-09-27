@@ -24,7 +24,6 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
   .inputValidator((d: z.infer<typeof staffInputSchema>) => staffInputSchema.parse(d))
   .handler(async ({ data, context }) => {
     const gymId = await assertAdminGym(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { sendAccountInvite, inviterName } = await import("@/lib/invites.server");
     const { userId } = await sendAccountInvite({
       email: data.email,
@@ -34,17 +33,13 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
       displayName: data.displayName,
     });
 
-    // The signup trigger always creates a member; staff get their real role here.
-    await supabaseAdmin.from("member_profiles").delete().eq("user_id", userId);
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", userId).eq("role", "member");
-    const { error: rErr } = await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: userId, gym_id: gymId, role: data.role });
-    if (rErr && !/duplicate key/i.test(rErr.message)) throw new Error(rErr.message);
-    await supabaseAdmin
-      .from("users")
-      .update({ display_name: data.displayName, gym_id: gymId })
-      .eq("id", userId);
+    // Role is written server-side in one transaction; the signup trigger only ever grants 'member'.
+    const { error: rErr } = await context.supabase.rpc("staff_assign_role", {
+      _user_id: userId,
+      _role: data.role,
+      _display_name: data.displayName,
+    });
+    if (rErr) throw new Error(rErr.message);
 
     return { id: userId };
   });
@@ -63,7 +58,7 @@ export const listStaff = createServerFn({ method: "GET" })
     if (!ids.length) return [];
     const { data: users } = await supabase
       .from("users")
-      .select("id, display_name, email, photo_url, active, created_at")
+      .select("id, display_name, email, photo_url, active, created_at, last_sign_in_at")
       .in("id", ids);
     const rolesByUser = new Map<string, Role[]>();
     for (const r of roleRows ?? []) {
@@ -71,7 +66,22 @@ export const listStaff = createServerFn({ method: "GET" })
       list.push(r.role as Role);
       rolesByUser.set(r.user_id, list);
     }
-    return (users ?? []).map((u: any) => ({ ...u, roles: rolesByUser.get(u.id) ?? [] }));
+    // Auth Admin API: invite timestamps and whether they ever signed in.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const auth = await Promise.all(
+      (users ?? []).map((u: any) => supabaseAdmin.auth.admin.getUserById(u.id)),
+    );
+    const authById = new Map(auth.map((a) => [a.data.user?.id, a.data.user]));
+    return (users ?? []).map((u: any) => {
+      const au: any = authById.get(u.id);
+      const signedIn = !!(au?.last_sign_in_at ?? u.last_sign_in_at);
+      return {
+        ...u,
+        roles: rolesByUser.get(u.id) ?? [],
+        invited: !signedIn,
+        invited_at: (au?.invited_at ?? au?.recovery_sent_at ?? u.created_at) as string | null,
+      };
+    });
   });
 
 export const setStaffActive = createServerFn({ method: "POST" })
@@ -91,6 +101,60 @@ export const setStaffActive = createServerFn({ method: "POST" })
       .from("users")
       .update({ active: data.active })
       .eq("id", data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+async function assertPendingStaff(supabase: any, gymId: string, targetId: string) {
+  const { data: target } = await supabase
+    .from("users")
+    .select("gym_id, email, display_name")
+    .eq("id", targetId)
+    .maybeSingle();
+  if (!target || target.gym_id !== gymId) throw new Error("Not found");
+  const { data: roles } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", targetId)
+    .eq("gym_id", gymId);
+  const staffRole = (roles ?? []).find((r: any) => r.role === "admin" || r.role === "trainer");
+  if (!staffRole) throw new Error("Not a staff member");
+  return { ...target, role: staffRole.role as "admin" | "trainer" };
+}
+
+const targetSchema = z.object({ userId: z.string().uuid() });
+
+export const resendStaffInvite = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: z.infer<typeof targetSchema>) => targetSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const gymId = await assertAdminGym(context.supabase, context.userId);
+    const t = await assertPendingStaff(context.supabase, gymId, data.userId);
+    const { sendAccountInvite, inviterName } = await import("@/lib/invites.server");
+    await sendAccountInvite({
+      email: t.email,
+      gymId,
+      role: t.role,
+      invitedByName: await inviterName(context.userId),
+      displayName: t.display_name,
+    });
+    return { ok: true };
+  });
+
+export const cancelStaffInvite = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: z.infer<typeof targetSchema>) => targetSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const gymId = await assertAdminGym(context.supabase, context.userId);
+    if (data.userId === context.userId) throw new Error("You cannot cancel yourself");
+    await assertPendingStaff(context.supabase, gymId, data.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: au } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    if (au?.user?.last_sign_in_at) {
+      throw new Error("They have already signed in — deactivate them instead.");
+    }
+    // Deleting the auth user cascades their roles and profile rows.
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
