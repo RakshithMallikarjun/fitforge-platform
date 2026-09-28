@@ -449,3 +449,118 @@ export const bulkAssignPlan = createServerFn({ method: "POST" })
 
     return { assigned, errors };
   });
+
+export type SessionExerciseLog = {
+  name: string;
+  substitutedFrom: string | null;
+  sets: { set_number: number; weight: number | null; reps: number | null }[];
+};
+export type PlanSession = {
+  id: string;
+  date: string;
+  day_label: string | null;
+  effort_rating: number | null;
+  notes: string | null;
+  prs: { exercise: string; weight: number; reps: number | null }[];
+  exercises: SessionExerciseLog[];
+};
+
+/**
+ * Completed sessions logged against a plan, newest first. Admins see any plan
+ * in their gym; trainers only plans of their assigned members (RLS + explicit check).
+ */
+export const listPlanSessions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ planId: z.string().uuid() }).parse(data))
+  .handler(async ({ context, data }): Promise<PlanSession[]> => {
+    const { supabase, userId } = context;
+    const { data: plan, error } = await supabase
+      .from("workout_plans")
+      .select(
+        "id, member_id, workout_days(id, workout_exercises(id, exercise_id, order, exercises(name)))",
+      )
+      .eq("id", data.planId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!plan?.member_id) return [];
+    const { isAdmin } = await getRolesAndGym(supabase, userId);
+    if (!isAdmin) {
+      const { data: ok } = await supabase.rpc("is_trainer_of", { _member_id: plan.member_id });
+      if (!ok) throw new Error("Forbidden");
+    }
+
+    const { data: logs, error: lErr } = await supabase
+      .from("workout_logs")
+      .select("id, date, effort_rating, notes, workout_day_id, workout_days:workout_day_id(day_label)")
+      .eq("plan_id", data.planId)
+      .not("completed_at", "is", null)
+      .order("date", { ascending: false })
+      .order("completed_at", { ascending: false })
+      .limit(50);
+    if (lErr) throw new Error(lErr.message);
+    const logIds = (logs ?? []).map((l: any) => l.id);
+    if (!logIds.length) return [];
+
+    const weAll = ((plan as any).workout_days ?? []).flatMap((d: any) =>
+      (d.workout_exercises ?? []).map((w: any) => ({ ...w, day_id: d.id })),
+    );
+    const [{ data: sets }, { data: prs }, { data: subs }] = await Promise.all([
+      supabase
+        .from("exercise_logs")
+        .select("log_id, exercise_id, set_number, weight, reps, completed, exercises(name)")
+        .in("log_id", logIds)
+        .order("set_number", { ascending: true }),
+      supabase
+        .from("personal_records")
+        .select("log_id, weight, reps, exercises(name)")
+        .in("log_id", logIds),
+      weAll.length
+        ? supabase
+            .from("workout_exercise_substitutions")
+            .select("original_workout_exercise_id, substitute_exercise_id, exercises:substitute_exercise_id(name)")
+            .eq("member_id", plan.member_id)
+            .in("original_workout_exercise_id", weAll.map((w: any) => w.id))
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+    const subByWe = new Map<string, any>((subs ?? []).map((s: any) => [s.original_workout_exercise_id, s]));
+
+    return (logs ?? []).map((l: any) => {
+      const logSets = (sets ?? []).filter((s: any) => s.log_id === l.id && s.completed !== false);
+      const used = new Set<string>();
+      const prescribed = weAll
+        .filter((w: any) => w.day_id === l.workout_day_id)
+        .sort((a: any, b: any) => a.order - b.order);
+      const exercises: SessionExerciseLog[] = prescribed.map((w: any) => {
+        const sub = subByWe.get(w.id);
+        const subSets = sub ? logSets.filter((s: any) => s.exercise_id === sub.substitute_exercise_id) : [];
+        const useSub = sub && subSets.length > 0;
+        const exId = useSub ? sub.substitute_exercise_id : w.exercise_id;
+        used.add(exId);
+        const mine = logSets.filter((s: any) => s.exercise_id === exId);
+        return {
+          name: useSub ? (sub.exercises?.name ?? "Exercise") : (w.exercises?.name ?? "Exercise"),
+          substitutedFrom: useSub ? (w.exercises?.name ?? null) : null,
+          sets: mine.map((s: any) => ({ set_number: s.set_number, weight: s.weight, reps: s.reps })),
+        };
+      });
+      // Anything logged that wasn't in the prescription (e.g. older swaps).
+      const extra = new Map<string, SessionExerciseLog>();
+      for (const s of logSets as any[]) {
+        if (used.has(s.exercise_id)) continue;
+        const e = extra.get(s.exercise_id) ?? { name: s.exercises?.name ?? "Exercise", substitutedFrom: null, sets: [] };
+        e.sets.push({ set_number: s.set_number, weight: s.weight, reps: s.reps });
+        extra.set(s.exercise_id, e);
+      }
+      return {
+        id: l.id,
+        date: l.date,
+        day_label: l.workout_days?.day_label ?? null,
+        effort_rating: l.effort_rating,
+        notes: l.notes,
+        prs: (prs ?? [])
+          .filter((p: any) => p.log_id === l.id)
+          .map((p: any) => ({ exercise: p.exercises?.name ?? "Exercise", weight: Number(p.weight), reps: p.reps })),
+        exercises: [...exercises, ...extra.values()],
+      };
+    });
+  });
