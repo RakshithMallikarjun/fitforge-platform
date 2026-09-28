@@ -27,7 +27,7 @@ export type BlockType = "warmup" | "main" | "cooldown";
 
 export type WorkoutDayData = {
   day: { id: string; day_label: string; order: number; plan_id: string; block_type: BlockType };
-  plan: { id: string; name: string } | null;
+  plan: { id: string; name: string; notes: string | null } | null;
   exercises: WorkoutDayExercise[];
 };
 
@@ -39,7 +39,7 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
     await requireActiveMembership(supabase, userId);
     const { data: day, error: dayErr } = await supabase
       .from("workout_days")
-      .select("id, day_label, order, plan_id, block_type, workout_plans:plan_id(id, name)")
+      .select("id, day_label, order, plan_id, block_type, workout_plans:plan_id(id, name, notes)")
       .eq("id", data.dayId)
       .maybeSingle();
     if (dayErr || !day) throw new Error(dayErr?.message ?? "Day not found");
@@ -100,7 +100,11 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
         block_type: ((day as any).block_type ?? "main") as BlockType,
       },
       plan: (day as any).workout_plans
-        ? { id: (day as any).workout_plans.id, name: (day as any).workout_plans.name }
+        ? {
+            id: (day as any).workout_plans.id,
+            name: (day as any).workout_plans.name,
+            notes: (day as any).workout_plans.notes ?? null,
+          }
         : null,
       exercises,
     };
@@ -347,6 +351,7 @@ export type WorkoutsBrowserData = {
   activePlan: {
     id: string;
     name: string;
+    notes: string | null;
     days: {
       id: string;
       day_label: string;
@@ -373,7 +378,7 @@ export const getWorkoutsBrowser = createServerFn({ method: "GET" })
     await requireActiveMembership(supabase, userId);
     const { data: plans } = await supabase
       .from("workout_plans")
-      .select("id, name")
+      .select("id, name, notes")
       .eq("member_id", userId)
       .eq("status", "active")
       .order("created_at", { ascending: false })
@@ -392,6 +397,7 @@ export const getWorkoutsBrowser = createServerFn({ method: "GET" })
       activePlan = {
         id: plans[0].id as string,
         name: plans[0].name as string,
+        notes: ((plans[0] as any).notes as string | null) ?? null,
         days: (days ?? []).map((d: any) => {
           const exs = d.workout_exercises ?? [];
           const minutes = Math.max(

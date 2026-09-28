@@ -636,6 +636,15 @@ function WorkoutPlayer() {
         <div className="w-9" />
       </div>
 
+      {currentIdx === 0 && dayData?.plan?.notes && (
+        <div className="rounded-2xl border border-border bg-card p-4 text-card-foreground">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+            Plan notes
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-sm">{dayData.plan.notes}</p>
+        </div>
+      )}
+
       {/* Progress bar */}
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div

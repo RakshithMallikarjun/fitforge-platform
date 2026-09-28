@@ -143,14 +143,14 @@ function MemberHome() {
 
       {/* Latest trainer note */}
       {data?.latestNote && (
-        <div className="rounded-[2rem] border border-border bg-secondary-soft p-5">
-          <div className="flex items-center gap-2 text-secondary">
+        <div className="rounded-[2rem] border border-border bg-card p-5 text-card-foreground shadow-[var(--shadow-card)]">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <MessageSquareQuote className="h-4 w-4" />
             <p className="text-xs font-semibold uppercase tracking-[0.15em]">
               From {data.latestNote.author ?? "your trainer"}
             </p>
           </div>
-          <p className="mt-2 text-sm leading-relaxed text-foreground">{data.latestNote.body}</p>
+          <p className="mt-2 text-sm leading-relaxed text-card-foreground">{data.latestNote.body}</p>
           <p className="mt-2 text-[11px] text-muted-foreground">
             {formatRelativeDay(data.latestNote.created_at)}
           </p>

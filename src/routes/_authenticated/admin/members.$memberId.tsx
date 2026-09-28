@@ -1,3 +1,4 @@
+import { ExpandablePlanSessions } from "@/components/plans/plan-sessions";
 import { useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -353,6 +354,7 @@ function MemberProfile() {
                               View plan
                             </Link>
                           </div>
+                          <ExpandablePlanSessions planId={p.id} />
                         </div>
                       </li>
                     );
