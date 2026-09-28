@@ -51,6 +51,14 @@ function WorkoutsPage() {
             <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Active plan</p>
             <p className="text-xs font-medium">{data.activePlan.name}</p>
           </div>
+          {data.activePlan.notes && (
+            <div className="rounded-2xl border border-border bg-card p-4 text-card-foreground">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                Plan notes
+              </p>
+              <p className="mt-1 whitespace-pre-wrap text-sm">{data.activePlan.notes}</p>
+            </div>
+          )}
           {(() => {
             const meta: Record<string, { label: string; emoji: string; badgeClass: string }> = {
               warmup: {

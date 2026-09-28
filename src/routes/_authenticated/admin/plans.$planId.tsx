@@ -5,6 +5,7 @@ import { GlassHeader } from "@/components/glass-header";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPlan } from "@/lib/plans.functions";
+import { PlanSessions } from "@/components/plans/plan-sessions";
 import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/plans/$planId")({
@@ -131,6 +132,13 @@ function PlanView() {
               </div>
             ))}
           </div>
+        )}
+
+        {plan.member_id && !plan.is_template && (
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold">Sessions</h2>
+            <PlanSessions planId={plan.id} />
+          </section>
         )}
       </main>
     </>
