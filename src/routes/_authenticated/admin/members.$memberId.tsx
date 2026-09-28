@@ -354,7 +354,7 @@ function MemberProfile() {
                               View plan
                             </Link>
                           </div>
-                          {p.member_id && <ExpandablePlanSessions planId={p.id} />}
+                          <ExpandablePlanSessions planId={p.id} />
                         </div>
                       </li>
                     );

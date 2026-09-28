@@ -547,7 +547,7 @@ export const listPlanSessions = createServerFn({ method: "GET" })
       const extra = new Map<string, SessionExerciseLog>();
       for (const s of logSets as any[]) {
         if (used.has(s.exercise_id)) continue;
-        const e = extra.get(s.exercise_id) ?? { name: s.exercises?.name ?? "Exercise", substitutedFrom: null, sets: [] };
+        const e: SessionExerciseLog = extra.get(s.exercise_id) ?? { name: s.exercises?.name ?? "Exercise", substitutedFrom: null, sets: [] as SessionExerciseLog["sets"] };
         e.sets.push({ set_number: s.set_number, weight: s.weight, reps: s.reps });
         extra.set(s.exercise_id, e);
       }
