@@ -114,22 +114,29 @@ export const getPlan = createServerFn({ method: "GET" })
     const { data: plan, error } = await supabase
       .from("workout_plans")
       .select(
-        "*, users:member_id(display_name, email, photo_url), workout_days(id, day_label, order, workout_exercises(id, exercise_id, sets, reps, rest_seconds, tempo, notes, order, exercises(id, name, thumbnail_url, muscle_groups, equipment)))",
+        "*, users:member_id(display_name, email, photo_url), workout_days(id, day_label, block_type, order, hidden_at, workout_exercises(id, exercise_id, sets, reps, rest_seconds, tempo, notes, order, hidden_at, exercises(id, name, thumbnail_url, muscle_groups, equipment)))",
       )
       .eq("id", data.planId)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!plan) throw new Error("Not found");
+    // Hidden rows are kept only so logged sessions stay linked; never show them.
     const days = (plan.workout_days ?? [])
+      .filter((d: any) => !d.hidden_at)
       .slice()
       .sort((a: any, b: any) => a.order - b.order)
       .map((d: any) => ({
         ...d,
         workout_exercises: (d.workout_exercises ?? [])
+          .filter((e: any) => !e.hidden_at)
           .slice()
           .sort((a: any, b: any) => a.order - b.order),
       }));
-    return { ...plan, workout_days: days } as any;
+    const { count } = await supabase
+      .from("workout_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("plan_id", data.planId);
+    return { ...plan, workout_days: days, session_count: count ?? 0 } as any;
   });
 
 const exerciseInputSchema = z.object({
@@ -178,6 +185,8 @@ export const createPlan = createServerFn({ method: "POST" })
         .maybeSingle();
       if (!target || (target as any).gym_id !== gymId)
         throw new Error("Member not found in your gym");
+      // A member has at most one active plan (enforced by a unique index too).
+      await archiveActivePlans(supabase, memberId);
     }
 
     const { data: plan, error: planErr } = await supabase
