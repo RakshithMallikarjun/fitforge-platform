@@ -233,7 +233,8 @@ export const createPlan = createServerFn({ method: "POST" })
   });
 
 /** Copies the source plan's days/exercises onto a freshly created plan. */
-async function copyPlanContents(supabase: any, planId: string, sortedDays: any[]) {
+async function copyPlanContents(supabase: any, planId: string, allDays: any[]) {
+  const sortedDays = allDays.filter((d: any) => !d.hidden_at);
   for (let i = 0; i < sortedDays.length; i++) {
     const d = sortedDays[i] as any;
     const { data: newDay, error: dErr } = await supabase
@@ -247,7 +248,9 @@ async function copyPlanContents(supabase: any, planId: string, sortedDays: any[]
       .select("id")
       .single();
     if (dErr) throw new Error(dErr.message);
-    const exs = (d.workout_exercises ?? []).slice().sort((a: any, b: any) => a.order - b.order);
+    const exs = (d.workout_exercises ?? [])
+      .filter((e: any) => !e.hidden_at)
+      .slice().sort((a: any, b: any) => a.order - b.order);
     if (exs.length) {
       const rows = exs.map((e: any, idx: number) => ({
         day_id: newDay.id,
@@ -285,7 +288,7 @@ export const assignPlan = createServerFn({ method: "POST" })
     const { data: src, error: srcErr } = await supabase
       .from("workout_plans")
       .select(
-        "name, duration_weeks, notes, workout_days(id, day_label, block_type, order, workout_exercises(exercise_id, sets, reps, rest_seconds, tempo, notes, order))",
+        "name, duration_weeks, notes, workout_days(id, day_label, block_type, order, hidden_at, workout_exercises(exercise_id, sets, reps, rest_seconds, tempo, notes, order, hidden_at))",
       )
       .eq("id", data.planId)
       .maybeSingle();
@@ -408,7 +411,7 @@ export const bulkAssignPlan = createServerFn({ method: "POST" })
     const { data: src, error: srcErr } = await supabase
       .from("workout_plans")
       .select(
-        "name, duration_weeks, notes, workout_days(id, day_label, block_type, order, workout_exercises(exercise_id, sets, reps, rest_seconds, tempo, notes, order))",
+        "name, duration_weeks, notes, workout_days(id, day_label, block_type, order, hidden_at, workout_exercises(exercise_id, sets, reps, rest_seconds, tempo, notes, order, hidden_at))",
       )
       .eq("id", data.planId)
       .maybeSingle();
