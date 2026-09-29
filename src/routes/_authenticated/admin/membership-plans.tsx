@@ -371,8 +371,18 @@ function PlanCard({
                 <Label htmlFor={`${plan.id}-${period}-price`} className="text-xs text-muted-foreground">
                   {PERIOD_LABEL[period]}
                 </Label>
-                <p className="text-xs text-muted-foreground">
-                  {row?.is_enabled ? "On sale" : "Not on sale"}
+                <p className="text-xs text-muted-foreground" aria-live="polite">
+                  {pending
+                    ? "Saving…"
+                    : (savePrice.isError && savePrice.variables?.period === period) ||
+                        (clearPrice.isError && clearPrice.variables === period)
+                      ? <span className="text-destructive">Not saved</span>
+                      : changed && !valid && value.trim() !== ""
+                        ? <span className="text-destructive">Invalid amount</span>
+                        : (savePrice.isSuccess && savePrice.variables?.period === period) ||
+                            (clearPrice.isSuccess && clearPrice.variables === period)
+                          ? <span className="text-primary">Saved ✓</span>
+                          : row?.is_enabled ? "On sale" : "Not on sale"}
                 </p>
               </div>
               {canEdit ? (
@@ -387,7 +397,11 @@ function PlanCard({
                       value={value}
                       onChange={(e) => setDraft((d) => ({ ...d, [period]: e.target.value }))}
                       onKeyDown={(event) => {
-                        if (event.key === "Enter" && changed && !pending) persistPrice();
+                        // Enter just leaves the field; onBlur does the single save.
+                        if (event.key === "Enter") event.currentTarget.blur();
+                      }}
+                      onBlur={() => {
+                        if (changed && !pending) persistPrice();
                       }}
                     />
                     <Button
