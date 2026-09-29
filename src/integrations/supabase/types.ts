@@ -396,6 +396,8 @@ export type Database = {
           thighs: number | null
           trainer_id: string | null
           unit_system: string
+          updated_at: string | null
+          updated_by: string | null
           vo2_max: number | null
           waist: number | null
           weight: number | null
@@ -423,6 +425,8 @@ export type Database = {
           thighs?: number | null
           trainer_id?: string | null
           unit_system?: string
+          updated_at?: string | null
+          updated_by?: string | null
           vo2_max?: number | null
           waist?: number | null
           weight?: number | null
@@ -450,6 +454,8 @@ export type Database = {
           thighs?: number | null
           trainer_id?: string | null
           unit_system?: string
+          updated_at?: string | null
+          updated_by?: string | null
           vo2_max?: number | null
           waist?: number | null
           weight?: number | null
@@ -899,6 +905,48 @@ export type Database = {
             columns: ["subscription_id"]
             isOneToOne: false
             referencedRelation: "member_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_profile_history: {
+        Row: {
+          changed_by: string | null
+          changes: Json
+          created_at: string
+          gym_id: string
+          id: string
+          member_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          changes: Json
+          created_at?: string
+          gym_id: string
+          id?: string
+          member_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          changes?: Json
+          created_at?: string
+          gym_id?: string
+          id?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_profile_history_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_profile_history_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1654,6 +1702,7 @@ export type Database = {
           block_type: string | null
           created_at: string
           day_label: string
+          hidden_at: string | null
           id: string
           order: number
           plan_id: string
@@ -1662,6 +1711,7 @@ export type Database = {
           block_type?: string | null
           created_at?: string
           day_label: string
+          hidden_at?: string | null
           id?: string
           order?: number
           plan_id: string
@@ -1670,6 +1720,7 @@ export type Database = {
           block_type?: string | null
           created_at?: string
           day_label?: string
+          hidden_at?: string | null
           id?: string
           order?: number
           plan_id?: string
@@ -1735,6 +1786,7 @@ export type Database = {
           created_at: string
           day_id: string
           exercise_id: string
+          hidden_at: string | null
           id: string
           notes: string | null
           order: number
@@ -1747,6 +1799,7 @@ export type Database = {
           created_at?: string
           day_id: string
           exercise_id: string
+          hidden_at?: string | null
           id?: string
           notes?: string | null
           order?: number
@@ -1759,6 +1812,7 @@ export type Database = {
           created_at?: string
           day_id?: string
           exercise_id?: string
+          hidden_at?: string | null
           id?: string
           notes?: string | null
           order?: number
@@ -2300,6 +2354,19 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      staff_update_member_profile: {
+        Args: {
+          _display_name: string
+          _dob: string
+          _experience_level: string
+          _gender: string
+          _goals: string
+          _health_notes: string
+          _member_id: string
+          _phone: string
+        }
+        Returns: Json
       }
       sync_member_membership: {
         Args: { _member_id: string }
