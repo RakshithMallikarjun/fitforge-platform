@@ -274,12 +274,12 @@ export const getMember = createServerFn({ method: "GET" })
 
 export const listMemberNotes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { memberId: string }) => d)
+  .inputValidator((d: unknown) => z.object({ memberId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const { data: notes } = await supabase
       .from("member_notes")
-      .select("id, body, created_at, author_id, shared_with_member")
+      .select("id, body, created_at, updated_at, author_id, shared_with_member")
       .eq("member_id", data.memberId)
       .order("created_at", { ascending: false });
     const ids = Array.from(new Set((notes ?? []).map((n: any) => n.author_id)));
@@ -287,12 +287,24 @@ export const listMemberNotes = createServerFn({ method: "GET" })
       ? await supabase.from("users").select("id, display_name, email").in("id", ids)
       : { data: [] as any[] };
     const map = new Map((authors ?? []).map((a: any) => [a.id, a]));
-    return (notes ?? []).map((n: any) => ({ ...n, author: map.get(n.author_id) ?? null }));
+    return (notes ?? []).map((n: any) => ({
+      ...n,
+      edited: new Date(n.updated_at).getTime() - new Date(n.created_at).getTime() > 2000,
+      author: map.get(n.author_id) ?? null,
+    }));
   });
 
 export const createMemberNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { memberId: string; body: string; sharedWithMember?: boolean }) => d)
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        memberId: z.string().uuid(),
+        body: z.string().trim().min(1).max(5000),
+        sharedWithMember: z.boolean().optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { gymId } = await getRolesAndGym(supabase, userId);
@@ -309,14 +321,50 @@ export const createMemberNote = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const setMemberNoteShared = createServerFn({ method: "POST" })
+async function loadNote(supabase: any, userId: string, id: string) {
+  const { data: note } = await supabase
+    .from("member_notes")
+    .select("id, author_id")
+    .eq("id", id)
+    .maybeSingle();
+  if (!note) throw new Error("Note not found");
+  const { isAdmin } = await getRolesAndGym(supabase, userId);
+  return { note, isAuthor: note.author_id === userId, isAdmin };
+}
+
+export const updateMemberNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; shared: boolean }) => d)
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        body: z.string().trim().min(1).max(5000),
+        shared: z.boolean(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    const { isAuthor } = await loadNote(supabase, userId, data.id);
+    if (!isAuthor) throw new Error("Only the author can edit this note");
     const { error } = await supabase
       .from("member_notes")
-      .update({ shared_with_member: data.shared })
+      .update({ body: data.body, shared_with_member: data.shared, updated_at: new Date().toISOString() })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const setMemberNoteShared = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), shared: z.boolean() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { isAuthor } = await loadNote(supabase, userId, data.id);
+    if (!isAuthor) throw new Error("Only the author can change sharing on this note");
+    const { error } = await supabase
+      .from("member_notes")
+      .update({ shared_with_member: data.shared, updated_at: new Date().toISOString() })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -324,12 +372,86 @@ export const setMemberNoteShared = createServerFn({ method: "POST" })
 
 export const deleteMemberNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => d)
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    const { isAuthor, isAdmin } = await loadNote(supabase, userId, data.id);
+    if (!isAuthor && !isAdmin) throw new Error("Only the author or an admin can delete this note");
     const { error } = await supabase.from("member_notes").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+// =================== PROFILE EDIT ===================
+
+const optText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .nullable()
+    .optional()
+    .transform((v) => (v ? v : null));
+
+export const updateMemberProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        memberId: z.string().uuid(),
+        name: z.string().trim().min(1).max(120),
+        phone: optText(30),
+        dob: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable()
+          .optional()
+          .transform((v) => v || null),
+        gender: optText(40),
+        experienceLevel: optText(40),
+        goals: optText(2000),
+        medicalHistory: optText(4000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: res, error } = await context.supabase.rpc("staff_update_member_profile", {
+      _member_id: data.memberId,
+      _display_name: data.name,
+      _phone: data.phone as string,
+      _dob: data.dob as string,
+      _gender: data.gender as string,
+      _experience_level: data.experienceLevel as string,
+      _goals: data.goals as string,
+      _health_notes: data.medicalHistory as string,
+    });
+    if (error) throw new Error(error.message);
+    return res as { changed: boolean };
+  });
+
+export const listMemberProfileHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ memberId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: rows, error } = await supabase
+      .from("member_profile_history")
+      .select("id, changes, created_at, changed_by")
+      .eq("member_id", data.memberId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (error) throw new Error(error.message);
+    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.changed_by).filter(Boolean)));
+    const { data: who } = ids.length
+      ? await supabase.from("users").select("id, display_name, email").in("id", ids)
+      : { data: [] as any[] };
+    const m = new Map((who ?? []).map((w: any) => [w.id, w.display_name ?? w.email]));
+    return (rows ?? []).map((r: any) => ({
+      id: r.id as string,
+      created_at: r.created_at as string,
+      fields: Object.keys(r.changes ?? {}),
+      by: (m.get(r.changed_by) as string | undefined) ?? null,
+    }));
   });
 
 // =================== WRITE / ADMIN ===================

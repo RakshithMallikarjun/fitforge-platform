@@ -50,6 +50,7 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
         "id, order, sets, reps, rest_seconds, notes, tempo, exercises(id, name, muscle_groups, video_url, thumbnail_url, description)",
       )
       .eq("day_id", data.dayId)
+      .is("hidden_at", null)
       .order("order", { ascending: true });
     if (exErr) throw new Error(exErr.message);
 
@@ -392,6 +393,8 @@ export const getWorkoutsBrowser = createServerFn({ method: "GET" })
           "id, day_label, order, block_type, workout_exercises(sets, rest_seconds, exercises(muscle_groups))",
         )
         .eq("plan_id", plans[0].id)
+        .is("hidden_at", null)
+        .is("workout_exercises.hidden_at", null)
         .order("order", { ascending: true });
 
       activePlan = {

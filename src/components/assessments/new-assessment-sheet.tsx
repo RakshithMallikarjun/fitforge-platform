@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { createAssessment } from "@/lib/assessments.functions";
+import { createAssessment, updateAssessment } from "@/lib/assessments.functions";
 import { uploadProgressPhoto } from "@/lib/progress.functions";
 
 const formSchema = z.object({
@@ -72,13 +72,17 @@ export function NewAssessmentSheet({
   memberId,
   open,
   onOpenChange,
+  existing,
 }: {
   memberId: string;
+  /** When set, the sheet edits this saved assessment instead of creating one. */
+  existing?: any | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
   const qc = useQueryClient();
   const createFn = useServerFn(createAssessment);
+  const updateFn = useServerFn(updateAssessment);
   const uploadPhotoFn = useServerFn(uploadProgressPhoto);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -90,6 +94,36 @@ export function NewAssessmentSheet({
       unit_system: "metric",
     },
   });
+
+  useEffect(() => {
+    if (!open) return;
+    if (existing) {
+      const str = (n: any) => (n === null || n === undefined ? "" : String(n));
+      form.reset({
+        date: existing.date,
+        unit_system: "metric",
+        weight: str(existing.weight),
+        height: str(existing.height),
+        body_fat_pct: str(existing.body_fat_pct),
+        muscle_mass: str(existing.muscle_mass),
+        chest: str(existing.chest),
+        waist: str(existing.waist),
+        hips: str(existing.hips),
+        arms: str(existing.arms),
+        thighs: str(existing.thighs),
+        vo2_max: str(existing.vo2_max),
+        resting_hr: str(existing.resting_hr),
+        blood_pressure: existing.blood_pressure ?? "",
+        flexibility: str(existing.flexibility),
+        bench_1rm: str(existing.bench_1rm),
+        squat_1rm: str(existing.squat_1rm),
+        deadlift_1rm: str(existing.deadlift_1rm),
+        notes: existing.notes ?? "",
+      });
+      setLastUnit("metric");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, existing?.id]);
 
   const unit = form.watch("unit_system");
   const weightStr = form.watch("weight");
@@ -142,7 +176,8 @@ export function NewAssessmentSheet({
   }, [unit, lastUnit, form]);
 
   const mutation = useMutation({
-    mutationFn: (payload: any) => createFn({ data: payload }),
+    mutationFn: (payload: any) =>
+      existing ? updateFn({ data: { ...payload, id: existing.id } }) : createFn({ data: payload }),
     onSuccess: async (inserted: any) => {
       if (photoFile && inserted?.id) {
         try {
@@ -165,8 +200,9 @@ export function NewAssessmentSheet({
           );
         }
       }
-      toast.success("Assessment recorded");
+      toast.success(existing ? "Assessment updated" : "Assessment recorded");
       qc.invalidateQueries({ queryKey: ["assessments", memberId] });
+      qc.invalidateQueries({ queryKey: ["progress"] });
       onOpenChange(false);
       form.reset({
         date: format(new Date(), "yyyy-MM-dd"),
@@ -222,8 +258,10 @@ export function NewAssessmentSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>New assessment</SheetTitle>
-          <SheetDescription>Record measurements and benchmarks.</SheetDescription>
+          <SheetTitle>{existing ? "Edit assessment" : "New assessment"}</SheetTitle>
+          <SheetDescription>
+            {existing ? "Correct the saved measurements." : "Record measurements and benchmarks."}
+          </SheetDescription>
         </SheetHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-6">

@@ -1,9 +1,28 @@
 import { Fragment, useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { format, differenceInDays } from "date-fns";
-import { AlertTriangle, ChevronDown, ChevronRight, Plus, FileText, Download } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  Plus,
+  FileText,
+  Download,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   LineChart,
   Line,
@@ -25,7 +44,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { listAssessments, exportAssessmentReport } from "@/lib/assessments.functions";
+import { listAssessments, exportAssessmentReport, deleteAssessment } from "@/lib/assessments.functions";
 import { NewAssessmentSheet } from "./new-assessment-sheet";
 
 export function AssessmentsTab({ memberId }: { memberId: string }) {
@@ -36,6 +55,19 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
     queryFn: () => fetchFn({ data: { memberId } }),
   });
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [toDelete, setToDelete] = useState<any | null>(null);
+  const qc = useQueryClient();
+  const deleteFn = useServerFn(deleteAssessment);
+  const del = useMutation({
+    mutationFn: (id: string) => deleteFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Assessment deleted");
+      qc.invalidateQueries({ queryKey: ["assessments", memberId] });
+      qc.invalidateQueries({ queryKey: ["progress"] });
+    },
+    onError: (e: any) => toast.error("Couldn't delete the assessment", { description: formatServerError(e) }),
+  });
   const [expanded, setExpanded] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
@@ -96,7 +128,13 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
           >
             <Download className="mr-1.5 h-4 w-4" /> {exporting ? "Generating…" : "Download PDF"}
           </Button>
-          <Button onClick={() => setOpen(true)} className="rounded-lg">
+          <Button
+            onClick={() => {
+              setEditing(null);
+              setOpen(true);
+            }}
+            className="rounded-lg"
+          >
             <Plus className="mr-1.5 h-4 w-4" /> New assessment
           </Button>
         </div>
@@ -135,6 +173,7 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
                 <TableHead>Body fat %</TableHead>
                 <TableHead>Muscle mass</TableHead>
                 <TableHead>Notes</TableHead>
+                <TableHead className="w-24 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -156,6 +195,9 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
                       </TableCell>
                       <TableCell className="font-medium">
                         {format(new Date(a.date), "PP")}
+                        {a.updated_at && (
+                          <span className="ml-2 text-xs font-normal text-muted-foreground">Edited</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {a.weight != null ? `${Number(a.weight).toFixed(1)} kg` : "—"}
@@ -170,11 +212,32 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
                       <TableCell className="max-w-[240px] truncate text-muted-foreground">
                         {a.notes ?? "—"}
                       </TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Edit assessment from ${a.date}`}
+                          onClick={() => {
+                            setEditing(a);
+                            setOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Delete assessment from ${a.date}`}
+                          onClick={() => setToDelete(a)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                     {isOpen && (
                       <TableRow key={`${a.id}-d`} className="bg-muted/40 hover:bg-muted/40">
                         <TableCell />
-                        <TableCell colSpan={6} className="py-4">
+                        <TableCell colSpan={7} className="py-4">
                           <DetailGrid a={a} />
                         </TableCell>
                       </TableRow>
@@ -228,7 +291,38 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
         </div>
       )}
 
-      <NewAssessmentSheet memberId={memberId} open={open} onOpenChange={setOpen} />
+      <NewAssessmentSheet
+        memberId={memberId}
+        open={open}
+        existing={editing}
+        onOpenChange={(v) => {
+          setOpen(v);
+          if (!v) setEditing(null);
+        }}
+      />
+      <AlertDialog open={!!toDelete} onOpenChange={(v) => !v && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete the assessment from {toDelete ? format(new Date(toDelete.date), "PP") : ""}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Its measurements are removed from the history and progress charts. This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (toDelete) del.mutate(toDelete.id);
+                setToDelete(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

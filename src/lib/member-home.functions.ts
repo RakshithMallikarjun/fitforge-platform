@@ -110,6 +110,7 @@ export const getMemberHome = createServerFn({ method: "GET" })
         .from("workout_days")
         .select("id, day_label, order")
         .eq("plan_id", activePlan.id)
+        .is("hidden_at", null)
         .order("order", { ascending: true });
       const dayList = days ?? [];
       if (dayList.length) {
@@ -126,7 +127,8 @@ export const getMemberHome = createServerFn({ method: "GET" })
         const { data: exs } = await supabase
           .from("workout_exercises")
           .select("sets, rest_seconds, exercises(muscle_groups)")
-          .eq("day_id", day.id);
+          .eq("day_id", day.id)
+          .is("hidden_at", null);
         const exercises = exs ?? [];
         const minutes = Math.max(
           15,
