@@ -576,3 +576,218 @@ export const listPlanSessions = createServerFn({ method: "GET" })
       };
     });
   });
+
+// =================== EDIT / ARCHIVE / DUPLICATE / DELETE ===================
+
+async function loadOwnPlan(supabase: any, userId: string, planId: string) {
+  const { gymId, isAdmin, isTrainer } = await getRolesAndGym(supabase, userId);
+  if (!gymId || (!isAdmin && !isTrainer)) throw new Error("Forbidden");
+  const { data: plan } = await supabase
+    .from("workout_plans")
+    .select("id, gym_id, member_id, is_template, status, name, duration_weeks, notes")
+    .eq("id", planId)
+    .maybeSingle();
+  if (!plan || plan.gym_id !== gymId) throw new Error("Plan not found in your gym");
+  if (!isAdmin && plan.member_id) {
+    const { data: ok } = await supabase.rpc("is_trainer_of", { _member_id: plan.member_id });
+    if (!ok) throw new Error("Forbidden");
+  }
+  return { plan, gymId };
+}
+
+const editExerciseSchema = exerciseInputSchema.extend({ id: z.string().uuid().optional() });
+const editDaySchema = dayInputSchema.extend({
+  id: z.string().uuid().optional(),
+  exercises: z.array(editExerciseSchema).default([]),
+});
+
+export const updatePlan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        planId: z.string().uuid(),
+        name: z.string().trim().min(1),
+        start_date: z.string().nullable().optional(),
+        duration_weeks: z.number().int().positive().nullable().optional(),
+        notes: z.string().nullable().optional(),
+        days: z.array(editDaySchema).min(1),
+      })
+      .parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await loadOwnPlan(supabase, userId, data.planId);
+
+    const { error: pErr } = await supabase
+      .from("workout_plans")
+      .update({
+        name: data.name,
+        start_date: data.start_date ?? null,
+        duration_weeks: data.duration_weeks ?? null,
+        notes: data.notes ?? null,
+      })
+      .eq("id", data.planId);
+    if (pErr) throw new Error(pErr.message);
+
+    const { data: existingDays, error: dErr } = await supabase
+      .from("workout_days")
+      .select("id, hidden_at, workout_exercises(id, exercise_id, hidden_at)")
+      .eq("plan_id", data.planId);
+    if (dErr) throw new Error(dErr.message);
+    const { data: logs } = await supabase
+      .from("workout_logs")
+      .select("id, workout_day_id, exercise_logs(exercise_id)")
+      .eq("plan_id", data.planId);
+    const loggedDays = new Set((logs ?? []).map((l: any) => l.workout_day_id).filter(Boolean));
+    const loggedPairs = new Set<string>();
+    for (const l of logs ?? [])
+      for (const e of (l as any).exercise_logs ?? [])
+        loggedPairs.add(`${(l as any).workout_day_id}:${e.exercise_id}`);
+
+    const now = new Date().toISOString();
+    const keptDayIds = new Set(data.days.map((d) => d.id).filter(Boolean) as string[]);
+    const existingById = new Map((existingDays ?? []).map((d: any) => [d.id, d]));
+
+    for (let i = 0; i < data.days.length; i++) {
+      const d = data.days[i]!;
+      let dayId = d.id && existingById.has(d.id) ? d.id : null;
+      if (dayId) {
+        const { error } = await supabase
+          .from("workout_days")
+          .update({ day_label: d.day_label, block_type: d.block_type, order: i, hidden_at: null })
+          .eq("id", dayId);
+        if (error) throw new Error(error.message);
+      } else {
+        const { data: nd, error } = await supabase
+          .from("workout_days")
+          .insert({ plan_id: data.planId, day_label: d.day_label, block_type: d.block_type, order: i })
+          .select("id")
+          .single();
+        if (error) throw new Error(error.message);
+        dayId = nd.id;
+      }
+      const prevEx: any[] = dayId && existingById.get(dayId)?.workout_exercises
+        ? existingById.get(dayId).workout_exercises
+        : [];
+      const keepEx = new Set(d.exercises.map((e) => e.id).filter(Boolean) as string[]);
+      for (let j = 0; j < d.exercises.length; j++) {
+        const e = d.exercises[j]!;
+        const row = {
+          exercise_id: e.exercise_id,
+          sets: e.sets ?? null,
+          reps: e.reps ?? null,
+          rest_seconds: e.rest_seconds ?? null,
+          tempo: e.tempo ?? null,
+          notes: e.notes ?? null,
+          order: j,
+        };
+        if (e.id && prevEx.some((p) => p.id === e.id)) {
+          const { error } = await supabase
+            .from("workout_exercises")
+            .update({ ...row, hidden_at: null })
+            .eq("id", e.id);
+          if (error) throw new Error(error.message);
+        } else {
+          const { error } = await supabase.from("workout_exercises").insert({ ...row, day_id: dayId });
+          if (error) throw new Error(error.message);
+        }
+      }
+      for (const p of prevEx) {
+        if (keepEx.has(p.id) || p.hidden_at) continue;
+        if (loggedPairs.has(`${dayId}:${p.exercise_id}`)) {
+          await supabase.from("workout_exercises").update({ hidden_at: now }).eq("id", p.id);
+        } else {
+          await supabase.from("workout_exercises").delete().eq("id", p.id);
+        }
+      }
+    }
+
+    for (const d of existingDays ?? []) {
+      if (keptDayIds.has((d as any).id) || (d as any).hidden_at) continue;
+      if (loggedDays.has((d as any).id)) {
+        await supabase.from("workout_days").update({ hidden_at: now }).eq("id", (d as any).id);
+      } else {
+        await supabase.from("workout_days").delete().eq("id", (d as any).id);
+      }
+    }
+    return { id: data.planId };
+  });
+
+export const setPlanArchived = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ planId: z.string().uuid(), archived: z.boolean() }).parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { plan } = await loadOwnPlan(supabase, userId, data.planId);
+    if (!data.archived && plan.member_id && !plan.is_template) {
+      // Unarchiving makes this the member's one active plan.
+      await archiveActivePlans(supabase, plan.member_id);
+    }
+    const { error } = await supabase
+      .from("workout_plans")
+      .update({ status: data.archived ? "archived" : "active" })
+      .eq("id", data.planId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const duplicatePlanAsTemplate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ planId: z.string().uuid() }).parse(data))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { plan, gymId } = await loadOwnPlan(supabase, userId, data.planId);
+    const { data: src, error: sErr } = await supabase
+      .from("workout_days")
+      .select(
+        "id, day_label, block_type, order, hidden_at, workout_exercises(exercise_id, sets, reps, rest_seconds, tempo, notes, order, hidden_at)",
+      )
+      .eq("plan_id", data.planId);
+    if (sErr) throw new Error(sErr.message);
+    const { data: tpl, error } = await supabase
+      .from("workout_plans")
+      .insert({
+        gym_id: gymId,
+        trainer_id: userId,
+        member_id: null,
+        name: plan.is_template ? `${plan.name} (copy)` : plan.name,
+        duration_weeks: plan.duration_weeks,
+        notes: plan.notes,
+        is_template: true,
+        status: "active",
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    try {
+      await copyPlanContents(
+        supabase,
+        tpl.id,
+        (src ?? []).slice().sort((a: any, b: any) => a.order - b.order),
+      );
+    } catch (e) {
+      await supabase.from("workout_plans").delete().eq("id", tpl.id);
+      throw e;
+    }
+    return { id: tpl.id };
+  });
+
+export const deletePlan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ planId: z.string().uuid() }).parse(data))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await loadOwnPlan(supabase, userId, data.planId);
+    const { count } = await supabase
+      .from("workout_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("plan_id", data.planId);
+    if ((count ?? 0) > 0)
+      throw new Error("This plan has logged sessions, so it can't be deleted. Archive it instead.");
+    const { error } = await supabase.from("workout_plans").delete().eq("id", data.planId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
