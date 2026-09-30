@@ -10,7 +10,7 @@ const assessmentInputSchema = z.object({
   unit_system: z.enum(["metric", "imperial"]).default("metric"),
   weight: num,
   height: num,
-  body_fat_pct: num,
+  body_fat_pct: z.number().finite().min(1).max(75).nullable().optional(),
   muscle_mass: num,
   chest: num,
   waist: num,
@@ -111,6 +111,58 @@ export const createAssessment = createServerFn({ method: "POST" })
       .single();
     if (error) throw error;
     return inserted;
+  });
+
+export const updateAssessment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    assessmentInputSchema.extend({ id: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row } = await supabase
+      .from("fitness_assessments")
+      .select("member_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!row || row.member_id !== data.member_id) throw new Error("Not found");
+    await assertCanWrite(supabase, userId, row.member_id);
+    let bmi: number | null = null;
+    if (data.weight && data.height && data.height > 0) {
+      const heightM = data.height / 100;
+      bmi = Number((data.weight / (heightM * heightM)).toFixed(2));
+    }
+    const { data: updated, error } = await supabase
+      .from("fitness_assessments")
+      .update({
+        date: data.date,
+        unit_system: data.unit_system,
+        weight: data.weight ?? null,
+        height: data.height ?? null,
+        bmi,
+        body_fat_pct: data.body_fat_pct ?? null,
+        muscle_mass: data.muscle_mass ?? null,
+        chest: data.chest ?? null,
+        waist: data.waist ?? null,
+        hips: data.hips ?? null,
+        arms: data.arms ?? null,
+        thighs: data.thighs ?? null,
+        vo2_max: data.vo2_max ?? null,
+        resting_hr: data.resting_hr ?? null,
+        blood_pressure: data.blood_pressure ?? null,
+        flexibility: data.flexibility ?? null,
+        bench_1rm: data.bench_1rm ?? null,
+        squat_1rm: data.squat_1rm ?? null,
+        deadlift_1rm: data.deadlift_1rm ?? null,
+        notes: data.notes ?? null,
+        updated_at: new Date().toISOString(),
+        updated_by: userId,
+      })
+      .eq("id", data.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return updated;
   });
 
 export const deleteAssessment = createServerFn({ method: "POST" })
