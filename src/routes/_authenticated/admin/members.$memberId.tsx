@@ -31,6 +31,7 @@ import { RecordPaymentDialog } from "@/components/membership/record-payment-dial
 import { MemberBillingPanel } from "@/components/membership/member-billing-panel";
 import { StatusBadge } from "@/components/members/status-badge";
 import { MemberNotes } from "@/components/members/member-notes";
+import { EditProfileDialog } from "@/components/members/edit-profile-dialog";
 import { AssessmentsTab } from "@/components/assessments/assessments-tab";
 import { AttendanceHeatmap } from "@/components/members/attendance-heatmap";
 import { ThreadView } from "@/components/messages/thread-view";
@@ -48,6 +49,7 @@ function MemberProfile() {
   const [assignOpen, setAssignOpen] = useState(false);
   const [membershipOpen, setMembershipOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const qc = useQueryClient();
   const logManual = useServerFn(logAttendanceManual);
 
@@ -129,6 +131,16 @@ function MemberProfile() {
               </span>
             </div>
           </div>
+          <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setEditOpen(true)}>
+            <Pencil className="mr-1.5 h-4 w-4" /> Edit profile
+          </Button>
+          <EditProfileDialog
+            memberId={memberId}
+            user={user}
+            profile={profile}
+            open={editOpen}
+            onOpenChange={setEditOpen}
+          />
           {isAdmin && (
             <div className="flex flex-wrap gap-2">
               <Button size="sm" className="rounded-lg" onClick={() => setPayOpen(true)}>
