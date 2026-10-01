@@ -143,16 +143,16 @@ export function MemberNotes({ memberId }: { memberId: string }) {
                       <div className="mt-2 space-y-2">
                         <Textarea
                           rows={3}
-                          value={editing.body}
-                          onChange={(e) => setEditing({ ...editing, body: e.target.value })}
+                          value={editing!.body}
+                          onChange={(e) => setEditing({ ...editing!, body: e.target.value })}
                           aria-label="Edit note"
                         />
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
                             <Switch
                               id={`edit-share-${n.id}`}
-                              checked={editing.shared}
-                              onCheckedChange={(v) => setEditing({ ...editing, shared: v })}
+                              checked={editing!.shared}
+                              onCheckedChange={(v) => setEditing({ ...editing!, shared: v })}
                             />
                             <Label htmlFor={`edit-share-${n.id}`} className="text-xs text-muted-foreground">
                               Share with member
@@ -164,8 +164,8 @@ export function MemberNotes({ memberId }: { memberId: string }) {
                             </Button>
                             <Button
                               size="sm"
-                              disabled={!editing.body.trim() || edit.isPending}
-                              onClick={() => edit.mutate(editing)}
+                              disabled={!editing!.body.trim() || edit.isPending}
+                              onClick={() => edit.mutate(editing!)}
                             >
                               {edit.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                               Save

@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { PlanActions } from "@/components/plans/plan-actions";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ClipboardList } from "lucide-react";
 import { GlassHeader } from "@/components/glass-header";
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/_authenticated/admin/plans/$planId")({
 
 function PlanView() {
   const { planId } = Route.useParams();
+  const navigate = useNavigate();
   const { data: plan, isLoading } = useQuery({
     queryKey: ["plan", planId],
     queryFn: () => getPlan({ data: { planId } }),
@@ -79,6 +81,15 @@ function PlanView() {
           {plan.duration_weeks && (
             <span className="text-sm text-muted-foreground">{plan.duration_weeks} weeks</span>
           )}
+          <div className="ml-auto">
+            <PlanActions
+              plan={plan}
+              sessionCount={plan.session_count}
+              afterDelete={() =>
+                navigate({ to: plan.is_template ? "/admin/templates" : "/admin/plans" })
+              }
+            />
+          </div>
         </div>
 
         {plan.notes && (

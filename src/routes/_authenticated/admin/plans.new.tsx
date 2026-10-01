@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -38,7 +38,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { listMembers } from "@/lib/members.functions";
-import { createPlan, getMemberSnapshot } from "@/lib/plans.functions";
+import { createPlan, getMemberSnapshot, getPlan, updatePlan } from "@/lib/plans.functions";
 import { suggestOverload, type ExerciseSuggestion } from "@/lib/overload.functions";
 import { ExercisePickerDialog } from "@/components/exercises/exercise-picker-dialog";
 import { AiPlanDialog } from "@/components/plans/ai-plan-dialog";
@@ -49,12 +49,14 @@ export const Route = createFileRoute("/_authenticated/admin/plans/new")({
   validateSearch: z.object({
     memberId: z.string().uuid().optional(),
     isTemplate: z.boolean().optional(),
+    editPlanId: z.string().uuid().optional(),
   }),
   component: PlanBuilder,
 });
 
 type ExerciseInput = {
   uid: string;
+  dbId?: string;
   exercise: ExerciseRow;
   sets: number;
   reps: string;
@@ -67,6 +69,7 @@ type BlockType = "warmup" | "main" | "cooldown";
 
 type DayInput = {
   uid: string;
+  dbId?: string;
   label: string;
   block_type: BlockType;
   exercises: ExerciseInput[];
@@ -113,6 +116,43 @@ function PlanBuilder() {
   ]);
   const [pickerForDay, setPickerForDay] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
+  const editId = search.editPlanId;
+  const qc = useQueryClient();
+  const existing = useQuery({
+    enabled: !!editId,
+    queryKey: ["plan", editId],
+    queryFn: () => getPlan({ data: { planId: editId! } }),
+  });
+  const [loadedId, setLoadedId] = useState<string | null>(null);
+  useEffect(() => {
+    const p = existing.data;
+    if (!p || loadedId === p.id) return;
+    setName(p.name ?? "");
+    setMemberId(p.member_id ?? "");
+    setStartDate(p.start_date ?? "");
+    setDurationWeeks(p.duration_weeks ? String(p.duration_weeks) : "");
+    setNotes(p.notes ?? "");
+    setIsTemplate(!!p.is_template);
+    setDays(
+      (p.workout_days ?? []).map((d: any) => ({
+        uid: uid(),
+        dbId: d.id,
+        label: d.day_label,
+        block_type: (d.block_type ?? "main") as BlockType,
+        exercises: (d.workout_exercises ?? []).map((e: any) => ({
+          uid: uid(),
+          dbId: e.id,
+          exercise: { ...(e.exercises ?? {}), id: e.exercise_id } as ExerciseRow,
+          sets: e.sets ?? 0,
+          reps: e.reps ?? "",
+          rest_seconds: e.rest_seconds ?? 0,
+          tempo: e.tempo ?? "",
+          notes: e.notes ?? "",
+        })),
+      })),
+    );
+    setLoadedId(p.id);
+  }, [existing.data, loadedId]);
 
   /** Loads an AI draft into the builder. Nothing is persisted until Save. */
   const applyDraft = (draft: PlanDraft) => {
@@ -150,8 +190,33 @@ function PlanBuilder() {
   });
 
   const create = useMutation({
-    mutationFn: () =>
-      createPlan({
+    mutationFn: async () => {
+      if (editId) {
+        return updatePlan({
+          data: {
+            planId: editId,
+            name,
+            start_date: startDate || null,
+            duration_weeks: durationWeeks ? Number(durationWeeks) : null,
+            notes: notes || null,
+            days: days.map((d) => ({
+              id: d.dbId,
+              day_label: d.label,
+              block_type: d.block_type,
+              exercises: d.exercises.map((e) => ({
+                id: e.dbId,
+                exercise_id: e.exercise.id,
+                sets: e.sets || null,
+                reps: e.reps || null,
+                rest_seconds: e.rest_seconds || null,
+                tempo: e.tempo || null,
+                notes: e.notes || null,
+              })),
+            })),
+          },
+        });
+      }
+      return createPlan({
         data: {
           name,
           member_id: isTemplate ? null : memberId || null,
@@ -172,8 +237,16 @@ function PlanBuilder() {
             })),
           })),
         },
-      }),
+      });
+    },
     onSuccess: (r) => {
+      if (editId) {
+        toast.success("Plan updated");
+        qc.invalidateQueries({ queryKey: ["plan", editId] });
+        qc.invalidateQueries({ queryKey: ["plans"] });
+        navigate({ to: "/admin/plans/$planId", params: { planId: editId } });
+        return;
+      }
       toast.success(isTemplate ? "Template saved" : "Plan assigned");
       if (isTemplate) navigate({ to: "/admin/templates" });
       else navigate({ to: "/admin/plans/$planId", params: { planId: r.id } });
@@ -187,7 +260,7 @@ function PlanBuilder() {
   return (
     <>
       <GlassHeader
-        title={forceTemplate ? "New template" : "New plan"}
+        title={editId ? "Edit plan" : forceTemplate ? "New template" : "New plan"}
         subtitle={`Step ${step} of 3`}
       />
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
@@ -236,7 +309,7 @@ function PlanBuilder() {
                   <Checkbox
                     id="tpl"
                     checked={isTemplate}
-                    disabled={forceTemplate}
+                    disabled={forceTemplate || !!editId}
                     onCheckedChange={(v) => setIsTemplate(!!v)}
                   />
                   <Label htmlFor="tpl" className="cursor-pointer">
@@ -246,7 +319,7 @@ function PlanBuilder() {
                 {!isTemplate && !forceTemplate && (
                   <div>
                     <Label>Assign to member</Label>
-                    <Select value={memberId} onValueChange={setMemberId}>
+                    <Select value={memberId} onValueChange={setMemberId} disabled={!!editId}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a member…" />
                       </SelectTrigger>
@@ -339,7 +412,13 @@ function PlanBuilder() {
                     Back
                   </Button>
                   <Button disabled={!canFinish || create.isPending} onClick={() => create.mutate()}>
-                    {create.isPending ? "Saving…" : isTemplate ? "Save template" : "Assign plan"}
+                    {create.isPending
+                      ? "Saving…"
+                      : editId
+                        ? "Save changes"
+                        : isTemplate
+                          ? "Save template"
+                          : "Assign plan"}
                   </Button>
                 </div>
               </div>

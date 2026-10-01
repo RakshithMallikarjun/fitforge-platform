@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listPlans, bulkAssignPlan } from "@/lib/plans.functions";
 import { listMembers } from "@/lib/members.functions";
+import { PlanActions } from "@/components/plans/plan-actions";
 
 export const Route = createFileRoute("/_authenticated/admin/templates")({
   component: TemplatesPage,
@@ -119,14 +120,22 @@ function TemplatesPage() {
                 className="cursor-pointer rounded-2xl border border-border bg-card p-5 transition hover:border-primary/40 hover:bg-muted/40"
                 onClick={() => navigate({ to: "/admin/plans/$planId", params: { planId: t.id } })}
               >
-                <Link
-                  to="/admin/plans/$planId"
-                  params={{ planId: t.id }}
-                  className="text-base font-semibold hover:underline"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {t.name}
-                </Link>
+                <div className="flex items-start justify-between gap-2">
+                  <Link
+                    to="/admin/plans/$planId"
+                    params={{ planId: t.id }}
+                    className="text-base font-semibold hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {t.name}
+                  </Link>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <PlanActions plan={t} />
+                  </div>
+                </div>
+                {t.status === "archived" && (
+                  <p className="mt-1 text-xs text-muted-foreground">Archived</p>
+                )}
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t.day_count} days · {t.exercise_count ?? 0} exercises
                   {t.duration_weeks ? ` · ${t.duration_weeks} wk` : ""}

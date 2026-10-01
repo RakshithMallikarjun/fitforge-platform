@@ -275,3 +275,15 @@ test("member profile offers ledger-backed Adjust expiry (admin)", async ({ page 
   await expect(page.getByRole("button", { name: /Adjust expiry/i })).toBeVisible();
   await expect(page.getByText(/Membership type/i)).toHaveCount(0);
 });
+
+test.describe("record corrections", () => {
+  test("plan list exposes the actions menu", async ({ page }) => {
+    await page.goto("/admin/plans");
+    const menu = page.getByRole("button", { name: /Actions for/ }).first();
+    if (await menu.count()) {
+      await menu.click();
+      await expect(page.getByRole("menuitem", { name: "Edit" })).toBeVisible();
+      await expect(page.getByRole("menuitem", { name: /Duplicate as template/ })).toBeVisible();
+    }
+  });
+});

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listPlans } from "@/lib/plans.functions";
+import { PlanActions } from "@/components/plans/plan-actions";
 import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/plans")({
@@ -67,6 +68,7 @@ function PlansPage() {
                   <TableHead>Start</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead className="text-right">Days</TableHead>
+                  <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -96,6 +98,9 @@ function PlansPage() {
                     <TableCell>{p.start_date ? formatShortDate(p.start_date) : "—"}</TableCell>
                     <TableCell>{p.duration_weeks ? `${p.duration_weeks} wk` : "—"}</TableCell>
                     <TableCell className="text-right">{p.day_count}</TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <PlanActions plan={p} />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
