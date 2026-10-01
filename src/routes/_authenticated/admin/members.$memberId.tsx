@@ -17,6 +17,7 @@ import {
   UserCog,
   UserCheck,
   CreditCard,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { GlassHeader } from "@/components/glass-header";
