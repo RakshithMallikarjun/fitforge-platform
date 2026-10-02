@@ -22,6 +22,7 @@ import {
   PaymentChip,
   fmtDate,
   relTime,
+  isNewGym,
 } from "@/components/platform/platform-ui";
 import {
   getPlatformActivityTrend,

@@ -42,6 +42,7 @@ import {
   PaymentChip,
   fmtDate,
   relTime,
+  isNewGym,
 } from "@/components/platform/platform-ui";
 import { NewGymDialog } from "@/components/platform/new-gym-dialog";
 import { listPlatformGyms, setGymEnabled, type PlatformGymRow } from "@/lib/platform.functions";
