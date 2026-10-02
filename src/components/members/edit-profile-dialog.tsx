@@ -105,7 +105,7 @@ export function EditProfileDialog({
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="ep-dob">Date of birth</Label>
-              <Input id="ep-dob" type="date" value={f.dob} onChange={set("dob")} />
+              <Input id="ep-dob" type="date" min="1900-01-01" max={new Date().toISOString().slice(0, 10)} value={f.dob} onChange={set("dob")} />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="ep-gender">Gender</Label>

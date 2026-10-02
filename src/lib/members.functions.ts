@@ -401,12 +401,22 @@ export const updateMemberProfile = createServerFn({ method: "POST" })
         memberId: z.string().uuid(),
         name: z.string().trim().min(1).max(120),
         phone: optText(30),
+        // Blank means "not set" — only validate when a value is present.
         dob: z
           .string()
-          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .trim()
           .nullable()
           .optional()
-          .transform((v) => v || null),
+          .transform((v) => (v ? v : null))
+          .refine(
+            (v) =>
+              v === null ||
+              (/^\d{4}-\d{2}-\d{2}$/.test(v) &&
+                !isNaN(new Date(`${v}T00:00:00Z`).getTime()) &&
+                v <= new Date().toISOString().slice(0, 10) &&
+                v >= "1900-01-01"),
+            { message: "Date of birth must be a real date, not in the future" },
+          ),
         gender: optText(40),
         experienceLevel: optText(40),
         goals: optText(2000),
