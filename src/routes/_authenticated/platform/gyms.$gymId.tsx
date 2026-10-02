@@ -340,10 +340,21 @@ function PlatformGymDetailPage() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Section title="Health">
-          <HealthBar score={g.health_score} memberCount={g.member_count} />
+          <HealthBar
+            score={g.health_score}
+            memberCount={g.member_count}
+            createdAt={(g as any).created_at}
+          />
           <p className="mt-3 text-xs text-muted-foreground">
-            Last activity {g.last_activity_at ? relTime(g.last_activity_at) : "never"}
-            {g.days_since_activity !== null ? ` (${g.days_since_activity}d)` : ""}. Check-in rate{" "}
+            Last activity{" "}
+            {g.days_since_activity === null || g.days_since_activity === undefined
+              ? "never"
+              : g.days_since_activity === 0
+                ? "today"
+                : g.days_since_activity === 1
+                  ? "yesterday"
+                  : `${g.days_since_activity} days ago`}
+            . Check-in rate{" "}
             {pct(g.checkin_rate_30d)}, active ratio {pct(g.active_member_ratio)}.
           </p>
         </Section>

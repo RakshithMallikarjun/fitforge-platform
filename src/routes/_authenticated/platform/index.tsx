@@ -72,7 +72,12 @@ function PlatformOverviewPage() {
   const o = overview.data;
   const gymRows = gyms.data ?? [];
   const needsAttention = [...gymRows]
-    .filter((g) => g.is_enabled && (g.days_since_activity === null || g.days_since_activity >= 14))
+    .filter(
+      (g) =>
+        g.is_enabled &&
+        !isNewGym(g.created_at) &&
+        (g.days_since_activity === null || g.days_since_activity >= 14),
+    )
     .sort((a, b) => (b.days_since_activity ?? 9999) - (a.days_since_activity ?? 9999));
   const overdue = gymRows.filter(
     (g) => g.payment_status === "overdue" || g.payment_status === "failed",
@@ -122,7 +127,7 @@ function PlatformOverviewPage() {
               label="At risk"
               value={o.at_risk_gyms}
               tone={o.at_risk_gyms ? "bad" : "default"}
-              hint="Enabled gyms with no workout or check-in in the last 14 days."
+              hint="Enabled gyms older than 14 days with no workout or check-in in the last 14 days. Newer gyms count as New."
             />
             <KpiCard
               label="Overdue"
@@ -133,14 +138,12 @@ function PlatformOverviewPage() {
             <KpiCard
               label="Total members"
               value={o.total_members}
-              hint={`${o.active_members} active accounts`}
+              hint="Every member account across all gyms, enabled or not. Staff are not included."
             />
             <KpiCard
               label="MAU"
               value={o.mau}
-              hint={`DAU ${o.dau} · WAU ${o.wau} · stickiness ${
-                o.stickiness ? `${Math.round(Number(o.stickiness) * 100)}%` : "—"
-              }`}
+              hint="Monthly active members: members who logged a workout or checked in during the last 30 days."
             />
           </div>
 
@@ -298,7 +301,7 @@ function PlatformOverviewPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <Card
               title="Needs attention"
-              subtitle="Enabled gyms with no activity for 14+ days, stalest first"
+              subtitle="Enabled gyms older than 14 days with no activity for 14+ days, stalest first"
             >
               {gyms.isError ? (
                 <ErrorState

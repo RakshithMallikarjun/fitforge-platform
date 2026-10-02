@@ -100,8 +100,9 @@ function AdminDashboard() {
                 value={stats.activeMemberships.toLocaleString()}
                 footer={
                   <span className="flex flex-col gap-0.5">
-                    <span>Gym-wide</span>
-                    <span>{stats.activeAccounts.toLocaleString()} accounts enabled</span>
+                    <span>
+                      Paid & current · {stats.activeAccounts.toLocaleString()} member accounts
+                    </span>
                     <span className="inline-flex items-center gap-1">
                       <ArrowUpRight className="h-3 w-3" /> {stats.newThisMonth} new this month
                     </span>
@@ -291,7 +292,7 @@ function AtRiskMembers({ isAdmin }: { isAdmin: boolean }) {
 
   const rows = useMemo(() => {
     return [...(data ?? [])]
-      .filter((r) => r.workouts30d === 0 || r.score < 30)
+      .filter((r) => r.score < 20)
       .sort((a, b) => a.score - b.score)
       .slice(0, 5);
   }, [data]);
@@ -340,7 +341,8 @@ function AtRiskMembers({ isAdmin }: { isAdmin: boolean }) {
                     </span>
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {r.workouts30d} workouts · {r.checkIns30d} check-ins · {r.messages30d} messages
+                    {r.workouts30d} workouts · {r.checkIns30d} check-ins · {r.messages30d}{" "}
+                    {r.messages30d === 1 ? "message" : "messages"} sent
                     (30d)
                   </p>
                 </div>

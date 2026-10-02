@@ -73,7 +73,7 @@ function EngagementReportPage() {
     <>
       <GlassHeader
         title="Member engagement"
-        subtitle="Score = workouts×3 + check-ins×2 + messages×1 (last 30 days)"
+        subtitle="Relative score: 100 = your most engaged member. Based on workouts×3 + check-ins×2 + messages sent×1, last 30 days. Members with no activity score 0."
       />
       <main className="mx-auto max-w-[1280px] space-y-6 px-8 py-8">
         <div className="flex items-center justify-between">

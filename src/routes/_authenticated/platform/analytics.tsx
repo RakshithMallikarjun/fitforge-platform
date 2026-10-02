@@ -267,9 +267,13 @@ function PlatformAnalyticsPage() {
                 <li key={label}>
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-medium">{label}</span>
-                    <span className="font-numeric text-muted-foreground">{pct(value)}</span>
+                    <span className="font-numeric text-muted-foreground">
+                      {value === null || value === undefined
+                        ? "—"
+                        : `${Math.min(100, Math.round(Number(value)))}%`}
+                    </span>
                   </div>
-                  <Progress value={Math.round(Number(value ?? 0) * 100)} className="mt-1.5 h-1.5" />
+                  <Progress value={Math.min(100, Number(value ?? 0))} className="mt-1.5 h-1.5" />
                 </li>
               ))}
             </ul>
@@ -369,7 +373,7 @@ function PlatformAnalyticsPage() {
                       {g.checkins_30d}
                     </TableCell>
                     <TableCell>
-                      <HealthBar score={g.health_score} memberCount={g.member_count} />
+                      <HealthBar score={g.health_score} memberCount={g.member_count} createdAt={g.created_at} />
                     </TableCell>
                   </TableRow>
                 ))}
