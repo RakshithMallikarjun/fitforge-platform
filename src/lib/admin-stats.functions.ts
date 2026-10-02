@@ -328,6 +328,14 @@ export const getEngagementReport = createServerFn({ method: "GET" })
         .eq("gym_id", gymId)
         .eq("role", "member");
       let memberIds = (memberRoles ?? []).map((r: any) => r.user_id as string);
+      // Staff never appear in member engagement, even if they also hold a member role.
+      const { data: staffRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("gym_id", gymId)
+        .in("role", ["admin", "trainer"]);
+      const staffSet = new Set((staffRoles ?? []).map((r: any) => r.user_id as string));
+      memberIds = memberIds.filter((id) => !staffSet.has(id));
 
       if (!isAdmin && isTrainer) {
         const { data: myAssigned } = await supabase
@@ -407,8 +415,6 @@ export const getEngagementReport = createServerFn({ method: "GET" })
       for (const m of msgs ?? []) {
         if (memberIds.includes(m.sender_id))
           mCount.set(m.sender_id, (mCount.get(m.sender_id) ?? 0) + 1);
-        if (memberIds.includes(m.recipient_id))
-          mCount.set(m.recipient_id, (mCount.get(m.recipient_id) ?? 0) + 1);
       }
 
       const raw = (members ?? []).map((u: any) => {

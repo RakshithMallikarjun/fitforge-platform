@@ -42,6 +42,7 @@ import {
   PaymentChip,
   fmtDate,
   relTime,
+  isNewGym,
 } from "@/components/platform/platform-ui";
 import { NewGymDialog } from "@/components/platform/new-gym-dialog";
 import { listPlatformGyms, setGymEnabled, type PlatformGymRow } from "@/lib/platform.functions";
@@ -125,7 +126,13 @@ function PlatformGymsPage() {
       if (sort === "name") cmp = a.name.localeCompare(b.name);
       else if (sort === "last_activity_at" || sort === "next_due_at")
         cmp = String(a[sort] ?? "").localeCompare(String(b[sort] ?? ""));
-      else cmp = Number(a[sort] ?? 0) - Number(b[sort] ?? 0);
+      else if (sort === "health_score") {
+        // "No data"/"New" gyms have no meaningful score: always sort them last.
+        const na = a.member_count === 0 || isNewGym(a.created_at);
+        const nb = b.member_count === 0 || isNewGym(b.created_at);
+        if (na !== nb) return na ? 1 : -1;
+        cmp = Number(a.health_score ?? 0) - Number(b.health_score ?? 0);
+      } else cmp = Number(a[sort] ?? 0) - Number(b[sort] ?? 0);
       return dir === "asc" ? cmp : -cmp;
     });
     return arr;
@@ -319,7 +326,7 @@ function PlatformGymsPage() {
                     {g.checkins_30d}
                   </TableCell>
                   <TableCell>
-                    <HealthBar score={g.health_score} memberCount={g.member_count} />
+                    <HealthBar score={g.health_score} memberCount={g.member_count} createdAt={g.created_at} />
                   </TableCell>
                   <TableCell className={`text-xs ${activityClass(g.days_since_activity)}`}>
                     {g.last_activity_at ? relTime(g.last_activity_at) : "never"}

@@ -52,15 +52,31 @@ export function PaymentChip({ status }: { status: PaymentStatus }) {
   );
 }
 
-export function healthBand(score: number, memberCount: number) {
+/** Gyms younger than this are "New", never "At risk" — same rule as the overview. */
+export const NEW_GYM_DAYS = 14;
+export function isNewGym(createdAt: string | null | undefined) {
+  if (!createdAt) return false;
+  return Date.now() - new Date(createdAt).getTime() < NEW_GYM_DAYS * 86_400_000;
+}
+
+export function healthBand(score: number, memberCount: number, createdAt?: string | null) {
+  if (isNewGym(createdAt)) return { label: "New", tone: "muted" as const };
   if (memberCount === 0) return { label: "No data", tone: "muted" as const };
   if (score >= 70) return { label: "Healthy", tone: "good" as const };
   if (score >= 40) return { label: "Watch", tone: "warn" as const };
   return { label: "At risk", tone: "bad" as const };
 }
 
-export function HealthBar({ score, memberCount }: { score: number; memberCount: number }) {
-  const band = healthBand(Number(score ?? 0), memberCount);
+export function HealthBar({
+  score,
+  memberCount,
+  createdAt,
+}: {
+  score: number;
+  memberCount: number;
+  createdAt?: string | null;
+}) {
+  const band = healthBand(Number(score ?? 0), memberCount, createdAt);
   const color =
     band.tone === "good"
       ? "bg-primary"
