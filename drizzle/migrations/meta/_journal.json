@@ -197,6 +197,13 @@
       "when": 1790842776133,
       "tag": "0027_0027_profile_rpc_auth_first",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790959040186,
+      "tag": "0028_0028_overview_new_gyms_not_at_risk",
+      "breakpoints": true
     }
   ]
 }
