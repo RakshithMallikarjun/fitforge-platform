@@ -227,7 +227,9 @@ function MembersPage() {
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="expiring">Expiring soon</SelectItem>
+              <SelectItem value="overdue_grace">Overdue (grace)</SelectItem>
               <SelectItem value="expired">Expired</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
               <SelectItem value="none">No membership</SelectItem>
               <SelectItem value="inactive">Inactive</SelectItem>
             </SelectContent>
