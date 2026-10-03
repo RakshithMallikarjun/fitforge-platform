@@ -101,7 +101,8 @@ function AdminDashboard() {
                 footer={
                   <span className="flex flex-col gap-0.5">
                     <span>
-                      Paid & current · {stats.activeAccounts.toLocaleString()} member accounts
+                      Paid & current · {stats.activeAccounts.toLocaleString()} member{" "}
+                      {stats.activeAccounts === 1 ? "account" : "accounts"} enabled
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <ArrowUpRight className="h-3 w-3" /> {stats.newThisMonth} new this month

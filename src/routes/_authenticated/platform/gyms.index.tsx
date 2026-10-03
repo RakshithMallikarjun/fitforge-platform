@@ -43,6 +43,7 @@ import {
   fmtDate,
   relTime,
   isNewGym,
+  activityAgo,
 } from "@/components/platform/platform-ui";
 import { NewGymDialog } from "@/components/platform/new-gym-dialog";
 import { listPlatformGyms, setGymEnabled, type PlatformGymRow } from "@/lib/platform.functions";
@@ -326,10 +327,12 @@ function PlatformGymsPage() {
                     {g.checkins_30d}
                   </TableCell>
                   <TableCell>
-                    <HealthBar score={g.health_score} memberCount={g.member_count} createdAt={g.created_at} />
+                    <HealthBar score={g.health_score} memberCount={g.member_count} createdAt={g.created_at}
+                      daysSinceActivity={g.days_since_activity}
+                    />
                   </TableCell>
                   <TableCell className={`text-xs ${activityClass(g.days_since_activity)}`}>
-                    {g.last_activity_at ? relTime(g.last_activity_at) : "never"}
+                    {activityAgo(g.days_since_activity)}
                   </TableCell>
                   <TableCell
                     className={`text-xs ${

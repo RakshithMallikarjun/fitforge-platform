@@ -1063,13 +1063,18 @@ export type MyMembership = {
   }[];
   currency: string;
   today: string;
+  status: import("@/lib/membership").LedgerStatus;
 };
 
 export const getMyMembership = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<MyMembership> => {
     const { supabase, userId } = context;
-    const { currency, timeZone } = await gymOf(supabase, userId);
+    const { currency, timeZone, gymId } = await gymOf(supabase, userId);
+    const { ledgerMemberships } = await import("./membership-ledger.server");
+    const mine = gymId
+      ? (await ledgerMemberships(supabase, gymId, [{ id: userId, active: true }])).get(userId)
+      : null;
 
     const [{ data: subs }, { data: payments }] = await Promise.all([
       supabase
@@ -1103,6 +1108,7 @@ export const getMyMembership = createServerFn({ method: "GET" })
       payments: ((payments ?? []) as any[]).map((p) => ({ ...p, amount: Number(p.amount) })),
       currency,
       today: dateStringInZone(timeZone),
+      status: mine?.status ?? "none",
     };
   });
 

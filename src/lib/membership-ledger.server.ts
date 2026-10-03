@@ -15,16 +15,17 @@ export async function ledgerMemberships(
   const ids = members.map((m) => m.id);
   const [{ data: gym }, { data: settings }, { data: subs }] = await Promise.all([
     supabase.from("gyms").select("timezone").eq("id", gymId).maybeSingle(),
-    supabase.from("gym_billing_settings").select("reminder_lead_days").eq("gym_id", gymId).maybeSingle(),
+    supabase.from("gym_billing_settings").select("reminder_lead_days, grace_days").eq("gym_id", gymId).maybeSingle(),
     supabase
       .from("member_subscriptions")
       .select("member_id, plan_name_snapshot, ends_on, source, state")
       .in("member_id", ids)
-      .in("state", ["active", "expired"])
+      .in("state", ["active", "expired", "cancelled"])
       .order("ends_on", { ascending: false }),
   ]);
   const today = dateStringInZone((gym as any)?.timezone || "UTC");
   const lead = (settings as any)?.reminder_lead_days ?? 7;
+  const grace = (settings as any)?.grace_days ?? 5;
   const latest = new Map<string, any>();
   for (const s of (subs ?? []) as any[]) if (!latest.has(s.member_id)) latest.set(s.member_id, s);
   for (const m of members) {
@@ -33,7 +34,7 @@ export async function ledgerMemberships(
       planName: s?.plan_name_snapshot ?? null,
       endsOn: s?.ends_on ?? null,
       legacy: s?.source === "imported",
-      status: ledgerStatus(m.active, s?.ends_on ?? null, today, lead),
+      status: ledgerStatus(m.active, s?.ends_on ?? null, today, lead, grace, s?.state === "cancelled"),
     });
   }
   return out;

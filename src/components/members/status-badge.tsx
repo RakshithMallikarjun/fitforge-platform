@@ -1,6 +1,8 @@
 import { cn } from "@/lib/utils";
 
-export type MembershipStatus = "active" | "inactive" | "expiring" | "expired" | "none";
+import type { LedgerStatus } from "@/lib/membership";
+
+export type MembershipStatus = LedgerStatus;
 
 export function getMembershipStatus(active: boolean, expiresAt?: string | null): MembershipStatus {
   if (!active) return "inactive";
@@ -18,7 +20,9 @@ const STYLES: Record<MembershipStatus, string> = {
   active: "bg-primary-soft text-primary",
   inactive: "bg-muted text-muted-foreground",
   expiring: "bg-secondary-soft text-secondary",
+  overdue_grace: "bg-destructive/10 text-destructive",
   expired: "bg-destructive/10 text-destructive",
+  cancelled: "bg-muted text-muted-foreground",
   none: "bg-muted text-muted-foreground",
 };
 
@@ -26,7 +30,9 @@ const LABELS: Record<MembershipStatus, string> = {
   active: "Active",
   inactive: "Inactive",
   expiring: "Expiring soon",
+  overdue_grace: "Overdue · grace",
   expired: "Expired",
+  cancelled: "Cancelled",
   none: "No membership",
 };
 

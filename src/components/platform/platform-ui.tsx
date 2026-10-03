@@ -59,24 +59,51 @@ export function isNewGym(createdAt: string | null | undefined) {
   return Date.now() - new Date(createdAt).getTime() < NEW_GYM_DAYS * 86_400_000;
 }
 
-export function healthBand(score: number, memberCount: number, createdAt?: string | null) {
+/**
+ * The ONE gym health rule (overview card, Gyms list, gym detail all use it,
+ * and platform_overview.at_risk_gyms mirrors it in SQL):
+ *   New      gym younger than 14 days
+ *   At risk  no workout or check-in in the last 14 days (gym's timezone)
+ *   Healthy  health score >= 70, otherwise Watch
+ */
+export function isAtRiskGym(createdAt: string | null | undefined, daysSinceActivity: number | null | undefined) {
+  if (isNewGym(createdAt)) return false;
+  return daysSinceActivity === null || daysSinceActivity === undefined || daysSinceActivity >= NEW_GYM_DAYS;
+}
+
+export function healthBand(
+  score: number,
+  memberCount: number,
+  createdAt?: string | null,
+  daysSinceActivity?: number | null,
+) {
   if (isNewGym(createdAt)) return { label: "New", tone: "muted" as const };
+  if (isAtRiskGym(createdAt, daysSinceActivity)) return { label: "At risk", tone: "bad" as const };
   if (memberCount === 0) return { label: "No data", tone: "muted" as const };
   if (score >= 70) return { label: "Healthy", tone: "good" as const };
-  if (score >= 40) return { label: "Watch", tone: "warn" as const };
-  return { label: "At risk", tone: "bad" as const };
+  return { label: "Watch", tone: "warn" as const };
+}
+
+/** "today" / "yesterday" / "N days ago" from days_since_activity (computed in the gym's timezone). */
+export function activityAgo(days: number | null | undefined, never = "never") {
+  if (days === null || days === undefined) return never;
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  return `${days} days ago`;
 }
 
 export function HealthBar({
   score,
   memberCount,
   createdAt,
+  daysSinceActivity,
 }: {
   score: number;
   memberCount: number;
   createdAt?: string | null;
+  daysSinceActivity?: number | null;
 }) {
-  const band = healthBand(Number(score ?? 0), memberCount, createdAt);
+  const band = healthBand(Number(score ?? 0), memberCount, createdAt, daysSinceActivity);
   const color =
     band.tone === "good"
       ? "bg-primary"

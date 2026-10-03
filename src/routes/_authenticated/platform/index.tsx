@@ -23,6 +23,8 @@ import {
   fmtDate,
   relTime,
   isNewGym,
+  activityAgo,
+  isAtRiskGym,
 } from "@/components/platform/platform-ui";
 import {
   getPlatformActivityTrend,
@@ -75,9 +77,7 @@ function PlatformOverviewPage() {
   const needsAttention = [...gymRows]
     .filter(
       (g) =>
-        g.is_enabled &&
-        !isNewGym(g.created_at) &&
-        (g.days_since_activity === null || g.days_since_activity >= 14),
+        g.is_enabled && isAtRiskGym(g.created_at, g.days_since_activity),
     )
     .sort((a, b) => (b.days_since_activity ?? 9999) - (a.days_since_activity ?? 9999));
   const overdue = gymRows.filter(
@@ -325,7 +325,7 @@ function PlatformOverviewPage() {
                         {g.name}
                       </Link>
                       <span className="shrink-0 text-xs text-destructive">
-                        {g.last_activity_at ? relTime(g.last_activity_at) : "never active"}
+                        {activityAgo(g.days_since_activity, "never active")}
                       </span>
                     </li>
                   ))}

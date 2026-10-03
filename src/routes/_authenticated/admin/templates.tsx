@@ -39,7 +39,7 @@ function TemplatesPage() {
   const { data: members = [] } = useQuery({ queryKey: ["members"], queryFn: () => listMembers() });
 
   const activeMembers = useMemo(
-    () => (members as any[]).filter((m) => (m.status ?? "active") === "active"),
+    () => (members as any[]).filter((m) => m.active !== false),
     [members],
   );
   const filteredMembers = useMemo(() => {

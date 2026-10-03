@@ -56,6 +56,7 @@ import {
   num,
   pct,
   relTime,
+  activityAgo,
 } from "@/components/platform/platform-ui";
 import {
   getAuditLog,
@@ -344,16 +345,10 @@ function PlatformGymDetailPage() {
             score={g.health_score}
             memberCount={g.member_count}
             createdAt={(g as any).created_at}
+            daysSinceActivity={g.days_since_activity}
           />
           <p className="mt-3 text-xs text-muted-foreground">
-            Last activity{" "}
-            {g.days_since_activity === null || g.days_since_activity === undefined
-              ? "never"
-              : g.days_since_activity === 0
-                ? "today"
-                : g.days_since_activity === 1
-                  ? "yesterday"
-                  : `${g.days_since_activity} days ago`}
+            Last activity {activityAgo(g.days_since_activity)}
             . Check-in rate{" "}
             {pct(g.checkin_rate_30d)}, active ratio {pct(g.active_member_ratio)}.
           </p>

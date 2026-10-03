@@ -373,7 +373,9 @@ function PlatformAnalyticsPage() {
                       {g.checkins_30d}
                     </TableCell>
                     <TableCell>
-                      <HealthBar score={g.health_score} memberCount={g.member_count} createdAt={g.created_at} />
+                      <HealthBar score={g.health_score} memberCount={g.member_count} createdAt={g.created_at}
+                      daysSinceActivity={g.days_since_activity}
+                    />
                     </TableCell>
                   </TableRow>
                 ))}
