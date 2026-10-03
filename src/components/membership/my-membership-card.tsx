@@ -64,7 +64,12 @@ export function MyMembershipCard() {
                     new Date(`${data.ends_on}T00:00:00`),
                     new Date(`${data.today}T00:00:00`),
                   );
-                  if (days < 0) return `expired ${Math.abs(days)} day${days === -1 ? "" : "s"} ago`;
+                  if (days < 0)
+                    return data.status === "overdue_grace"
+                      ? `overdue · in grace period (ended ${Math.abs(days)} day${days === -1 ? "" : "s"} ago)`
+                      : data.status === "cancelled"
+                        ? "cancelled"
+                        : `expired ${Math.abs(days)} day${days === -1 ? "" : "s"} ago`;
                   if (days === 0) return "expires today";
                   return `${days} day${days === 1 ? "" : "s"} left`;
                 })()}
