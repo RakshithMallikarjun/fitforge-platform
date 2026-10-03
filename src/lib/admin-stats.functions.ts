@@ -6,7 +6,7 @@ import {
   resolveGymTimezone,
   zonedMonthStartISO,
 } from "@/lib/gym-date";
-import { isMembershipCurrent } from "@/lib/membership";
+import { countsAsActiveMembership } from "@/lib/membership";
 
 export type AdminStats = {
   /** Active account AND membership not past expiry (gym timezone). */
@@ -73,20 +73,20 @@ export const getAdminStats = createServerFn({ method: "GET" })
     let activeAccounts = 0;
     let newThisMonth = 0;
     if (memberIds.length) {
-      const { ledgerEndsOn } = await import("@/lib/membership-ledger.server");
-      const [{ data: activeRows }, { count: nm }, expiryByUser] = await Promise.all([
-        supabase.from("users").select("id").in("id", memberIds).eq("active", true),
+      const { ledgerMemberships } = await import("@/lib/membership-ledger.server");
+      const [{ data: activeRows }, { count: nm }] = await Promise.all([
+        supabase.from("users").select("id, active").in("id", memberIds).eq("active", true),
         supabase
           .from("users")
           .select("id", { count: "exact", head: true })
           .in("id", memberIds)
           .gte("created_at", monthStart),
-        ledgerEndsOn(supabase, memberIds),
       ]);
-      // A lapsed membership is not an active membership, even if the login is enabled.
+      // Same status rule as Members/Dues: only active + expiring-soon count.
       activeAccounts = (activeRows ?? []).length;
-      activeMemberships = (activeRows ?? []).filter((u: any) =>
-        isMembershipCurrent(expiryByUser.get(u.id) ?? null, todayStr),
+      const ledger = await ledgerMemberships(supabase, gymId, (activeRows ?? []) as any[]);
+      activeMemberships = Array.from(ledger.values()).filter((m) =>
+        countsAsActiveMembership(m.status),
       ).length;
       newThisMonth = nm ?? 0;
     }
