@@ -324,11 +324,20 @@ function PlanBuilder() {
                         <SelectValue placeholder="Select a member…" />
                       </SelectTrigger>
                       <SelectContent>
-                        {members.map((m: any) => (
-                          <SelectItem key={m.id} value={m.id}>
-                            {m.display_name ?? m.email}
-                          </SelectItem>
-                        ))}
+                        {(members as any[])
+                          .filter((m) => m.active !== false)
+                          .map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              <span className="flex flex-col">
+                                <span>{m.display_name ?? m.email}</span>
+                                {m.display_name && (m.email || m.phone) && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {m.email ?? m.phone}
+                                  </span>
+                                )}
+                              </span>
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>

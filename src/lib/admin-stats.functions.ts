@@ -352,7 +352,8 @@ export const getEngagementReport = createServerFn({ method: "GET" })
       const { data: members } = await supabase
         .from("users")
         .select("id, display_name, email")
-        .in("id", memberIds);
+        .in("id", memberIds)
+        .eq("active", true); // deactivated members never appear in reports
 
       const since = new Date(Date.now() - 30 * 86400_000).toISOString();
 
