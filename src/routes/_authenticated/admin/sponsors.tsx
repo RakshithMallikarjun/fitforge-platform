@@ -297,6 +297,7 @@ function SponsorsPage() {
                         <TableHead>Runs</TableHead>
                         <TableHead className="text-right">Impr.</TableHead>
                         <TableHead className="text-right">Clicks</TableHead>
+                        <TableHead className="text-right">Dismissed</TableHead>
                         <TableHead className="text-right">CTR</TableHead>
                         <TableHead />
                       </TableRow>
@@ -343,6 +344,7 @@ function SponsorsPage() {
                           </TableCell>
                           <TableCell className="text-right font-numeric">{a.impressions}</TableCell>
                           <TableCell className="text-right font-numeric">{a.clicks}</TableCell>
+                          <TableCell className="text-right font-numeric">{a.dismisses}</TableCell>
                           <TableCell className="text-right font-numeric">
                             {a.ctr === null ? "—" : `${a.ctr}%`}
                           </TableCell>
@@ -412,7 +414,9 @@ function SponsorsPage() {
               )}
               <p className="mt-3 text-xs text-muted-foreground">
                 Impressions and clicks are counted in daily totals. Fit Foundry does not record
-                which member saw which ad.
+                which member saw which ad. An impression counts once per ad per device per day, and
+                hiding a card counts as a dismiss, not a click. Figures before 4 Oct 2026 may be
+                inflated by repeat views and dismisses counted as clicks.
               </p>
             </CardContent>
           </Card>
