@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { X } from "lucide-react";
@@ -12,48 +12,47 @@ import { recordAdEvent, serveAds, type AdPlacement, type ServedAd } from "@/lib/
  * nothing at all when there is no ad (or when the lookup fails).
  */
 
-const DISMISS_KEY = "fitfoundry.ads.dismissed";
-const SEEN_KEY = "fitfoundry.ads.seen";
+const LEDGER_PREFIX = "fitfoundry.ads.day.";
 
-function safeSessionGet(): string[] {
-  try {
-    return JSON.parse(sessionStorage.getItem(DISMISS_KEY) ?? "[]") as string[];
-  } catch {
-    return [];
-  }
+/**
+ * Per-device, per-gym, per-day ledger. Lives only in localStorage, so the
+ * server never learns which member saw which ad.
+ *  - shows: how many times a sponsored card was displayed today (daily cap)
+ *  - impressed: ad ids already counted as an impression today
+ *  - dismissed: ad ids hidden with the X today
+ */
+type Ledger = { day: string; shows: number; impressed: string[]; dismissed: string[] };
+
+function deviceDay(): string {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${dd}`;
 }
 
-function safeSessionAdd(id: string) {
+function readLedger(gymId: string): Ledger {
+  const day = deviceDay();
   try {
-    const next = Array.from(new Set([...safeSessionGet(), id]));
-    sessionStorage.setItem(DISMISS_KEY, JSON.stringify(next));
-  } catch {
-    /* private mode — dismissal is just not remembered */
-  }
-}
-
-/** Courtesy frequency cap. The server count is the real one. */
-function seenToday(): { day: string; ids: string[] } {
-  const day = new Date().toISOString().slice(0, 10);
-  try {
-    const raw = JSON.parse(localStorage.getItem(SEEN_KEY) ?? "null") as {
-      day: string;
-      ids: string[];
-    } | null;
-    if (raw && raw.day === day && Array.isArray(raw.ids)) return raw;
+    const raw = JSON.parse(localStorage.getItem(LEDGER_PREFIX + gymId) ?? "null") as Ledger | null;
+    if (raw && raw.day === day) {
+      return {
+        day,
+        shows: Number(raw.shows) || 0,
+        impressed: Array.isArray(raw.impressed) ? raw.impressed : [],
+        dismissed: Array.isArray(raw.dismissed) ? raw.dismissed : [],
+      };
+    }
   } catch {
     /* ignore */
   }
-  return { day, ids: [] };
+  return { day, shows: 0, impressed: [], dismissed: [] };
 }
 
-function markSeenToday(id: string) {
+function updateLedger(gymId: string, fn: (l: Ledger) => Ledger) {
   try {
-    const cur = seenToday();
-    if (cur.ids.includes(id)) return;
-    localStorage.setItem(SEEN_KEY, JSON.stringify({ day: cur.day, ids: [...cur.ids, id] }));
+    localStorage.setItem(LEDGER_PREFIX + gymId, JSON.stringify(fn(readLedger(gymId))));
   } catch {
-    /* ignore */
+    /* private mode — cap is best-effort */
   }
 }
 
@@ -113,7 +112,11 @@ export function SponsoredCard({
           <button
             type="button"
             aria-label="Hide this sponsored card"
-            onClick={onDismiss}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDismiss();
+            }}
             className="-mr-1 -mt-1 rounded-full p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
           >
             <X className="h-4 w-4" />
@@ -147,9 +150,13 @@ export function SponsoredCard({
             size="sm"
             variant="outline"
             className="mt-4 rounded-xl"
-            onClick={() => onClick?.()}
           >
-            <a href={ad.ctaUrl} target="_blank" rel="noopener noreferrer">
+            <a
+              href={ad.ctaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => onClick?.()}
+            >
               {ad.ctaLabel || "Learn more"}
             </a>
           </Button>
@@ -163,54 +170,70 @@ export function SponsoredCard({
 export function SponsoredSlot({ placement }: { placement: AdPlacement }) {
   const fetchAds = useServerFn(serveAds);
   const record = useServerFn(recordAdEvent);
-  const [dismissed, setDismissed] = useState<string[]>([]);
-
-  useEffect(() => setDismissed(safeSessionGet()), []);
+  // Chosen once per mount so re-renders never count as a new showing.
+  const [chosen, setChosen] = useState<ServedAd | null>(null);
+  const decided = useRef(false);
+  const counted = useRef(false);
 
   const { data } = useQuery({
     queryKey: ["ads", placement],
-    queryFn: () => fetchAds({ data: { placement, limit: 1 } }),
+    queryFn: () => fetchAds({ data: { placement, limit: 3 } }),
     staleTime: 5 * 60_000,
     retry: false,
     // A member must never see an ad error state.
     throwOnError: false,
   });
 
-  const ad = useMemo(() => {
-    const candidates = data?.ads ?? [];
-    const cap = data?.maxPerMemberDay ?? 3;
-    const seen = seenToday();
-    return (
-      candidates.find(
-        (a) =>
-          !dismissed.includes(a.id) &&
-          (seen.ids.includes(a.id) || seen.ids.length < Math.max(0, cap)),
-      ) ?? null
-    );
-  }, [data, dismissed]);
+  const gymId = data?.gymId ?? null;
+
+  useEffect(() => {
+    if (decided.current || !data || !gymId) return;
+    decided.current = true;
+    const ledger = readLedger(gymId);
+    const cap = Math.max(0, data.maxPerMemberDay ?? 3);
+    if (ledger.shows >= cap) return;
+    const ad = data.ads.find((a) => !ledger.dismissed.includes(a.id)) ?? null;
+    setChosen(ad);
+  }, [data, gymId]);
 
   const onImpression = useCallback(() => {
-    if (!ad) return;
-    markSeenToday(ad.id);
-    void record({ data: { adId: ad.id, event: "impression" } }).catch(() => {});
-  }, [ad, record]);
+    if (!chosen || !gymId || counted.current) return;
+    counted.current = true;
+    let firstToday = false;
+    updateLedger(gymId, (l) => {
+      firstToday = !l.impressed.includes(chosen.id);
+      return {
+        ...l,
+        shows: l.shows + 1,
+        impressed: firstToday ? [...l.impressed, chosen.id] : l.impressed,
+      };
+    });
+    if (firstToday) {
+      void record({ data: { adId: chosen.id, event: "impression" } }).catch(() => {});
+    }
+  }, [chosen, gymId, record]);
 
   const onClick = useCallback(() => {
-    if (!ad) return;
-    void record({ data: { adId: ad.id, event: "click" } }).catch(() => {});
-  }, [ad, record]);
+    if (!chosen) return;
+    void record({ data: { adId: chosen.id, event: "click" } }).catch(() => {});
+  }, [chosen, record]);
 
-  if (!ad) return null;
+  const onDismiss = useCallback(() => {
+    if (!chosen) return;
+    const id = chosen.id;
+    if (gymId) {
+      updateLedger(gymId, (l) => ({
+        ...l,
+        dismissed: l.dismissed.includes(id) ? l.dismissed : [...l.dismissed, id],
+      }));
+    }
+    void record({ data: { adId: id, event: "dismiss" } }).catch(() => {});
+    setChosen(null);
+  }, [chosen, gymId, record]);
+
+  if (!chosen) return null;
 
   return (
-    <SponsoredCard
-      ad={ad}
-      onImpression={onImpression}
-      onClick={onClick}
-      onDismiss={() => {
-        safeSessionAdd(ad.id);
-        setDismissed((d) => [...d, ad.id]);
-      }}
-    />
+    <SponsoredCard ad={chosen} onImpression={onImpression} onClick={onClick} onDismiss={onDismiss} />
   );
 }
