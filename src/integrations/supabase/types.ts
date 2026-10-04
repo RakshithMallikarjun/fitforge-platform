@@ -19,6 +19,7 @@ export type Database = {
           ad_id: string
           clicks: number
           day: string
+          dismisses: number
           gym_id: string
           impressions: number
         }
@@ -26,6 +27,7 @@ export type Database = {
           ad_id: string
           clicks?: number
           day: string
+          dismisses?: number
           gym_id: string
           impressions?: number
         }
@@ -33,6 +35,7 @@ export type Database = {
           ad_id?: string
           clicks?: number
           day?: string
+          dismisses?: number
           gym_id?: string
           impressions?: number
         }
@@ -2032,6 +2035,13 @@ export type Database = {
           clicks: number
           day: string
           impressions: number
+        }[]
+      }
+      gym_ad_dismisses: {
+        Args: { _days?: number }
+        Returns: {
+          ad_id: string
+          dismisses: number
         }[]
       }
       gym_ad_report: {
