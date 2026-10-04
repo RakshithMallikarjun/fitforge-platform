@@ -40,6 +40,7 @@ export type AdRow = {
   created_at: string;
   impressions: number;
   clicks: number;
+  dismisses: number;
   ctr: number | null;
 };
 
@@ -152,13 +153,14 @@ export const listGymAds = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const gymId = await requireAdminGym(supabase, userId);
 
-    const [adsRes, statsRes] = await Promise.all([
+    const [adsRes, statsRes, dismissRes] = await Promise.all([
       supabase
         .from("ads")
         .select("*")
         .eq("gym_id", gymId)
         .order("created_at", { ascending: false }),
       supabase.rpc("gym_ad_report", { _days: 30 }),
+      supabase.rpc("gym_ad_dismisses", { _days: 30 }),
     ]);
     if (adsRes.error) fail(adsRes.error);
 
@@ -171,8 +173,12 @@ export const listGymAds = createServerFn({ method: "GET" })
       });
     }
 
+    const dismisses = new Map<string, number>();
+    for (const r of (dismissRes.data ?? []) as any[]) dismisses.set(r.ad_id, Number(r.dismisses ?? 0));
+
     return ((adsRes.data ?? []) as any[]).map((a) => ({
       ...a,
+      dismisses: dismisses.get(a.id) ?? 0,
       impressions: stats.get(a.id)?.impressions ?? 0,
       clicks: stats.get(a.id)?.clicks ?? 0,
       ctr: stats.get(a.id)?.ctr ?? null,
@@ -439,6 +445,7 @@ export const listPlatformAds = createServerFn({ method: "GET" })
       ...a,
       impressions: 0,
       clicks: 0,
+      dismisses: 0,
       ctr: null,
     })) as AdRow[];
   });
@@ -574,14 +581,14 @@ export const serveAds = createServerFn({ method: "POST" })
       .object({ placement: placementSchema, limit: z.number().int().min(1).max(3).default(1) })
       .parse(data),
   )
-  .handler(async ({ data, context }): Promise<{ ads: ServedAd[]; maxPerMemberDay: number }> => {
+  .handler(async ({ data, context }): Promise<{ ads: ServedAd[]; maxPerMemberDay: number; gymId: string | null }> => {
     const { supabase } = context;
     try {
       const [served, settings] = await Promise.all([
         supabase.rpc("ad_serve", { _placement: data.placement, _limit: data.limit }),
-        supabase.from("gym_ad_settings").select("max_per_member_day").maybeSingle(),
+        supabase.from("gym_ad_settings").select("gym_id, max_per_member_day").maybeSingle(),
       ]);
-      if (served.error) return { ads: [], maxPerMemberDay: 3 };
+      if (served.error) return { ads: [], maxPerMemberDay: 3, gymId: null };
       const ads = await Promise.all(
         ((served.data ?? []) as any[]).map(async (a) => ({
           id: a.id as string,
@@ -597,9 +604,10 @@ export const serveAds = createServerFn({ method: "POST" })
       return {
         ads,
         maxPerMemberDay: Number((settings.data as any)?.max_per_member_day ?? 3),
+        gymId: ((settings.data as any)?.gym_id ?? null) as string | null,
       };
     } catch {
-      return { ads: [], maxPerMemberDay: 3 };
+      return { ads: [], maxPerMemberDay: 3, gymId: null };
     }
   });
 
@@ -607,7 +615,7 @@ export const serveAds = createServerFn({ method: "POST" })
 export const recordAdEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({ adId: z.string().uuid(), event: z.enum(["impression", "click"]) }).parse(data),
+    z.object({ adId: z.string().uuid(), event: z.enum(["impression", "click", "dismiss"]) }).parse(data),
   )
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
     try {
