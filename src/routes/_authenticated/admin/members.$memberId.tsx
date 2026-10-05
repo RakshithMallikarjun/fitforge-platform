@@ -116,7 +116,7 @@ function MemberProfile() {
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-xl font-bold tracking-tight">{user.display_name ?? "—"}</h2>
-              <StatusBadge status={status} />
+              <StatusBadge status={status} endsOn={membership?.endsOn} />
             </div>
             <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
@@ -224,7 +224,7 @@ function MemberProfile() {
                     ),
                   ],
                   ["Expires", membership?.endsOn ? formatShortDate(membership.endsOn) : "—"],
-                  ["Status", <StatusBadge key="s" status={status} />],
+                  ["Status", <StatusBadge key="s" status={status} endsOn={membership?.endsOn} />],
                 ]}
               />
               <InfoCard

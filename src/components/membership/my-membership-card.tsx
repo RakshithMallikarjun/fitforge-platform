@@ -67,9 +67,9 @@ export function MyMembershipCard() {
                   if (days < 0)
                     return data.status === "overdue_grace"
                       ? `overdue · in grace period (ended ${Math.abs(days)} day${days === -1 ? "" : "s"} ago)`
-                      : data.status === "cancelled"
-                        ? "cancelled"
-                        : `expired ${Math.abs(days)} day${days === -1 ? "" : "s"} ago`;
+                      : `expired ${Math.abs(days)} day${days === -1 ? "" : "s"} ago`;
+                  if (data.status === "cancelled")
+                    return `Cancelled — access until ${formatShortDate(data.ends_on!)}`;
                   if (days === 0) return "expires today";
                   return `${days} day${days === 1 ? "" : "s"} left`;
                 })()}

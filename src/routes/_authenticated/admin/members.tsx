@@ -337,7 +337,7 @@ function MembersPage() {
                         </Link>
                       </TableCell>
                       <TableCell>
-                        <StatusBadge status={status} />
+                        <StatusBadge status={status} endsOn={m.membership?.endsOn} />
                       </TableCell>
                       <TableCell className="text-xs">
                         {m.membership?.planName ? (

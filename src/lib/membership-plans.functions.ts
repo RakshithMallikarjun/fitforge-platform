@@ -1096,7 +1096,9 @@ export const getMyMembership = createServerFn({ method: "GET" })
 
     // Same rule as staff screens: the latest active or lapsed ledger row.
     const active =
-      ((subs ?? []) as any[]).find((s) => s.state === "active" || s.state === "expired") ?? null;
+      ((subs ?? []) as any[]).find(
+        (s) => s.state === "active" || s.state === "expired" || s.state === "cancelled",
+      ) ?? null;
     return {
       legacy: active?.source === "imported",
       plan_name: active?.plan_name_snapshot ?? null,
