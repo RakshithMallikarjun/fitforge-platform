@@ -36,7 +36,8 @@ export function isMembershipExpired(
  *   expiring      paid, ends within the gym's reminder lead days ("Expiring soon")
  *   overdue_grace ended, still inside the gym's grace days ("Overdue · grace")
  *   expired       ended and past grace
- *   cancelled     latest membership was cancelled and has ended
+ *   cancelled     latest membership was cancelled; access continues until its end date
+ *                 (once that date passes it reads "expired")
  *   inactive      account deactivated
  * Only active + expiring count as "Active memberships".
  */
@@ -70,8 +71,8 @@ export function membershipState(o: {
   if (!o.accountActive) return "inactive";
   if (!o.endsOn) return "none";
   const days = dayDiff(o.endsOn, o.today);
+  if (o.cancelled) return days < 0 ? "expired" : "cancelled";
   if (days < 0) {
-    if (o.cancelled) return "cancelled";
     return -days <= o.graceDays ? "overdue_grace" : "expired";
   }
   return days <= o.leadDays ? "expiring" : "active";

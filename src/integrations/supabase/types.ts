@@ -2131,6 +2131,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      member_is_ad_free: { Args: { _user_id: string }; Returns: boolean }
       my_gym_enabled: { Args: never; Returns: boolean }
       period_months: {
         Args: { _p: Database["public"]["Enums"]["billing_period"] }
@@ -2336,6 +2337,10 @@ export type Database = {
       }
       refund_member_payment: {
         Args: { _note: string; _payment_id: string }
+        Returns: Json
+      }
+      refund_member_payment_v2: {
+        Args: { _end_membership: boolean; _note: string; _payment_id: string }
         Returns: Json
       }
       resolve_payment_window: {

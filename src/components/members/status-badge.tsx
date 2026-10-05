@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { formatShortDate } from "@/lib/format-date";
 
 import type { LedgerStatus } from "@/lib/membership";
 
@@ -38,9 +39,12 @@ const LABELS: Record<MembershipStatus, string> = {
 
 export function StatusBadge({
   status,
+  endsOn,
   className,
 }: {
   status: MembershipStatus;
+  /** Shown for cancelled memberships that still have access. */
+  endsOn?: string | null;
   className?: string;
 }) {
   return (
@@ -52,7 +56,9 @@ export function StatusBadge({
       )}
     >
       <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current" />
-      {LABELS[status]}
+      {status === "cancelled" && endsOn
+        ? `Cancelled — access until ${formatShortDate(endsOn)}`
+        : LABELS[status]}
     </span>
   );
 }
