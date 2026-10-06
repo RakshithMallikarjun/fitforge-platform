@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { dateStringInZone } from "@/lib/gym-date";
+import { dateStringInZone, shiftDateString } from "@/lib/gym-date";
 
 /**
  * Membership tiers, the payment ledger and the dues engine.
@@ -610,6 +610,7 @@ export type DuesRow = {
   in_grace: boolean;
   last_payment_on: string | null;
   last_reminded_at: string | null;
+  reminded_today?: boolean;
   reminder_count: number;
 };
 
