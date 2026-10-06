@@ -531,6 +531,7 @@ export type PlatformAdReport = {
     ends_on: string | null;
     impressions: number;
     clicks: number;
+    dismisses?: number;
     gyms_served: number;
     by_gym: { gym_id: string; gym_name: string | null; impressions: number; clicks: number }[];
   }[];
@@ -552,9 +553,17 @@ export const getPlatformAdReport = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<PlatformAdReport> => {
     const { supabase } = context;
-    const { data, error } = await supabase.rpc("platform_ad_report", { _days: 30 });
+    const [{ data, error }, dis] = await Promise.all([
+      supabase.rpc("platform_ad_report", { _days: 30 }),
+      supabase.rpc("platform_ad_dismisses", { _days: 30 }),
+    ]);
     if (error) fail(error);
-    return data as unknown as PlatformAdReport;
+    const map = new Map(((dis.data ?? []) as any[]).map((r) => [r.ad_id, Number(r.dismisses ?? 0)]));
+    const rep = data as unknown as PlatformAdReport;
+    return {
+      ...rep,
+      campaigns: (rep?.campaigns ?? []).map((c) => ({ ...c, dismisses: map.get(c.ad_id) ?? 0 })),
+    };
   });
 
 export const setGymAdRevenueNote = createServerFn({ method: "POST" })
