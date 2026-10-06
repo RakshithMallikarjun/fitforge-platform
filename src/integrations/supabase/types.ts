@@ -2146,6 +2146,13 @@ export type Database = {
           workouts: number
         }[]
       }
+      platform_ad_dismisses: {
+        Args: { _days?: number }
+        Returns: {
+          ad_id: string
+          dismisses: number
+        }[]
+      }
       platform_ad_report: { Args: { _days?: number }; Returns: Json }
       platform_ads_for_gym: {
         Args: never

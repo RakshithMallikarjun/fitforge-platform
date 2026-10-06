@@ -225,6 +225,13 @@
       "when": 1791175057081,
       "tag": "0031_0031_billing_live_test_fixes",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1791293092223,
+      "tag": "0032_0032_platform_ad_dismisses",
+      "breakpoints": true
     }
   ]
 }
