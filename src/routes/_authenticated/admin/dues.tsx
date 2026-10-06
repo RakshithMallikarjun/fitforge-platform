@@ -286,15 +286,16 @@ function DuesPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">
+                        <span title={r.reminded_today ? "Already reminded today" : undefined}>
                         <Button
                           variant="outline"
                           size="sm"
                           disabled={remindOne.isPending || r.reminded_today}
-                          title={r.reminded_today ? "Already reminded today" : undefined}
                           onClick={() => remindOne.mutate({ memberId: r.member_id })}
                         >
                           {r.reminded_today ? "Reminded today" : "Remind"}
                         </Button>
+                        </span>
                         <Button
                           size="sm"
                           onClick={() =>
