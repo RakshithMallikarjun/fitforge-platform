@@ -452,6 +452,7 @@ export const previewPayment = createServerFn({ method: "GET" })
         planId: uuid,
         period: periodSchema,
         startsOn: z.string().date().nullable().optional(),
+        paidOn: z.string().date().nullable().optional(),
         supersede: z.boolean().optional(),
       })
       .parse(d),
@@ -459,6 +460,22 @@ export const previewPayment = createServerFn({ method: "GET" })
   .handler(async ({ context, data }): Promise<PaymentPreview> => {
     const { supabase, userId } = context;
     await requireGymRole(supabase, userId, ["admin", "trainer"]);
+    // Same rule as record_member_payment: coverage starts at the later of
+    // the paid-on date and the day after the current expiry.
+    if (!data.startsOn) {
+      const { timeZone } = await gymOf(supabase, userId);
+      const paid = data.paidOn ?? dateStringInZone(timeZone);
+      const { data: last } = await supabase
+        .from("member_subscriptions")
+        .select("ends_on")
+        .eq("member_id", data.memberId)
+        .in("state", ["active", "expired", "cancelled"])
+        .order("ends_on", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const next = (last as any)?.ends_on ? shiftDateString((last as any).ends_on, 1) : paid;
+      data.startsOn = next > paid ? next : paid;
+    }
     const { data: res, error } = await supabase.rpc("preview_member_payment", {
       _member_id: data.memberId,
       _plan_id: data.planId,
@@ -534,17 +551,28 @@ export const recordPayment = createServerFn({ method: "POST" })
 export const refundPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ paymentId: uuid, note: z.string().trim().max(500).optional() }).parse(d),
+    z
+      .object({
+        paymentId: uuid,
+        note: z.string().trim().max(500).optional(),
+        endMembership: z.boolean().optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     await requireGymRole(supabase, userId, ["admin"]);
-    const { data: res, error } = await supabase.rpc("refund_member_payment", {
+    const { data: res, error } = await supabase.rpc("refund_member_payment_v2", {
       _payment_id: data.paymentId,
       _note: data.note ?? "",
+      _end_membership: data.endMembership ?? false,
     });
     if (error) fail(error);
-    return res as { refund_id: string; suggest_adjust_end_date: boolean };
+    return res as {
+      refund_id: string;
+      suggest_adjust_end_date: boolean;
+      membership_ended: boolean;
+    };
   });
 
 export const cancelSubscription = createServerFn({ method: "POST" })
@@ -597,7 +625,12 @@ export const getDues = createServerFn({ method: "GET" })
     await requireGymRole(supabase, userId, ["admin", "trainer"]);
     const { data: rows, error } = await supabase.rpc("gym_dues", { _bucket: data.bucket });
     if (error) fail(error);
-    return ((rows ?? []) as any[]).map((r) => ({ ...r, amount_due: Number(r.amount_due) }));
+    const { timeZone } = await gymOf(supabase, userId);
+    return ((rows ?? []) as any[]).map((r) => ({
+      ...r,
+      amount_due: Number(r.amount_due),
+      reminded_today: remindedToday(r.last_reminded_at, timeZone),
+    }));
   });
 
 export type DuesSummary = {
@@ -609,6 +642,7 @@ export type DuesSummary = {
   due_soon_amount: number;
   current_count: number;
   collected_this_month: number;
+  refunded_this_month: number;
   currency: string;
 };
 
@@ -628,7 +662,8 @@ export const getDuesSummary = createServerFn({ method: "GET" })
       due_soon_count: Number(r.due_soon_count ?? 0),
       due_soon_amount: Number(r.due_soon_amount ?? 0),
       current_count: Number(r.current_count ?? 0),
-      collected_this_month: Number(r.collected_this_month ?? 0),
+      collected_this_month: Math.max(0, Number(r.collected_this_month ?? 0)),
+      refunded_this_month: Math.max(0, Number(r.refunded_this_month ?? 0)),
       currency: r.currency ?? "INR",
     };
   });
@@ -753,6 +788,11 @@ function renderTemplate(
     .replaceAll("{amount}", vals.amount);
 }
 
+function remindedToday(at: string | null | undefined, timeZone: string) {
+  if (!at) return false;
+  return dateStringInZone(timeZone, new Date(at)) === dateStringInZone(timeZone);
+}
+
 async function sendOneReminder(
   supabase: any,
   staffId: string,
@@ -764,11 +804,22 @@ async function sendOneReminder(
   row: DuesRow,
   force: boolean,
 ) {
-  if (!force && row.last_reminded_at) {
-    const hrs = (Date.now() - new Date(row.last_reminded_at).getTime()) / 36e5;
-    if (hrs < 24) {
-      return { skipped: true as const, reason: "Reminded less than 24 hours ago" };
+  void force;
+  if (remindedToday(row.last_reminded_at, timeZone)) {
+    return { skipped: true as const, reason: "Already reminded today" };
+  }
+  // Log first: the server refuses a second reminder on the same gym day.
+  const { error: logErr } = await supabase.rpc("log_payment_reminder", {
+    _member_id: row.member_id,
+    _subscription_id: row.subscription_id,
+    _channel: "message",
+    _note: null,
+  });
+  if (logErr) {
+    if (/already reminded today/i.test(logErr.message ?? "")) {
+      return { skipped: true as const, reason: "Already reminded today" };
     }
+    fail(logErr);
   }
 
   const amount = new Intl.NumberFormat(undefined, {
@@ -807,12 +858,6 @@ async function sendOneReminder(
     console.error("dues reminder push failed", e);
   }
 
-  await supabase.rpc("log_payment_reminder", {
-    _member_id: row.member_id,
-    _subscription_id: row.subscription_id,
-    _channel: "message",
-    _note: null,
-  });
   return { skipped: false as const, body };
 }
 
@@ -861,7 +906,7 @@ export const sendMemberReminder = createServerFn({ method: "POST" })
       row,
       data.force ?? false,
     );
-    if (res.skipped) throw new Error(`${res.reason}. Use "Remind anyway" to send another.`);
+    if (res.skipped) throw new Error(`${res.reason}.`);
     return { sent: 1 };
   });
 
@@ -876,6 +921,7 @@ export const sendBulkReminders = createServerFn({ method: "POST" })
     const ctx = await reminderContext(supabase, userId);
     let sent = 0;
     let skipped = 0;
+    let alreadyToday = 0;
     for (const id of data.memberIds) {
       const row = ctx.dues.find((r) => r.member_id === id);
       if (!row) {
@@ -894,13 +940,15 @@ export const sendBulkReminders = createServerFn({ method: "POST" })
           row,
           data.force ?? false,
         );
-        if (res.skipped) skipped++;
-        else sent++;
+        if (res.skipped) {
+          skipped++;
+          alreadyToday++;
+        } else sent++;
       } catch {
         skipped++;
       }
     }
-    return { sent, skipped };
+    return { sent, skipped, alreadyToday };
   });
 
 // =================== reports ===================
