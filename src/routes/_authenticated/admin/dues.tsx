@@ -120,7 +120,9 @@ function DuesPage() {
     mutationFn: (memberIds: string[]) => sendBulkReminders({ data: { memberIds } }),
     onSuccess: (res) => {
       toast.success(`${res.sent} reminder${res.sent === 1 ? "" : "s"} sent`, {
-        description: res.skipped ? `${res.skipped} skipped (recently reminded)` : undefined,
+        description: res.skipped
+          ? `Sent ${res.sent}, skipped ${res.skipped} (already reminded today)`
+          : undefined,
       });
       setSelected({});
       qc.invalidateQueries({ queryKey: ["dues"] });
@@ -193,7 +195,11 @@ function DuesPage() {
             <StatCard
               label="Collected this month"
               value={formatMoney(summary.data.collected_this_month, currency)}
-              sub={`${summary.data.current_count} members current`}
+              sub={
+                summary.data.refunded_this_month > 0
+                  ? `Refunded this month: ${formatMoney(summary.data.refunded_this_month, currency)}`
+                  : `${summary.data.current_count} members current`
+              }
               icon={<IndianRupee className="h-4 w-4 text-primary" />}
             />
           </div>
@@ -280,19 +286,16 @@ function DuesPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">
+                        <span title={r.reminded_today ? "Already reminded today" : undefined}>
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled={remindOne.isPending}
-                          onClick={() =>
-                            remindOne.mutate({
-                              memberId: r.member_id,
-                              force: !!r.last_reminded_at,
-                            })
-                          }
+                          disabled={remindOne.isPending || r.reminded_today}
+                          onClick={() => remindOne.mutate({ memberId: r.member_id })}
                         >
-                          Remind
+                          {r.reminded_today ? "Reminded today" : "Remind"}
                         </Button>
+                        </span>
                         <Button
                           size="sm"
                           onClick={() =>
