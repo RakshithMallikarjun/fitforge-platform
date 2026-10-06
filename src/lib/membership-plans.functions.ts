@@ -397,6 +397,7 @@ export type MemberPayment = {
   reference: string | null;
   note: string | null;
   refund_of: string | null;
+  subscription_id: string | null;
   kind: "payment" | "adjustment";
   recorded_by_name: string | null;
 };
