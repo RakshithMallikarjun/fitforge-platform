@@ -311,7 +311,7 @@ export function RecordPaymentDialog({
               ) : (
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">
-                    Paid on {formatShortDate(paidOn || null) || "today"}
+                    Paid on {paidOn ? formatShortDate(paidOn) : "today"}
                   </p>
                   <p className="font-semibold">
                     Covers {formatShortDate(quote.covers_from)} – {formatShortDate(quote.covers_to)}
