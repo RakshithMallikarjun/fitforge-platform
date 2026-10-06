@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -62,6 +63,7 @@ export function RecordPaymentDialog({
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
+  const [backdateOk, setBackdateOk] = useState(false);
 
   const {
     data: plans,
@@ -101,8 +103,8 @@ export function RecordPaymentDialog({
   }, [listPrice]);
 
   const { data: quote, isFetching: quoting } = useQuery({
-    queryKey: ["payment-preview", memberId, planId, period],
-    queryFn: () => preview({ data: { memberId, planId, period } }),
+    queryKey: ["payment-preview", memberId, planId, period, paidOn],
+    queryFn: () => preview({ data: { memberId, planId, period, paidOn: paidOn || null } }),
     enabled: open && !!planId && !!period,
   });
 
@@ -144,6 +146,18 @@ export function RecordPaymentDialog({
   });
 
   const currency = quote?.currency ?? null;
+  // Back-dated more than 7 days (device date; the server re-checks the future bound).
+  const backdatedDays = (() => {
+    if (!paidOn) return 0;
+    const t = new Date();
+    const today = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+    const [y, m, d] = paidOn.split("-").map(Number);
+    return Math.round((today - Date.UTC(y, (m ?? 1) - 1, d ?? 1)) / 86400000);
+  })();
+  const isBackdated = backdatedDays > 7;
+  const bookedMonth = paidOn
+    ? new Date(`${paidOn}T12:00:00`).toLocaleString("en-GB", { month: "long" })
+    : "";
   const amountNumber = amount.trim() === "" ? null : Number(amount);
   const amountInvalid =
     amountNumber != null && (!Number.isFinite(amountNumber) || amountNumber < 0);
@@ -228,10 +242,29 @@ export function RecordPaymentDialog({
                   id="pay-date"
                   type="date"
                   value={paidOn}
-                  onChange={(e) => setPaidOn(e.target.value)}
+                  onChange={(e) => {
+                    setPaidOn(e.target.value);
+                    setBackdateOk(false);
+                  }}
                 />
               </div>
             </div>
+            {isBackdated && (
+              <div className="space-y-2 rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-sm">
+                <p className="text-destructive">
+                  This payment is dated {backdatedDays} days ago. Revenue will be booked to{" "}
+                  {bookedMonth}.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="backdate-ok"
+                    checked={backdateOk}
+                    onCheckedChange={(v) => setBackdateOk(v === true)}
+                  />
+                  <Label htmlFor="backdate-ok">Yes, back-date this payment</Label>
+                </div>
+              </div>
+            )}
 
             <div className="grid gap-2 sm:grid-cols-2">
               <div className="grid gap-2">
@@ -277,6 +310,9 @@ export function RecordPaymentDialog({
                 <p className="text-muted-foreground">Choose a tier and term to see the dates.</p>
               ) : (
                 <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">
+                    Paid on {formatShortDate(paidOn || null) || "today"}
+                  </p>
                   <p className="font-semibold">
                     Covers {formatShortDate(quote.covers_from)} – {formatShortDate(quote.covers_to)}
                   </p>
@@ -285,7 +321,7 @@ export function RecordPaymentDialog({
                       ? `Renewal — currently ends ${formatShortDate(quote.previous_ends_on)}`
                       : "First payment on this tier"}
                     {quote.is_lapsed_restart
-                      ? ` · lapsed ${quote.days_lapsed} day${quote.days_lapsed === 1 ? "" : "s"}, restarts today`
+                      ? ` · lapsed ${quote.days_lapsed} day${quote.days_lapsed === 1 ? "" : "s"}, restarts ${formatShortDate(quote.covers_from)}`
                       : ""}
                   </p>
                   {quote.supersedes_plan_name && (
@@ -304,7 +340,13 @@ export function RecordPaymentDialog({
             Cancel
           </Button>
           <Button
-            disabled={!planId || amountInvalid || record.isPending || sellable.length === 0}
+            disabled={
+              !planId ||
+              amountInvalid ||
+              record.isPending ||
+              sellable.length === 0 ||
+              (isBackdated && !backdateOk)
+            }
             onClick={() =>
               record.mutate({
                 amount: amountNumber ?? undefined,
