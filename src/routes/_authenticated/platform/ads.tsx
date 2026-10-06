@@ -162,6 +162,7 @@ function PlatformAdsPage() {
                     <TableHead className="text-right">Gyms</TableHead>
                     <TableHead className="text-right">Impr.</TableHead>
                     <TableHead className="text-right">Clicks</TableHead>
+                    <TableHead className="text-right">Dismissed</TableHead>
                     <TableHead />
                   </TableRow>
                 </TableHeader>
@@ -214,6 +215,7 @@ function PlatformAdsPage() {
                           {st?.impressions ?? 0}
                         </TableCell>
                         <TableCell className="text-right font-numeric">{st?.clicks ?? 0}</TableCell>
+                        <TableCell className="text-right font-numeric">{st?.dismisses ?? 0}</TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"
@@ -229,6 +231,10 @@ function PlatformAdsPage() {
                   })}
                 </TableBody>
               </Table>
+              <p className="p-4 text-xs text-muted-foreground">
+                Impressions count once per campaign per device per day; hiding a card is a dismiss,
+                not a click. Figures before 4 Oct 2026 may be inflated.
+              </p>
             </div>
           )}
         </CardContent>
