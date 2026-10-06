@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -47,7 +49,12 @@ export function MemberBillingPanel({
   canManage: boolean;
 }) {
   const qc = useQueryClient();
-  const [refundTarget, setRefundTarget] = useState<{ id: string; amount: number } | null>(null);
+  const [refundTarget, setRefundTarget] = useState<{
+    id: string;
+    amount: number;
+    current: boolean;
+  } | null>(null);
+  const [endToo, setEndToo] = useState(true);
   const [cancelTarget, setCancelTarget] = useState<{ id: string; plan: string } | null>(null);
 
   const subs = useQuery({
@@ -69,10 +76,13 @@ export function MemberBillingPanel({
   };
 
   const refund = useMutation({
-    mutationFn: (paymentId: string) => refundPayment({ data: { paymentId } }),
+    mutationFn: (v: { paymentId: string; endMembership: boolean }) =>
+      refundPayment({ data: v }),
     onSuccess: (res) => {
       toast.success("Payment refunded", {
-        description: res.suggest_adjust_end_date
+        description: res.membership_ended
+          ? "Their membership has ended."
+          : res.suggest_adjust_end_date
           ? "Check their end date — this payment had already extended it."
           : undefined,
       });
@@ -115,6 +125,11 @@ export function MemberBillingPanel({
                   {formatShortDate(s.started_on)} – {formatShortDate(s.ends_on)}
                 </span>
                 <span className="text-xs text-muted-foreground capitalize">{s.state}</span>
+                {s.state === "cancelled" && (
+                  <span className="text-xs text-muted-foreground">
+                    Cancelled — access until {formatShortDate(s.ends_on)}
+                  </span>
+                )}
                 {canManage && s.state === "active" && (
                   <Button
                     variant="ghost"
@@ -179,8 +194,10 @@ export function MemberBillingPanel({
                     ) : (
                       formatMoney(p.amount, p.currency ?? currency)
                     )}
-                    {p.state === "refunded" && (
-                      <span className="ml-1 text-muted-foreground">(refunded)</span>
+                    {p.state === "refunded" && !p.refund_of && (
+                      <Badge variant="secondary" className="ml-1.5 text-[10px]">
+                        Refunded
+                      </Badge>
                     )}
                     {p.refund_of && <span className="ml-1 text-muted-foreground">(refund)</span>}
                   </TableCell>
@@ -194,7 +211,15 @@ export function MemberBillingPanel({
                         variant="ghost"
                         size="sm"
                         className="text-destructive"
-                        onClick={() => setRefundTarget({ id: p.id, amount: p.amount })}
+                        onClick={() => {
+                          const sub = (subs.data ?? []).find((s) => s.id === p.subscription_id);
+                          const current =
+                            !!sub &&
+                            (sub.state === "active" || sub.state === "cancelled") &&
+                            sub.ends_on === p.covers_to;
+                          setEndToo(true);
+                          setRefundTarget({ id: p.id, amount: p.amount, current });
+                        }}
                       >
                         Refund
                       </Button>
@@ -214,14 +239,30 @@ export function MemberBillingPanel({
               Refund {formatMoney(refundTarget?.amount, currency)} to {memberName}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              The payment stays on record as refunded. You may need to adjust their end date.
+              The payment stays on record as refunded. A payment can be refunded only once.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {refundTarget?.current && (
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="refund-end"
+                checked={endToo}
+                onCheckedChange={(v) => setEndToo(v === true)}
+              />
+              <Label htmlFor="refund-end" className="text-sm">
+                Also end their membership today?
+              </Label>
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (refundTarget) refund.mutate(refundTarget.id);
+                if (refundTarget)
+                  refund.mutate({
+                    paymentId: refundTarget.id,
+                    endMembership: refundTarget.current && endToo,
+                  });
                 setRefundTarget(null);
               }}
             >
