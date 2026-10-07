@@ -245,6 +245,10 @@ function ExercisesPage() {
                       <Lock className="h-3 w-3" /> Global
                     </div>
                   ) : (
+                    <>
+                    <div className="pointer-events-none absolute left-3 top-3 inline-flex items-center rounded-full bg-primary/90 px-2 py-1 text-[10px] font-semibold text-primary-foreground shadow-sm">
+                      Gym
+                    </div>
                     <div className="absolute right-2 top-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

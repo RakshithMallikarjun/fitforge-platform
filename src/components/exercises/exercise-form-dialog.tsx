@@ -20,8 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { Plus } from "lucide-react";
+import { EQUIPMENT, MUSCLE_GROUPS, isYoutubeUrl, normaliseTags } from "@/lib/exercise-taxonomy";
 import {
   createExercise,
   updateExercise,
@@ -38,47 +38,82 @@ type Props = {
   globalNames?: Set<string>;
 };
 
-function TagInput({
+function ChipSelect({
   value,
   onChange,
-  placeholder,
+  options,
+  kind,
+  label,
 }: {
   value: string[];
   onChange: (v: string[]) => void;
-  placeholder: string;
+  options: readonly string[];
+  kind: "muscle" | "equipment";
+  label: string;
 }) {
+  const [adding, setAdding] = useState(false);
   const [text, setText] = useState("");
-  const add = () => {
-    const t = text.trim().toLowerCase();
-    if (!t) return;
-    if (!value.includes(t)) onChange([...value, t]);
+  const all = Array.from(new Set([...options, ...value]));
+  const toggle = (t: string) =>
+    onChange(value.includes(t) ? value.filter((x) => x !== t) : [...value, t]);
+  const addCustom = () => {
+    const next = normaliseTags([...value, text], kind);
+    onChange(next);
     setText("");
+    setAdding(false);
   };
   return (
     <div>
-      <div className="flex flex-wrap gap-1.5">
-        {value.map((t) => (
-          <Badge key={t} variant="secondary" className="gap-1">
-            {t}
-            <button type="button" onClick={() => onChange(value.filter((x) => x !== t))}>
-              <X className="h-3 w-3" />
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label={label}>
+        {all.map((t) => {
+          const on = value.includes(t);
+          return (
+            <button
+              key={t}
+              type="button"
+              aria-pressed={on}
+              onClick={() => toggle(t)}
+              className={
+                "rounded-full border px-2.5 py-1 text-xs capitalize transition " +
+                (on
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground")
+              }
+            >
+              {t}
             </button>
-          </Badge>
-        ))}
+          );
+        })}
+        {!adding && (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <Plus className="h-3 w-3" /> Add custom
+          </button>
+        )}
       </div>
-      <Input
-        className="mt-2"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === ",") {
-            e.preventDefault();
-            add();
-          }
-        }}
-        onBlur={add}
-        placeholder={placeholder}
-      />
+      {adding && (
+        <div className="mt-2 flex gap-2">
+          <Input
+            autoFocus
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addCustom();
+              }
+              if (e.key === "Escape") setAdding(false);
+            }}
+            placeholder="One per entry; commas split"
+          />
+          <Button type="button" size="sm" variant="outline" onClick={addCustom}>
+            Add
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -89,8 +124,13 @@ export function ExerciseFormDialog({ open, onOpenChange, initial, globalNames }:
   const [description, setDescription] = useState(initial?.description ?? "");
   const [videoUrl, setVideoUrl] = useState(initial?.video_url ?? "");
   const [thumbnailUrl, setThumbnailUrl] = useState(initial?.thumbnail_url ?? "");
-  const [muscleGroups, setMuscleGroups] = useState<string[]>(initial?.muscle_groups ?? []);
-  const [equipment, setEquipment] = useState<string[]>(initial?.equipment ?? []);
+  const [muscleGroups, setMuscleGroups] = useState<string[]>(
+    normaliseTags(initial?.muscle_groups ?? [], "muscle"),
+  );
+  const [equipment, setEquipment] = useState<string[]>(
+    normaliseTags(initial?.equipment ?? [], "equipment"),
+  );
+  const [videoErr, setVideoErr] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<string>(initial?.difficulty ?? "beginner");
 
   const duplicatesGlobal =
@@ -103,7 +143,7 @@ export function ExerciseFormDialog({ open, onOpenChange, initial, globalNames }:
       const payload = {
         name,
         description: description || null,
-        video_url: videoUrl || null,
+        video_url: videoUrl.trim() || null,
         thumbnail_url: finalThumb,
         muscle_groups: muscleGroups,
         equipment,
@@ -119,7 +159,11 @@ export function ExerciseFormDialog({ open, onOpenChange, initial, globalNames }:
       qc.invalidateQueries({ queryKey: ["exercises"] });
       onOpenChange(false);
     },
-    onError: (e: any) => toast.error("Save failed", { description: formatServerError(e) }),
+    onError: (e: any) => {
+      const msg = formatServerError(e);
+      if (/youtube/i.test(msg)) setVideoErr("Use a YouTube link");
+      else toast.error("Save failed", { description: msg });
+    },
   });
 
   return (
@@ -148,9 +192,14 @@ export function ExerciseFormDialog({ open, onOpenChange, initial, globalNames }:
               <Label>YouTube Video URL (optional)</Label>
               <Input
                 value={videoUrl ?? ""}
-                onChange={(e) => setVideoUrl(e.target.value)}
+                onChange={(e) => {
+                  setVideoUrl(e.target.value);
+                  setVideoErr(null);
+                }}
+                aria-invalid={!!videoErr}
                 placeholder="https://www.youtube.com/watch?v=..."
               />
+              {videoErr && <p className="mt-1 text-xs text-destructive">{videoErr}</p>}
               <p className="mt-1 text-[11px] text-muted-foreground">
                 Paste a YouTube video URL for the exercise demonstration, e.g.
                 https://www.youtube.com/watch?v=… — leave blank to use auto-search.
@@ -166,11 +215,23 @@ export function ExerciseFormDialog({ open, onOpenChange, initial, globalNames }:
           </div>
           <div>
             <Label>Muscle groups</Label>
-            <TagInput value={muscleGroups} onChange={setMuscleGroups} placeholder="chest, back…" />
+            <ChipSelect
+              label="Muscle groups"
+              kind="muscle"
+              options={MUSCLE_GROUPS}
+              value={muscleGroups}
+              onChange={setMuscleGroups}
+            />
           </div>
           <div>
             <Label>Equipment</Label>
-            <TagInput value={equipment} onChange={setEquipment} placeholder="barbell, dumbbells…" />
+            <ChipSelect
+              label="Equipment"
+              kind="equipment"
+              options={EQUIPMENT}
+              value={equipment}
+              onChange={setEquipment}
+            />
           </div>
           <div>
             <Label>Difficulty</Label>
@@ -190,7 +251,16 @@ export function ExerciseFormDialog({ open, onOpenChange, initial, globalNames }:
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={() => save.mutate()} disabled={!name || save.isPending}>
+          <Button
+            onClick={() => {
+              if (videoUrl.trim() && !isYoutubeUrl(videoUrl)) {
+                setVideoErr("Use a YouTube link");
+                return;
+              }
+              save.mutate();
+            }}
+            disabled={!name || save.isPending}
+          >
             {save.isPending ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>

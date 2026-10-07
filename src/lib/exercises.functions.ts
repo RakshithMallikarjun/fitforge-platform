@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { isYoutubeUrl, normaliseTags } from "@/lib/exercise-taxonomy";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /** Compare exercise names ignoring case, punctuation and extra spaces. */
@@ -91,10 +92,24 @@ export const listExercises = createServerFn({ method: "GET" })
 const createSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional().nullable(),
-  video_url: z.string().optional().nullable(),
-  thumbnail_url: z.string().optional().nullable(),
-  muscle_groups: z.array(z.string()).default([]),
-  equipment: z.array(z.string()).default([]),
+  video_url: z
+    .string()
+    .trim()
+    .max(500)
+    .refine((v) => v === "" || isYoutubeUrl(v), "Use a YouTube link")
+    .optional()
+    .nullable(),
+  thumbnail_url: z.string().trim().max(500).optional().nullable(),
+  muscle_groups: z
+    .array(z.string().max(200))
+    .max(20)
+    .default([])
+    .transform((v) => normaliseTags(v, "muscle")),
+  equipment: z
+    .array(z.string().max(200))
+    .max(20)
+    .default([])
+    .transform((v) => normaliseTags(v, "equipment")),
   difficulty: z.enum(["beginner", "intermediate", "advanced"]).optional().nullable(),
 });
 

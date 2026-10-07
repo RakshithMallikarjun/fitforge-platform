@@ -1,4 +1,6 @@
 import { formatServerError } from "@/lib/format-error";
+import { formatMoney } from "@/lib/format-money";
+import { CURRENCIES } from "@/lib/currencies";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -149,6 +151,8 @@ function PlatformGymDetailPage() {
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("INR");
   const [note, setNote] = useState("");
+  const [billingEmail, setBillingEmail] = useState("");
+  const [billingErr, setBillingErr] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!g) return;
@@ -157,7 +161,22 @@ function PlatformGymDetailPage() {
     setNextDueAt(g.next_due_at?.slice(0, 10) ?? "");
     setAmount(g.monthly_amount != null ? String(g.monthly_amount) : "");
     setCurrency(g.currency ?? "INR");
+    setBillingEmail(g.billing_email ?? "");
   }, [g]);
+
+  function validateBilling() {
+    const e: Record<string, string> = {};
+    if (amount.trim() !== "") {
+      const n = Number(amount);
+      if (!Number.isFinite(n)) e.amount = "Enter a number";
+      else if (n < 0) e.amount = "Monthly amount can't be negative";
+    }
+    if (!(CURRENCIES as readonly string[]).includes(currency)) e.currency = "Choose a currency";
+    const be = billingEmail.trim();
+    if (be && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(be)) e.billingEmail = "Enter a valid billing email";
+    setBillingErr(e);
+    return Object.keys(e).length === 0;
+  }
 
   function invalidate() {
     qc.invalidateQueries({ queryKey: ["platform-gym", gymId] });
@@ -185,7 +204,8 @@ function PlatformGymDetailPage() {
           lastPaymentAt: lastPaymentAt || null,
           nextDueAt: nextDueAt || null,
           monthlyAmount: amount ? Number(amount) : null,
-          currency,
+          currency: currency as (typeof CURRENCIES)[number],
+          billingEmail: billingEmail.trim(),
           note: note || null,
         },
       }),
@@ -195,7 +215,13 @@ function PlatformGymDetailPage() {
       setNote("");
       invalidate();
     },
-    onError: (e) => toast.error(formatServerError(e, {ownerEmail:"Owner email",primaryColor:"Primary colour",supportEmail:"Support email",slug:"Web address"}, "Could not update billing")),
+    onError: (e) => {
+      const msg = formatServerError(e, { monthlyAmount: "Monthly amount", billingEmail: "Billing email", currency: "Currency" }, "Could not update billing");
+      if (/billing email/i.test(msg)) setBillingErr({ billingEmail: msg });
+      else if (/amount/i.test(msg)) setBillingErr({ amount: msg });
+      else if (/currency/i.test(msg)) setBillingErr({ currency: msg });
+      else toast.error(msg);
+    },
   });
 
   const planMutation = useMutation({
@@ -427,7 +453,7 @@ function PlatformGymDetailPage() {
             <div className="flex items-center justify-between gap-3">
               <dt className="text-xs text-muted-foreground">Monthly</dt>
               <dd className="font-numeric">
-                {g.monthly_amount != null ? `${g.currency} ${g.monthly_amount}` : "—"}
+                {g.monthly_amount != null ? formatMoney(g.monthly_amount, g.currency) : "—"}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3">
@@ -695,19 +721,43 @@ function PlatformGymDetailPage() {
                 min="0"
                 step="1"
                 value={amount}
+                aria-invalid={!!billingErr.amount}
                 onChange={(e) => setAmount(e.target.value)}
               />
+              {billingErr.amount && <p className="text-xs text-destructive">{billingErr.amount}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="currency" className="text-xs">
                 Currency
               </Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger id="currency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {billingErr.currency && <p className="text-xs text-destructive">{billingErr.currency}</p>}
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="billing-email" className="text-xs">
+                Billing email
+              </Label>
               <Input
-                id="currency"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-                maxLength={3}
+                id="billing-email"
+                type="email"
+                value={billingEmail}
+                aria-invalid={!!billingErr.billingEmail}
+                onChange={(e) => setBillingEmail(e.target.value)}
               />
+              {billingErr.billingEmail && (
+                <p className="text-xs text-destructive">{billingErr.billingEmail}</p>
+              )}
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="note" className="text-xs">
@@ -720,7 +770,10 @@ function PlatformGymDetailPage() {
             <Button variant="outline" onClick={() => setBillingOpen(false)}>
               Cancel
             </Button>
-            <Button disabled={billingMutation.isPending} onClick={() => billingMutation.mutate()}>
+            <Button
+              disabled={billingMutation.isPending}
+              onClick={() => validateBilling() && billingMutation.mutate()}
+            >
               Save billing
             </Button>
           </DialogFooter>
