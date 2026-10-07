@@ -24,28 +24,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createAssessment, updateAssessment } from "@/lib/assessments.functions";
 import { uploadProgressPhoto } from "@/lib/progress.functions";
 
-const formSchema = z.object({
-  date: z.string().min(1),
-  unit_system: z.enum(["metric", "imperial"]),
-  weight: z.string().optional(),
-  height: z.string().optional(),
-  body_fat_pct: z.string().optional(),
-  muscle_mass: z.string().optional(),
-  chest: z.string().optional(),
-  waist: z.string().optional(),
-  hips: z.string().optional(),
-  arms: z.string().optional(),
-  thighs: z.string().optional(),
-  vo2_max: z.string().optional(),
-  resting_hr: z.string().optional(),
-  blood_pressure: z.string().optional(),
-  flexibility: z.string().optional(),
-  bench_1rm: z.string().optional(),
-  squat_1rm: z.string().optional(),
-  deadlift_1rm: z.string().optional(),
-  notes: z.string().optional(),
-});
-
 type FormValues = z.infer<typeof formSchema>;
 
 const numOrUndef = (s?: string) => {
@@ -67,6 +45,64 @@ const fromMetricWeight = (n: number, unit: "metric" | "imperial") =>
   unit === "imperial" ? n * 2.205 : n;
 const fromMetricLength = (n: number, unit: "metric" | "imperial") =>
   unit === "imperial" ? n / 2.54 : n;
+
+const formSchema = z.object({
+  date: z.string().min(1),
+  unit_system: z.enum(["metric", "imperial"]),
+  weight: z.string().optional(),
+  height: z.string().optional(),
+  body_fat_pct: z.string().optional(),
+  muscle_mass: z.string().optional(),
+  chest: z.string().optional(),
+  waist: z.string().optional(),
+  hips: z.string().optional(),
+  arms: z.string().optional(),
+  thighs: z.string().optional(),
+  vo2_max: z.string().optional(),
+  resting_hr: z.string().optional(),
+  blood_pressure: z.string().optional(),
+  flexibility: z.string().optional(),
+  bench_1rm: z.string().optional(),
+  squat_1rm: z.string().optional(),
+  deadlift_1rm: z.string().optional(),
+  notes: z.string().optional(),
+}).superRefine((v, ctx) => {
+  const u = v.unit_system;
+  const w = (s?: string) => { const n = numOrUndef(s); return n === undefined ? undefined : toMetricWeight(n, u); };
+  const l = (s?: string) => { const n = numOrUndef(s); return n === undefined ? undefined : toMetricLength(n, u); };
+  const raw = (s?: string) => numOrUndef(s);
+  const wu = u === "imperial" ? "lb" : "kg";
+  const lu = u === "imperial" ? "in" : "cm";
+  const fw = (kg: number) => (u === "imperial" ? Math.round(kg * 2.205) : kg);
+  const fl = (cm: number) => (u === "imperial" ? Math.round(cm / 2.54) : cm);
+  const check = (path: keyof typeof v, val: number | undefined, min: number, max: number, msg: string) => {
+    if (val === undefined) return;
+    if (val < min - 1e-9 || val > max + 1e-9) ctx.addIssue({ code: "custom", path: [path], message: msg });
+  };
+  for (const k of Object.keys(v) as (keyof typeof v)[]) {
+    if (["date", "unit_system", "notes", "blood_pressure"].includes(k)) continue;
+    const s = v[k] as string | undefined;
+    if (s && s.trim() !== "" && !Number.isFinite(Number(s)))
+      ctx.addIssue({ code: "custom", path: [k], message: "Enter a number" });
+  }
+  check("weight", w(v.weight), 20, 400, `Weight must be ${fw(20)}–${fw(400)} ${wu}`);
+  check("height", l(v.height), 100, 250, `Height must be ${fl(100)}–${fl(250)} ${lu}`);
+  check("body_fat_pct", raw(v.body_fat_pct), 2, 70, "Body fat must be 2–70 %");
+  const mm = w(v.muscle_mass), ww = w(v.weight);
+  if (mm !== undefined && (mm <= 0 || (ww !== undefined && mm >= ww)))
+    ctx.addIssue({ code: "custom", path: ["muscle_mass"], message: "Muscle mass must be more than 0 and less than weight" });
+  for (const g of ["chest", "waist", "hips", "arms", "thighs"] as const)
+    check(g, l(v[g]), 10, 250, `Must be ${fl(10)}–${fl(250)} ${lu}`);
+  check("resting_hr", raw(v.resting_hr), 30, 220, "Resting HR must be 30–220 bpm");
+  if (v.resting_hr && raw(v.resting_hr) !== undefined && !Number.isInteger(raw(v.resting_hr)))
+    ctx.addIssue({ code: "custom", path: ["resting_hr"], message: "Use a whole number" });
+  check("vo2_max", raw(v.vo2_max), 10, 90, "VO2 max must be 10–90");
+  check("flexibility", raw(v.flexibility), -50, 80, "Flexibility must be −50 to 80 cm");
+  for (const r of ["bench_1rm", "squat_1rm", "deadlift_1rm"] as const)
+    check(r, w(v[r]), 0, 500, `1RM must be 0–${fw(500)} ${wu}`);
+  if (v.blood_pressure && v.blood_pressure.trim() && !/^\d{2,3}\/\d{2,3}$/.test(v.blood_pressure.trim()))
+    ctx.addIssue({ code: "custom", path: ["blood_pressure"], message: "Use the format 120/80" });
+});
 
 export function NewAssessmentSheet({
   memberId,
@@ -150,13 +186,13 @@ export function NewAssessmentSheet({
       if (n === undefined) return s;
       // currently in lastUnit -> metric -> new unit
       const metric = toMetricWeight(n, lastUnit);
-      return Number(fromMetricWeight(metric, unit).toFixed(2)).toString();
+      return Number(fromMetricWeight(metric, unit).toFixed(1)).toString();
     };
     const convertLen = (s?: string) => {
       const n = numOrUndef(s);
       if (n === undefined) return s;
       const metric = toMetricLength(n, lastUnit);
-      return Number(fromMetricLength(metric, unit).toFixed(2)).toString();
+      return Number(fromMetricLength(metric, unit).toFixed(1)).toString();
     };
     const v = form.getValues();
     form.reset({
@@ -251,6 +287,7 @@ export function NewAssessmentSheet({
     });
   };
 
+  const errs = form.formState.errors;
   const wU = unit === "imperial" ? "lb" : "kg";
   const lU = unit === "imperial" ? "in" : "cm";
 
@@ -264,11 +301,11 @@ export function NewAssessmentSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-6">
+        <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-6">
           {/* Basic */}
           <Section title="Basic metrics">
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Date">
+              <Field label="Date" error={errs.date?.message}>
                 <Input type="date" {...form.register("date")} />
               </Field>
               <Field label="Units">
@@ -290,19 +327,19 @@ export function NewAssessmentSheet({
           <Section title="Body composition">
             <div className="grid grid-cols-2 gap-3">
               <Field label={`Weight (${wU})`}>
-                <Input type="number" step="0.1" {...form.register("weight")} />
+                <Input type="number" step="any" {...form.register("weight")} />
               </Field>
               <Field label={`Height (${lU})`}>
-                <Input type="number" step="0.1" {...form.register("height")} />
+                <Input type="number" step="any" {...form.register("height")} />
               </Field>
               <Field label="BMI (auto)">
                 <Input value={bmiDisplay} readOnly className="bg-muted" />
               </Field>
-              <Field label="Body fat %">
-                <Input type="number" step="0.1" {...form.register("body_fat_pct")} />
+              <Field label="Body fat %" error={errs.body_fat_pct?.message}>
+                <Input type="number" step="any" {...form.register("body_fat_pct")} />
               </Field>
               <Field label={`Muscle mass (${wU})`}>
-                <Input type="number" step="0.1" {...form.register("muscle_mass")} />
+                <Input type="number" step="any" {...form.register("muscle_mass")} />
               </Field>
             </div>
           </Section>
@@ -310,20 +347,20 @@ export function NewAssessmentSheet({
           {/* Measurements */}
           <Section title={`Measurements (${lU})`}>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Chest">
-                <Input type="number" step="0.1" {...form.register("chest")} />
+              <Field label="Chest" error={errs.chest?.message}>
+                <Input type="number" step="any" {...form.register("chest")} />
               </Field>
-              <Field label="Waist">
-                <Input type="number" step="0.1" {...form.register("waist")} />
+              <Field label="Waist" error={errs.waist?.message}>
+                <Input type="number" step="any" {...form.register("waist")} />
               </Field>
-              <Field label="Hips">
-                <Input type="number" step="0.1" {...form.register("hips")} />
+              <Field label="Hips" error={errs.hips?.message}>
+                <Input type="number" step="any" {...form.register("hips")} />
               </Field>
-              <Field label="Arms">
-                <Input type="number" step="0.1" {...form.register("arms")} />
+              <Field label="Arms" error={errs.arms?.message}>
+                <Input type="number" step="any" {...form.register("arms")} />
               </Field>
-              <Field label="Thighs">
-                <Input type="number" step="0.1" {...form.register("thighs")} />
+              <Field label="Thighs" error={errs.thighs?.message}>
+                <Input type="number" step="any" {...form.register("thighs")} />
               </Field>
             </div>
           </Section>
@@ -331,17 +368,17 @@ export function NewAssessmentSheet({
           {/* Benchmarks */}
           <Section title="Fitness benchmarks">
             <div className="grid grid-cols-2 gap-3">
-              <Field label="VO2 max">
-                <Input type="number" step="0.1" {...form.register("vo2_max")} />
+              <Field label="VO2 max" error={errs.vo2_max?.message}>
+                <Input type="number" step="any" {...form.register("vo2_max")} />
               </Field>
-              <Field label="Resting HR (bpm)">
+              <Field label="Resting HR (bpm)" error={errs.resting_hr?.message}>
                 <Input type="number" {...form.register("resting_hr")} />
               </Field>
-              <Field label="Blood pressure">
+              <Field label="Blood pressure" error={errs.blood_pressure?.message}>
                 <Input placeholder="120/80" {...form.register("blood_pressure")} />
               </Field>
-              <Field label="Flexibility (cm)">
-                <Input type="number" step="0.1" {...form.register("flexibility")} />
+              <Field label="Flexibility (cm)" error={errs.flexibility?.message}>
+                <Input type="number" step="any" {...form.register("flexibility")} />
               </Field>
             </div>
           </Section>
@@ -349,14 +386,14 @@ export function NewAssessmentSheet({
           {/* 1RM */}
           <Section title={`Strength 1RM (${wU})`}>
             <div className="grid grid-cols-3 gap-3">
-              <Field label="Bench">
-                <Input type="number" step="0.5" {...form.register("bench_1rm")} />
+              <Field label="Bench" error={errs.bench_1rm?.message}>
+                <Input type="number" step="any" {...form.register("bench_1rm")} />
               </Field>
-              <Field label="Squat">
-                <Input type="number" step="0.5" {...form.register("squat_1rm")} />
+              <Field label="Squat" error={errs.squat_1rm?.message}>
+                <Input type="number" step="any" {...form.register("squat_1rm")} />
               </Field>
-              <Field label="Deadlift">
-                <Input type="number" step="0.5" {...form.register("deadlift_1rm")} />
+              <Field label="Deadlift" error={errs.deadlift_1rm?.message}>
+                <Input type="number" step="any" {...form.register("deadlift_1rm")} />
               </Field>
             </div>
           </Section>
@@ -445,11 +482,20 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-1.5">
       <Label className="text-xs text-muted-foreground">{label}</Label>
       {children}
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }
