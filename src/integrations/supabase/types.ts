@@ -2281,6 +2281,10 @@ export type Database = {
           cohort_size: number
         }[]
       }
+      platform_set_billing_email: {
+        Args: { _email: string; _gym_id: string }
+        Returns: undefined
+      }
       platform_set_gym_ad_note: {
         Args: { _gym_id: string; _note: string }
         Returns: undefined
