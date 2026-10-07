@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { CURRENCIES } from "@/lib/currencies";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -302,10 +303,42 @@ export const setPaymentStatus = createServerFn({ method: "POST" })
       nextDueAt?: string | null;
       monthlyAmount?: number | null;
       currency?: string | null;
+      billingEmail?: string | null;
       note?: string | null;
-    }) => input,
+    }) =>
+      z
+        .object({
+          gymId: z.string().uuid(),
+          status: z.string() as z.ZodType<PaymentStatus>,
+          lastPaymentAt: z.string().date().nullable().optional(),
+          nextDueAt: z.string().date().nullable().optional(),
+          monthlyAmount: z
+            .number()
+            .finite()
+            .min(0, "Monthly amount can't be negative")
+            .max(100_000_000)
+            .nullable()
+            .optional(),
+          currency: z.enum(CURRENCIES, { message: "Choose a currency" }).nullable().optional(),
+          billingEmail: z
+            .string()
+            .trim()
+            .max(255)
+            .refine((v) => v === "" || z.string().email().safeParse(v).success, "Enter a valid billing email")
+            .nullable()
+            .optional(),
+          note: z.string().max(1000).nullable().optional(),
+        })
+        .parse(input),
   )
   .handler(async ({ context, data: input }): Promise<{ ok: true }> => {
+    if (input.billingEmail !== undefined) {
+      const { error: e2 } = await context.supabase.rpc("platform_set_billing_email", {
+        _gym_id: input.gymId,
+        _email: input.billingEmail ?? "",
+      });
+      if (e2) fail(e2);
+    }
     const { error } = await context.supabase.rpc("platform_set_payment_status", {
       _gym_id: input.gymId,
       _status: input.status,
