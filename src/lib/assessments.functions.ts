@@ -2,30 +2,43 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const num = z.number().finite().nullable().optional();
+const r = (min: number, max: number, msg: string) =>
+  z.number().finite().min(min - 0.05, msg).max(max + 0.05, msg).nullable().optional();
+const girth = r(10, 250, "Girths must be 10–250 cm");
+const oneRm = r(0, 500, "1RMs must be 0–500 kg");
 
-const assessmentInputSchema = z.object({
-  member_id: z.string().uuid(),
-  date: z.string(), // ISO date
-  unit_system: z.enum(["metric", "imperial"]).default("metric"),
-  weight: num,
-  height: num,
-  body_fat_pct: z.number().finite().min(1).max(75).nullable().optional(),
-  muscle_mass: num,
-  chest: num,
-  waist: num,
-  hips: num,
-  arms: num,
-  thighs: num,
-  vo2_max: num,
-  resting_hr: num,
-  blood_pressure: z.string().trim().max(20).nullable().optional(),
-  flexibility: num,
-  bench_1rm: num,
-  squat_1rm: num,
-  deadlift_1rm: num,
-  notes: z.string().trim().max(2000).nullable().optional(),
-});
+const assessmentInputSchema = z
+  .object({
+    member_id: z.string().uuid(),
+    date: z.string().date(),
+    unit_system: z.enum(["metric", "imperial"]).default("metric"),
+    weight: r(20, 400, "Weight must be 20–400 kg"),
+    height: r(100, 250, "Height must be 100–250 cm"),
+    body_fat_pct: r(2, 70, "Body fat must be 2–70 %"),
+    muscle_mass: z.number().finite().positive().nullable().optional(),
+    chest: girth,
+    waist: girth,
+    hips: girth,
+    arms: girth,
+    thighs: girth,
+    vo2_max: r(10, 90, "VO2 max must be 10–90"),
+    resting_hr: z.number().int().min(30).max(220, "Resting HR must be 30–220 bpm").nullable().optional(),
+    blood_pressure: z
+      .string()
+      .trim()
+      .regex(/^\d{2,3}\/\d{2,3}$/, "Use the format 120/80")
+      .nullable()
+      .optional(),
+    flexibility: r(-50, 80, "Flexibility must be −50 to 80 cm"),
+    bench_1rm: oneRm,
+    squat_1rm: oneRm,
+    deadlift_1rm: oneRm,
+    notes: z.string().trim().max(2000).nullable().optional(),
+  })
+  .refine((d) => d.muscle_mass == null || d.weight == null || d.muscle_mass < d.weight, {
+    path: ["muscle_mass"],
+    message: "Muscle mass must be less than weight",
+  });
 
 export type AssessmentInput = z.infer<typeof assessmentInputSchema>;
 
@@ -116,7 +129,7 @@ export const createAssessment = createServerFn({ method: "POST" })
 export const updateAssessment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    assessmentInputSchema.extend({ id: z.string().uuid() }).parse(d),
+    assessmentInputSchema.and(z.object({ id: z.string().uuid() })).parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
