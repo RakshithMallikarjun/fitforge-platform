@@ -98,6 +98,13 @@ const BLOCK_META: Record<BlockType, { label: string; badgeClass: string; emoji: 
 let uidCounter = 0;
 const uid = () => `id-${++uidCounter}-${Date.now()}`;
 
+function exerciseErrors(e: { sets: number; reps: string }) {
+  const sets =
+    !Number.isInteger(e.sets) || e.sets < 1 || e.sets > 10 ? "Sets must be 1–10" : undefined;
+  const reps = !e.reps || !e.reps.trim() ? "Reps are required" : undefined;
+  return { sets, reps, any: !!sets || !!reps };
+}
+
 function PlanBuilder() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/_authenticated/admin/plans/new" });
@@ -107,7 +114,10 @@ function PlanBuilder() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [name, setName] = useState("");
   const [memberId, setMemberId] = useState<string>(search.memberId ?? "");
-  const [startDate, setStartDate] = useState("");
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  });
   const [durationWeeks, setDurationWeeks] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [isTemplate, setIsTemplate] = useState(forceTemplate);
@@ -206,8 +216,8 @@ function PlanBuilder() {
               exercises: d.exercises.map((e) => ({
                 id: e.dbId,
                 exercise_id: e.exercise.id,
-                sets: e.sets || null,
-                reps: e.reps || null,
+                sets: e.sets,
+                reps: e.reps.trim(),
                 rest_seconds: e.rest_seconds || null,
                 tempo: e.tempo || null,
                 notes: e.notes || null,
@@ -229,8 +239,8 @@ function PlanBuilder() {
             block_type: d.block_type,
             exercises: d.exercises.map((e) => ({
               exercise_id: e.exercise.id,
-              sets: e.sets || null,
-              reps: e.reps || null,
+              sets: e.sets,
+              reps: e.reps.trim(),
               rest_seconds: e.rest_seconds || null,
               tempo: e.tempo || null,
               notes: e.notes || null,
@@ -254,8 +264,10 @@ function PlanBuilder() {
     onError: (e: any) => toast.error("Save failed", { description: formatServerError(e) }),
   });
 
-  const canStep2 = name && (isTemplate || memberId);
-  const canFinish = canStep2 && days.length > 0;
+  const startDateMissing = !isTemplate && !!memberId && !startDate;
+  const canStep2 = name && (isTemplate || memberId) && !startDateMissing;
+  const exercisesValid = days.every((d) => d.exercises.every((e) => !exerciseErrors(e).any));
+  const canFinish = canStep2 && days.length > 0 && exercisesValid;
 
   return (
     <>
@@ -348,8 +360,12 @@ function PlanBuilder() {
                     <Input
                       type="date"
                       value={startDate}
+                      aria-invalid={startDateMissing}
                       onChange={(e) => setStartDate(e.target.value)}
                     />
+                    {startDateMissing && (
+                      <p className="mt-1 text-xs text-destructive">Start date is required</p>
+                    )}
                   </div>
                   <div>
                     <Label>Duration (weeks)</Label>
@@ -573,6 +589,10 @@ function DayBuilder({
       return arrayMove(prev, oldI, newI);
     });
   };
+  const invalidCount = days.reduce(
+    (n, d) => n + d.exercises.filter((e) => exerciseErrors(e).any).length,
+    0,
+  );
   const addDay = () =>
     setDays((p) => [
       ...p,
@@ -592,9 +612,16 @@ function DayBuilder({
         <Button variant="outline" onClick={addDay}>
           <Plus className="mr-1.5 h-4 w-4" /> Add day
         </Button>
-        <Button onClick={onNext} disabled={days.length === 0}>
-          Next: Review
-        </Button>
+        <div className="flex items-center gap-3">
+          {invalidCount > 0 && (
+            <p className="text-xs text-destructive">
+              Fix sets/reps on {invalidCount} exercise{invalidCount === 1 ? "" : "s"}
+            </p>
+          )}
+          <Button onClick={onNext} disabled={days.length === 0 || invalidCount > 0}>
+            Next: Review
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -748,16 +775,27 @@ function SortableExercise({
           <Input
             type="number"
             min={1}
-            value={ex.sets}
-            onChange={(e) => onChange({ sets: Number(e.target.value) })}
+            max={10}
+            value={Number.isFinite(ex.sets) && ex.sets !== 0 ? ex.sets : ""}
+            aria-invalid={!!exerciseErrors(ex).sets}
+            onChange={(e) =>
+              onChange({ sets: e.target.value === "" ? 0 : Number(e.target.value) })
+            }
           />
+          {exerciseErrors(ex).sets && (
+            <p className="mt-1 text-[11px] text-destructive">{exerciseErrors(ex).sets}</p>
+          )}
         </Field>
         <Field label="Reps">
           <Input
             value={ex.reps}
+            aria-invalid={!!exerciseErrors(ex).reps}
             onChange={(e) => onChange({ reps: e.target.value })}
             placeholder="8-12"
           />
+          {exerciseErrors(ex).reps && (
+            <p className="mt-1 text-[11px] text-destructive">{exerciseErrors(ex).reps}</p>
+          )}
         </Field>
         <Field label="Rest (s)">
           <Input
