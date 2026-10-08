@@ -134,6 +134,37 @@ function SettingsPage() {
   const [primaryColor, setPrimaryColor] = useState("#059669");
   const [secondaryColor, setSecondaryColor] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const [logoLoad, setLogoLoad] = useState<"idle" | "loading" | "ok" | "broken">("idle");
+  useEffect(() => {
+    const url = logoUrl.trim();
+    let ok = false;
+    try {
+      ok = new URL(url).protocol === "https:";
+    } catch {
+      ok = false;
+    }
+    if (!ok) {
+      setLogoLoad("idle");
+      return;
+    }
+    setLogoLoad("loading");
+    const img = new Image();
+    let alive = true;
+    const t = setTimeout(() => alive && setLogoLoad("broken"), 8000);
+    img.onload = () => {
+      clearTimeout(t);
+      if (alive) setLogoLoad(img.naturalWidth > 0 ? "ok" : "broken");
+    };
+    img.onerror = () => {
+      clearTimeout(t);
+      if (alive) setLogoLoad("broken");
+    };
+    img.src = url;
+    return () => {
+      alive = false;
+      clearTimeout(t);
+    };
+  }, [logoUrl]);
   const [fontFamily, setFontFamily] = useState<string>("Satoshi");
   const [supportEmail, setSupportEmail] = useState("");
   const [supportPhone, setSupportPhone] = useState("");
@@ -214,7 +245,23 @@ function SettingsPage() {
 See you at the gym!`;
 
   const validHex = /^#[0-9a-fA-F]{6}$/.test(primaryColor);
-  const logoValid = logoUrl && /^https?:\/\//i.test(logoUrl);
+  const logoTrim = logoUrl.trim();
+  const logoIsHttps = (() => {
+    try {
+      return new URL(logoTrim).protocol === "https:";
+    } catch {
+      return false;
+    }
+  })();
+  const logoValid = !!logoTrim && logoIsHttps && logoLoad === "ok";
+  const logoError = !logoTrim
+    ? null
+    : !logoIsHttps
+      ? "Use an https:// image URL"
+      : logoLoad === "broken"
+        ? "That URL didn't load as an image"
+        : null;
+  const logoBlocksSave = !!logoTrim && logoLoad !== "ok";
 
   if (!isAdmin) {
     return (
@@ -305,16 +352,18 @@ See you at the gym!`;
                   id="logo-url"
                   value={logoUrl}
                   onChange={(e) => setLogoUrl(e.target.value)}
+                  aria-invalid={!!logoError}
                   placeholder="https://…/logo.png"
                 />
+                {logoError && <p className="text-xs text-destructive">{logoError}</p>}
+                {logoLoad === "loading" && (
+                  <p className="text-xs text-muted-foreground">Checking the image…</p>
+                )}
                 {logoValid && (
                   <img
-                    src={logoUrl}
+                    src={logoTrim}
                     alt="Logo preview"
                     className="mt-2 h-12 w-12 rounded-md border border-border object-contain"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = "none";
-                    }}
                   />
                 )}
               </div>
@@ -388,13 +437,13 @@ See you at the gym!`;
                       name,
                       primaryColor,
                       secondaryColor: secondaryColor || null,
-                      logoUrl: logoUrl || null,
+                      logoUrl: logoTrim || null,
                       fontFamily,
                       supportEmail: supportEmail || null,
                       supportPhone: supportPhone || null,
                     })
                   }
-                  disabled={!validHex || !name.trim() || mutation.isPending}
+                  disabled={!validHex || !name.trim() || logoBlocksSave || mutation.isPending}
                 >
                   {mutation.isPending ? "Saving…" : "Save changes"}
                 </Button>
