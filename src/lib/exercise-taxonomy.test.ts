@@ -1,3 +1,4 @@
+// @ts-nocheck -- run with `bun test`; bun types are not installed in this project
 import { describe, expect, it } from "bun:test";
 import { isYoutubeUrl, normaliseTags } from "./exercise-taxonomy";
 
