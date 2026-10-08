@@ -111,6 +111,17 @@ export const updateGymSettings = createServerFn({ method: "POST" })
         throw new Error("Primary colour must be a 6-digit hex like #059669");
       if (data.secondaryColor && !/^#[0-9a-fA-F]{6}$/.test(data.secondaryColor))
         throw new Error("Secondary colour must be a 6-digit hex like #0284c7");
+      const logo = data.logoUrl?.trim();
+      if (logo) {
+        let ok = false;
+        try {
+          const u = new URL(logo);
+          ok = u.protocol === "https:" && logo.length <= 1000;
+        } catch {
+          ok = false;
+        }
+        if (!ok) throw new Error("Logo URL must be an https:// image URL");
+      }
       return data;
     },
   )
