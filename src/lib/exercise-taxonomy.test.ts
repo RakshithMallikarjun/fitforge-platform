@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { isYoutubeUrl, normaliseTags } from "./exercise-taxonomy";
 
 describe("exercise taxonomy", () => {
