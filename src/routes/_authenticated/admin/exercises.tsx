@@ -276,6 +276,7 @@ function ExercisesPage() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
+                    </>
                   )}
                   {e.description && (
                     <div className="pointer-events-none absolute inset-0 flex items-end bg-gradient-to-t from-background/95 via-background/40 to-transparent p-4 opacity-0 transition-opacity group-hover:opacity-100">
