@@ -29,7 +29,11 @@ function TemplatesPage() {
   const navigate = useNavigate();
   const [assignFor, setAssignFor] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [assignDate, setAssignDate] = useState("");
+  const todayStr = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+  const [assignDate, setAssignDate] = useState(todayStr);
   const [query, setQuery] = useState("");
 
   const { data: templates = [], isLoading } = useQuery({
@@ -56,12 +60,12 @@ function TemplatesPage() {
         data: {
           planId: assignFor!,
           memberIds: Array.from(selected),
-          startDate: assignDate || null,
+          startDate: assignDate,
         },
       }),
     onSuccess: (r) => {
       if (r.assigned > 0) {
-        toast.success(`Template assigned to ${r.assigned} member${r.assigned === 1 ? "" : "s"}`);
+        toast.success(`Assigned to ${r.assigned} member${r.assigned === 1 ? "" : "s"}`);
       }
       if (r.errors.length > 0) {
         toast.warning(`${r.errors.length} assignment${r.errors.length === 1 ? "" : "s"} failed`, {
@@ -70,7 +74,7 @@ function TemplatesPage() {
       }
       setAssignFor(null);
       setSelected(new Set());
-      setAssignDate("");
+      setAssignDate(todayStr());
       setQuery("");
       if (r.assigned > 0) navigate({ to: "/admin/plans" });
     },
@@ -137,7 +141,7 @@ function TemplatesPage() {
                   <p className="mt-1 text-xs text-muted-foreground">Archived</p>
                 )}
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {t.day_count} days · {t.exercise_count ?? 0} exercises
+                  {t.day_count} {t.day_count === 1 ? "day" : "days"} · {t.exercise_count ?? 0} exercises
                   {t.duration_weeks ? ` · ${t.duration_weeks} wk` : ""}
                 </p>
                 {t.trainer_name && (
@@ -184,8 +188,12 @@ function TemplatesPage() {
               <Input
                 type="date"
                 value={assignDate}
+                aria-invalid={!assignDate}
                 onChange={(e) => setAssignDate(e.target.value)}
               />
+              {!assignDate && (
+                <p className="mt-1 text-xs text-destructive">Start date is required</p>
+              )}
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -233,7 +241,7 @@ function TemplatesPage() {
             <Button variant="outline" onClick={() => setAssignFor(null)} disabled={bulk.isPending}>
               Cancel
             </Button>
-            <Button disabled={selected.size === 0 || bulk.isPending} onClick={() => bulk.mutate()}>
+            <Button disabled={selected.size === 0 || !assignDate || bulk.isPending} onClick={() => bulk.mutate()}>
               {bulk.isPending ? (
                 <>
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Assigning…
