@@ -141,8 +141,8 @@ export const getPlan = createServerFn({ method: "GET" })
 
 const exerciseInputSchema = z.object({
   exercise_id: z.string().uuid(),
-  sets: z.number().int().nullable().optional(),
-  reps: z.string().nullable().optional(),
+  sets: z.number({ message: "Sets are required" }).int().min(1, "Sets must be 1–10").max(10, "Sets must be 1–10"),
+  reps: z.string().trim().min(1, "Reps are required").max(20),
   rest_seconds: z.number().int().nullable().optional(),
   tempo: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
@@ -157,11 +157,14 @@ const dayInputSchema = z.object({
 const createPlanSchema = z.object({
   name: z.string().min(1),
   member_id: z.string().uuid().nullable().optional(),
-  start_date: z.string().nullable().optional(),
-  duration_weeks: z.number().int().nullable().optional(),
+  start_date: z.string().date().nullable().optional(),
+  duration_weeks: z.number().int().min(1).max(104).nullable().optional(),
   notes: z.string().nullable().optional(),
   is_template: z.boolean().default(false),
   days: z.array(dayInputSchema).default([]),
+}).refine((d) => d.is_template || !d.member_id || !!d.start_date, {
+  path: ["start_date"],
+  message: "Start date is required",
 });
 
 export const createPlan = createServerFn({ method: "POST" })
@@ -275,7 +278,7 @@ export const assignPlan = createServerFn({ method: "POST" })
       .object({
         planId: z.string().uuid(),
         memberId: z.string().uuid(),
-        startDate: z.string().nullable().optional(),
+        startDate: z.string({ message: "Start date is required" }).date("Start date is required"),
       })
       .parse(data),
   )
@@ -396,7 +399,7 @@ export const bulkAssignPlan = createServerFn({ method: "POST" })
       .object({
         planId: z.string().uuid(),
         memberIds: z.array(z.string().uuid()).min(1),
-        startDate: z.string().nullable().optional(),
+        startDate: z.string({ message: "Start date is required" }).date("Start date is required"),
       })
       .parse(data),
   )
