@@ -180,7 +180,7 @@ export const getExerciseAlternatives = createServerFn({ method: "GET" })
 
     const { data: target } = await supabase
       .from("exercises")
-      .select("id, muscle_groups")
+      .select("id, name, muscle_groups")
       .eq("id", data.exerciseId)
       .maybeSingle();
 
@@ -188,24 +188,25 @@ export const getExerciseAlternatives = createServerFn({ method: "GET" })
       ? [data.muscleGroup]
       : ((target as any)?.muscle_groups ?? []);
 
-    if (!groups.length) return [] as ExerciseRow[];
+    if (!groups.length) return [] as AlternativeRow[];
 
-    const difficultyOrder = ["beginner", "intermediate", "advanced"];
     const { data: rows, error } = await supabase
       .from("exercises")
       .select("*")
       .overlaps("muscle_groups", groups)
       .neq("id", data.exerciseId)
-      .limit(20);
+      .limit(200);
     if (error) throw new Error(error.message);
 
-    const sorted = (rows ?? []).slice().sort((a: any, b: any) => {
-      const ai = difficultyOrder.indexOf(a.difficulty ?? "");
-      const bi = difficultyOrder.indexOf(b.difficulty ?? "");
-      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-    });
-    return sorted.slice(0, 5) as ExerciseRow[];
+    const { rankAlternatives } = await import("./workout-math");
+    return rankAlternatives(
+      { name: (target as any)?.name ?? "", muscle_groups: groups },
+      (rows ?? []) as ExerciseRow[],
+      6,
+    ) as AlternativeRow[];
   });
+
+export type AlternativeRow = ExerciseRow & { differentFocus: boolean };
 
 export const substituteExercise = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
