@@ -30,12 +30,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   getProgressData,
   createGoal,
   deleteGoal,
   getFitnessScore,
   getProgressPhotos,
+  uploadProgressPhoto,
   type ProgressData,
   type FitnessScore,
   type ProgressPhoto,
@@ -223,7 +225,7 @@ function BodyTab({ data }: { data: ProgressData }) {
   const [measure, setMeasure] = useState<"waist" | "chest" | "hips">("waist");
   const assessments = data.assessments;
 
-  if (assessments.length < 2) {
+  if (assessments.length === 0) {
     return (
       <EmptyCard
         icon={Activity}
@@ -232,6 +234,7 @@ function BodyTab({ data }: { data: ProgressData }) {
       />
     );
   }
+  const showCharts = assessments.length >= 2;
 
   const latest = assessments[assessments.length - 1];
   const chartData = assessments.map((a) => ({
@@ -264,6 +267,28 @@ function BodyTab({ data }: { data: ProgressData }) {
         </div>
       </div>
 
+      {(() => {
+        const u = latest.unit_system === "imperial" ? "in" : "cm";
+        return (
+          <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Measurements
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              <Metric label="Waist" value={latest.waist} unit={u} />
+              <Metric label="Chest" value={latest.chest} unit={u} />
+              <Metric label="Hips" value={latest.hips} unit={u} />
+            </div>
+          </div>
+        );
+      })()}
+
+      {!showCharts ? (
+        <p className="text-center text-xs text-muted-foreground">
+          Charts appear once you have two or more assessments.
+        </p>
+      ) : (
+      <>
       <ChartCard title="Weight" dataKey="weight" data={chartData} color="var(--primary)" />
       <ChartCard
         title="Body fat %"
@@ -307,6 +332,8 @@ function BodyTab({ data }: { data: ProgressData }) {
           </ResponsiveContainer>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }
@@ -403,14 +430,17 @@ function StrengthTab({ data }: { data: ProgressData }) {
   }, [logs]);
 
   const prs = useMemo(() => {
+    // Best set = highest Epley estimated 1RM, shown as weight × reps.
     const findMax = (keyword: string) => {
-      let max = 0;
+      let best: { w: number; r: number; e: number } | null = null;
       logs.forEach((l) => {
-        if (l.exercise_name.toLowerCase().includes(keyword) && l.weight && l.weight > max) {
-          max = l.weight;
-        }
+        if (!l.exercise_name.toLowerCase().includes(keyword) || !l.weight) return;
+        const r = l.reps ?? 1;
+        const e = epley(l.weight, r);
+        if (!best || e > best.e) best = { w: l.weight, r, e };
       });
-      return max || null;
+      const b = best as { w: number; r: number; e: number } | null;
+      return b ? `${b.w} × ${b.r}` : null;
     };
     const latest = data.assessments[data.assessments.length - 1];
     return [
@@ -824,32 +854,92 @@ function GoalsTab({ data }: { data: ProgressData }) {
 
 function PhotosTab() {
   const fetchFn = useServerFn(getProgressPhotos);
-  const { data: photos = [], isLoading } = useQuery({
+  const uploadFn = useServerFn(uploadProgressPhoto);
+  const qc = useQueryClient();
+  const { data: me } = useQuery({ queryKey: ["me-id"], queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null });
+  const { data: photos = [], isLoading, error, refetch } = useQuery({
     queryKey: ["progress-photos"],
     queryFn: () => fetchFn(),
   });
   const [compareOpen, setCompareOpen] = useState(false);
+  const [pick, setPick] = useState<string[]>([]);
+  const upload = useMutation({
+    mutationFn: async (file: File) => {
+      if (!me) throw new Error("Not signed in");
+      if (file.size > 5 * 1024 * 1024) throw new Error("Photos must be 5MB or smaller");
+      const b64 = await new Promise<string>((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result));
+        r.onerror = () => rej(r.error);
+        r.readAsDataURL(file);
+      });
+      return uploadFn({
+        data: { member_id: me, file_base64: b64, content_type: file.type as any },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Photo added");
+      qc.invalidateQueries({ queryKey: ["progress-photos"] });
+    },
+    onError: (e) => toast.error("Couldn't upload photo", { description: formatServerError(e) }),
+  });
+
+  const uploader = (
+    <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted">
+      <Plus className="h-4 w-4" />
+      {upload.isPending ? "Uploading…" : "Add photo"}
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="sr-only"
+        disabled={upload.isPending}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          e.target.value = "";
+          if (f) upload.mutate(f);
+        }}
+      />
+    </label>
+  );
 
   if (isLoading) return <SkeletonCard />;
+  if (error)
+    return (
+      <div className="flex items-center justify-between rounded-2xl border border-destructive/30 p-4 text-sm">
+        <span className="text-destructive">Couldn't load photos. {formatServerError(error)}</span>
+        <Button size="sm" variant="outline" onClick={() => refetch()}>Retry</Button>
+      </div>
+    );
 
   if (photos.length === 0) {
     return (
-      <EmptyCard
-        icon={Camera}
-        title="No progress photos yet"
-        subtitle="Your trainer can add progress photos during your assessment."
-      />
+      <div className="space-y-3">
+        <EmptyCard
+          icon={Camera}
+          title="No progress photos yet"
+          subtitle="Add your own photos — only you and your gym's staff can see them."
+        />
+        <div className="flex justify-center">{uploader}</div>
+      </div>
     );
   }
 
   const sorted = [...(photos as ProgressPhoto[])].sort((a, b) =>
     a.taken_at.localeCompare(b.taken_at),
   );
-  const oldest = sorted[0];
-  const newest = sorted[sorted.length - 1];
+  const chosen = sorted.filter((p) => pick.includes(p.id));
+  const oldest = chosen.length === 2 ? chosen[0] : sorted[0];
+  const newest = chosen.length === 2 ? chosen[1] : sorted[sorted.length - 1];
+  const togglePick = (id: string) =>
+    setPick((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id].slice(-2)));
 
   return (
     <div className="space-y-4">
+      <p className="text-xs text-muted-foreground">
+        Private to you and your gym's staff. Tap two photos to compare them.
+      </p>
+      <div className="flex items-center justify-between gap-2">
+        {uploader}
       {sorted.length >= 2 && (
         <div className="flex justify-end">
           <Dialog open={compareOpen} onOpenChange={setCompareOpen}>
@@ -864,24 +954,30 @@ function PhotosTab() {
                 <DialogTitle>Before &amp; After</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-3">
-                <PhotoTile photo={oldest} label="Oldest" />
-                <PhotoTile photo={newest} label="Most recent" />
+                <PhotoTile photo={oldest} label="Before" />
+                <PhotoTile photo={newest} label="After" />
               </div>
             </DialogContent>
           </Dialog>
         </div>
       )}
+      </div>
 
       <div className="grid grid-cols-2 gap-3">
         {sorted.map((p) => (
           <div key={p.id} className="space-y-1">
-            <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-muted">
+            <button
+              type="button"
+              onClick={() => togglePick(p.id)}
+              aria-pressed={pick.includes(p.id)}
+              className={`block aspect-square w-full overflow-hidden rounded-2xl border bg-muted ${pick.includes(p.id) ? "border-primary ring-2 ring-primary" : "border-border"}`}
+            >
               <img
                 src={p.photo_url}
                 alt={`Progress photo from ${p.taken_at}`}
                 className="h-full w-full object-cover"
               />
-            </div>
+            </button>
             <p className="text-center text-xs text-muted-foreground">
               {format(parseISO(p.taken_at), "PPP")}
             </p>

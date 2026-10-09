@@ -274,6 +274,7 @@ export type Database = {
         Row: {
           completed: boolean
           created_at: string
+          duration_seconds: number | null
           exercise_id: string
           id: string
           log_id: string
@@ -284,6 +285,7 @@ export type Database = {
         Insert: {
           completed?: boolean
           created_at?: string
+          duration_seconds?: number | null
           exercise_id: string
           id?: string
           log_id: string
@@ -294,6 +296,7 @@ export type Database = {
         Update: {
           completed?: boolean
           created_at?: string
+          duration_seconds?: number | null
           exercise_id?: string
           id?: string
           log_id?: string
@@ -330,6 +333,7 @@ export type Database = {
           muscle_groups: string[] | null
           name: string
           thumbnail_url: string | null
+          tracking: string
           video_url: string | null
         }
         Insert: {
@@ -343,6 +347,7 @@ export type Database = {
           muscle_groups?: string[] | null
           name: string
           thumbnail_url?: string | null
+          tracking?: string
           video_url?: string | null
         }
         Update: {
@@ -356,6 +361,7 @@ export type Database = {
           muscle_groups?: string[] | null
           name?: string
           thumbnail_url?: string | null
+          tracking?: string
           video_url?: string | null
         }
         Relationships: [

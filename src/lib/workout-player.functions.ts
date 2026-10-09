@@ -3,6 +3,7 @@ import { rankMuscleGroups } from "./muscle-groups";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { dateStringInZone, resolveGymTimezone } from "@/lib/gym-date";
 import { requireActiveMembership } from "@/lib/entitlement.server";
+import { epley1RM, pickBestSets } from "@/lib/workout-math";
 
 export type WorkoutDayExercise = {
   id: string; // workout_exercises.id
@@ -17,11 +18,14 @@ export type WorkoutDayExercise = {
     id: string;
     name: string;
     muscle_groups: string[];
+    tracking: ExerciseTracking;
     video_url: string | null;
     thumbnail_url: string | null;
     description: string | null;
   };
 };
+
+export type ExerciseTracking = "weight_reps" | "reps" | "time";
 
 export type BlockType = "warmup" | "main" | "cooldown";
 
@@ -47,7 +51,7 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
     const { data: rows, error: exErr } = await supabase
       .from("workout_exercises")
       .select(
-        "id, order, sets, reps, rest_seconds, notes, tempo, exercises(id, name, muscle_groups, video_url, thumbnail_url, description)",
+        "id, order, sets, reps, rest_seconds, notes, tempo, exercises(id, name, muscle_groups, tracking, video_url, thumbnail_url, description)",
       )
       .eq("day_id", data.dayId)
       .is("hidden_at", null)
@@ -60,7 +64,7 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
       const { data: subs } = await supabase
         .from("workout_exercise_substitutions")
         .select(
-          "original_workout_exercise_id, substitute_exercise_id, exercises:substitute_exercise_id(id, name, muscle_groups, video_url, thumbnail_url, description)",
+          "original_workout_exercise_id, substitute_exercise_id, exercises:substitute_exercise_id(id, name, muscle_groups, tracking, video_url, thumbnail_url, description)",
         )
         .eq("member_id", userId)
         .in("original_workout_exercise_id", weIds);
@@ -85,6 +89,7 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
           id: src?.id,
           name: src?.name ?? "Exercise",
           muscle_groups: src?.muscle_groups ?? [],
+          tracking: (src?.tracking ?? "weight_reps") as ExerciseTracking,
           video_url: src?.video_url ?? null,
           thumbnail_url: src?.thumbnail_url ?? null,
           description: src?.description ?? null,
@@ -111,7 +116,12 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
     };
   });
 
-export type PrevSet = { set_number: number; weight: number | null; reps: number | null };
+export type PrevSet = {
+  set_number: number;
+  weight: number | null;
+  reps: number | null;
+  duration_seconds: number | null;
+};
 
 export const getPreviousSetValues = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -122,7 +132,7 @@ export const getPreviousSetValues = createServerFn({ method: "GET" })
     // exercise_logs has no member_id — join via workout_logs to filter to this member.
     const { data: rows, error } = await supabase
       .from("exercise_logs")
-      .select("set_number, weight, reps, created_at, workout_logs!inner(member_id)")
+      .select("set_number, weight, reps, duration_seconds, created_at, workout_logs!inner(member_id)")
       .eq("exercise_id", data.exerciseId)
       .eq("workout_logs.member_id", userId)
       .order("created_at", { ascending: false })
@@ -134,7 +144,12 @@ export const getPreviousSetValues = createServerFn({ method: "GET" })
     for (const r of rows ?? []) {
       const sn = (r as any).set_number as number;
       if (!bySet.has(sn)) {
-        bySet.set(sn, { set_number: sn, weight: (r as any).weight, reps: (r as any).reps });
+        bySet.set(sn, {
+          set_number: sn,
+          weight: (r as any).weight,
+          reps: (r as any).reps,
+          duration_seconds: (r as any).duration_seconds ?? null,
+        });
       }
     }
     return Array.from(bySet.values())
@@ -194,8 +209,15 @@ export const logSet = createServerFn({ method: "POST" })
       setNumber: number;
       weight: number | null;
       reps: number | null;
+      durationSeconds?: number | null;
       completed: boolean;
-    }) => d,
+    }) => {
+      const num = (v: unknown, max: number) =>
+        v == null || (typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= max);
+      if (!num(d.weight, 1000) || !num(d.reps, 1000) || !num(d.durationSeconds, 36000))
+        throw new Error("Invalid set values");
+      return d;
+    },
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -225,6 +247,7 @@ export const logSet = createServerFn({ method: "POST" })
         .update({
           weight: data.weight,
           reps: data.reps,
+          duration_seconds: data.durationSeconds ?? null,
           completed: data.completed,
         })
         .eq("id", existing.id);
@@ -239,6 +262,7 @@ export const logSet = createServerFn({ method: "POST" })
         set_number: data.setNumber,
         weight: data.weight,
         reps: data.reps,
+        duration_seconds: data.durationSeconds ?? null,
         completed: data.completed,
       })
       .select("id")
@@ -287,41 +311,34 @@ export const completeWorkout = createServerFn({ method: "POST" })
       .eq("id", data.logId);
     if (error) throw new Error(error.message);
 
-    // PR detection: for each exercise in this session, find today's max weight
+    // PR detection: the best set is the one with the highest estimated 1RM (Epley).
     const { data: todaySets } = await supabase
       .from("exercise_logs")
       .select("exercise_id, weight, reps, completed")
       .eq("log_id", data.logId);
 
-    const todayMax = new Map<string, { weight: number; reps: number }>();
-    for (const s of (todaySets ?? []) as any[]) {
-      if (!s.completed || s.weight == null) continue;
-      const w = Number(s.weight);
-      if (!isFinite(w) || w <= 0) continue;
-      const cur = todayMax.get(s.exercise_id);
-      if (!cur || w > cur.weight)
-        todayMax.set(s.exercise_id, { weight: w, reps: Number(s.reps ?? 0) });
-    }
+    const todayBest = pickBestSets((todaySets ?? []) as any[]);
 
     const newPRs: NewPR[] = [];
-    if (todayMax.size > 0) {
-      const exerciseIds = Array.from(todayMax.keys());
+    if (todayBest.size > 0) {
+      const exerciseIds = Array.from(todayBest.keys());
       const [{ data: existingPRs }, { data: exerciseRows }] = await Promise.all([
         supabase
           .from("personal_records")
-          .select("exercise_id, weight")
+          .select("exercise_id, weight, reps")
           .eq("member_id", userId)
           .in("exercise_id", exerciseIds),
         supabase.from("exercises").select("id, name").in("id", exerciseIds),
       ]);
       const prMap = new Map<string, number>();
-      for (const p of (existingPRs ?? []) as any[]) prMap.set(p.exercise_id, Number(p.weight));
+      for (const p of (existingPRs ?? []) as any[])
+        prMap.set(p.exercise_id, epley1RM(Number(p.weight), Number(p.reps ?? 1)));
       const nameMap = new Map<string, string>();
       for (const e of (exerciseRows ?? []) as any[]) nameMap.set(e.id, e.name);
 
-      for (const [exerciseId, { weight, reps }] of todayMax.entries()) {
+      for (const [exerciseId, { weight, reps, e1rm }] of todayBest.entries()) {
         const prev = prMap.get(exerciseId) ?? -Infinity;
-        if (weight > prev) {
+        if (e1rm > prev + 1e-9) {
           const { error: upErr } = await supabase.from("personal_records").upsert(
             {
               member_id: userId,
@@ -335,11 +352,7 @@ export const completeWorkout = createServerFn({ method: "POST" })
             { onConflict: "member_id,exercise_id" },
           );
           if (!upErr) {
-            newPRs.push({
-              exerciseName: nameMap.get(exerciseId) ?? "Exercise",
-              weight,
-              reps,
-            });
+            newPRs.push({ exerciseName: nameMap.get(exerciseId) ?? "Exercise", weight, reps });
           }
         }
       }

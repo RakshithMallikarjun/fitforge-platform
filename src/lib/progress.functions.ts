@@ -108,7 +108,7 @@ export const getProgressData = createServerFn({ method: "GET" })
         supabase
           .from("workout_logs")
           .select(
-            "id, date, completed_at, effort_rating, notes, workout_days(day_label, workout_plans(name)), exercise_logs(id)",
+            "id, date, completed_at, effort_rating, notes, workout_day_id, workout_days(day_label, workout_plans(name)), exercise_logs(exercise_id, completed)",
           )
           .eq("member_id", userId)
           .not("completed_at", "is", null)
@@ -137,6 +137,19 @@ export const getProgressData = createServerFn({ method: "GET" })
       date: r.workout_logs?.date ?? "",
     }));
 
+    // A substitute replaces its original, so count each slot once.
+    const { countSessionExercises } = await import("./workout-math");
+    const { data: subRows } = await supabase
+      .from("workout_exercise_substitutions")
+      .select("substitute_exercise_id, workout_exercises:original_workout_exercise_id(exercise_id)")
+      .eq("member_id", userId);
+    const subs = ((subRows ?? []) as any[])
+      .filter((s) => s.workout_exercises?.exercise_id)
+      .map((s) => ({
+        original_exercise_id: s.workout_exercises.exercise_id as string,
+        substitute_exercise_id: s.substitute_exercise_id as string,
+      }));
+
     const history: ProgressWorkoutHistory[] = workoutRows.map((r: any) => ({
       id: r.id,
       date: r.date,
@@ -145,7 +158,12 @@ export const getProgressData = createServerFn({ method: "GET" })
       notes: r.notes,
       day_label: r.workout_days?.day_label ?? null,
       plan_name: r.workout_days?.workout_plans?.name ?? null,
-      exercise_count: Array.isArray(r.exercise_logs) ? r.exercise_logs.length : 0,
+      exercise_count: Array.isArray(r.exercise_logs)
+        ? countSessionExercises(
+            r.exercise_logs.filter((l: any) => l.completed).map((l: any) => l.exercise_id),
+            subs,
+          )
+        : 0,
     }));
 
     return {
@@ -386,7 +404,7 @@ export const uploadProgressPhoto = createServerFn({ method: "POST" })
 
     // Extension follows the validated content type, never caller-supplied text.
     const ext = PHOTO_EXT[data.content_type];
-    const key = `${memberRow.gym_id}/${crypto.randomUUID()}.${ext}`;
+    const key = `${memberRow.gym_id}/${data.member_id}/${crypto.randomUUID()}.${ext}`;
     const bytes = base64ToBytes(data.file_base64);
     if (bytes.byteLength === 0) throw new Error("That file looks empty");
     if (bytes.byteLength > MAX_PHOTO_BYTES) throw new Error("Photos must be 5MB or smaller");

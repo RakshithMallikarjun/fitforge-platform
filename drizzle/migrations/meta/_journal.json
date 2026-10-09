@@ -239,6 +239,13 @@
       "when": 1791358021913,
       "tag": "0033_0033_platform_billing_email",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1791534414754,
+      "tag": "0034_0034_exercise_tracking_and_member_photos",
+      "breakpoints": true
     }
   ]
 }
