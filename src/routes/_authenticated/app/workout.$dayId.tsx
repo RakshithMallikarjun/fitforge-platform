@@ -33,6 +33,16 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import {
   completeWorkout,
@@ -49,7 +59,7 @@ import {
   getExerciseAlternatives,
   substituteExercise,
   getYoutubeEmbedUrl,
-  type ExerciseRow,
+  type AlternativeRow,
 } from "@/lib/exercises.functions";
 import { enqueueLog, getQueuedSetCount, QUEUE_EVENT } from "@/lib/pwa/offline-queue";
 import { SponsoredSlot } from "@/components/ads/sponsored-card";
@@ -151,57 +161,52 @@ function Stepper({
       >
         <Minus className="h-4 w-4" />
       </button>
-      {hasValue ? (
-        valueNode
-      ) : (
-        <Popover
-          open={popoverOpen}
-          onOpenChange={(o) => {
-            setPopoverOpen(o);
-            if (o) setDraft("");
-          }}
-        >
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="min-w-[4.5rem] text-center font-display text-2xl font-bold text-muted-foreground"
-            >
-              {display}
-              {unit ? (
-                <span className="ml-1 text-sm font-semibold text-muted-foreground">{unit}</span>
-              ) : null}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-48 p-3" align="center">
-            <p className="mb-2 text-xs font-semibold text-muted-foreground">Set {ariaLabel}</p>
-            <Input
-              autoFocus
-              inputMode={decimals > 0 ? "decimal" : "numeric"}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && draft) {
-                  const n = Number(draft);
-                  if (!Number.isNaN(n)) apply(n);
-                  setPopoverOpen(false);
-                }
-              }}
-              placeholder={unit ?? ""}
-            />
-            <Button
-              size="sm"
-              className="mt-2 w-full"
-              onClick={() => {
+      <Popover
+        open={popoverOpen}
+        onOpenChange={(o) => {
+          setPopoverOpen(o);
+          if (o) setDraft(hasValue ? String(value) : "");
+        }}
+      >
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-label={`Type ${ariaLabel}`}
+            className="rounded-lg px-1 underline decoration-dotted underline-offset-4 hover:bg-muted"
+          >
+            {valueNode}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-48 p-3" align="center">
+          <p className="mb-2 text-xs font-semibold text-muted-foreground">Set {ariaLabel}</p>
+          <Input
+            autoFocus
+            inputMode={decimals > 0 ? "decimal" : "numeric"}
+            value={draft}
+            onFocus={(e) => e.currentTarget.select()}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && draft) {
                 const n = Number(draft);
                 if (!Number.isNaN(n)) apply(n);
                 setPopoverOpen(false);
-              }}
-            >
-              Set
-            </Button>
-          </PopoverContent>
-        </Popover>
-      )}
+              }
+            }}
+            placeholder={unit ?? ""}
+          />
+          <Button
+            size="sm"
+            className="mt-2 w-full"
+            onClick={() => {
+              const n = Number(draft);
+              if (draft !== "" && !Number.isNaN(n)) apply(n);
+              setPopoverOpen(false);
+            }}
+          >
+            Set
+          </Button>
+        </PopoverContent>
+      </Popover>
       <button
         type="button"
         aria-label={`Increase ${ariaLabel}`}
@@ -220,7 +225,7 @@ function Stepper({
   );
 }
 
-type SetState = { weight: string; reps: string; done: boolean };
+type SetState = { weight: string; reps: string; seconds: string; done: boolean; touched?: boolean };
 
 /** Video with poster, degrading to a poster image and then an icon placeholder. */
 function ExerciseMedia({
@@ -319,6 +324,7 @@ function WorkoutPlayer() {
     };
   }, []);
   const [swapOpen, setSwapOpen] = useState(false);
+  const [confirmFinish, setConfirmFinish] = useState<number | null>(null);
 
   const { data: dayData, isLoading } = useQuery({
     queryKey: ["workout-day", dayId],
@@ -369,6 +375,7 @@ function WorkoutPlayer() {
         next[ex.id] = Array.from({ length: ex.sets }, () => ({
           weight: "",
           reps: "",
+          seconds: "",
           done: false,
         }));
       }
@@ -396,28 +403,22 @@ function WorkoutPlayer() {
     return m;
   }, [exercises, prevQueries]);
 
-  // Pre-fill empty rows with previous values when available.
+  // Set 1 starts from last session's set 1; later untouched sets follow the set before.
   useEffect(() => {
     if (!current) return;
     const prev = prevMap.get(current.exercise.id) ?? [];
-    if (!prev.length) return;
+    const p = prev.find((x) => x.set_number === 1) ?? prev[0];
+    if (!p) return;
     setSets((cur) => {
       const rows = cur[current.id];
-      if (!rows) return cur;
-      let changed = false;
-      const next = rows.map((row, idx) => {
-        if (row.weight || row.reps || row.done) return row;
-        const p = prev.find((x) => x.set_number === idx + 1) ?? prev[idx];
-        if (!p) return row;
-        changed = true;
-        return {
-          ...row,
-          weight: p.weight != null ? String(p.weight) : "",
-          reps: p.reps != null ? String(p.reps) : "",
-        };
-      });
-      if (!changed) return cur;
-      return { ...cur, [current.id]: next };
+      if (!rows || rows.some((r) => r.touched || r.done || r.weight || r.reps || r.seconds))
+        return cur;
+      const seed = {
+        weight: p.weight != null ? String(p.weight) : "",
+        reps: p.reps != null ? String(p.reps) : "",
+        seconds: p.duration_seconds != null ? String(p.duration_seconds) : "",
+      };
+      return { ...cur, [current.id]: rows.map((r) => ({ ...r, ...seed })) };
     });
   }, [current, prevMap]);
 
@@ -427,6 +428,7 @@ function WorkoutPlayer() {
       setNumber: number;
       weight: number | null;
       reps: number | null;
+      durationSeconds: number | null;
       completed: boolean;
     }) => {
       const payload = {
@@ -435,6 +437,7 @@ function WorkoutPlayer() {
         setNumber: input.setNumber,
         weight: input.weight,
         reps: input.reps,
+        durationSeconds: input.durationSeconds,
         completed: input.completed,
       };
       try {
@@ -485,7 +488,17 @@ function WorkoutPlayer() {
   function updateSet(exId: string, idx: number, patch: Partial<SetState>) {
     setSets((cur) => {
       const rows = cur[exId] ?? [];
-      const next = rows.map((r, i) => (i === idx ? { ...r, ...patch } : r));
+      const edited = { ...rows[idx], ...patch, touched: true };
+      const valuePatch: Partial<SetState> = {};
+      for (const k of ["weight", "reps", "seconds"] as const) if (k in patch) valuePatch[k] = patch[k];
+      let carry = Object.keys(valuePatch).length > 0;
+      const next = rows.map((r, i) => {
+        if (i === idx) return edited;
+        // Later sets that the member hasn't touched start from the set before.
+        if (i > idx && carry && !r.done && !r.touched) return { ...r, ...valuePatch };
+        if (i > idx) carry = false;
+        return r;
+      });
       return { ...cur, [exId]: next };
     });
   }
@@ -494,12 +507,21 @@ function WorkoutPlayer() {
     const row = sets[ex.id]?.[idx];
     if (!row || !logId) return;
     const newDone = !row.done;
+    if (newDone) {
+      const missing = setMissing(ex.exercise.tracking, row);
+      if (missing) {
+        toast.error(`Enter ${missing} before marking this set done`);
+        return;
+      }
+    }
+    const tracking = ex.exercise.tracking;
     updateSet(ex.id, idx, { done: newDone });
     logSetMut.mutate({
       exerciseId: ex.exercise.id,
       setNumber: idx + 1,
-      weight: row.weight ? Number(row.weight) : null,
-      reps: row.reps ? Number(row.reps) : null,
+      weight: tracking === "weight_reps" && row.weight ? Number(row.weight) : null,
+      reps: tracking !== "time" && row.reps ? Number(row.reps) : null,
+      durationSeconds: tracking === "time" && row.seconds ? Number(row.seconds) : null,
       completed: newDone,
     });
     if (newDone && ex.rest_seconds > 0) {
@@ -610,7 +632,7 @@ function WorkoutPlayer() {
   const prev = prevMap.get(ex.exercise.id) ?? [];
 
   return (
-    <div className="w-full max-w-full space-y-5 overflow-x-hidden pb-8">
+    <div className="w-full max-w-full space-y-5 overflow-x-hidden pb-24">
       {(offlineFallback || !online || queuedSets > 0) && (
         <div
           role="status"
@@ -654,15 +676,7 @@ function WorkoutPlayer() {
       </div>
 
       {/* Exercise hero */}
-      <div className="relative rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-        <button
-          type="button"
-          onClick={() => setSwapOpen(true)}
-          aria-label="Swap exercise"
-          className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full bg-background/90 text-muted-foreground shadow-sm ring-1 ring-border hover:text-foreground"
-        >
-          <ArrowLeftRight className="h-4 w-4" />
-        </button>
+      <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
         {(() => {
           const embed = getYoutubeEmbedUrl(ex.exercise.video_url ?? "");
           if (embed) {
@@ -711,6 +725,15 @@ function WorkoutPlayer() {
         })()}
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <h2 className="font-display text-xl font-bold tracking-tight">{ex.exercise.name}</h2>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setSwapOpen(true)}
+            className="ml-auto h-8 rounded-full"
+          >
+            <ArrowLeftRight className="mr-1 h-3.5 w-3.5" /> Swap
+          </Button>
           {ex.substituted && (
             <span className="inline-flex items-center gap-1 rounded-full bg-secondary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-secondary">
               <ArrowLeftRight className="h-3 w-3" /> Substituted
@@ -738,10 +761,20 @@ function WorkoutPlayer() {
         <div className="mt-3 space-y-4">
           {rows.map((row, idx) => {
             const p = prev.find((x) => x.set_number === idx + 1) ?? prev[idx];
-            const lastPill =
-              p && (p.weight != null || p.reps != null)
-                ? `Last: ${p.weight ?? "—"} kg × ${p.reps ?? "—"}`
-                : null;
+            const tracking = ex.exercise.tracking;
+            const lastPill = !p
+              ? null
+              : tracking === "time"
+                ? p.duration_seconds != null
+                  ? `Last: ${p.duration_seconds}s`
+                  : null
+                : tracking === "reps"
+                  ? p.reps != null
+                    ? `Last: ${p.reps} reps`
+                    : null
+                  : p.weight != null || p.reps != null
+                    ? `Last: ${p.weight ?? "—"} kg × ${p.reps ?? "—"}`
+                    : null;
             return (
               <div key={idx} className="rounded-2xl border border-border bg-background/60 p-3">
                 <div className="mb-2 flex items-center justify-between">
@@ -753,36 +786,59 @@ function WorkoutPlayer() {
                   )}
                 </div>
                 {/* Below 400px the two steppers stack so nothing pushes off-canvas. */}
-                <div className="grid grid-cols-1 items-end gap-3 min-[400px]:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] min-[400px]:gap-2">
-                  <div className="min-w-0">
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      Weight (kg)
-                    </p>
-                    <Stepper
-                      value={row.weight}
-                      onChange={(v) => updateSet(ex.id, idx, { weight: v })}
-                      step={2.5}
-                      min={0}
-                      max={1000}
-                      unit="kg"
-                      decimals={1}
-                      ariaLabel="weight"
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      Reps
-                    </p>
-                    <Stepper
-                      value={row.reps}
-                      onChange={(v) => updateSet(ex.id, idx, { reps: v })}
-                      step={1}
-                      min={1}
-                      max={100}
-                      decimals={0}
-                      ariaLabel="reps"
-                    />
-                  </div>
+                <div
+                  className={
+                    tracking === "weight_reps"
+                      ? "grid grid-cols-1 items-end gap-3 min-[400px]:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] min-[400px]:gap-2"
+                      : "grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2"
+                  }
+                >
+                  {tracking === "time" ? (
+                    <div className="min-w-0">
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        Time (seconds)
+                      </p>
+                      <HoldTimer
+                        value={row.seconds}
+                        disabled={row.done}
+                        onChange={(v) => updateSet(ex.id, idx, { seconds: v })}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      {tracking === "weight_reps" && (
+                        <div className="min-w-0">
+                          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Weight (kg)
+                          </p>
+                          <Stepper
+                            value={row.weight}
+                            onChange={(v) => updateSet(ex.id, idx, { weight: v })}
+                            step={2.5}
+                            min={0}
+                            max={1000}
+                            unit="kg"
+                            decimals={1}
+                            ariaLabel="weight"
+                          />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Reps
+                        </p>
+                        <Stepper
+                          value={row.reps}
+                          onChange={(v) => updateSet(ex.id, idx, { reps: v })}
+                          step={1}
+                          min={1}
+                          max={100}
+                          decimals={0}
+                          ariaLabel="reps"
+                        />
+                      </div>
+                    </>
+                  )}
                   <button
                     type="button"
                     onClick={() => toggleSetDone(ex, idx)}
@@ -810,7 +866,11 @@ function WorkoutPlayer() {
         {prev.length > 0 && (
           <p className="mt-3 text-[11px] text-muted-foreground">{`Hint: ${prev
             .slice(0, 3)
-            .map((p) => `S${p.set_number} ${p.weight ?? "—"}×${p.reps ?? "—"}`)
+            .map((p) =>
+              ex.exercise.tracking === "time"
+                ? `S${p.set_number} ${p.duration_seconds ?? "—"}s`
+                : `S${p.set_number} ${p.weight ?? "—"}×${p.reps ?? "—"}`,
+            )
             .join(" · ")}`}</p>
         )}
       </div>
@@ -829,7 +889,14 @@ function WorkoutPlayer() {
           <ChevronLeft className="mr-1 h-4 w-4" /> Previous
         </Button>
         {currentIdx === exercises.length - 1 ? (
-          <Button className="flex-1 rounded-xl" onClick={() => setPhase("complete")}>
+          <Button
+            className="flex-1 rounded-xl"
+            onClick={() => {
+              const unlogged = exercises.filter((e) => !(sets[e.id] ?? []).some((r) => r.done));
+              if (unlogged.length > 0) setConfirmFinish(unlogged.length);
+              else setPhase("complete");
+            }}
+          >
             Finish <PartyPopper className="ml-1 h-4 w-4" />
           </Button>
         ) : (
@@ -842,6 +909,31 @@ function WorkoutPlayer() {
         )}
       </div>
 
+      <AlertDialog open={confirmFinish != null} onOpenChange={(o) => !o && setConfirmFinish(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmFinish} exercise{confirmFinish === 1 ? " has" : "s have"} no sets logged. Finish
+              anyway?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Unlogged exercises won't count toward your history or PRs.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep logging</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmFinish(null);
+                setPhase("complete");
+              }}
+            >
+              Finish anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <SwapExerciseDialog
         open={swapOpen}
         onOpenChange={setSwapOpen}
@@ -852,6 +944,10 @@ function WorkoutPlayer() {
           try {
             await swapExerciseFn({ data: { workoutExerciseId: ex.id, newExerciseId } });
             toast.success("Exercise substituted");
+            setSets((cur) => ({
+              ...cur,
+              [ex.id]: (cur[ex.id] ?? []).map(() => ({ weight: "", reps: "", seconds: "", done: false })),
+            }));
             setSwapOpen(false);
             await queryClient.invalidateQueries({ queryKey: ["workout-day", dayId] });
           } catch (e: any) {
@@ -875,7 +971,7 @@ function SwapExerciseDialog({
   onOpenChange: (v: boolean) => void;
   workoutExerciseId: string;
   exerciseId: string;
-  fetchAlts: (args: { data: { exerciseId: string } }) => Promise<ExerciseRow[]>;
+  fetchAlts: (args: { data: { exerciseId: string } }) => Promise<AlternativeRow[]>;
   onSwap: (newExerciseId: string) => void;
 }) {
   const { data: alts = [], isLoading } = useQuery({
@@ -889,7 +985,7 @@ function SwapExerciseDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Choose an alternative</DialogTitle>
-          <DialogDescription>Pick a swap targeting the same muscle group.</DialogDescription>
+          <DialogDescription>Ranked by the same main muscle and movement.</DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
           {isLoading ? (
@@ -912,6 +1008,11 @@ function SwapExerciseDialog({
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{a.name}</p>
+                  {a.differentFocus && (
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Different focus
+                    </p>
+                  )}
                   {a.muscle_groups?.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
                       {a.muscle_groups.slice(0, 3).map((m) => (
@@ -941,45 +1042,85 @@ function SwapExerciseDialog({
 
 function RestTimer({ total, left, onSkip }: { total: number; left: number; onSkip: () => void }) {
   const pct = total > 0 ? (1 - left / total) * 100 : 100;
-  const r = 28;
-  const c = 2 * Math.PI * r;
-  const offset = c * (1 - pct / 100);
   return (
-    <div className="fixed inset-x-0 bottom-24 z-20 px-5">
-      <div className="mx-auto flex max-w-md items-center justify-between rounded-2xl border border-border bg-card/95 p-3 shadow-[var(--shadow-card)] backdrop-blur">
-        <div className="flex items-center gap-3">
-          <svg width="68" height="68" viewBox="0 0 68 68" className="-rotate-90">
-            <circle
-              cx="34"
-              cy="34"
-              r={r}
-              stroke="currentColor"
-              strokeWidth="6"
-              className="text-muted"
-              fill="none"
-            />
-            <circle
-              cx="34"
-              cy="34"
-              r={r}
-              stroke="currentColor"
-              strokeWidth="6"
-              strokeLinecap="round"
-              className="text-primary transition-[stroke-dashoffset] duration-1000"
-              fill="none"
-              strokeDasharray={c}
-              strokeDashoffset={offset}
-            />
-          </svg>
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">Rest</p>
-            <p className="font-numeric text-xl font-bold">{left}s</p>
-          </div>
+    <div className="fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-20 px-4">
+      <div className="mx-auto flex max-w-md items-center gap-3 overflow-hidden rounded-full border border-border bg-card/95 py-1.5 pl-4 pr-1.5 shadow-[var(--shadow-card)] backdrop-blur">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          Rest
+        </p>
+        <p className="font-numeric w-10 text-sm font-bold tabular-nums">{left}s</p>
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+          <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
         </div>
-        <Button size="sm" variant="outline" className="rounded-xl" onClick={onSkip}>
-          <SkipForward className="mr-1 h-4 w-4" /> Skip
+        <Button size="sm" variant="ghost" className="h-8 rounded-full" onClick={onSkip}>
+          <SkipForward className="mr-1 h-3.5 w-3.5" /> Skip
         </Button>
       </div>
+    </div>
+  );
+}
+
+function setMissing(
+  tracking: WorkoutDayExercise["exercise"]["tracking"],
+  row: SetState,
+): string | null {
+  const pos = (v: string) => v !== "" && Number(v) > 0;
+  if (tracking === "time") return pos(row.seconds) ? null : "a time";
+  if (!pos(row.reps)) return tracking === "weight_reps" && !pos(row.weight) ? "weight and reps" : "reps";
+  if (tracking === "weight_reps" && !(row.weight !== "" && Number(row.weight) >= 0 && pos(row.weight)))
+    return "a weight";
+  return null;
+}
+
+/** Start/stop hold timer that writes elapsed seconds; value is also typeable. */
+function HoldTimer({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}) {
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (startedAt == null) return;
+    const id = window.setInterval(() => tick((n) => n + 1), 250);
+    return () => window.clearInterval(id);
+  }, [startedAt]);
+  const running = startedAt != null;
+  const elapsed = running ? Math.floor((Date.now() - startedAt) / 1000) : null;
+  return (
+    <div className="flex items-center gap-2 rounded-xl border border-input bg-background px-2 py-1.5">
+      <Button
+        type="button"
+        size="sm"
+        variant={running ? "destructive" : "secondary"}
+        className="h-11 shrink-0 rounded-lg"
+        disabled={disabled}
+        onClick={() => {
+          if (running) {
+            onChange(String(Math.max(1, elapsed ?? 0)));
+            setStartedAt(null);
+          } else setStartedAt(Date.now());
+        }}
+      >
+        {running ? "Stop" : <><Play className="mr-1 h-4 w-4" /> Start</>}
+      </Button>
+      {running ? (
+        <span className="flex-1 text-center font-display text-2xl font-bold tabular-nums">{elapsed}s</span>
+      ) : (
+        <Input
+          aria-label="Seconds"
+          inputMode="numeric"
+          className="h-11 flex-1 text-center font-display text-xl font-bold"
+          value={value}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, "").slice(0, 5))}
+          placeholder="sec"
+        />
+      )}
     </div>
   );
 }
