@@ -19,6 +19,7 @@ import {
 } from "@/lib/push.functions";
 import { registerSW, swAllowed } from "@/lib/pwa/register-sw";
 import { formatShortDate } from "@/lib/format-date";
+import { GoalsPanel } from "@/components/goals/goals-panel";
 import { MyMembershipCard } from "@/components/membership/my-membership-card";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -166,19 +167,9 @@ function ProfilePage() {
 
       <PushNotificationsSection />
 
-      <Link
-        to="/app/progress"
-        search={{ tab: "goals" } as never}
-        className="card-lift flex items-center gap-3 rounded-2xl border border-border bg-card p-4"
-      >
-        <div className="grid h-10 w-10 place-items-center rounded-full bg-primary-soft text-primary">
-          <Target className="h-5 w-5" />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-semibold">My goals</p>
-          <p className="text-xs text-muted-foreground">Track your targets and progress</p>
-        </div>
-      </Link>
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <GoalsPanel compact />
+      </div>
 
       <Button variant="outline" className="w-full rounded-xl" onClick={signOut}>
         <LogOut className="mr-2 h-4 w-4" />

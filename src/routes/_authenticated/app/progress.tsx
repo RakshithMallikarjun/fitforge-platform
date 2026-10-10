@@ -30,11 +30,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { GoalsPanel } from "@/components/goals/goals-panel";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getProgressData,
-  createGoal,
-  deleteGoal,
   getFitnessScore,
   getProgressPhotos,
   uploadProgressPhoto,
@@ -697,157 +696,8 @@ function HistoryTab({ data }: { data: ProgressData }) {
 
 /* ---------------- GOALS TAB ---------------- */
 
-function GoalsTab({ data }: { data: ProgressData }) {
-  const qc = useQueryClient();
-  const createFn = useServerFn(createGoal);
-  const deleteFn = useServerFn(deleteGoal);
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [target, setTarget] = useState("");
-  const [unit, setUnit] = useState("kg");
-  const [targetDate, setTargetDate] = useState("");
-
-  const latest = data.assessments[data.assessments.length - 1];
-
-  const enrichedGoals = useMemo(() => {
-    return data.goals.map((g) => {
-      let current = g.current_value;
-      if (latest && g.unit) {
-        const nm = g.name.toLowerCase();
-        if (g.unit === "kg" || g.unit === "lb") {
-          if (nm.includes("weight") && latest.weight != null) current = latest.weight;
-          else if (nm.includes("bench") && latest.bench_1rm != null) current = latest.bench_1rm;
-          else if (nm.includes("squat") && latest.squat_1rm != null) current = latest.squat_1rm;
-          else if (nm.includes("deadlift") && latest.deadlift_1rm != null)
-            current = latest.deadlift_1rm;
-        } else if (g.unit === "%" && nm.includes("fat") && latest.body_fat_pct != null) {
-          current = latest.body_fat_pct;
-        }
-      }
-      return { ...g, current_value: current };
-    });
-  }, [data.goals, latest]);
-
-  const create = useMutation({
-    mutationFn: () =>
-      createFn({
-        data: {
-          name,
-          target_value: target ? Number(target) : null,
-          unit: unit || null,
-          target_date: targetDate || null,
-        },
-      }),
-    onSuccess: () => {
-      toast.success("Goal added");
-      setOpen(false);
-      setName("");
-      setTarget("");
-      setUnit("kg");
-      setTargetDate("");
-      qc.invalidateQueries({ queryKey: ["progress-data"] });
-    },
-    onError: (e: any) => toast.error(formatServerError(e, {}, "Failed")),
-  });
-
-  const del = useMutation({
-    mutationFn: (id: string) => deleteFn({ data: { id } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["progress-data"] }),
-  });
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Your goals</h3>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="rounded-lg">
-              <Plus className="mr-1 h-4 w-4" />
-              Add
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>New goal</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label>Name</Label>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Bench press 100kg"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Target</Label>
-                  <Input type="number" value={target} onChange={(e) => setTarget(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Unit</Label>
-                  <Input
-                    value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                    placeholder="kg / lb / %"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>Target date</Label>
-                <Input
-                  type="date"
-                  value={targetDate}
-                  onChange={(e) => setTargetDate(e.target.value)}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={() => create.mutate()} disabled={!name || create.isPending}>
-                {create.isPending ? "Saving…" : "Add goal"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {enrichedGoals.length === 0 && (
-        <EmptyCard
-          icon={Target}
-          title="No goals yet"
-          subtitle="Set a target to track your progress."
-        />
-      )}
-
-      {enrichedGoals.map((g) => {
-        const pct =
-          g.target_value && g.current_value
-            ? Math.min(100, Math.max(0, (Number(g.current_value) / Number(g.target_value)) * 100))
-            : 0;
-        return (
-          <div
-            key={g.id}
-            className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold">{g.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {g.current_value ?? "—"} / {g.target_value ?? "—"} {g.unit ?? ""}
-                  {g.target_date && ` · by ${format(parseISO(g.target_date), "PP")}`}
-                </p>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => del.mutate(g.id)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-            <Progress value={pct} className="mt-3 h-2" />
-            <p className="mt-1 text-right text-[10px] text-muted-foreground">{Math.round(pct)}%</p>
-          </div>
-        );
-      })}
-    </div>
-  );
+function GoalsTab(_props: { data: ProgressData }) {
+  return <GoalsPanel />;
 }
 
 /* ---------------- PHOTOS TAB ---------------- */

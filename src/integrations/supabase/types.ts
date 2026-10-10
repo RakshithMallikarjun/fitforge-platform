@@ -498,10 +498,15 @@ export type Database = {
           achieved_at: string | null
           created_at: string
           current_value: number | null
+          direction: string
+          exercise_id: string | null
+          goal_type: string
           gym_id: string
           id: string
           member_id: string
+          metric: string | null
           name: string
+          start_value: number | null
           target_date: string | null
           target_value: number | null
           unit: string | null
@@ -510,10 +515,15 @@ export type Database = {
           achieved_at?: string | null
           created_at?: string
           current_value?: number | null
+          direction?: string
+          exercise_id?: string | null
+          goal_type?: string
           gym_id: string
           id?: string
           member_id: string
+          metric?: string | null
           name: string
+          start_value?: number | null
           target_date?: string | null
           target_value?: number | null
           unit?: string | null
@@ -522,15 +532,27 @@ export type Database = {
           achieved_at?: string | null
           created_at?: string
           current_value?: number | null
+          direction?: string
+          exercise_id?: string | null
+          goal_type?: string
           gym_id?: string
           id?: string
           member_id?: string
+          metric?: string | null
           name?: string
+          start_value?: number | null
           target_date?: string | null
           target_value?: number | null
           unit?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "goals_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "goals_gym_id_fkey"
             columns: ["gym_id"]
