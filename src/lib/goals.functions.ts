@@ -235,7 +235,7 @@ export const updateGoalV2 = createServerFn({ method: "POST" })
     if (!g) throw new Error("Goal not found");
     if (data.target_date && data.target_date < today && data.target_date !== g.target_date)
       throw new Error("Target date must be today or later");
-    const patch: Record<string, unknown> = {
+    const patch: { name: string; target_value: number; unit: string | null; target_date: string | null; achieved_at: null; current_value?: number | null } = {
       name: data.name,
       target_value: data.target_value,
       unit: data.unit,
