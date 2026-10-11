@@ -33,6 +33,7 @@ const NAV = [
   { to: "/platform/ads", label: "Ads", icon: Megaphone },
   { to: "/platform/analytics", label: "Analytics", icon: LineChart },
   { to: "/platform/contacts", label: "Contacts", icon: Users2 },
+  { to: "/platform/leads", label: "Leads", icon: Inbox },
 ];
 
 function PlatformShell() {
