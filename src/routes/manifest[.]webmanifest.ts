@@ -47,10 +47,11 @@ async function resolveGym(key: { slug?: string; domain?: string }) {
       auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
       global: anon.startsWith("sb_") ? { headers: { apikey: anon } } : undefined,
     });
-    let q = supabase.from("gyms").select("name, primary_color, logo_url").limit(1);
-    q = key.slug ? q.eq("slug", key.slug) : q.eq("custom_domain", key.domain!);
-    const { data } = await q.maybeSingle();
-    return data;
+    const { data } = await supabase.rpc("public_gym_manifest", {
+      _slug: key.slug ?? (null as any),
+      _domain: key.domain ?? (null as any),
+    });
+    return (data ?? [])[0] ?? null;
   } catch {
     return null;
   }
