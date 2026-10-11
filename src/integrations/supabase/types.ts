@@ -2205,6 +2205,7 @@ export type Database = {
         Args: never
         Returns: {
           gym_name: string
+          gym_slug: string
           is_enabled: boolean
           support_email: string
           support_phone: string
@@ -2414,6 +2415,15 @@ export type Database = {
           logo_url: string
           name: string
           primary_color: string
+        }[]
+      }
+      public_gym_pause_notice: {
+        Args: { _slug: string }
+        Returns: {
+          gym_name: string
+          is_enabled: boolean
+          support_email: string
+          support_phone: string
         }[]
       }
       record_member_payment: {
