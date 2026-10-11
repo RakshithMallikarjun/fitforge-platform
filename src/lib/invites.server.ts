@@ -1,3 +1,4 @@
+import { supportEmailFooter } from "@/lib/platform-brand";
 /**
  * Single invite path for every "invite someone to a gym" flow (owner, staff,
  * member, CSV import, resends).
@@ -106,6 +107,7 @@ ${inviterName ? `<p style="font-size:14px;color:#57534e;margin:0 0 20px">Invited
 ${contact.length ? `<p style="font-size:13px;color:#57534e;margin:0 0 8px">Questions? Contact ${esc(gym.name)} — ${contact.map(esc).join(" · ")}</p>` : ""}
 <p style="font-size:12px;color:#a8a29e;margin:16px 0 0;word-break:break-all">If the button doesn't work, paste this link into your browser:<br>${esc(link)}</p>
 </td></tr>
+${role === "owner" ? `<tr><td style="padding:0 28px">${supportEmailFooter().html}</td></tr>` : ""}
 <tr><td style="padding:20px 28px;border-top:1px solid #e7e5e4;font-size:12px;color:#a8a29e;text-align:center">Sent by ${PLATFORM_NAME} on behalf of ${esc(gym.name)} · ${esc(stamp)} UTC</td></tr>
 </table></td></tr></table></body></html>`;
 
@@ -125,7 +127,7 @@ ${contact.length ? `<p style="font-size:13px;color:#57534e;margin:0 0 8px">Quest
     .filter((l, i, a) => !(l === "" && a[i - 1] === ""))
     .join("\n");
 
-  return { subject, html, text };
+  return { subject, html, text: role === "owner" ? `${text}\n\n${supportEmailFooter().text}` : text };
 }
 
 async function sendViaResend(args: {

@@ -1,3 +1,4 @@
+import { SupportWhatsappLink } from "@/components/support-whatsapp";
 import {
   createFileRoute,
   Link,
@@ -92,6 +93,10 @@ function PlatformShell() {
               );
             })}
           </nav>
+          <SupportWhatsappLink
+            label="Support"
+            className="rounded-xl px-3 py-2 text-sm font-medium text-foreground/70 hover:bg-muted hover:text-foreground"
+          />
           <Button variant="ghost" size="sm" className="text-destructive" onClick={signOut}>
             <LogOut className="mr-1.5 h-4 w-4" /> Log out
           </Button>

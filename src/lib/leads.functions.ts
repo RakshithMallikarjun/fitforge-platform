@@ -1,3 +1,4 @@
+import { supportEmailFooter } from "@/lib/platform-brand";
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
@@ -74,10 +75,11 @@ async function notifyOwner(lead: z.infer<typeof leadSchema> & { id: string }) {
     ["Email", lead.email],
     ["Members", size],
   ];
-  const text = rows.map(([k, v]) => `${k}: ${v}`).join("\n");
+  const footer = supportEmailFooter();
+  const text = rows.map(([k, v]) => `${k}: ${v}`).join("\n") + `\n\n${footer.text}`;
   const html = `<h2>New gym lead</h2><table>${rows
     .map(([k, v]) => `<tr><td><b>${k}</b></td><td>${esc(v)}</td></tr>`)
-    .join("")}</table>`;
+    .join("")}</table>${footer.html}`;
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",

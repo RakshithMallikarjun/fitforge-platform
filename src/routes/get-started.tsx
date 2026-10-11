@@ -1,3 +1,5 @@
+import { SupportWhatsappButton, SupportWhatsappLink } from "@/components/support-whatsapp";
+import { formatSupportWhatsapp } from "@/lib/platform-brand";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -15,6 +17,7 @@ import {
 import { MEMBER_COUNT_OPTIONS, submitLead } from "@/lib/leads.functions";
 import { formatServerError } from "@/lib/format-error";
 
+const SETUP_TEXT = "Hi, I'd like to set up my gym on Fit Foundry.";
 const TITLE = "Get started with Fit Foundry — set up your gym";
 const DESC =
   "Tell us about your gym and we'll set up Fit Foundry for you — memberships, dues, attendance and a branded member app.";
@@ -98,6 +101,12 @@ function GetStartedPage() {
             <p className="mt-3 font-semibold">
               Thanks — we'll set up your gym and email you within one working day.
             </p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Questions? WhatsApp us at {formatSupportWhatsapp()}
+            </p>
+            <div className="mt-3">
+              <SupportWhatsappButton text={SETUP_TEXT} label="WhatsApp us" />
+            </div>
           </div>
         ) : (
           <form onSubmit={onSubmit} className="mt-8 space-y-4 rounded-2xl border border-border bg-card p-6">
@@ -161,6 +170,12 @@ function GetStartedPage() {
           </form>
         )}
       </section>
+      <footer className="border-t border-border">
+        <div className="mx-auto flex max-w-7xl flex-wrap gap-6 px-6 py-8 text-sm text-muted-foreground md:px-8">
+          <span>© {new Date().getFullYear()} Fit Foundry</span>
+          <SupportWhatsappLink text={SETUP_TEXT} className="hover:text-foreground" />
+        </div>
+      </footer>
     </main>
   );
 }

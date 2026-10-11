@@ -60,3 +60,37 @@ export function migrateLegacyStorageKeys() {
 export const CUSTOM_DOMAIN_CNAME_TARGET = "fitffoundry.lovable.app";
 /** Lovable hosting IP, accepted when a registrar can't CNAME (apex domains). */
 export const CUSTOM_DOMAIN_A_RECORD = "185.158.133.1";
+
+/** Fit Foundry's own support WhatsApp (digits, country code first). Gyms use their own number. */
+export const SUPPORT_WHATSAPP: string =
+  ((typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_SUPPORT_WHATSAPP) as string | undefined)?.replace(/\D/g, "") ||
+  "919845432219";
+
+/** "+91 98454 32219" for Indian numbers; "+<digits>" otherwise. */
+export function formatSupportWhatsapp(digits: string = SUPPORT_WHATSAPP): string {
+  const d = digits.replace(/\D/g, "");
+  if (d.length === 12 && d.startsWith("91")) return `+91 ${d.slice(2, 7)} ${d.slice(7)}`;
+  return `+${d}`;
+}
+
+/** https://wa.me/<number>, optionally with a prefilled message. */
+export function supportWhatsappUrl(text?: string, digits: string = SUPPORT_WHATSAPP): string {
+  return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+}
+
+/** Server-side value (env SUPPORT_WHATSAPP overrides) for emails. */
+export function serverSupportWhatsapp(): string {
+  const env = typeof process !== "undefined" ? process.env?.["SUPPORT_WHATSAPP"] : undefined;
+  return env?.replace(/\D/g, "") || SUPPORT_WHATSAPP;
+}
+
+/** Plain + HTML footer line for Fit Foundry emails. */
+export function supportEmailFooter() {
+  const d = serverSupportWhatsapp();
+  const shown = formatSupportWhatsapp(d);
+  const url = supportWhatsappUrl(undefined, d);
+  return {
+    text: `Need help? WhatsApp us: ${shown} (${url})`,
+    html: `<p style="margin-top:24px;font-size:12px;color:#64748b">Need help? WhatsApp us: <a href="${url}">${shown}</a></p>`,
+  };
+}
