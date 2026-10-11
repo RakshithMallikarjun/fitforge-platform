@@ -15,7 +15,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { friendlyAuthError, scorePassword } from "@/lib/auth-errors";
 import { verifyGymJoinCode } from "@/lib/join-code.functions";
-import { getPublicGymBrand } from "@/lib/leads.functions";
+import { getPublicGymBrand, getPublicGymPauseNotice } from "@/lib/leads.functions";
 import { getAuthRedirectUrl } from "@/lib/authRedirect";
 import { checkGymPaused, readPauseInfo, signOutPaused, whatsappLink, type PauseInfo } from "@/lib/gym-pause";
 
@@ -82,6 +82,8 @@ function AuthPage() {
   const { deactivated, gymDisabled: gymDisabledFlag, reason } = Route.useSearch();
   const gymDisabled = gymDisabledFlag || reason === "gym_disabled";
   const [pause, setPause] = useState<PauseInfo | null>(null);
+  const gymFromSearch = Route.useSearch().gym;
+  const pauseNoticeFn = useServerFn(getPublicGymPauseNotice);
   const { data: user, sessionLoading, refetch } = useCurrentUser();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -117,10 +119,19 @@ function AuthPage() {
       /* storage unavailable */
     }
     const info = readPauseInfo();
-    if (gymDisabled && info) {
+    if (gymDisabled && gymFromSearch) {
+      // Public lookup by gym code; fall back to what was stored before sign-out.
+      pauseNoticeFn({ data: { slug: gymFromSearch } })
+        .then((n) => {
+          if (n) setPause({ gymName: n.gymName, supportEmail: n.supportEmail, supportPhone: n.supportPhone });
+          else if (info) setPause(info);
+          else setPageError("This gym's Fit Foundry account is paused. Please contact the gym.");
+        })
+        .catch(() => (info ? setPause(info) : setPageError("This gym's Fit Foundry account is paused. Please contact the gym.")));
+    } else if (gymDisabled && info) {
       setPause(info);
     } else if (gymDisabled || notice === "gymDisabled") {
-      setPageError("This gym's account is currently disabled — please contact your gym.");
+      setPageError("This gym's Fit Foundry account is paused. Please contact the gym.");
     } else if (deactivated || notice === "deactivated") {
       setPageError("This account has been deactivated. Please contact your gym to regain access.");
     }

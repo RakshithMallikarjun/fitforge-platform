@@ -24,6 +24,7 @@ import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticated/app/route'
 import { Route as AuthenticatedPlatformRouteRouteImport } from './routes/_authenticated/platform/route'
 import { Route as AuthCallbackRouteImport } from './routes/auth_.callback'
+import { Route as ManifestFileRouteImport } from './routes/manifest.$file'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminCheckinRouteImport } from './routes/_authenticated/admin/checkin'
 import { Route as AuthenticatedAdminDuesRouteImport } from './routes/_authenticated/admin/dues'
@@ -132,6 +133,11 @@ const AuthenticatedPlatformRouteRoute =
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth_/callback',
   path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManifestFileRoute = ManifestFileRouteImport.update({
+  id: '/manifest/$file',
+  path: '/manifest/$file',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
@@ -345,6 +351,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthenticatedAppRouteRouteWithChildren
   '/platform': typeof AuthenticatedPlatformRouteRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/manifest/$file': typeof ManifestFileRoute
   '/platform/gyms': typeof AuthenticatedPlatformGymsRouteRouteWithChildren
   '/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/admin/dues': typeof AuthenticatedAdminDuesRoute
@@ -392,6 +399,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/manifest/$file': typeof ManifestFileRoute
   '/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/admin/dues': typeof AuthenticatedAdminDuesRoute
   '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
@@ -443,6 +451,7 @@ export interface FileRoutesById {
   '/_authenticated/app': typeof AuthenticatedAppRouteRouteWithChildren
   '/_authenticated/platform': typeof AuthenticatedPlatformRouteRouteWithChildren
   '/auth_/callback': typeof AuthCallbackRoute
+  '/manifest/$file': typeof ManifestFileRoute
   '/_authenticated/platform/gyms': typeof AuthenticatedPlatformGymsRouteRouteWithChildren
   '/_authenticated/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/_authenticated/admin/dues': typeof AuthenticatedAdminDuesRoute
@@ -495,6 +504,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/platform'
     | '/auth/callback'
+    | '/manifest/$file'
     | '/platform/gyms'
     | '/admin/checkin'
     | '/admin/dues'
@@ -542,6 +552,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/auth/callback'
+    | '/manifest/$file'
     | '/admin/checkin'
     | '/admin/dues'
     | '/admin/exercises'
@@ -592,6 +603,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app'
     | '/_authenticated/platform'
     | '/auth_/callback'
+    | '/manifest/$file'
     | '/_authenticated/platform/gyms'
     | '/_authenticated/admin/checkin'
     | '/_authenticated/admin/dues'
@@ -641,6 +653,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  ManifestFileRoute: typeof ManifestFileRoute
   ApiPublicDailySummaryRoute: typeof ApiPublicDailySummaryRoute
   ApiPublicDuesDigestRoute: typeof ApiPublicDuesDigestRoute
 }
@@ -750,6 +763,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manifest/$file': {
+      id: '/manifest/$file'
+      path: '/manifest/$file'
+      fullPath: '/manifest/$file'
+      preLoaderRoute: typeof ManifestFileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/': {
@@ -1162,6 +1182,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  ManifestFileRoute: ManifestFileRoute,
   ApiPublicDailySummaryRoute: ApiPublicDailySummaryRoute,
   ApiPublicDuesDigestRoute: ApiPublicDuesDigestRoute,
 }

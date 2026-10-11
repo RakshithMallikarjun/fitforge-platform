@@ -12,8 +12,7 @@ import {
   updateGymOperations,
   updateGymSettings,
 } from "@/lib/gym-theme.functions";
-import { CUSTOM_DOMAIN_CNAME_TARGET } from "@/lib/platform-brand";
-import { checkCustomDomain } from "@/lib/domain.functions";
+import { checkCustomDomain, getDomainConfig } from "@/lib/domain.functions";
 import { formatJoinCode } from "@/lib/join-code-format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -627,6 +626,8 @@ See you at the gym!`;
 
 function CustomDomainHelp({ domain, draft }: { domain: string; draft: string }) {
   const check = useServerFn(checkCustomDomain);
+  const configFn = useServerFn(getDomainConfig);
+  const config = useQuery({ queryKey: ["domain-config"], queryFn: () => configFn(), staleTime: 60 * 60_000 });
   const q = useQuery({
     queryKey: ["custom-domain-status", domain],
     queryFn: () => check({ data: { domain } }),
@@ -642,7 +643,7 @@ function CustomDomainHelp({ domain, draft }: { domain: string; draft: string }) 
         <Badge variant={status === "Active" ? "default" : "outline"}>{status}</Badge>
       </div>
       <p className="font-mono text-foreground">
-        CNAME {host} → {CUSTOM_DOMAIN_CNAME_TARGET}
+        CNAME {host} → {config.data?.cnameTarget ?? "…"}
       </p>
       <p>Add this at your domain provider, then save. DNS changes can take up to 48 hours.</p>
       {domain && q.data?.status === "waiting" && (

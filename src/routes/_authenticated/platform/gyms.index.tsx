@@ -1,5 +1,5 @@
 import { formatServerError } from "@/lib/format-error";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -84,7 +84,12 @@ function PlatformGymsPage() {
   const [plan, setPlan] = useState("all");
   const [sort, setSort] = useState<SortKey>("health_score");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
-  const [pending, setPending] = useState<{ gym: PlatformGymRow; enable: boolean } | null>(null);
+  const [pendingState, setPendingState] = useState<{ gym: PlatformGymRow; enable: boolean } | null>(null);
+  // Keep the last target while the dialog animates closed so the title never loses the gym name.
+  const lastPending = useRef<{ gym: PlatformGymRow; enable: boolean } | null>(null);
+  if (pendingState) lastPending.current = pendingState;
+  const pending = pendingState ?? lastPending.current;
+  const setPending = setPendingState;
   const [reason, setReason] = useState("");
   const [newOpen, setNewOpen] = useState(false);
 
@@ -350,7 +355,7 @@ function PlatformGymsPage() {
         </div>
       )}
 
-      <Dialog open={!!pending} onOpenChange={(o) => !o && setPending(null)}>
+      <Dialog open={!!pendingState} onOpenChange={(o) => !o && setPending(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -359,7 +364,7 @@ function PlatformGymsPage() {
             <DialogDescription>
               {pending?.enable
                 ? "Members and staff of this gym regain access immediately. No data was lost while it was disabled."
-                : "Everyone at this gym is signed out on their next navigation and shown a contact-your-gym message. Nothing is deleted and this is reversible."}
+                : "Everyone at this gym is signed out within a minute and shown a message to contact the gym. Nothing is deleted and this is reversible."}
             </DialogDescription>
           </DialogHeader>
           {!pending?.enable && (

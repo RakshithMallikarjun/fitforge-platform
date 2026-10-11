@@ -158,10 +158,11 @@ function AuthListener() {
 
 /** Signs users of a paused gym out within a minute (and on window focus), with an explanation. */
 function GymPauseWatcher() {
+  const router = useRouter();
   useEffect(() => {
     let busy = false;
     const check = async () => {
-      if (busy || document.visibilityState === "hidden") return;
+      if (busy) return;
       busy = true;
       try {
         const { data } = await supabase.auth.getSession();
@@ -173,13 +174,19 @@ function GymPauseWatcher() {
       }
     };
     void check();
+    // Hidden tabs throttle timers, so also re-check the moment the tab is visible again.
     const id = window.setInterval(check, 60_000);
+    const onVisible = () => document.visibilityState === "visible" && void check();
     window.addEventListener("focus", check);
+    document.addEventListener("visibilitychange", onVisible);
+    const unsub = router.subscribe("onResolved", () => void check());
     return () => {
       window.clearInterval(id);
       window.removeEventListener("focus", check);
+      document.removeEventListener("visibilitychange", onVisible);
+      unsub();
     };
-  }, []);
+  }, [router]);
   return null;
 }
 

@@ -79,18 +79,6 @@ function MemberShell() {
     if (gymTheme) setTheme(gymTheme);
   }, [gymTheme, setTheme]);
 
-  // Point "Add to Home Screen" at this gym's branded manifest.
-  useEffect(() => {
-    const slug = (gymTheme as any)?.slug as string | undefined;
-    const link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
-    if (!link || !slug) return;
-    const prev = link.getAttribute("href");
-    link.setAttribute("href", `/manifest.webmanifest?gym=${encodeURIComponent(slug)}`);
-    return () => {
-      if (prev) link.setAttribute("href", prev);
-    };
-  }, [gymTheme]);
-
   useEffect(() => {
     void registerSW();
   }, []);
