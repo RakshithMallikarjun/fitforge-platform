@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import {
   generatePlanDraft,
+  getAiPlanPrefill,
   getTrainingProfile,
   listGymEquipment,
   saveTrainingProfile,
@@ -52,6 +54,13 @@ export function AiPlanDialog({
   const [daysPerWeek, setDaysPerWeek] = useState("3");
   const [sessionMinutes, setSessionMinutes] = useState("60");
   const [experience, setExperience] = useState<Experience>("beginner");
+  const [allowAdvanced, setAllowAdvanced] = useState(false);
+
+  const prefill = useQuery({
+    enabled: open && !!memberId,
+    queryKey: ["ai-plan-prefill", memberId],
+    queryFn: () => getAiPlanPrefill({ data: { memberId } }),
+  });
 
   const profile = useQuery({
     enabled: open && !!memberId,
@@ -66,16 +75,18 @@ export function AiPlanDialog({
   });
 
   // Pre-fill from the saved profile so a trainer types this only once.
+  // Saved training profile wins; otherwise fall back to the member's own profile.
   useEffect(() => {
+    if (!open || profile.isLoading || prefill.isLoading) return;
     const p = profile.data;
-    if (!open || !p) return;
-    setGoals(p.goals ?? "");
-    setLimitations(p.limitations ?? "");
-    setEquipment(p.equipment ?? []);
-    setDaysPerWeek(String(p.days_per_week ?? 3));
-    setSessionMinutes(String(p.session_minutes ?? 60));
-    setExperience((p.experience as Experience) ?? "beginner");
-  }, [open, profile.data]);
+    const f = prefill.data;
+    setGoals(p?.goals?.trim() || f?.goals || "");
+    setLimitations(p?.limitations?.trim() || f?.limitations || "");
+    setEquipment(p?.equipment ?? []);
+    setDaysPerWeek(String(p?.days_per_week ?? 3));
+    setSessionMinutes(String(p?.session_minutes ?? 60));
+    setExperience((f?.experience as Experience) ?? (p?.experience as Experience) ?? "beginner");
+  }, [open, profile.data, prefill.data, profile.isLoading, prefill.isLoading]);
 
   const payload = () => ({
     memberId,
@@ -85,13 +96,15 @@ export function AiPlanDialog({
     daysPerWeek: Number(daysPerWeek) || 3,
     sessionMinutes: Number(sessionMinutes) || 60,
     experience,
+    allowAdvanced: experience === "beginner" ? allowAdvanced : undefined,
   });
 
   const generate = useMutation({
     mutationFn: async () => {
       const data = payload();
       // Save first so the inputs survive even if generation fails.
-      await saveTrainingProfile({ data }).catch(() => undefined);
+      const { allowAdvanced: _a, ...profileData } = data;
+      await saveTrainingProfile({ data: profileData }).catch(() => undefined);
       return generatePlanDraft({ data });
     },
     onSuccess: (draft) => {
@@ -124,7 +137,7 @@ export function AiPlanDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {profile.isLoading ? (
+        {profile.isLoading || prefill.isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
@@ -132,6 +145,12 @@ export function AiPlanDialog({
           </div>
         ) : (
           <div className="space-y-4">
+            {prefill.data?.assessment && (
+              <p className="rounded-xl bg-muted p-3 text-xs text-muted-foreground">
+                Latest assessment ({prefill.data.assessment.date}): {prefill.data.assessment.summary}.
+                It's included in the draft.
+              </p>
+            )}
             <div>
               <Label htmlFor="ai-goals">Goals</Label>
               <Textarea
@@ -219,6 +238,12 @@ export function AiPlanDialog({
                   <SelectItem value="advanced">Advanced</SelectItem>
                 </SelectContent>
               </Select>
+              {experience === "beginner" && (
+                <label className="mt-2 flex items-center gap-2 text-sm">
+                  <Checkbox checked={allowAdvanced} onCheckedChange={(v) => setAllowAdvanced(v === true)} />
+                  Allow advanced exercises
+                </label>
+              )}
             </div>
 
             {generate.isError && (

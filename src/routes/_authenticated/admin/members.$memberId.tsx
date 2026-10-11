@@ -1,4 +1,5 @@
 import { ExpandablePlanSessions } from "@/components/plans/plan-sessions";
+import { OverloadSuggestions } from "@/components/plans/overload-suggestions";
 import { useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -368,6 +369,15 @@ function MemberProfile() {
                             </Link>
                           </div>
                           <ExpandablePlanSessions planId={p.id} />
+                          {isActive && (
+                            <div className="mt-3">
+                              <OverloadSuggestions
+                                memberId={memberId}
+                                planId={p.id}
+                                exerciseIds={p.exercise_ids ?? []}
+                              />
+                            </div>
+                          )}
                         </div>
                       </li>
                     );

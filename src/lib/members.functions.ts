@@ -214,8 +214,18 @@ export const getMember = createServerFn({ method: "GET" })
           .eq("member_id", data.memberId)
           .in("plan_id", planIds)
           .not("completed_at", "is", null),
-        supabase.from("workout_days").select("id, plan_id").in("plan_id", planIds),
+        supabase
+          .from("workout_days")
+          .select("id, plan_id, workout_exercises(exercise_id, hidden_at)")
+          .in("plan_id", planIds)
+          .is("hidden_at", null),
       ]);
+      const exIds = new Map<string, Set<string>>();
+      for (const d of (days ?? []) as any[]) {
+        const set = exIds.get(d.plan_id) ?? new Set<string>();
+        for (const we of d.workout_exercises ?? []) if (!we.hidden_at) set.add(we.exercise_id);
+        exIds.set(d.plan_id, set);
+      }
       const logCount = new Map<string, number>();
       for (const l of (logs ?? []) as any[])
         if (l.plan_id) logCount.set(l.plan_id, (logCount.get(l.plan_id) ?? 0) + 1);
@@ -226,6 +236,7 @@ export const getMember = createServerFn({ method: "GET" })
         ...p,
         completed_logs_count: logCount.get(p.id) ?? 0,
         day_count: dayCount.get(p.id) ?? 0,
+        exercise_ids: Array.from(exIds.get(p.id) ?? []),
         total_sessions: (dayCount.get(p.id) ?? 0) * (p.duration_weeks ?? 1),
       }));
     }
