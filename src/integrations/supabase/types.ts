@@ -1548,6 +1548,45 @@ export type Database = {
           },
         ]
       }
+      platform_leads: {
+        Row: {
+          city: string
+          contact_name: string
+          created_at: string
+          email: string
+          gym_name: string
+          id: string
+          member_count: string
+          phone: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          city: string
+          contact_name: string
+          created_at?: string
+          email: string
+          gym_name: string
+          id?: string
+          member_count: string
+          phone: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          contact_name?: string
+          created_at?: string
+          email?: string
+          gym_name?: string
+          id?: string
+          member_count?: string
+          phone?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       progress_photos: {
         Row: {
           assessment_id: string | null
@@ -2057,6 +2096,7 @@ export type Database = {
       }
       current_gym_id: { Args: never; Returns: string }
       expire_lapsed_subscriptions: { Args: never; Returns: number }
+      generate_join_code: { Args: never; Returns: string }
       gym_ad_daily: {
         Args: { _days?: number }
         Returns: {

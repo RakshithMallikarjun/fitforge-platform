@@ -267,6 +267,13 @@
       "when": 1791737994424,
       "tag": "0037_0037_public_gym_manifest",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791738329064,
+      "tag": "0038_0038_join_codes_and_leads",
+      "breakpoints": true
     }
   ]
 }
