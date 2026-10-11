@@ -34,6 +34,7 @@ export type DraftExercise = {
   reps: string;
   rest_seconds: number;
   notes: string;
+  section: "warmup" | "main" | "cooldown";
 };
 
 export type DraftDay = {
@@ -57,6 +58,7 @@ const profileInput = z.object({
   daysPerWeek: z.number().int().min(1).max(7),
   sessionMinutes: z.number().int().min(15).max(180),
   experience: z.enum(["beginner", "intermediate", "advanced"]),
+  allowAdvanced: z.boolean().optional(),
 });
 
 /** Model replies are untrusted input — every field is validated and clamped. */
@@ -79,6 +81,8 @@ const aiDraftSchema = z.object({
                 .nullable(),
               rest_seconds: z.number().finite().optional().nullable(),
               notes: z.string().max(200).optional().nullable(),
+              section: z.enum(["warmup", "main", "cooldown"]).optional().nullable(),
+              seconds: z.number().finite().optional().nullable(),
             }),
           )
           .default([]),
@@ -210,37 +214,47 @@ export const generatePlanDraft = createServerFn({ method: "POST" })
     }
 
     // --- Candidate exercises: the gym's own library only ---
-    let q = supabase
+    const { data: all, error: libErr } = await supabase
       .from("exercises")
-      .select("id, name, equipment, muscle_groups, difficulty")
+      .select("id, name, equipment, muscle_groups, difficulty, tracking")
       .order("name", { ascending: true })
-      .limit(MAX_CATALOG);
-    if (data.equipment.length) q = q.overlaps("equipment", data.equipment);
-    const first = await q;
-    if (first.error) throw new Error(first.error.message);
-    let catalog = first.data;
-    // Equipment filter can be too narrow (e.g. bodyweight work stored with no
-    // equipment at all) — fall back to the full library rather than fail.
-    if (!catalog?.length && data.equipment.length) {
-      const { data: all, error: allErr } = await supabase
-        .from("exercises")
-        .select("id, name, equipment, muscle_groups, difficulty")
-        .order("name", { ascending: true })
-        .limit(MAX_CATALOG);
-      if (allErr) throw new Error(allErr.message);
-      catalog = all;
+      .limit(500);
+    if (libErr) throw new Error(libErr.message);
+    let catalog = (all ?? []) as any[];
+    // Beginners never get Advanced lifts unless the trainer explicitly allows them.
+    if (data.experience === "beginner" && !data.allowAdvanced) {
+      catalog = catalog.filter((e) => (e.difficulty ?? "").toLowerCase() !== "advanced");
     }
-    if (!catalog?.length) {
+    if (data.equipment.length) {
+      const allowed = new Set(data.equipment.map((x) => x.toLowerCase()));
+      const fits = catalog.filter((e) => {
+        const eq = ((e.equipment ?? []) as string[]).map((x) => x.toLowerCase());
+        // Bodyweight / no-equipment moves always fit (warm-ups, cooldowns).
+        return eq.length === 0 || eq.includes("bodyweight") || eq.some((x) => allowed.has(x));
+      });
+      if (fits.length) catalog = fits;
+    }
+    catalog = catalog.slice(0, MAX_CATALOG);
+    if (!catalog.length) {
       throw new Error("Add exercises to your library before generating a plan.");
     }
 
-    const byName = new Map<string, { id: string; name: string }>();
-    for (const e of catalog as any[]) byName.set(normalize(e.name), { id: e.id, name: e.name });
+    const byName = new Map<string, { id: string; name: string; tracking: string }>();
+    for (const e of catalog)
+      byName.set(normalize(e.name), { id: e.id, name: e.name, tracking: e.tracking ?? "weight_reps" });
+
+    const { data: latestAssessment } = await supabase
+      .from("fitness_assessments")
+      .select("date, weight, body_fat_pct, resting_hr, vo2_max, flexibility, notes, unit_system")
+      .eq("member_id", data.memberId)
+      .order("date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     const catalogLines = (catalog as any[])
       .map(
         (e) =>
-          `- ${e.name} | equipment: ${(e.equipment ?? []).join(", ") || "none"} | muscles: ${(e.muscle_groups ?? []).join(", ") || "n/a"}`,
+          `- ${e.name} | equipment: ${(e.equipment ?? []).join(", ") || "none"} | muscles: ${(e.muscle_groups ?? []).join(", ") || "n/a"} | difficulty: ${e.difficulty ?? "n/a"} | tracking: ${e.tracking ?? "weight_reps"}`,
       )
       .join("\n");
 
@@ -249,8 +263,10 @@ export const generatePlanDraft = createServerFn({ method: "POST" })
       "You MUST only use exercises from the provided library, copying each name EXACTLY.",
       "Respect the athlete's limitations strictly: never include a movement that aggravates them.",
       "Return JSON only, shaped as:",
-      '{"plan_name":string,"notes":string,"days":[{"day_label":string,"block_type":"warmup"|"main"|"cooldown","exercises":[{"name":string,"sets":number,"reps":string,"rest_seconds":number,"notes":string}]}]}',
-      "Produce exactly the requested number of training days, each with 4-7 exercises that fit the session length.",
+      '{"plan_name":string,"notes":string,"days":[{"day_label":string,"exercises":[{"name":string,"section":"warmup"|"main"|"cooldown","sets":number,"reps":string,"seconds":number|null,"rest_seconds":number,"notes":string}]}]}',
+      "Produce exactly the requested number of training days. Every day starts with 1-2 short warm-up exercises (section \"warmup\"), then 4-6 main exercises (section \"main\"), and ends with 1-2 cooldown exercises (section \"cooldown\"), all fitting the session length.",
+      "For exercises whose tracking is \"time\", set \"seconds\" to a single whole number of seconds per set and leave \"reps\" empty. For other exercises give reps like \"8-12\" and seconds null.",
+      "Match difficulty to the athlete's experience; beginners get beginner or intermediate movements.",
     ].join("\n");
 
     const user = [
@@ -260,6 +276,9 @@ export const generatePlanDraft = createServerFn({ method: "POST" })
       `Training days per week: ${data.daysPerWeek}`,
       `Session length: ${data.sessionMinutes} minutes`,
       `Experience level: ${data.experience}`,
+      latestAssessment
+        ? `Latest assessment (${(latestAssessment as any).date}): ${JSON.stringify(latestAssessment)}`
+        : "Latest assessment: none on file",
       "",
       "Exercise library:",
       catalogLines,
@@ -291,19 +310,27 @@ export const generatePlanDraft = createServerFn({ method: "POST" })
           skipped.push(e.name);
           continue;
         }
+        const section = (e.section ?? "main") as DraftExercise["section"];
+        const timed = match.tracking === "time";
+        const secs = Math.min(600, Math.max(5, Math.round(Number(e.seconds) || parseInt(String(e.reps ?? ""), 10) || 30)));
+        const label = section === "warmup" ? "Warm-Up" : section === "cooldown" ? "Cooldown" : "";
+        const note = (e.notes ?? "").trim();
         exercises.push({
           exercise_id: match.id,
           exercise_name: match.name,
-          sets: Math.min(10, Math.max(1, Math.round(Number(e.sets) || 3))),
-          reps: String(e.reps ?? "8-12").slice(0, 20),
-          rest_seconds: Math.min(600, Math.max(15, Math.round(Number(e.rest_seconds) || 90))),
-          notes: (e.notes ?? "").slice(0, 200),
+          sets: Math.min(10, Math.max(1, Math.round(Number(e.sets) || (section === "main" ? 3 : 1)))),
+          reps: timed ? `${secs}s` : String(e.reps ?? "8-12").slice(0, 20),
+          rest_seconds: Math.min(600, Math.max(15, Math.round(Number(e.rest_seconds) || (section === "main" ? 90 : 30)))),
+          notes: (label ? (note ? `${label} · ${note}` : label) : note).slice(0, 200),
+          section,
         });
       }
+      const order = { warmup: 0, main: 1, cooldown: 2 } as const;
+      exercises.sort((x, y) => order[x.section] - order[y.section]);
       if (!exercises.length) continue;
       days.push({
         day_label: (d.day_label || `Day ${i + 1}`).slice(0, 40),
-        block_type: d.block_type ?? "main",
+        block_type: "main",
         exercises,
       });
     }
@@ -326,5 +353,50 @@ export const generatePlanDraft = createServerFn({ method: "POST" })
       notes: (parsed.notes || "").slice(0, 600),
       days,
       skipped: [...new Set(skipped)].slice(0, 10),
+    };
+  });
+
+export type AiPlanPrefill = {
+  goals: string;
+  limitations: string;
+  experience: "beginner" | "intermediate" | "advanced" | null;
+  assessment: { date: string; summary: string } | null;
+};
+
+/** Member's own profile + latest assessment, so the trainer doesn't retype them. */
+export const getAiPlanPrefill = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ memberId: z.string().uuid() }).parse(data))
+  .handler(async ({ context, data }): Promise<AiPlanPrefill> => {
+    const { supabase, userId } = context;
+    await resolveAccess({ supabase, userId }, data.memberId, { staffOnly: true });
+    const [{ data: prof }, { data: a }] = await Promise.all([
+      supabase
+        .from("member_profiles")
+        .select("goals, health_notes, experience_level")
+        .eq("user_id", data.memberId)
+        .maybeSingle(),
+      supabase
+        .from("fitness_assessments")
+        .select("date, weight, body_fat_pct, resting_hr, flexibility, unit_system, notes")
+        .eq("member_id", data.memberId)
+        .order("date", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    const exp = String((prof as any)?.experience_level ?? "").toLowerCase();
+    const parts: string[] = [];
+    if (a) {
+      const u = (a as any).unit_system === "imperial" ? "lb" : "kg";
+      if ((a as any).weight != null) parts.push(`weight ${(a as any).weight} ${u}`);
+      if ((a as any).body_fat_pct != null) parts.push(`body fat ${(a as any).body_fat_pct}%`);
+      if ((a as any).resting_hr != null) parts.push(`resting HR ${(a as any).resting_hr}`);
+      if ((a as any).notes) parts.push(String((a as any).notes).slice(0, 120));
+    }
+    return {
+      goals: ((prof as any)?.goals ?? "").trim(),
+      limitations: ((prof as any)?.health_notes ?? "").trim(),
+      experience: (["beginner", "intermediate", "advanced"] as const).find((x) => x === exp) ?? null,
+      assessment: a ? { date: (a as any).date, summary: parts.join(", ") || "recorded" } : null,
     };
   });
