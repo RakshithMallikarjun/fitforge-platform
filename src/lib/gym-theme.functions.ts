@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type GymThemePayload = {
   name: string;
+  slug?: string | null;
   primaryColor: string;
   secondaryColor: string | null;
   logoUrl: string | null;

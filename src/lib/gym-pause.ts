@@ -1,6 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type PauseInfo = { gymName: string; supportEmail: string | null; supportPhone: string | null };
+export type PauseInfo = {
+  gymName: string;
+  supportEmail: string | null;
+  supportPhone: string | null;
+  gymSlug?: string | null;
+};
 const KEY = "fitfoundry:gym-paused";
 
 /** Returns pause details when the signed-in user's gym is disabled, else null. */
@@ -9,7 +14,12 @@ export async function checkGymPaused(): Promise<PauseInfo | null> {
   if (error) return null; // never sign someone out on a network blip
   const row = (data ?? [])[0] as any;
   if (!row || row.is_enabled !== false) return null;
-  return { gymName: row.gym_name, supportEmail: row.support_email, supportPhone: row.support_phone };
+  return {
+    gymName: row.gym_name,
+    supportEmail: row.support_email,
+    supportPhone: row.support_phone,
+    gymSlug: row.gym_slug ?? null,
+  };
 }
 
 /** Remember why, sign out, and land on /auth with the paused message. */
@@ -20,7 +30,9 @@ export async function signOutPaused(info: PauseInfo) {
     /* ignore */
   }
   await supabase.auth.signOut();
-  window.location.assign("/auth?reason=gym_disabled");
+  const q = new URLSearchParams({ reason: "gym_disabled" });
+  if (info.gymSlug) q.set("gym", info.gymSlug);
+  window.location.assign(`/auth?${q.toString()}`);
 }
 
 export function readPauseInfo(): PauseInfo | null {
