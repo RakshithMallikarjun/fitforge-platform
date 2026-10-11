@@ -7,6 +7,8 @@ export type ExerciseSuggestion = {
   exerciseId: string;
   exerciseName: string;
   currentAvg: { weight: number | null; reps: number | null; sets: number };
+  /** Best logged set in the window (highest estimated 1RM). */
+  currentBest: { weight: number; reps: number } | null;
   suggestedWeight: number | null;
   suggestedReps: number | null;
   reasoning: string;
@@ -143,9 +145,18 @@ export const suggestOverload = createServerFn({ method: "POST" })
         .sort((a, b) => (a[0] < b[0] ? -1 : 1))
         .slice(-8)
         .map(([d, v]) => ({ date: d, weight: v.w, reps: v.r }));
+      let best: { weight: number; reps: number; e: number } | null = null;
+      for (const r of rows) {
+        const w = Number(r.weight ?? 0);
+        const rp = Number(r.reps ?? 0);
+        if (w <= 0 || rp <= 0) continue;
+        const e = w * (1 + rp / 30);
+        if (!best || e > best.e) best = { weight: w, reps: rp, e };
+      }
       return {
         exerciseId: exId,
         exerciseName: nameById.get(exId) ?? "Exercise",
+        best: best ? { weight: best.weight, reps: best.reps } : null,
         avgWeight: avgW,
         avgReps: avgR,
         sessionCount: byDate.size,
@@ -153,18 +164,19 @@ export const suggestOverload = createServerFn({ method: "POST" })
       };
     });
 
-    const hasData = summaries.some((s) => s.sessionCount >= 2);
-    if (!hasData) {
-      // Not enough history — return baseline suggestion
-      return summaries.map((s) => ({
-        exerciseId: s.exerciseId,
-        exerciseName: s.exerciseName,
-        currentAvg: { weight: s.avgWeight, reps: s.avgReps, sets: s.sessionCount },
-        suggestedWeight: s.avgWeight,
-        suggestedReps: s.avgReps,
-        reasoning: "Not enough recent data — keep current numbers and build a baseline.",
-      }));
+    const logged = summaries.filter((s) => s.sessionCount >= 1);
+    if (!logged.length) {
+      throw new Error("Log at least one session in the last 4 weeks to get suggestions.");
     }
+    const noData = (s: (typeof summaries)[number]): ExerciseSuggestion => ({
+      exerciseId: s.exerciseId,
+      exerciseName: s.exerciseName,
+      currentAvg: { weight: s.avgWeight, reps: s.avgReps, sets: s.sessionCount },
+      currentBest: s.best,
+      suggestedWeight: null,
+      suggestedReps: null,
+      reasoning: "No sets logged for this exercise in the last 4 weeks.",
+    });
 
     const { chatCompletion } = await import("./ai-gateway.server");
     const prompt = `You are a strength coach. For each exercise, propose next week's target weight (kg) and reps.
@@ -172,11 +184,12 @@ Rules:
 - If sessions show progression (weight or reps trending up over 2+ sessions), increase weight by 2.5-5%.
 - If plateaued (no progress in 2+ weeks), suggest a small deload (~10%) OR keep weight and add 1 rep.
 - Round weight to nearest 2.5 kg.
+- With only one session, progress conservatively from the best set (about +2.5 kg, or +1 rep).
 - Keep reps in a similar range to the athlete's recent work.
 - Return ONLY valid JSON — no prose, no markdown fences.
 
 Data:
-${JSON.stringify(summaries, null, 2)}
+${JSON.stringify(logged, null, 2)}
 
 Return JSON:
 {
@@ -199,11 +212,13 @@ Return JSON:
     } catch (e: any) {
       // Fall back to a heuristic +2.5% bump so the UI still works.
       return summaries.map((s) => {
+        if (!s.sessionCount) return noData(s);
         const bumped = s.avgWeight ? Math.round((s.avgWeight * 1.025) / 2.5) * 2.5 : null;
         return {
           exerciseId: s.exerciseId,
           exerciseName: s.exerciseName,
           currentAvg: { weight: s.avgWeight, reps: s.avgReps, sets: s.sessionCount },
+          currentBest: s.best,
           suggestedWeight: bumped,
           suggestedReps: s.avgReps ? Math.round(s.avgReps) : null,
           reasoning: `AI unavailable (${e?.message?.slice(0, 60) ?? "error"}) — heuristic +2.5%.`,
@@ -214,6 +229,7 @@ Return JSON:
     const map = new Map((parsed.suggestions ?? []).map((x) => [x.exerciseId, x]));
 
     const result: ExerciseSuggestion[] = summaries.map((s) => {
+      if (!s.sessionCount) return noData(s);
       const ai = map.get(s.exerciseId);
       const heuristicWeight = roundWeight(s.avgWeight ? s.avgWeight * 1.025 : null);
       const clampedWeight = roundWeight(clampToDelta(ai?.suggestedWeight, s.avgWeight));
@@ -223,6 +239,7 @@ Return JSON:
         exerciseId: s.exerciseId,
         exerciseName: s.exerciseName,
         currentAvg: { weight: s.avgWeight, reps: s.avgReps, sets: s.sessionCount },
+        currentBest: s.best,
         suggestedWeight: clampedWeight ?? heuristicWeight ?? s.avgWeight,
         suggestedReps:
           clampedReps != null ? Math.round(clampedReps) : s.avgReps ? Math.round(s.avgReps) : null,
@@ -241,6 +258,22 @@ Return JSON:
     });
 
     return result;
+  });
+
+/** Why suggestions can or can't be generated for a member right now. */
+export const getOverloadReadiness = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ memberId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const since = new Date(Date.now() - FOUR_WEEKS_MS).toISOString().slice(0, 10);
+    const { count, error } = await context.supabase
+      .from("workout_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("member_id", data.memberId)
+      .gte("date", since)
+      .not("completed_at", "is", null);
+    if (error) throw new Error(error.message);
+    return { sessions: count ?? 0 };
   });
 
 /** Persist an approved suggestion so it surfaces on the member's home. */
