@@ -1,3 +1,4 @@
+import { SupportWhatsappButton, SupportWhatsappLink } from "@/components/support-whatsapp";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { formatServerError } from "@/lib/format-error";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -592,7 +593,11 @@ See you at the gym!`;
               placeholder="app.yourgym.com"
               className="max-w-[320px]"
             />
-            <CustomDomainHelp domain={gym?.custom_domain ?? ""} draft={customDomain} />
+            <CustomDomainHelp
+              domain={gym?.custom_domain ?? ""}
+              draft={customDomain}
+              supportText={`Hi, I'm ${name || gym?.name || "a gym"} (${gym?.slug ?? ""}) and I need help with my Fit Foundry account.`}
+            />
           </div>
 
           <div className="space-y-2">
@@ -605,9 +610,14 @@ See you at the gym!`;
                 Payment: {gym?.payment_status ?? "—"}
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Managed by Fit Foundry — contact support to change.
-            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-xs text-muted-foreground">
+                Managed by Fit Foundry — contact support to change.
+              </p>
+              <SupportWhatsappButton
+                text={`Hi, I'm ${name || gym?.name || "a gym"} (${gym?.slug ?? ""}) and I need help with my Fit Foundry account.`}
+              />
+            </div>
           </div>
 
           <div className="flex justify-end">
@@ -624,7 +634,15 @@ See you at the gym!`;
   );
 }
 
-function CustomDomainHelp({ domain, draft }: { domain: string; draft: string }) {
+function CustomDomainHelp({
+  domain,
+  draft,
+  supportText,
+}: {
+  domain: string;
+  draft: string;
+  supportText: string;
+}) {
   const check = useServerFn(checkCustomDomain);
   const configFn = useServerFn(getDomainConfig);
   const config = useQuery({ queryKey: ["domain-config"], queryFn: () => configFn(), staleTime: 60 * 60_000 });
@@ -646,6 +664,10 @@ function CustomDomainHelp({ domain, draft }: { domain: string; draft: string }) 
         CNAME {host} → {config.data?.cnameTarget ?? "…"}
       </p>
       <p>Add this at your domain provider, then save. DNS changes can take up to 48 hours.</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <p>Then ask Fit Foundry support to attach the domain.</p>
+        <SupportWhatsappButton text={supportText} />
+      </div>
       {domain && q.data?.status === "waiting" && (
         <Button size="sm" variant="outline" onClick={() => q.refetch()} disabled={q.isFetching}>
           Check again

@@ -1,3 +1,4 @@
+import { SupportWhatsappButton, SupportWhatsappLink } from "@/components/support-whatsapp";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { ArrowRight, Dumbbell, ShieldCheck, Sparkles } from "lucide-react";
@@ -130,6 +131,10 @@ function Landing() {
             <Link to="/auth" className="hover:text-foreground">
               Sign in
             </Link>
+            <SupportWhatsappLink
+              text="Hi, I'd like to set up my gym on Fit Foundry."
+              className="hover:text-foreground"
+            />
           </nav>
         </div>
       </footer>

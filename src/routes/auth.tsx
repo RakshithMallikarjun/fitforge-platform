@@ -1,3 +1,4 @@
+import { SupportWhatsappLink } from "@/components/support-whatsapp";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -274,6 +275,10 @@ function AuthPage() {
           {checking && (
             <p className="mt-3 text-center text-xs text-muted-foreground">Checking gym…</p>
           )}
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Need help?{" "}
+            <SupportWhatsappLink label="WhatsApp support" text="Hi, I need help signing in to Fit Foundry." />
+          </p>
         </div>
       </div>
     </main>

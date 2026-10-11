@@ -1,3 +1,4 @@
+import { SupportWhatsappButton, SupportWhatsappLink } from "@/components/support-whatsapp";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
@@ -310,6 +311,10 @@ function GymManagementSoftwarePage() {
             <Link to="/auth" className="hover:text-foreground">
               Sign in
             </Link>
+            <SupportWhatsappLink
+              text="Hi, I'd like to set up my gym on Fit Foundry."
+              className="hover:text-foreground"
+            />
           </nav>
         </div>
       </footer>
