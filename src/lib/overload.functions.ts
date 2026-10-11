@@ -80,7 +80,7 @@ export const suggestOverload = createServerFn({ method: "POST" })
     // --- Cache: one AI answer per (member, exercise set) per gym-local day ---
     const { timeZone } = await resolveGymTimezone(supabase, userId);
     const today = dateStringInZone(timeZone);
-    const cacheKey = `${today}:${[...data.exerciseIds].sort().join(",")}`;
+    const cacheKey = `v2:${today}:${[...data.exerciseIds].sort().join(",")}`;
     const { data: cached } = await supabase
       .from("ai_overload_cache")
       .select("payload")
