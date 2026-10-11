@@ -99,3 +99,17 @@ export function countSessionExercises(
   }
   return ids.size;
 }
+
+/** "3 sets × 30 s" for timed exercises, "3 × 8-12" otherwise. */
+export function formatPrescription(
+  sets: number | null | undefined,
+  reps: string | null | undefined,
+  tracking: string | null | undefined,
+): string {
+  const n = sets ?? "?";
+  if (tracking === "time") {
+    const secs = parseInt(String(reps ?? "").match(/\d+/)?.[0] ?? "", 10) || 30;
+    return `${n} sets × ${secs} s`;
+  }
+  return `${n} × ${reps || "?"}`;
+}

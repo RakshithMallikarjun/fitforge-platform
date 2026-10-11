@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { registerSW } from "@/lib/pwa/register-sw";
+import { checkGymPaused } from "@/lib/gym-pause";
 
 /** Survives the sign-out navigation race so /auth can explain what happened. */
 function noteAuthReason(reason: "deactivated" | "gymDisabled") {
@@ -33,8 +34,16 @@ export const Route = createFileRoute("/_authenticated")({
     const { data: gymEnabled } = await supabase.rpc("my_gym_enabled");
     if (gymEnabled === false) {
       noteAuthReason("gymDisabled");
+      const info = await checkGymPaused();
+      if (info) {
+        try {
+          sessionStorage.setItem("fitfoundry:gym-paused", JSON.stringify(info));
+        } catch {
+          /* ignore */
+        }
+      }
       await supabase.auth.signOut();
-      throw redirect({ to: "/auth", search: { gymDisabled: true } });
+      throw redirect({ to: "/auth", search: { reason: "gym_disabled" } });
     }
     return { user: data.user };
   },

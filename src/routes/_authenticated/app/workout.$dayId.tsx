@@ -1,3 +1,4 @@
+import { formatPrescription } from "@/lib/workout-math";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -365,12 +366,55 @@ function WorkoutPlayer() {
       .catch((e) => toast.error("Could not start session", { description: formatServerError(e) }));
   }, [dayData, logId, startLog]);
 
-  // Seed empty set rows whenever exercises arrive.
+  // Unfinished workout saved on this device, keyed by plan day + local date.
+  const wipKey = useMemo(() => {
+    const d = new Date();
+    const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return `fitfoundry:wip:${dayId}:${ymd}`;
+  }, [dayId]);
+  const [resumed, setResumed] = useState(false);
+  const restoredRef = useRef(false);
+
+  // Seed set rows whenever exercises arrive — from the saved workout when there is one.
   useEffect(() => {
     if (!dayData) return;
+    let saved: { currentIdx: number; sets: Record<string, SetState[]> } | null = null;
+    if (!restoredRef.current) {
+      restoredRef.current = true;
+      try {
+        const raw = localStorage.getItem(wipKey);
+        if (raw) saved = JSON.parse(raw);
+      } catch {
+        saved = null;
+      }
+    }
     setSets((cur) => {
       if (Object.keys(cur).length) return cur;
       const next: Record<string, SetState[]> = {};
+      if (saved?.sets) {
+        let any = false;
+        for (const ex of dayData.exercises) {
+          const rows = saved.sets[ex.id];
+          if (Array.isArray(rows) && rows.length) {
+            next[ex.id] = rows.map((r) => ({
+              weight: String(r.weight ?? ""),
+              reps: String(r.reps ?? ""),
+              seconds: String(r.seconds ?? ""),
+              done: !!r.done,
+              touched: true,
+            }));
+            any = true;
+          } else {
+            next[ex.id] = Array.from({ length: ex.sets }, () => ({ weight: "", reps: "", seconds: "", done: false }));
+          }
+        }
+        if (any) {
+          const idx = Math.min(Math.max(0, saved.currentIdx ?? 0), dayData.exercises.length - 1);
+          setCurrentIdx(idx);
+          setResumed(true);
+          return next;
+        }
+      }
       for (const ex of dayData.exercises) {
         next[ex.id] = Array.from({ length: ex.sets }, () => ({
           weight: "",
@@ -384,6 +428,16 @@ function WorkoutPlayer() {
   }, [dayData]);
 
   const exercises = useMemo(() => dayData?.exercises ?? [], [dayData]);
+
+  // Save after every change so a reload resumes where the member left off.
+  useEffect(() => {
+    if (!restoredRef.current || !Object.keys(sets).length || finished) return;
+    try {
+      localStorage.setItem(wipKey, JSON.stringify({ currentIdx, sets }));
+    } catch {
+      /* storage full or blocked: resume is best-effort */
+    }
+  }, [sets, currentIdx, wipKey, finished]);
   const current = exercises[currentIdx];
 
   // Fetch previous set values per exercise (parallel).
@@ -476,6 +530,11 @@ function WorkoutPlayer() {
       const prs: NewPR[] = res?.newPRs ?? [];
       setNewPRs(prs);
       setFinished(true);
+      try {
+        localStorage.removeItem(wipKey);
+      } catch {
+        /* ignore */
+      }
       if (prs.length > 0) {
         toast.success(`🏆 ${prs.length} new PR${prs.length > 1 ? "s" : ""}!`);
       } else {
@@ -658,6 +717,12 @@ function WorkoutPlayer() {
         <div className="w-9" />
       </div>
 
+      {resumed && (
+        <div role="status" className="rounded-2xl border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">
+          Resumed your workout.
+        </div>
+      )}
+
       {currentIdx === 0 && dayData?.plan?.notes && (
         <div className="rounded-2xl border border-border bg-card p-4 text-card-foreground">
           <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
@@ -746,7 +811,10 @@ function WorkoutPlayer() {
           </p>
         )}
         <p className="mt-2 text-xs font-medium text-foreground">
-          {ex.sets} sets {ex.reps ? `× ${ex.reps} reps` : ""} · rest {ex.rest_seconds}s
+          {ex.exercise.tracking === "time"
+            ? formatPrescription(ex.sets, ex.reps, "time")
+            : `${ex.sets} sets${ex.reps ? ` × ${ex.reps} reps` : ""}`}{" "}
+          · rest {ex.rest_seconds}s
         </p>
         {ex.notes && (
           <p className="mt-3 rounded-2xl bg-secondary-soft p-3 text-xs leading-relaxed text-secondary">
@@ -801,7 +869,19 @@ function WorkoutPlayer() {
                       <HoldTimer
                         value={row.seconds}
                         disabled={row.done}
-                        onChange={(v) => updateSet(ex.id, idx, { seconds: v })}
+                        onChange={(v) => {
+                          updateSet(ex.id, idx, { seconds: v });
+                          // Correcting a logged set re-saves it straight away.
+                          if (row.done && logId && Number(v) > 0)
+                            logSetMut.mutate({
+                              exerciseId: ex.exercise.id,
+                              setNumber: idx + 1,
+                              weight: null,
+                              reps: null,
+                              durationSeconds: Number(v),
+                              completed: true,
+                            });
+                        }}
                       />
                     </div>
                   ) : (
@@ -1072,7 +1152,7 @@ function setMissing(
   return null;
 }
 
-/** Start/stop hold timer that writes elapsed seconds; value is also typeable. */
+/** Start/stop hold timer that writes elapsed seconds; the logged value stays visible and editable. */
 function HoldTimer({
   value,
   onChange,
@@ -1083,6 +1163,7 @@ function HoldTimer({
   disabled?: boolean;
 }) {
   const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [editing, setEditing] = useState(false);
   const [, tick] = useState(0);
   useEffect(() => {
     if (startedAt == null) return;
@@ -1091,35 +1172,51 @@ function HoldTimer({
   }, [startedAt]);
   const running = startedAt != null;
   const elapsed = running ? Math.floor((Date.now() - startedAt) / 1000) : null;
+  const hasValue = value !== "" && Number(value) > 0;
   return (
     <div className="flex items-center gap-2 rounded-xl border border-input bg-background px-2 py-1.5">
-      <Button
-        type="button"
-        size="sm"
-        variant={running ? "destructive" : "secondary"}
-        className="h-11 shrink-0 rounded-lg"
-        disabled={disabled}
-        onClick={() => {
-          if (running) {
-            onChange(String(Math.max(1, elapsed ?? 0)));
-            setStartedAt(null);
-          } else setStartedAt(Date.now());
-        }}
-      >
-        {running ? "Stop" : <><Play className="mr-1 h-4 w-4" /> Start</>}
-      </Button>
+      {!disabled && (
+        <Button
+          type="button"
+          size="sm"
+          variant={running ? "destructive" : "secondary"}
+          className="h-11 shrink-0 rounded-lg"
+          onClick={() => {
+            if (running) {
+              onChange(String(Math.max(1, elapsed ?? 0)));
+              setStartedAt(null);
+            } else {
+              setEditing(false);
+              setStartedAt(Date.now());
+            }
+          }}
+        >
+          {running ? "Stop" : <><Play className="mr-1 h-4 w-4" /> {hasValue ? "Redo" : "Start"}</>}
+        </Button>
+      )}
       {running ? (
-        <span className="flex-1 text-center font-display text-2xl font-bold tabular-nums">{elapsed}s</span>
-      ) : (
+        <span className="flex-1 text-center font-display text-2xl font-bold tabular-nums">{elapsed} s</span>
+      ) : editing || !hasValue ? (
         <Input
           aria-label="Seconds"
           inputMode="numeric"
+          autoFocus={editing}
           className="h-11 flex-1 text-center font-display text-xl font-bold"
           value={value}
-          disabled={disabled}
+          onBlur={() => setEditing(false)}
+          onKeyDown={(e) => e.key === "Enter" && setEditing(false)}
           onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, "").slice(0, 5))}
           placeholder="sec"
         />
+      ) : (
+        <button
+          type="button"
+          aria-label={`Logged ${value} seconds, tap to edit`}
+          onClick={() => setEditing(true)}
+          className="h-11 flex-1 rounded-lg text-center font-display text-2xl font-bold tabular-nums underline decoration-dotted underline-offset-4 hover:bg-muted"
+        >
+          {value} s
+        </button>
       )}
     </div>
   );

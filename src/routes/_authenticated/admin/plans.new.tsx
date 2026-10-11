@@ -1,3 +1,4 @@
+import { formatPrescription } from "@/lib/workout-math";
 import { useEffect, useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
@@ -424,7 +425,7 @@ function PlanBuilder() {
                       <ul className="mt-1 text-xs text-muted-foreground">
                         {d.exercises.map((e) => (
                           <li key={e.uid}>
-                            • {e.exercise.name} — {e.sets || "?"}×{e.reps || "?"}
+                            • {e.exercise.name} — {formatPrescription(e.sets, e.reps, e.exercise.tracking)}
                           </li>
                         ))}
                         {d.exercises.length === 0 && <li className="italic">No exercises</li>}
@@ -543,7 +544,7 @@ function PlanBuilder() {
                         uid: uid(),
                         exercise: ex,
                         sets: 3,
-                        reps: "8-12",
+                        reps: ex.tracking === "time" ? "30 s" : "8-12",
                         rest_seconds: 90,
                         tempo: "",
                         notes: "",

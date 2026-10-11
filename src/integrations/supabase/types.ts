@@ -2161,6 +2161,15 @@ export type Database = {
       }
       member_is_ad_free: { Args: { _user_id: string }; Returns: boolean }
       my_gym_enabled: { Args: never; Returns: boolean }
+      my_gym_pause_info: {
+        Args: never
+        Returns: {
+          gym_name: string
+          is_enabled: boolean
+          support_email: string
+          support_phone: string
+        }[]
+      }
       period_months: {
         Args: { _p: Database["public"]["Enums"]["billing_period"] }
         Returns: number
@@ -2358,6 +2367,14 @@ export type Database = {
           _supersede?: boolean
         }
         Returns: Json
+      }
+      public_gym_manifest: {
+        Args: { _domain: string; _slug: string }
+        Returns: {
+          logo_url: string
+          name: string
+          primary_color: string
+        }[]
       }
       record_member_payment: {
         Args: {

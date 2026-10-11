@@ -253,6 +253,20 @@
       "when": 1791629088435,
       "tag": "0035_0035_goal_types",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1791737732813,
+      "tag": "0036_0036_my_gym_pause_info",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1791737994424,
+      "tag": "0037_0037_public_gym_manifest",
+      "breakpoints": true
     }
   ]
 }

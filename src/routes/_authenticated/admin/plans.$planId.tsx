@@ -1,3 +1,4 @@
+import { formatPrescription } from "@/lib/workout-math";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { PlanActions } from "@/components/plans/plan-actions";
 import { useQuery } from "@tanstack/react-query";
@@ -129,7 +130,7 @@ function PlanView() {
                           {e.exercises?.name ?? "Exercise"}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {e.sets ?? "?"} × {e.reps ?? "?"}
+                          {formatPrescription(e.sets, e.reps, e.exercises?.tracking)}
                           {e.rest_seconds ? ` · ${e.rest_seconds}s rest` : ""}
                           {e.tempo ? ` · tempo ${e.tempo}` : ""}
                         </p>

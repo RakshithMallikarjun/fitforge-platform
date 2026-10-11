@@ -12,7 +12,8 @@ import {
   updateGymOperations,
   updateGymSettings,
 } from "@/lib/gym-theme.functions";
-import { PLATFORM_DOMAIN, gymSubdomain } from "@/lib/platform-brand";
+import { CUSTOM_DOMAIN_CNAME_TARGET } from "@/lib/platform-brand";
+import { checkCustomDomain } from "@/lib/domain.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -591,20 +592,7 @@ See you at the gym!`;
               placeholder="app.yourgym.com"
               className="max-w-[320px]"
             />
-            <div className="rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
-              <p className="mb-2 font-semibold text-foreground">DNS setup</p>
-              <p className="mb-2">
-                Subdomain option: add a wildcard <code>CNAME</code> for{" "}
-                <code>*.{PLATFORM_DOMAIN}</code> pointing at your published Fit Foundry URL. Members
-                visiting <code>{gymSubdomain(slug || "yourgym")}</code> get your theme, logo and app
-                icon automatically.
-              </p>
-              <p>
-                Fully custom domain: save it here, add a <code>CNAME</code> from{" "}
-                <code>{customDomain || "app.yourgym.com"}</code> to your published Fit Foundry URL,
-                then ask Fit Foundry support to attach the domain to your project.
-              </p>
-            </div>
+            <CustomDomainHelp domain={gym?.custom_domain ?? ""} draft={customDomain} />
           </div>
 
           <div className="space-y-2">
@@ -632,6 +620,35 @@ See you at the gym!`;
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function CustomDomainHelp({ domain, draft }: { domain: string; draft: string }) {
+  const check = useServerFn(checkCustomDomain);
+  const q = useQuery({
+    queryKey: ["custom-domain-status", domain],
+    queryFn: () => check({ data: { domain } }),
+    enabled: !!domain,
+    refetchInterval: (query) => (query.state.data?.status === "waiting" ? 60_000 : false),
+  });
+  const host = draft.trim() || domain || "app.yourgym.com";
+  const status = !domain ? "Not set" : q.isLoading ? "Checking…" : q.error ? "Couldn't check" : q.data?.status === "active" ? "Active" : "Waiting for DNS";
+  return (
+    <div className="space-y-2 rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-semibold text-foreground">DNS record to add</p>
+        <Badge variant={status === "Active" ? "default" : "outline"}>{status}</Badge>
+      </div>
+      <p className="font-mono text-foreground">
+        CNAME {host} → {CUSTOM_DOMAIN_CNAME_TARGET}
+      </p>
+      <p>Add this at your domain provider, then save. DNS changes can take up to 48 hours.</p>
+      {domain && q.data?.status === "waiting" && (
+        <Button size="sm" variant="outline" onClick={() => q.refetch()} disabled={q.isFetching}>
+          Check again
+        </Button>
+      )}
     </div>
   );
 }

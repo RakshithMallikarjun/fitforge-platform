@@ -1,12 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { cleanReasoning, ruleTarget, type Tracking } from "@/lib/overload-rules";
 import { dateStringInZone, resolveGymTimezone, zonedDayStartISO } from "@/lib/gym-date";
 
 export type ExerciseSuggestion = {
   exerciseId: string;
   exerciseName: string;
   currentAvg: { weight: number | null; reps: number | null; sets: number };
+  tracking?: Tracking;
+  currentBestSeconds?: number | null;
+  suggestedSeconds?: number | null;
   /** Best logged set in the window (highest estimated 1RM). */
   currentBest: { weight: number; reps: number } | null;
   suggestedWeight: number | null;
@@ -18,17 +22,22 @@ const FOUR_WEEKS_MS = 28 * 24 * 60 * 60 * 1000;
 const DAILY_CALL_CEILING = 40;
 
 /** Model replies are untrusted input — validate before anything reaches the UI. */
+const looseNumber = z.preprocess(
+  (v) => (typeof v === "number" && Number.isFinite(v) ? v : typeof v === "string" && v.trim() && Number.isFinite(Number(v)) ? Number(v) : null),
+  z.number().nullable(),
+);
 const aiResponseSchema = z.object({
   suggestions: z
     .array(
       z.object({
         exerciseId: z.string(),
-        suggestedWeight: z.number().finite().nonnegative().optional().nullable(),
-        suggestedReps: z.number().finite().positive().optional().nullable(),
-        reasoning: z.string().max(400).optional(),
+        suggestedWeight: looseNumber.optional(),
+        suggestedReps: looseNumber.optional(),
+        reasoning: z.string().optional().nullable().transform((v) => v ?? ""),
       }),
     )
-    .default([]),
+    .nullish()
+    .transform((v) => v ?? []),
 });
 
 /** Clamp a model number to +/-10% of the athlete's own recent average. */
@@ -80,7 +89,7 @@ export const suggestOverload = createServerFn({ method: "POST" })
     // --- Cache: one AI answer per (member, exercise set) per gym-local day ---
     const { timeZone } = await resolveGymTimezone(supabase, userId);
     const today = dateStringInZone(timeZone);
-    const cacheKey = `v2:${today}:${[...data.exerciseIds].sort().join(",")}`;
+    const cacheKey = `v3:${today}:${[...data.exerciseIds].sort().join(",")}`;
     const { data: cached } = await supabase
       .from("ai_overload_cache")
       .select("payload")
@@ -103,11 +112,11 @@ export const suggestOverload = createServerFn({ method: "POST" })
     const since = new Date(Date.now() - FOUR_WEEKS_MS).toISOString();
 
     const [{ data: exRows }, { data: logs }] = await Promise.all([
-      supabase.from("exercises").select("id, name").in("id", data.exerciseIds),
+      supabase.from("exercises").select("id, name, tracking").in("id", data.exerciseIds),
       supabase
         .from("exercise_logs")
         .select(
-          "exercise_id, set_number, weight, reps, completed, workout_logs!inner(member_id, date)",
+          "exercise_id, set_number, weight, reps, duration_seconds, completed, workout_logs!inner(member_id, date)",
         )
         .eq("workout_logs.member_id", data.memberId)
         .in("exercise_id", data.exerciseIds)
@@ -115,7 +124,11 @@ export const suggestOverload = createServerFn({ method: "POST" })
     ]);
 
     const nameById = new Map<string, string>();
-    (exRows ?? []).forEach((r: any) => nameById.set(r.id, r.name));
+    const trackingById = new Map<string, string>();
+    (exRows ?? []).forEach((r: any) => {
+      nameById.set(r.id, r.name);
+      trackingById.set(r.id, r.tracking ?? "weight_reps");
+    });
 
     // Group logs per exercise -> compute recent averages + a compact history
     const groups = new Map<string, any[]>();
@@ -153,13 +166,22 @@ export const suggestOverload = createServerFn({ method: "POST" })
         const e = w * (1 + rp / 30);
         if (!best || e > best.e) best = { weight: w, reps: rp, e };
       }
+      const tracking = (trackingById.get(exId) ?? "weight_reps") as Tracking;
+      const bestSeconds = rows.reduce(
+        (m: number, r: any) => Math.max(m, Number(r.duration_seconds ?? 0)),
+        0,
+      );
+      const bestReps = rows.reduce((m: number, r: any) => Math.max(m, Number(r.reps ?? 0)), 0);
       return {
         exerciseId: exId,
         exerciseName: nameById.get(exId) ?? "Exercise",
+        tracking,
+        bestSeconds: bestSeconds || null,
+        bestReps: bestReps || null,
+        sessionCount: rows.length ? Math.max(1, byDate.size) : 0,
         best: best ? { weight: best.weight, reps: best.reps } : null,
         avgWeight: avgW,
         avgReps: avgR,
-        sessionCount: byDate.size,
         history,
       };
     });
@@ -168,86 +190,80 @@ export const suggestOverload = createServerFn({ method: "POST" })
     if (!logged.length) {
       throw new Error("Log at least one session in the last 4 weeks to get suggestions.");
     }
-    const noData = (s: (typeof summaries)[number]): ExerciseSuggestion => ({
-      exerciseId: s.exerciseId,
-      exerciseName: s.exerciseName,
-      currentAvg: { weight: s.avgWeight, reps: s.avgReps, sets: s.sessionCount },
-      currentBest: s.best,
-      suggestedWeight: null,
-      suggestedReps: null,
-      reasoning: "No sets logged for this exercise in the last 4 weeks.",
-    });
 
-    const { chatCompletion } = await import("./ai-gateway.server");
-    const prompt = `You are a strength coach. For each exercise, propose next week's target weight (kg) and reps.
-Rules:
-- If sessions show progression (weight or reps trending up over 2+ sessions), increase weight by 2.5-5%.
-- If plateaued (no progress in 2+ weeks), suggest a small deload (~10%) OR keep weight and add 1 rep.
-- Round weight to nearest 2.5 kg.
-- With only one session, progress conservatively from the best set (about +2.5 kg, or +1 rep).
-- Keep reps in a similar range to the athlete's recent work.
-- Return ONLY valid JSON — no prose, no markdown fences.
-
-Data:
-${JSON.stringify(logged, null, 2)}
-
-Return JSON:
-{
-  "suggestions": [
-    { "exerciseId": "<uuid>", "suggestedWeight": <number>, "suggestedReps": <number>, "reasoning": "<one short sentence>" }
-  ]
-}`;
-
-    let parsed: z.infer<typeof aiResponseSchema> = { suggestions: [] };
-    try {
-      const text = await chatCompletion({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "You return only valid JSON matching the requested schema." },
-          { role: "user", content: prompt },
-        ],
-        responseFormat: "json_object",
-      });
-      parsed = aiResponseSchema.parse(JSON.parse(text));
-    } catch (e: any) {
-      // Fall back to a heuristic +2.5% bump so the UI still works.
-      return summaries.map((s) => {
-        if (!s.sessionCount) return noData(s);
-        const bumped = s.avgWeight ? Math.round((s.avgWeight * 1.025) / 2.5) * 2.5 : null;
-        return {
-          exerciseId: s.exerciseId,
-          exerciseName: s.exerciseName,
-          currentAvg: { weight: s.avgWeight, reps: s.avgReps, sets: s.sessionCount },
-          currentBest: s.best,
-          suggestedWeight: bumped,
-          suggestedReps: s.avgReps ? Math.round(s.avgReps) : null,
-          reasoning: `AI unavailable (${e?.message?.slice(0, 60) ?? "error"}) — heuristic +2.5%.`,
-        };
-      });
-    }
-
-    const map = new Map((parsed.suggestions ?? []).map((x) => [x.exerciseId, x]));
-
-    const result: ExerciseSuggestion[] = summaries.map((s) => {
-      if (!s.sessionCount) return noData(s);
-      const ai = map.get(s.exerciseId);
-      const heuristicWeight = roundWeight(s.avgWeight ? s.avgWeight * 1.025 : null);
-      const clampedWeight = roundWeight(clampToDelta(ai?.suggestedWeight, s.avgWeight));
-      const clampedReps = clampToDelta(ai?.suggestedReps, s.avgReps, 0.25);
-      const usedAi = clampedWeight != null || clampedReps != null;
-      return {
+    const toSuggestion = (
+      s: (typeof summaries)[number],
+      ai?: { suggestedWeight?: number | null; suggestedReps?: number | null; reasoning?: string },
+    ): ExerciseSuggestion => {
+      const base = {
         exerciseId: s.exerciseId,
         exerciseName: s.exerciseName,
+        tracking: s.tracking,
         currentAvg: { weight: s.avgWeight, reps: s.avgReps, sets: s.sessionCount },
         currentBest: s.best,
-        suggestedWeight: clampedWeight ?? heuristicWeight ?? s.avgWeight,
-        suggestedReps:
-          clampedReps != null ? Math.round(clampedReps) : s.avgReps ? Math.round(s.avgReps) : null,
-        reasoning: usedAi
-          ? (ai?.reasoning?.slice(0, 300) ?? "Progressive increase based on recent sessions.")
-          : "Suggestion out of safe range — using a conservative +2.5% instead.",
+        currentBestSeconds: s.bestSeconds,
+        suggestedSeconds: null as number | null,
       };
-    });
+      const rule = ruleTarget({
+        name: s.exerciseName,
+        tracking: s.tracking,
+        best: s.best,
+        bestReps: s.bestReps,
+        bestSeconds: s.bestSeconds,
+      });
+      if (!rule) {
+        return { ...base, suggestedWeight: null, suggestedReps: null, reasoning: "Log this once to get a target." };
+      }
+      // Accept the model's numbers only when they stay in a safe range and actually progress.
+      if (ai && s.tracking === "weight_reps" && s.best) {
+        const w = roundWeight(clampToDelta(ai.suggestedWeight, s.best.weight));
+        const r = clampToDelta(ai.suggestedReps, s.best.reps, 0.25);
+        const reps = r != null ? Math.round(r) : null;
+        const progresses =
+          w != null && reps != null && (w > s.best.weight || (w === s.best.weight && reps > s.best.reps));
+        const text = cleanReasoning(ai.reasoning);
+        if (progresses && text) {
+          return { ...base, suggestedWeight: w, suggestedReps: reps, reasoning: text };
+        }
+      }
+      return { ...base, ...rule };
+    };
+
+    let parsed: z.infer<typeof aiResponseSchema> | null = null;
+    const aiCandidates = logged.filter((s) => s.tracking === "weight_reps" && s.best);
+    if (aiCandidates.length) {
+      const { chatCompletion } = await import("./ai-gateway.server");
+      const prompt = `You are a strength coach. For each exercise, propose next week's target weight (kg) and reps.
+Rules:
+- Start from the best set. Never repeat the same weight and reps as the best set.
+- If progressing, add about 2.5-5% weight (rounded to 2.5 kg) and reps may drop by one; otherwise keep weight and add 1 rep.
+- With only one session, progress conservatively.
+- reasoning: one short, friendly sentence for the member. No numbers in brackets, no jargon.
+- Return ONLY valid JSON.
+
+Data:
+${JSON.stringify(aiCandidates.map((s) => ({ exerciseId: s.exerciseId, exerciseName: s.exerciseName, best: s.best, sessions: s.sessionCount, history: s.history })), null, 2)}
+
+Return JSON:
+{ "suggestions": [ { "exerciseId": "<uuid>", "suggestedWeight": <number>, "suggestedReps": <number>, "reasoning": "<sentence>" } ] }`;
+      try {
+        const text = await chatCompletion({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: "You return only valid JSON matching the requested schema." },
+            { role: "user", content: prompt },
+          ],
+          responseFormat: "json_object",
+        });
+        parsed = aiResponseSchema.parse(JSON.parse(text));
+      } catch (e: any) {
+        // Technical detail stays in server logs; the user sees the rule-based target.
+        console.error("[overload] AI suggestion failed, using rule-based targets:", e?.message ?? e);
+      }
+    }
+
+    const map = new Map((parsed?.suggestions ?? []).map((x) => [x.exerciseId, x]));
+    const result: ExerciseSuggestion[] = summaries.map((s) => toSuggestion(s, map.get(s.exerciseId)));
 
     // Cache so repeat views of the same day cost nothing.
     await supabase.from("ai_overload_cache").insert({
@@ -288,7 +304,8 @@ export const saveApprovedSuggestion = createServerFn({ method: "POST" })
         suggestion: z.object({
           suggestedWeight: z.number().nullable(),
           suggestedReps: z.number().nullable(),
-          reasoning: z.string(),
+          suggestedSeconds: z.number().nullable().optional(),
+          reasoning: z.string().transform((v) => cleanReasoning(v) ?? ""),
         }),
       })
       .parse(data),
@@ -329,6 +346,9 @@ export const getMemberTip = createServerFn({ method: "GET" })
     return {
       id: (data as any).id as string,
       exerciseName: (data as any).exercises?.name ?? "your next lift",
-      suggestion: (data as any).suggestion,
+      suggestion: {
+        ...((data as any).suggestion ?? {}),
+        reasoning: cleanReasoning((data as any).suggestion?.reasoning) ?? "",
+      },
     };
   });
