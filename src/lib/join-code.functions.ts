@@ -9,8 +9,8 @@ import { createServerFn } from "@tanstack/react-start";
  */
 export const verifyGymJoinCode = createServerFn({ method: "POST" })
   .inputValidator((d: { slug: string; code: string }) => {
-    const slug = String(d?.slug ?? "").trim();
-    const code = String(d?.code ?? "").trim();
+    const slug = String(d?.slug ?? "").trim().toLowerCase();
+    const code = String(d?.code ?? "").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
     if (!slug || slug.length > 64) throw new Error("Invalid gym code");
     if (!code || code.length > 64) throw new Error("Invalid join code");
     return { slug, code };
