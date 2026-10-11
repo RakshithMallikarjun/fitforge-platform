@@ -45,7 +45,17 @@ async function resolveGym(key: { slug?: string; domain?: string }) {
   try {
     const supabase = createClient<Database>(url, anon, {
       auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-      global: anon.startsWith("sb_") ? { headers: { apikey: anon } } : undefined,
+      global: anon.startsWith("sb_")
+        ? {
+            // Opaque publishable keys are not JWTs: send apikey only, no Bearer.
+            fetch: (input: RequestInfo | URL, init?: RequestInit) => {
+              const headers = new Headers(init?.headers);
+              if (headers.get("Authorization") === `Bearer ${anon}`) headers.delete("Authorization");
+              headers.set("apikey", anon);
+              return fetch(input, { ...init, headers });
+            },
+          }
+        : undefined,
     });
     const { data } = await supabase.rpc("public_gym_manifest", {
       _slug: key.slug ?? (null as any),
