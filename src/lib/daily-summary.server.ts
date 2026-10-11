@@ -248,7 +248,7 @@ export function renderSummaryEmail(a: Activity, duesUrl: string) {
   ].join("\n");
 
   const subject = `${a.gym_name} — ${a.new_count + a.renewal_count} memberships today, ${money(a.total_collected, a.currency)} collected`;
-  return { subject, html, text };
+  return { subject, html, text: `${text}\n\n${supportEmailFooter().text}` };
 }
 
 async function sendResend(to: string, subject: string, html: string, text: string) {

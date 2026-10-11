@@ -127,7 +127,7 @@ ${role === "owner" ? `<tr><td style="padding:0 28px">${supportEmailFooter().html
     .filter((l, i, a) => !(l === "" && a[i - 1] === ""))
     .join("\n");
 
-  return { subject, html, text };
+  return { subject, html, text: role === "owner" ? `${text}\n\n${supportEmailFooter().text}` : text };
 }
 
 async function sendViaResend(args: {
