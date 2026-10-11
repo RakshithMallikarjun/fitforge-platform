@@ -173,3 +173,20 @@ export const getPublicGymBrand = createServerFn({ method: "GET" })
     const g = (rows ?? [])[0] as any;
     return g ? { name: g.name as string, logoUrl: (g.logo_url as string | null) ?? null } : null;
   });
+
+/** Public: name + support contacts for the "account paused" notice on /auth. */
+export const getPublicGymPauseNotice = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) =>
+    z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]{1,64}$/) }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { data: rows } = await publicClient().rpc("public_gym_pause_notice", { _slug: data.slug });
+    const g = (rows ?? [])[0] as any;
+    if (!g) return null;
+    return {
+      gymName: g.gym_name as string,
+      isEnabled: !!g.is_enabled,
+      supportEmail: (g.support_email as string | null) ?? null,
+      supportPhone: (g.support_phone as string | null) ?? null,
+    };
+  });

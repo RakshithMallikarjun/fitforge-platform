@@ -162,7 +162,7 @@ function GymPauseWatcher() {
   useEffect(() => {
     let busy = false;
     const check = async () => {
-      if (busy || document.visibilityState === "hidden") return;
+      if (busy) return;
       busy = true;
       try {
         const { data } = await supabase.auth.getSession();
