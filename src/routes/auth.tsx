@@ -248,7 +248,7 @@ function AuthPage() {
         )}
 
         <div className="rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)] md:p-8">
-          <Tabs defaultValue="signin">
+          <Tabs defaultValue={Route.useSearch().gym ? "signup" : "signin"}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign in</TabsTrigger>
               <TabsTrigger value="signup">Create account</TabsTrigger>
