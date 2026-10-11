@@ -56,7 +56,7 @@ export function migrateLegacyStorageKeys() {
   }
 }
 
-/** Host a gym's own domain must CNAME to (the published Fit Foundry app). */
+/** Fallback only — the live value comes from server config (CUSTOM_DOMAIN_CNAME_TARGET). Published host per project settings. */
 export const CUSTOM_DOMAIN_CNAME_TARGET = "fitffoundry.lovable.app";
 /** Lovable hosting IP, accepted when a registrar can't CNAME (apex domains). */
 export const CUSTOM_DOMAIN_A_RECORD = "185.158.133.1";
