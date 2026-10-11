@@ -633,7 +633,7 @@ function PlatformGymDetailPage() {
             </DialogTitle>
             <DialogDescription>
               {g.is_enabled
-                ? "Members and staff lose access and see a contact-your-gym message. Nothing is deleted and you can re-enable at any time."
+                ? "Everyone at this gym is signed out within a minute and shown a message to contact the gym. Nothing is deleted and you can re-enable at any time."
                 : "Access is restored immediately with all data intact."}
             </DialogDescription>
           </DialogHeader>
