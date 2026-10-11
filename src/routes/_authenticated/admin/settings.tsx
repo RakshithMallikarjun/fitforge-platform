@@ -14,6 +14,7 @@ import {
 } from "@/lib/gym-theme.functions";
 import { CUSTOM_DOMAIN_CNAME_TARGET } from "@/lib/platform-brand";
 import { checkCustomDomain } from "@/lib/domain.functions";
+import { formatJoinCode } from "@/lib/join-code-format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -234,11 +235,11 @@ function SettingsPage() {
   });
 
   const slug = joinInfo?.slug ?? gym?.slug ?? "";
-  const joinCode = joinInfo?.joinCode ?? "";
+  const joinCode = formatJoinCode(joinInfo?.joinCode);
   const appOrigin = typeof window !== "undefined" ? window.location.origin : "";
   const signupMessage = `Join ${name || "our gym"} on Fit Foundry 💪
 
-1. Open ${appOrigin}/auth
+1. Open ${appOrigin}/auth?gym=${encodeURIComponent(slug)}
 2. Tap "Create account"
 3. Gym code: ${slug}
 4. Join code: ${joinCode}

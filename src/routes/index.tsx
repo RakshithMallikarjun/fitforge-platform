@@ -73,7 +73,7 @@ function Landing() {
           </p>
 
           <div className="mt-10 flex flex-wrap gap-3">
-            <Link to="/auth">
+            <Link to="/get-started">
               <Button size="lg" className="h-12 rounded-xl px-6">
                 Get started
                 <ArrowRight className="ml-2 h-4 w-4" />

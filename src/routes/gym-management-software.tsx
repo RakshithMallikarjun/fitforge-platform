@@ -127,7 +127,7 @@ function GymManagementSoftwarePage() {
                 Sign in
               </Button>
             </Link>
-            <Link to="/auth" className="hidden sm:block">
+            <Link to="/get-started" className="hidden sm:block">
               <Button className="rounded-xl">Get started</Button>
             </Link>
           </div>
@@ -151,7 +151,7 @@ function GymManagementSoftwarePage() {
             an app worth opening, and you finally see the numbers.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
-            <Link to="/auth">
+            <Link to="/get-started">
               <Button size="lg" className="h-12 rounded-xl px-6">
                 Get started free
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -279,7 +279,7 @@ function GymManagementSoftwarePage() {
             Start free, bring your branding, and move your members across at your own pace.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/auth">
+            <Link to="/get-started">
               <Button size="lg" className="h-12 rounded-xl px-6">
                 Get started free
                 <ArrowRight className="ml-2 h-4 w-4" />

@@ -192,11 +192,8 @@ export const regenerateGymJoinCode = createServerFn({ method: "POST" })
   .handler(async ({ context }): Promise<{ joinCode: string }> => {
     const { supabase, userId } = context;
     const gymId = await requireAdminGym(supabase, userId);
-    const bytes = new Uint8Array(6);
-    crypto.getRandomValues(bytes);
-    const joinCode = Array.from(bytes)
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+    const { generateJoinCode } = await import("./join-code-format");
+    const joinCode = generateJoinCode();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("gyms")

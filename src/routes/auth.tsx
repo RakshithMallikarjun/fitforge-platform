@@ -15,15 +15,20 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { friendlyAuthError, scorePassword } from "@/lib/auth-errors";
 import { verifyGymJoinCode } from "@/lib/join-code.functions";
+import { getPublicGymBrand } from "@/lib/leads.functions";
 import { getAuthRedirectUrl } from "@/lib/authRedirect";
 import { checkGymPaused, readPauseInfo, signOutPaused, whatsappLink, type PauseInfo } from "@/lib/gym-pause";
 
-type AuthSearch = { deactivated?: boolean; gymDisabled?: boolean; reason?: string; forgot?: boolean; email?: string };
+type AuthSearch = { gym?: string; deactivated?: boolean; gymDisabled?: boolean; reason?: string; forgot?: boolean; email?: string };
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): AuthSearch => ({
     deactivated: search.deactivated === true || search.deactivated === "true" ? true : undefined,
     gymDisabled: search.gymDisabled === true || search.gymDisabled === "true" ? true : undefined,
+    gym:
+      typeof search.gym === "string" && /^[a-z0-9-]{1,64}$/i.test(search.gym)
+        ? search.gym.toLowerCase()
+        : undefined,
     reason: typeof search.reason === "string" ? search.reason.slice(0, 40) : undefined,
     forgot: search.forgot === true || search.forgot === "true" ? true : undefined,
     email: typeof search.email === "string" ? search.email.slice(0, 200) : undefined,
@@ -243,7 +248,7 @@ function AuthPage() {
         )}
 
         <div className="rounded-[2rem] border border-border bg-card p-6 shadow-[var(--shadow-card)] md:p-8">
-          <Tabs defaultValue="signin">
+          <Tabs defaultValue={Route.useSearch().gym ? "signup" : "signin"}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign in</TabsTrigger>
               <TabsTrigger value="signup">Create account</TabsTrigger>
@@ -420,7 +425,16 @@ function SignUpForm() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [gymSlug, setGymSlug] = useState("fitforge");
+  const { gym: gymFromLink } = Route.useSearch();
+  const [gymSlug, setGymSlug] = useState(gymFromLink ?? "");
+  const brandFn = useServerFn(getPublicGymBrand);
+  const { data: brand } = useQuery({
+    queryKey: ["public-gym-brand", gymFromLink],
+    queryFn: () => brandFn({ data: { slug: gymFromLink! } }),
+    enabled: !!gymFromLink,
+    staleTime: 10 * 60_000,
+  });
+  const showDemoHint = import.meta.env.VITE_SHOW_DEMO_GYM_HINT === "true";
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -523,6 +537,20 @@ function SignUpForm() {
           <p className="text-xs text-destructive">Those passwords don't match.</p>
         )}
       </div>
+      {brand && gymSlug.trim().toLowerCase() === gymFromLink && (
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/40 p-3">
+          {brand.logoUrl ? (
+            <img src={brand.logoUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />
+          ) : (
+            <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary text-primary-foreground">
+              <Dumbbell className="h-5 w-5" />
+            </div>
+          )}
+          <p className="text-sm">
+            Joining <span className="font-semibold">{brand.name}</span>
+          </p>
+        </div>
+      )}
       <div className="space-y-2">
         <Label htmlFor="su-gym">Gym code</Label>
         <Input
@@ -530,10 +558,16 @@ function SignUpForm() {
           required
           value={gymSlug}
           onChange={(e) => setGymSlug(e.target.value)}
-          placeholder="fitforge"
+          placeholder="your-gym"
         />
         <p className="text-xs text-muted-foreground">
-          Use the code your gym gave you. The demo gym is <code>fitforge</code>.
+          Use the code your gym gave you.
+          {showDemoHint && (
+            <>
+              {" "}
+              The demo gym is <code>fitforge</code>.
+            </>
+          )}
         </p>
       </div>
       <div className="space-y-2">

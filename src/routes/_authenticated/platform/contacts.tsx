@@ -3,6 +3,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Copy } from "lucide-react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -52,6 +55,11 @@ function PlatformContactsPage() {
     });
   }, [data, search, role, state]);
 
+  const adminEmails = useMemo(
+    () => Array.from(new Set(rows.filter((r) => r.role === "admin").map((r) => r.email).filter(Boolean))),
+    [rows],
+  );
+
   return (
     <main className="mx-auto max-w-[1200px] space-y-5 px-6 py-8">
       <header>
@@ -88,6 +96,22 @@ function PlatformContactsPage() {
             <SelectItem value="disabled">Disabled gyms</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          size="sm"
+          variant="outline"
+          className="ml-auto"
+          disabled={adminEmails.length === 0}
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(adminEmails.join(", "));
+              toast.success(`Copied ${adminEmails.length} admin email${adminEmails.length === 1 ? "" : "s"}`);
+            } catch {
+              toast.error("Couldn't copy — your browser blocked clipboard access");
+            }
+          }}
+        >
+          <Copy className="mr-2 h-4 w-4" /> Copy all admin emails
+        </Button>
       </div>
 
       {isError ? (
@@ -107,6 +131,7 @@ function PlatformContactsPage() {
               <TableRow>
                 <TableHead>Gym</TableHead>
                 <TableHead>Name</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
@@ -132,11 +157,11 @@ function PlatformContactsPage() {
                   </TableCell>
                   <TableCell className="text-sm">
                     {r.display_name ?? "—"}
-                    {!r.active && (
-                      <Badge variant="secondary" className="ml-2">
-                        Inactive
-                      </Badge>
-                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={r.active ? "default" : "secondary"}>
+                      {r.active ? "Active" : "Inactive"}
+                    </Badge>
                   </TableCell>
                   <TableCell className="capitalize text-sm">{r.role}</TableCell>
                   <TableCell className="text-sm">
