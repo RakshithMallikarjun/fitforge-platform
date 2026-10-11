@@ -46,6 +46,7 @@ import { Route as AuthenticatedPlatformAdsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedPlatformAnalyticsRouteImport } from './routes/_authenticated/platform/analytics'
 import { Route as AuthenticatedPlatformContactsRouteImport } from './routes/_authenticated/platform/contacts'
 import { Route as AuthenticatedPlatformGymsRouteRouteImport } from './routes/_authenticated/platform/gyms.route'
+import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform/leads'
 import { Route as ApiPublicDailySummaryRouteImport } from './routes/api/public/daily-summary'
 import { Route as ApiPublicDuesDigestRouteImport } from './routes/api/public/dues-digest'
 import { Route as AuthenticatedAdminMembersMemberIdRouteImport } from './routes/_authenticated/admin/members.$memberId'
@@ -258,6 +259,12 @@ const AuthenticatedPlatformGymsRouteRoute =
     path: '/gyms',
     getParentRoute: () => AuthenticatedPlatformRouteRoute,
   } as any)
+const AuthenticatedPlatformLeadsRoute =
+  AuthenticatedPlatformLeadsRouteImport.update({
+    id: '/leads',
+    path: '/leads',
+    getParentRoute: () => AuthenticatedPlatformRouteRoute,
+  } as any)
 const ApiPublicDailySummaryRoute = ApiPublicDailySummaryRouteImport.update({
   id: '/api/public/daily-summary',
   path: '/api/public/daily-summary',
@@ -357,6 +364,7 @@ export interface FileRoutesByFullPath {
   '/platform/ads': typeof AuthenticatedPlatformAdsRoute
   '/platform/analytics': typeof AuthenticatedPlatformAnalyticsRoute
   '/platform/contacts': typeof AuthenticatedPlatformContactsRoute
+  '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/api/public/daily-summary': typeof ApiPublicDailySummaryRoute
   '/api/public/dues-digest': typeof ApiPublicDuesDigestRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -402,6 +410,7 @@ export interface FileRoutesByTo {
   '/platform/ads': typeof AuthenticatedPlatformAdsRoute
   '/platform/analytics': typeof AuthenticatedPlatformAnalyticsRoute
   '/platform/contacts': typeof AuthenticatedPlatformContactsRoute
+  '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/api/public/daily-summary': typeof ApiPublicDailySummaryRoute
   '/api/public/dues-digest': typeof ApiPublicDuesDigestRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -453,6 +462,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/ads': typeof AuthenticatedPlatformAdsRoute
   '/_authenticated/platform/analytics': typeof AuthenticatedPlatformAnalyticsRoute
   '/_authenticated/platform/contacts': typeof AuthenticatedPlatformContactsRoute
+  '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/api/public/daily-summary': typeof ApiPublicDailySummaryRoute
   '/api/public/dues-digest': typeof ApiPublicDuesDigestRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -504,6 +514,7 @@ export interface FileRouteTypes {
     | '/platform/ads'
     | '/platform/analytics'
     | '/platform/contacts'
+    | '/platform/leads'
     | '/api/public/daily-summary'
     | '/api/public/dues-digest'
     | '/admin/'
@@ -549,6 +560,7 @@ export interface FileRouteTypes {
     | '/platform/ads'
     | '/platform/analytics'
     | '/platform/contacts'
+    | '/platform/leads'
     | '/api/public/daily-summary'
     | '/api/public/dues-digest'
     | '/admin'
@@ -599,6 +611,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/ads'
     | '/_authenticated/platform/analytics'
     | '/_authenticated/platform/contacts'
+    | '/_authenticated/platform/leads'
     | '/api/public/daily-summary'
     | '/api/public/dues-digest'
     | '/_authenticated/admin/'
@@ -893,6 +906,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformGymsRouteRouteImport
       parentRoute: typeof AuthenticatedPlatformRouteRoute
     }
+    '/_authenticated/platform/leads': {
+      id: '/_authenticated/platform/leads'
+      path: '/leads'
+      fullPath: '/platform/leads'
+      preLoaderRoute: typeof AuthenticatedPlatformLeadsRouteImport
+      parentRoute: typeof AuthenticatedPlatformRouteRoute
+    }
     '/api/public/daily-summary': {
       id: '/api/public/daily-summary'
       path: '/api/public/daily-summary'
@@ -1094,6 +1114,7 @@ interface AuthenticatedPlatformRouteRouteChildren {
   AuthenticatedPlatformAdsRoute: typeof AuthenticatedPlatformAdsRoute
   AuthenticatedPlatformAnalyticsRoute: typeof AuthenticatedPlatformAnalyticsRoute
   AuthenticatedPlatformContactsRoute: typeof AuthenticatedPlatformContactsRoute
+  AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
 }
 
@@ -1104,6 +1125,7 @@ const AuthenticatedPlatformRouteRouteChildren: AuthenticatedPlatformRouteRouteCh
     AuthenticatedPlatformAdsRoute: AuthenticatedPlatformAdsRoute,
     AuthenticatedPlatformAnalyticsRoute: AuthenticatedPlatformAnalyticsRoute,
     AuthenticatedPlatformContactsRoute: AuthenticatedPlatformContactsRoute,
+    AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
     AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
   }
 
