@@ -9,6 +9,7 @@ import {
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { checkGymPaused, signOutPaused } from "@/lib/gym-pause";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -155,6 +156,33 @@ function AuthListener() {
   return null;
 }
 
+/** Signs users of a paused gym out within a minute (and on window focus), with an explanation. */
+function GymPauseWatcher() {
+  useEffect(() => {
+    let busy = false;
+    const check = async () => {
+      if (busy || document.visibilityState === "hidden") return;
+      busy = true;
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) return;
+        const info = await checkGymPaused();
+        if (info) await signOutPaused(info);
+      } finally {
+        busy = false;
+      }
+    };
+    void check();
+    const id = window.setInterval(check, 60_000);
+    window.addEventListener("focus", check);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", check);
+    };
+  }, []);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   // One-time carry-over of pre-rebrand browser-storage keys.
@@ -166,6 +194,7 @@ function RootComponent() {
       <ThemeProvider>
         <TooltipProvider delayDuration={150}>
           <AuthListener />
+          <GymPauseWatcher />
           <Outlet />
           <Toaster position="top-right" />
         </TooltipProvider>

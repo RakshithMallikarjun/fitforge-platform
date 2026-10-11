@@ -132,8 +132,12 @@ function MemberHome() {
             <p className="text-xs font-semibold uppercase tracking-[0.15em]">Trainer tip</p>
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">
-            {tip.exerciseName}: aim for {tip.suggestion?.suggestedWeight ?? "—"}kg ×{" "}
-            {tip.suggestion?.suggestedReps ?? "—"}
+            {tip.exerciseName}: aim for{" "}
+            {tip.suggestion?.suggestedSeconds != null
+              ? `${tip.suggestion.suggestedSeconds} s`
+              : tip.suggestion?.suggestedWeight != null
+                ? `${tip.suggestion.suggestedWeight} kg × ${tip.suggestion?.suggestedReps ?? "—"}`
+                : `${tip.suggestion?.suggestedReps ?? "—"} reps`}
           </p>
           {tip.suggestion?.reasoning && (
             <p className="mt-1 text-xs text-muted-foreground">{tip.suggestion.reasoning}</p>

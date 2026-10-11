@@ -114,7 +114,7 @@ export const getPlan = createServerFn({ method: "GET" })
     const { data: plan, error } = await supabase
       .from("workout_plans")
       .select(
-        "*, users:member_id(display_name, email, photo_url), workout_days(id, day_label, block_type, order, hidden_at, workout_exercises(id, exercise_id, sets, reps, rest_seconds, tempo, notes, order, hidden_at, exercises(id, name, thumbnail_url, muscle_groups, equipment)))",
+        "*, users:member_id(display_name, email, photo_url), workout_days(id, day_label, block_type, order, hidden_at, workout_exercises(id, exercise_id, sets, reps, rest_seconds, tempo, notes, order, hidden_at, exercises(id, name, thumbnail_url, muscle_groups, equipment, tracking)))",
       )
       .eq("id", data.planId)
       .maybeSingle();

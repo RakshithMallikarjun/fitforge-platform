@@ -57,6 +57,7 @@ export function OverloadSuggestions({
           suggestion: {
             suggestedWeight: s.suggestedWeight,
             suggestedReps: s.suggestedReps,
+            suggestedSeconds: s.suggestedSeconds ?? null,
             reasoning: s.reasoning,
           },
         },
@@ -117,17 +118,35 @@ export function OverloadSuggestions({
         <ul className="mt-4 space-y-2">
           {suggestions.map((s) => {
             const isApproved = approved.includes(s.exerciseId);
-            const hasTarget = s.suggestedWeight != null || s.suggestedReps != null;
+            const timed = s.tracking === "time";
+            const hasTarget =
+              s.suggestedWeight != null || s.suggestedReps != null || s.suggestedSeconds != null;
+            if (!hasTarget) {
+              return (
+                <li key={s.exerciseId} className="rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">
+                  <span className="font-semibold text-foreground">{s.exerciseName}</span> — Log this once to get a target.
+                </li>
+              );
+            }
+            const fmt = (w: number | null | undefined, r: number | null | undefined) =>
+              w != null ? `${w} kg × ${r ?? "—"}` : `${r ?? "—"} reps`;
             return (
               <li key={s.exerciseId} className="rounded-xl border border-border bg-background p-3 text-xs">
                 <p className="text-sm font-semibold text-foreground">{s.exerciseName}</p>
                 <p className="mt-0.5 text-muted-foreground">
                   Current best:{" "}
-                  {s.currentBest ? `${s.currentBest.weight} kg × ${s.currentBest.reps}` : "—"}
+                  {timed
+                    ? s.currentBestSeconds
+                      ? `${s.currentBestSeconds} s`
+                      : "—"
+                    : s.currentBest
+                      ? fmt(s.currentBest.weight, s.currentBest.reps)
+                      : (s.currentAvg.reps ?? "—")}
                 </p>
                 {hasTarget && (
                   <p className="mt-0.5 font-medium text-primary">
-                    Next target: {s.suggestedWeight ?? "—"} kg × {s.suggestedReps ?? "—"}
+                    Next target:{" "}
+                    {timed ? `${s.suggestedSeconds} s` : fmt(s.suggestedWeight, s.suggestedReps)}
                   </p>
                 )}
                 <p className="mt-1 italic text-muted-foreground">{s.reasoning}</p>
@@ -142,7 +161,7 @@ export function OverloadSuggestions({
                       <Check className="h-3 w-3" /> {isApproved ? "Approved" : "Approve"}
                     </Button>
                   )}
-                  {hasTarget && onApply && (
+                  {!timed && onApply && (
                     <Button
                       size="sm"
                       variant="outline"

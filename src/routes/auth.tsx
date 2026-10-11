@@ -16,13 +16,15 @@ import { PasswordStrength } from "@/components/auth/password-strength";
 import { friendlyAuthError, scorePassword } from "@/lib/auth-errors";
 import { verifyGymJoinCode } from "@/lib/join-code.functions";
 import { getAuthRedirectUrl } from "@/lib/authRedirect";
+import { checkGymPaused, readPauseInfo, signOutPaused, whatsappLink, type PauseInfo } from "@/lib/gym-pause";
 
-type AuthSearch = { deactivated?: boolean; gymDisabled?: boolean; forgot?: boolean; email?: string };
+type AuthSearch = { deactivated?: boolean; gymDisabled?: boolean; reason?: string; forgot?: boolean; email?: string };
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): AuthSearch => ({
     deactivated: search.deactivated === true || search.deactivated === "true" ? true : undefined,
     gymDisabled: search.gymDisabled === true || search.gymDisabled === "true" ? true : undefined,
+    reason: typeof search.reason === "string" ? search.reason.slice(0, 40) : undefined,
     forgot: search.forgot === true || search.forgot === "true" ? true : undefined,
     email: typeof search.email === "string" ? search.email.slice(0, 200) : undefined,
   }),
@@ -39,6 +41,30 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+function PausedNotice({ info }: { info: PauseInfo }) {
+  return (
+    <div role="alert" className="mb-4 rounded-xl bg-destructive/10 px-3 py-3 text-sm text-destructive">
+      <p className="font-medium">
+        {info.gymName}'s Fit Foundry account is paused. Please contact the gym.
+      </p>
+      {(info.supportEmail || info.supportPhone) && (
+        <p className="mt-1 flex flex-wrap gap-3 text-xs">
+          {info.supportEmail && (
+            <a className="underline" href={`mailto:${info.supportEmail}`}>
+              {info.supportEmail}
+            </a>
+          )}
+          {info.supportPhone && (
+            <a className="underline" href={whatsappLink(info.supportPhone)} target="_blank" rel="noreferrer">
+              WhatsApp {info.supportPhone}
+            </a>
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function ErrorBanner({ children }: { children: React.ReactNode }) {
   return (
     <p role="alert" className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -48,7 +74,9 @@ function ErrorBanner({ children }: { children: React.ReactNode }) {
 }
 
 function AuthPage() {
-  const { deactivated, gymDisabled } = Route.useSearch();
+  const { deactivated, gymDisabled: gymDisabledFlag, reason } = Route.useSearch();
+  const gymDisabled = gymDisabledFlag || reason === "gym_disabled";
+  const [pause, setPause] = useState<PauseInfo | null>(null);
   const { data: user, sessionLoading, refetch } = useCurrentUser();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -83,7 +111,10 @@ function AuthPage() {
     } catch {
       /* storage unavailable */
     }
-    if (gymDisabled || notice === "gymDisabled") {
+    const info = readPauseInfo();
+    if (gymDisabled && info) {
+      setPause(info);
+    } else if (gymDisabled || notice === "gymDisabled") {
       setPageError("This gym's account is currently disabled — please contact your gym.");
     } else if (deactivated || notice === "deactivated") {
       setPageError("This account has been deactivated. Please contact your gym to regain access.");
@@ -179,6 +210,8 @@ function AuthPage() {
           Sign in to Fit Foundry
         </h1>
 
+        {pause && <PausedNotice info={pause} />}
+
         {pageError && (
           <div className="mb-4">
             <ErrorBanner>{pageError}</ErrorBanner>
@@ -262,6 +295,14 @@ function SignInForm() {
       await supabase.auth.signOut();
       setLoading(false);
       setError("This account has been deactivated. Please contact your gym to regain access.");
+      return;
+    }
+
+    // A paused gym blocks sign-in with the gym's own contact details.
+    const paused = await checkGymPaused();
+    if (paused) {
+      setLoading(false);
+      await signOutPaused(paused);
       return;
     }
 

@@ -63,6 +63,7 @@ export type ExerciseRow = {
   equipment: string[];
   difficulty: string | null;
   created_by: string | null;
+  tracking?: string | null;
 };
 
 const listSchema = z

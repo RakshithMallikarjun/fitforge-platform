@@ -319,7 +319,7 @@ export const generatePlanDraft = createServerFn({ method: "POST" })
           exercise_id: match.id,
           exercise_name: match.name,
           sets: Math.min(10, Math.max(1, Math.round(Number(e.sets) || (section === "main" ? 3 : 1)))),
-          reps: timed ? `${secs}s` : String(e.reps ?? "8-12").slice(0, 20),
+          reps: timed ? `${secs} s` : String(e.reps ?? "8-12").slice(0, 20),
           rest_seconds: Math.min(600, Math.max(15, Math.round(Number(e.rest_seconds) || (section === "main" ? 90 : 30)))),
           notes: (label ? (note ? `${label} · ${note}` : label) : note).slice(0, 200),
           section,
