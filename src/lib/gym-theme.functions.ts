@@ -54,7 +54,7 @@ export const getGymTheme = createServerFn({ method: "GET" })
     const { data: user } = await supabase
       .from("users")
       .select(
-        "gym_id, gyms(name, primary_color, secondary_color, logo_url, font_family, support_email, support_phone)",
+        "gym_id, gyms(name, slug, primary_color, secondary_color, logo_url, font_family, support_email, support_phone)",
       )
       .eq("id", userId)
       .maybeSingle();
@@ -62,6 +62,7 @@ export const getGymTheme = createServerFn({ method: "GET" })
     if (!gym) return null;
     return {
       name: gym.name,
+      slug: gym.slug ?? null,
       primaryColor: gym.primary_color ?? "#059669",
       secondaryColor: gym.secondary_color ?? null,
       logoUrl: gym.logo_url ?? null,
