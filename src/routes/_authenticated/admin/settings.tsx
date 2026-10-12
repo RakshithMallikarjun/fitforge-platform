@@ -377,7 +377,7 @@ See you at the gym!`;
               <div className="space-y-2">
                 <Label htmlFor="set-font">Font family</Label>
                 <Select value={fontFamily} onValueChange={setFontFamily}>
-                  <SelectTrigger id="set-font" className="max-w-[240px]">
+                  <SelectTrigger id="set-font" aria-label="Font family" className="max-w-[240px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -572,7 +572,7 @@ See you at the gym!`;
           <div className="space-y-2">
             <Label htmlFor="set-tz">Timezone</Label>
             <Select value={timezone} onValueChange={setTimezone}>
-              <SelectTrigger id="set-tz" className="max-w-[280px]">
+              <SelectTrigger id="set-tz" aria-label="Timezone" className="max-w-[280px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

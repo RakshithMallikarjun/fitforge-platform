@@ -297,7 +297,7 @@ export function NewGymDialog({
             <div className="space-y-1.5">
               <Label htmlFor="gym-tz">Timezone</Label>
               <Select value={timezone} onValueChange={setTimezone}>
-                <SelectTrigger id="gym-tz">
+                <SelectTrigger id="gym-tz" aria-label="Timezone">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -312,7 +312,7 @@ export function NewGymDialog({
             <div className="space-y-1.5">
               <Label htmlFor="gym-currency">Currency</Label>
               <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger id="gym-currency">
+                <SelectTrigger id="gym-currency" aria-label="Currency">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -327,7 +327,7 @@ export function NewGymDialog({
             <div className="space-y-1.5">
               <Label htmlFor="gym-plan">Plan</Label>
               <Select value={plan} onValueChange={(v) => setPlan(v as SubscriptionPlan)}>
-                <SelectTrigger id="gym-plan" className="capitalize">
+                <SelectTrigger id="gym-plan" aria-label="Plan" className="capitalize">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

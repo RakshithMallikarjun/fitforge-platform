@@ -236,7 +236,7 @@ export function AiPlanDialog({
             <div>
               <Label htmlFor="ai-experience">Experience</Label>
               <Select value={experience} onValueChange={(v) => setExperience(v as Experience)}>
-                <SelectTrigger id="ai-experience">
+                <SelectTrigger id="ai-experience" aria-label="Experience">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

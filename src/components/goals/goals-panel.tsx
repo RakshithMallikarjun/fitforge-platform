@@ -282,7 +282,7 @@ function GoalDialog({ goal, onClose }: { goal: GoalView | null; onClose: () => v
             <div>
               <Label htmlFor="goal-type">Type</Label>
               <Select value={type} onValueChange={(v) => setType(v as GoalType)}>
-                <SelectTrigger id="goal-type">
+                <SelectTrigger id="goal-type" aria-label="Type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -302,7 +302,7 @@ function GoalDialog({ goal, onClose }: { goal: GoalView | null; onClose: () => v
             <div>
               <Label htmlFor="goal-exercise">Exercise</Label>
               <Select value={exerciseId} onValueChange={setExerciseId}>
-                <SelectTrigger id="goal-exercise">
+                <SelectTrigger id="goal-exercise" aria-label="Exercise">
                   <SelectValue placeholder="Pick an exercise" />
                 </SelectTrigger>
                 <SelectContent>
@@ -319,7 +319,7 @@ function GoalDialog({ goal, onClose }: { goal: GoalView | null; onClose: () => v
             <div>
               <Label htmlFor="goal-metric">Measurement</Label>
               <Select value={metric} onValueChange={(v) => setMetric(v as BodyMetric)}>
-                <SelectTrigger id="goal-metric">
+                <SelectTrigger id="goal-metric" aria-label="Measurement">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

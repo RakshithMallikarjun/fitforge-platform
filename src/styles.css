@@ -95,7 +95,7 @@
   --success: oklch(0.62 0.14 162);
   --info: oklch(0.62 0.14 232);
   --warning: oklch(0.78 0.16 70);
-  --destructive: oklch(0.6 0.22 27);
+  --destructive: oklch(0.55 0.22 27);
   --destructive-foreground: oklch(0.99 0.005 27);
 
   --border: oklch(0.93 0.01 250); /* slate-200 #E2E8F0 */

@@ -764,7 +764,7 @@ function PlatformGymDetailPage() {
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="billing-status" className="text-xs">Payment status</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as PaymentStatus)}>
-                <SelectTrigger id="billing-status" className="capitalize">
+                <SelectTrigger id="billing-status" aria-label="Payment status" className="capitalize">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -818,7 +818,7 @@ function PlatformGymDetailPage() {
                 Currency
               </Label>
               <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger id="currency">
+                <SelectTrigger id="currency" aria-label="Currency">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

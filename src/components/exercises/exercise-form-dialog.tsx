@@ -237,7 +237,7 @@ export function ExerciseFormDialog({ open, onOpenChange, initial, globalNames }:
           <div>
             <Label htmlFor="ex-difficulty">Difficulty</Label>
             <Select value={difficulty} onValueChange={setDifficulty}>
-              <SelectTrigger id="ex-difficulty">
+              <SelectTrigger id="ex-difficulty" aria-label="Difficulty">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
