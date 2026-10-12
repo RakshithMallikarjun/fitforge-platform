@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SponsoredCard } from "@/components/ads/sponsored-card";
+import { sentenceCase } from "@/lib/copy";
 import {
   createGymAd,
   createPlatformAd,
@@ -53,7 +54,7 @@ function todayISO() {
 async function fileToBase64(file: File): Promise<string> {
   const buf = new Uint8Array(await file.arrayBuffer());
   let binary = "";
-  for (let i = 0; i < buf.length; i += 1) binary += String.fromCharCode(buf[i]!);
+  for (const byte of buf) binary += String.fromCharCode(byte);
   return btoa(binary);
 }
 
@@ -71,6 +72,7 @@ export function AdFormDialog({
   onSaved: () => void;
 }) {
   const upload = useServerFn(uploadAdCreative);
+  const noun = scope === "platform" ? "campaign" : "sponsor";
   const saveGym = useServerFn(ad ? updateGymAd : createGymAd);
   const savePlatform = useServerFn(ad ? updatePlatformAd : createPlatformAd);
 
@@ -140,12 +142,12 @@ export function AdFormDialog({
         : saveGym({ data: data as never });
     },
     onSuccess: () => {
-      toast.success(ad ? "Sponsor updated" : "Sponsor created");
+      toast.success(`${sentenceCase(noun)} ${ad ? "updated" : "created"}`);
       onOpenChange(false);
       onSaved();
     },
     onError: (e: any) =>
-      toast.error("Couldn't save this sponsor", { description: formatServerError(e) }),
+      toast.error(`Couldn't save this ${noun}`, { description: formatServerError(e) }),
   });
 
   async function onPickFile(file: File) {
@@ -175,7 +177,7 @@ export function AdFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{ad ? "Edit sponsor" : "New sponsor"}</DialogTitle>
+          <DialogTitle>{`${ad ? "Edit" : "New"} ${noun}`}</DialogTitle>
           <DialogDescription>
             Members see this exactly as previewed, labelled "Sponsored".
           </DialogDescription>
@@ -293,7 +295,7 @@ export function AdFormDialog({
                   <SelectContent>
                     {STATUSES.map((s) => (
                       <SelectItem key={s} value={s} className="capitalize">
-                        {s}
+                        {sentenceCase(s)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -366,7 +368,7 @@ export function AdFormDialog({
             Cancel
           </Button>
           <Button disabled={!canSave || mutation.isPending} onClick={() => mutation.mutate()}>
-            {mutation.isPending ? "Saving…" : ad ? "Save changes" : "Create sponsor"}
+            {mutation.isPending ? "Saving…" : ad ? "Save changes" : `Create ${noun}`}
           </Button>
         </DialogFooter>
       </DialogContent>

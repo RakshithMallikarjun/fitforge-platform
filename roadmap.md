@@ -1,0 +1,5 @@
+- [ ] Shared plural copy and readable audit trail
+- [ ] Console wording, navigation, loading shells and notifications
+- [ ] Optimistic gym enablement and sponsor save feedback
+- [ ] Home canonical and legal placeholders
+- [ ] Verify targeted rules and preview

@@ -1,4 +1,5 @@
 import { formatServerError } from "@/lib/format-error";
+import { sentenceCase } from "@/lib/copy";
 import { useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -212,8 +213,8 @@ function PlatformGymsPage() {
           </SelectTrigger>
           <SelectContent>
             {PAYMENT_OPTIONS.map((p) => (
-              <SelectItem key={p} value={p} className="capitalize">
-                {p === "all" ? "All payments" : p}
+              <SelectItem key={p} value={p}>
+                {p === "all" ? "All payments" : sentenceCase(p)}
               </SelectItem>
             ))}
           </SelectContent>

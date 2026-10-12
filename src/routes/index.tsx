@@ -5,6 +5,7 @@ import { ArrowRight, Dumbbell, ShieldCheck, Sparkles } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Button } from "@/components/ui/button";
 import { jsonLdScript, softwareApplicationSchema } from "@/lib/structured-data";
+import { PLATFORM_ORIGIN } from "@/lib/platform-brand";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,7 +20,10 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Branded member apps, trainer tools, and analytics for modern gyms.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
+    links: [{ rel: "canonical", href: `${PLATFORM_ORIGIN}/` }],
     scripts: [jsonLdScript(softwareApplicationSchema())],
   }),
   component: Landing,

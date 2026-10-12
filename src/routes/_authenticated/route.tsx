@@ -6,6 +6,7 @@ import { getGymTheme } from "@/lib/gym-theme.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { registerSW } from "@/lib/pwa/register-sw";
 import { checkGymPaused } from "@/lib/gym-pause";
+import { ConsoleLoading } from "@/components/console-loading";
 
 /** Survives the sign-out navigation race so /auth can explain what happened. */
 function noteAuthReason(reason: "deactivated" | "gymDisabled") {
@@ -18,6 +19,8 @@ function noteAuthReason(reason: "deactivated" | "gymDisabled") {
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
+  pendingComponent: ConsoleLoading,
+  pendingMs: 0,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });

@@ -130,7 +130,10 @@ function SponsorsPage() {
       qc.setQueryData(["gym-ad-settings"], ctx?.prev);
       toast.error("Couldn't save your ad settings", { description: formatServerError(e) });
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["gym-ad-settings"] }),
+    onSuccess: () => {
+      toast.success("Saved");
+      void qc.invalidateQueries({ queryKey: ["gym-ad-settings"] });
+    },
   });
 
   const statusMutation = useMutation({

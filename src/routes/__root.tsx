@@ -203,7 +203,7 @@ function RootComponent() {
           <AuthListener />
           <GymPauseWatcher />
           <Outlet />
-          <Toaster position="top-right" />
+          <Toaster position="bottom-right" />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

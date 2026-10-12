@@ -13,6 +13,8 @@ import { Building2, LayoutDashboard, LineChart, LogOut, Megaphone, Users2, Inbox
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { isPlatformAdmin } from "@/lib/platform.functions";
+import { ConsoleContentSkeleton } from "@/components/console-loading";
+import { isNavActive } from "@/lib/copy";
 
 export const Route = createFileRoute("/_authenticated/platform")({
   head: () => ({
@@ -56,14 +58,8 @@ function PlatformShell() {
   }
 
   // Never flash the console before the platform-admin check resolves.
-  if (isLoading || allowed === undefined) {
-    return (
-      <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">
-        Checking platform access…
-      </div>
-    );
-  }
-  if (!allowed) return <Navigate to="/admin" replace />;
+  const loading = isLoading || allowed === undefined;
+  if (!loading && !allowed) return <Navigate to="/admin" replace />;
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,7 +70,7 @@ function PlatformShell() {
           </span>
           <nav className="flex flex-1 flex-wrap items-center gap-1">
             {NAV.map((item) => {
-              const active = item.exact ? path === item.to : path.startsWith(item.to);
+              const active = isNavActive(path, item.to, item.exact);
               const Icon = item.icon;
               return (
                 <Link
@@ -102,7 +98,7 @@ function PlatformShell() {
           </Button>
         </div>
       </div>
-      <Outlet />
+      {loading ? <ConsoleContentSkeleton /> : <Outlet />}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatServerError } from "@/lib/format-error";
+import { plural, sentenceCase } from "@/lib/copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -126,7 +127,7 @@ function PlatformAdsPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">Campaigns</CardTitle>
           <Badge variant="outline">
-            {report.data?.fill_enabled_gyms ?? 0} gyms accept platform fill
+            {plural(report.data?.fill_enabled_gyms ?? 0, "gym")} accept platform fill
           </Badge>
         </CardHeader>
         <CardContent className="p-0">
@@ -199,7 +200,7 @@ function PlatformAdsPage() {
                             <SelectContent>
                               {STATUSES.map((s) => (
                                 <SelectItem key={s} value={s} className="capitalize">
-                                  {s}
+                                  {sentenceCase(s)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
