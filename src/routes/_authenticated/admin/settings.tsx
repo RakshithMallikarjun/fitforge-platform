@@ -325,6 +325,7 @@ See you at the gym!`;
                     className="h-10 w-14 cursor-pointer rounded-md border border-border bg-transparent"
                   />
                   <Input
+                    aria-label="Primary colour hex code"
                     value={primaryColor}
                     onChange={(e) => setPrimaryColor(e.target.value)}
                     className="max-w-[140px] font-mono"
@@ -344,6 +345,7 @@ See you at the gym!`;
                     className="h-10 w-14 cursor-pointer rounded-md border border-border bg-transparent"
                   />
                   <Input
+                    aria-label="Secondary colour hex code"
                     value={secondaryColor}
                     onChange={(e) => setSecondaryColor(e.target.value)}
                     placeholder="Leave blank for neutral"
