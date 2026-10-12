@@ -1,5 +1,8 @@
 import { formatServerError } from "@/lib/format-error";
 import { formatMoney } from "@/lib/format-money";
+import { plural, sentenceCase } from "@/lib/copy";
+import { auditSummary } from "@/lib/audit-summary";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CURRENCIES } from "@/lib/currencies";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -188,11 +191,20 @@ function PlatformGymDetailPage() {
   const toggleMutation = useMutation({
     mutationFn: (v: { enabled: boolean; reason?: string }) =>
       updateGymEnabled({ data: { gymId, ...v } }),
+    onMutate: async (v) => {
+      await qc.cancelQueries({ queryKey: ["platform-gym", gymId] });
+      const previous = qc.getQueryData<typeof g>(["platform-gym", gymId]);
+      qc.setQueryData<typeof g>(["platform-gym", gymId], (old) => old ? { ...old, is_enabled: v.enabled, disabled_at: v.enabled ? null : old.disabled_at, disabled_reason: v.enabled ? null : v.reason ?? old.disabled_reason } : old);
+      return { previous };
+    },
     onSuccess: (_r, v) => {
       toast.success(v.enabled ? "Gym enabled" : "Gym disabled");
       invalidate();
     },
-    onError: (e) => toast.error(formatServerError(e, {ownerEmail:"Owner email",primaryColor:"Primary colour",supportEmail:"Support email",slug:"Web address"}, "Could not update the gym")),
+    onError: (e, _v, ctx) => {
+      if (ctx?.previous) qc.setQueryData(["platform-gym", gymId], ctx.previous);
+      toast.error(formatServerError(e, {}, "Could not update the gym"));
+    },
   });
 
   const billingMutation = useMutation({
@@ -314,7 +326,9 @@ function PlatformGymDetailPage() {
             <Switch
               id="gym-enabled"
               checked={g.is_enabled}
-              onCheckedChange={() => {
+              disabled={toggleMutation.isPending}
+              onCheckedChange={(enabled) => {
+                if (enabled) { toggleMutation.mutate({ enabled: true }); return; }
                 setReason("");
                 setToggleOpen(true);
               }}
@@ -344,7 +358,7 @@ function PlatformGymDetailPage() {
           value={`${g.active_member_count}/${g.member_count}`}
           hint="Active of total accounts"
         />
-        <KpiCard label="Staff" value={`${g.admin_count} admin · ${g.trainer_count} trainer`} />
+        <KpiCard label="Staff" value={`${plural(g.admin_count, "admin")} · ${plural(g.trainer_count, "trainer")}`} />
         <KpiCard
           label="Workouts 30d"
           value={g.workouts_30d}
@@ -607,7 +621,7 @@ function PlatformGymDetailPage() {
             {(audit.data ?? []).map((a) => (
               <li key={a.id} className="flex flex-wrap items-center gap-2 py-2">
                 <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                <span className="font-medium">{a.action.replace(/_/g, " ")}</span>
+                <span className="font-medium">{sentenceCase(a.action)}</span>
                 <span className="text-xs text-muted-foreground">
                   {a.actor_email ?? "platform admin"}
                 </span>
@@ -615,9 +629,15 @@ function PlatformGymDetailPage() {
                   <CalendarClock className="h-3 w-3" /> {relTime(a.created_at)}
                 </span>
                 {a.detail && (
-                  <span className="w-full truncate text-[11px] text-muted-foreground">
-                    {JSON.stringify(a.detail)}
-                  </span>
+                  <Collapsible className="w-full min-w-0">
+                    <p className="text-xs leading-relaxed text-muted-foreground">{auditSummary(a.detail)}</p>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="mt-1 h-7 text-xs">Raw view</Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted p-3 text-xs">{JSON.stringify(a.detail, null, 2)}</pre>
+                    </CollapsibleContent>
+                  </Collapsible>
                 )}
               </li>
             ))}
