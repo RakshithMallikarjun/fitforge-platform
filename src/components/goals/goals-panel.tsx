@@ -197,7 +197,7 @@ function GoalCard({ g, onEdit, onDelete }: { g: GoalView; onEdit: () => void; on
           <Button variant="ghost" size="icon" aria-label={`Edit ${g.name}`} onClick={onEdit}>
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" aria-label={`Delete ${g.name}`} onClick={onDelete}>
+          <Button variant="ghost" size="icon" aria-label={`Delete goal ${g.name}`} onClick={onDelete}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -280,9 +280,9 @@ function GoalDialog({ goal, onClose }: { goal: GoalView | null; onClose: () => v
         <div className="space-y-3">
           {!goal && (
             <div>
-              <Label>Type</Label>
+              <Label htmlFor="goal-type">Type</Label>
               <Select value={type} onValueChange={(v) => setType(v as GoalType)}>
-                <SelectTrigger>
+                <SelectTrigger id="goal-type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -300,9 +300,9 @@ function GoalDialog({ goal, onClose }: { goal: GoalView | null; onClose: () => v
           </div>
           {!goal && type === "strength" && (
             <div>
-              <Label>Exercise</Label>
+              <Label htmlFor="goal-exercise">Exercise</Label>
               <Select value={exerciseId} onValueChange={setExerciseId}>
-                <SelectTrigger>
+                <SelectTrigger id="goal-exercise">
                   <SelectValue placeholder="Pick an exercise" />
                 </SelectTrigger>
                 <SelectContent>
@@ -317,9 +317,9 @@ function GoalDialog({ goal, onClose }: { goal: GoalView | null; onClose: () => v
           )}
           {!goal && type === "body" && (
             <div>
-              <Label>Measurement</Label>
+              <Label htmlFor="goal-metric">Measurement</Label>
               <Select value={metric} onValueChange={(v) => setMetric(v as BodyMetric)}>
-                <SelectTrigger>
+                <SelectTrigger id="goal-metric">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

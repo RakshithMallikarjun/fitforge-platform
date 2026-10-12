@@ -11,11 +11,11 @@ export function BentoStatCard({ label, value, footer, variant = "default" }: Pro
   if (variant === "dark") {
     return (
       <div className="bento-emerald card-lift">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary-foreground/70">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary-foreground/90">
           {label}
         </p>
         <p className="font-numeric mt-3 text-2xl font-bold">{value}</p>
-        {footer && <div className="mt-3 text-xs text-primary-foreground/80">{footer}</div>}
+        {footer && <div className="mt-3 text-xs text-primary-foreground/90">{footer}</div>}
       </div>
     );
   }

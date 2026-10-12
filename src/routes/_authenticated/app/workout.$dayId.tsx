@@ -1280,7 +1280,7 @@ function CompletionScreen({
           <Check className="h-8 w-8 text-primary-foreground" />
         </div>
         <p className="mt-4 font-display text-2xl font-bold">Workout Complete</p>
-        <p className="mt-1 text-xs text-primary-foreground/80">
+        <p className="mt-1 text-xs text-primary-foreground/90">
           {finished ? "Nice session — your log is saved." : "Log your effort and notes below."}
         </p>
       </div>

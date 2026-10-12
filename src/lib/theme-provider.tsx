@@ -144,7 +144,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       document.head.appendChild(el);
     }
     // html:root / html.dark outrank the base :root and .dark rules in styles.css.
-    el.textContent = block("html:root", light) + block("html.dark", dark);
+    el.textContent = block("html:root", light) +
+      `@media (prefers-color-scheme: dark){${block("html:root:not(.light)", dark)}}` +
+      block("html.dark", dark);
     const stack = `"${theme.fontFamily}", ui-sans-serif, system-ui, sans-serif`;
     root.style.setProperty("--font-body", stack);
     root.style.setProperty("--font-heading", stack);

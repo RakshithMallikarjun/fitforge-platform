@@ -188,8 +188,9 @@ function TemplatesPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Start date</Label>
+              <Label htmlFor="bulk-start">Start date</Label>
               <Input
+                id="bulk-start"
                 type="date"
                 value={assignDate}
                 aria-invalid={!assignDate}
@@ -201,12 +202,13 @@ function TemplatesPage() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Members</Label>
+                <Label htmlFor="bulk-search">Members</Label>
                 <span className="text-xs text-muted-foreground">{selected.size} selected</span>
               </div>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
+                  id="bulk-search"
                   className="pl-8"
                   placeholder="Search members…"
                   value={query}
@@ -222,6 +224,7 @@ function TemplatesPage() {
                       <li key={m.id}>
                         <label className="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-muted/50">
                           <Checkbox
+                            aria-label={m.display_name ?? m.email}
                             checked={selected.has(m.id)}
                             onCheckedChange={() => toggle(m.id)}
                           />

@@ -174,8 +174,8 @@ export function ExerciseFormDialog({ open, onOpenChange, initial, globalNames }:
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+            <Label htmlFor="ex-name">Name</Label>
+            <Input id="ex-name" value={name} onChange={(e) => setName(e.target.value)} />
             {duplicatesGlobal && (
               <p className="mt-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
                 “{name.trim()}” already exists in the global library. Saving creates a duplicate for
@@ -184,13 +184,14 @@ export function ExerciseFormDialog({ open, onOpenChange, initial, globalNames }:
             )}
           </div>
           <div>
-            <Label>Description</Label>
-            <Textarea value={description ?? ""} onChange={(e) => setDescription(e.target.value)} />
+            <Label htmlFor="ex-desc">Description</Label>
+            <Textarea id="ex-desc" value={description ?? ""} onChange={(e) => setDescription(e.target.value)} />
           </div>
           <div className="grid grid-cols-1 gap-3">
             <div>
-              <Label>YouTube Video URL (optional)</Label>
+              <Label htmlFor="ex-video">YouTube Video URL (optional)</Label>
               <Input
+                id="ex-video"
                 value={videoUrl ?? ""}
                 onChange={(e) => {
                   setVideoUrl(e.target.value);
@@ -206,15 +207,15 @@ export function ExerciseFormDialog({ open, onOpenChange, initial, globalNames }:
               </p>
             </div>
             <div>
-              <Label>Thumbnail URL (optional)</Label>
-              <Input value={thumbnailUrl ?? ""} onChange={(e) => setThumbnailUrl(e.target.value)} />
+              <Label htmlFor="ex-thumb">Thumbnail URL (optional)</Label>
+              <Input id="ex-thumb" value={thumbnailUrl ?? ""} onChange={(e) => setThumbnailUrl(e.target.value)} />
               <p className="mt-1 text-[11px] text-muted-foreground">
                 Leave blank to auto-generate from YouTube URL.
               </p>
             </div>
           </div>
           <div>
-            <Label>Muscle groups</Label>
+            <p className="text-sm font-medium">Muscle groups</p>
             <ChipSelect
               label="Muscle groups"
               kind="muscle"
@@ -224,7 +225,7 @@ export function ExerciseFormDialog({ open, onOpenChange, initial, globalNames }:
             />
           </div>
           <div>
-            <Label>Equipment</Label>
+            <p className="text-sm font-medium">Equipment</p>
             <ChipSelect
               label="Equipment"
               kind="equipment"
@@ -234,9 +235,9 @@ export function ExerciseFormDialog({ open, onOpenChange, initial, globalNames }:
             />
           </div>
           <div>
-            <Label>Difficulty</Label>
+            <Label htmlFor="ex-difficulty">Difficulty</Label>
             <Select value={difficulty} onValueChange={setDifficulty}>
-              <SelectTrigger>
+              <SelectTrigger id="ex-difficulty">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

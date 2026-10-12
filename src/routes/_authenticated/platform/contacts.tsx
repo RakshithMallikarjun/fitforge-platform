@@ -92,7 +92,7 @@ function PlatformContactsPage() {
           className="w-72"
         />
         <Select value={role} onValueChange={setRole}>
-          <SelectTrigger className="w-36">
+          <SelectTrigger className="w-36" aria-label="Filter by role">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -102,7 +102,7 @@ function PlatformContactsPage() {
           </SelectContent>
         </Select>
         <Select value={state} onValueChange={setState}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-40" aria-label="Filter by status">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

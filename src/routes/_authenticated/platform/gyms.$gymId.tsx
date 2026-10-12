@@ -762,9 +762,9 @@ function PlatformGymDetailPage() {
           </DialogHeader>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs">Payment status</Label>
+              <Label htmlFor="billing-status" className="text-xs">Payment status</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as PaymentStatus)}>
-                <SelectTrigger className="capitalize">
+                <SelectTrigger id="billing-status" className="capitalize">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

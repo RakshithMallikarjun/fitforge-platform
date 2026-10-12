@@ -375,9 +375,9 @@ See you at the gym!`;
               </div>
 
               <div className="space-y-2">
-                <Label>Font family</Label>
+                <Label htmlFor="set-font">Font family</Label>
                 <Select value={fontFamily} onValueChange={setFontFamily}>
-                  <SelectTrigger className="max-w-[240px]">
+                  <SelectTrigger id="set-font" className="max-w-[240px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -419,7 +419,7 @@ See you at the gym!`;
               </div>
 
               <div className="space-y-2">
-                <Label>Live preview</Label>
+                <p className="text-sm font-medium">Live preview</p>
                 <div className="rounded-2xl border border-border bg-muted/40 p-6">
                   <span
                     className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-sm"
@@ -570,9 +570,9 @@ See you at the gym!`;
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label>Timezone</Label>
+            <Label htmlFor="set-tz">Timezone</Label>
             <Select value={timezone} onValueChange={setTimezone}>
-              <SelectTrigger className="max-w-[280px]">
+              <SelectTrigger id="set-tz" className="max-w-[280px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -605,7 +605,7 @@ See you at the gym!`;
           </div>
 
           <div className="space-y-2">
-            <Label>Subscription</Label>
+            <p className="text-sm font-medium">Subscription</p>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary" className="capitalize">
                 {gym?.subscription_plan ?? "—"} plan

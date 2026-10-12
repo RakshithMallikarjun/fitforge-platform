@@ -175,6 +175,7 @@ function PlatformGymsPage() {
         <button
           className={`inline-flex items-center gap-1 ${right ? "justify-end" : ""}`}
           onClick={() => toggleSort(k)}
+          aria-label={typeof children === "string" ? `Sort by ${children.toLowerCase()}` : undefined}
         >
           {children}
           <ArrowUpDown className="h-3 w-3 opacity-50" />
@@ -214,7 +215,7 @@ function PlatformGymsPage() {
           className="w-56"
         />
         <Select value={enabledFilter} onValueChange={setEnabledFilter}>
-          <SelectTrigger className="w-36">
+          <SelectTrigger className="w-36" aria-label="Filter by status">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -224,7 +225,7 @@ function PlatformGymsPage() {
           </SelectContent>
         </Select>
         <Select value={payment} onValueChange={setPayment}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-40" aria-label="Filter by payment">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -236,7 +237,7 @@ function PlatformGymsPage() {
           </SelectContent>
         </Select>
         <Select value={plan} onValueChange={setPlan}>
-          <SelectTrigger className="w-36">
+          <SelectTrigger className="w-36" aria-label="Filter by plan">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -274,7 +275,7 @@ function PlatformGymsPage() {
                 <Th k="active_member_count" right>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="underline decoration-dotted underline-offset-4">
+                      <span tabIndex={0} className="rounded underline decoration-dotted underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                         Members
                       </span>
                     </TooltipTrigger>
@@ -303,6 +304,8 @@ function PlatformGymsPage() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span
+                              tabIndex={0}
+                              role="img"
                               aria-label="No admin — nobody can sign in to this gym"
                               className="h-2 w-2 shrink-0 rounded-full bg-amber-500"
                             />
