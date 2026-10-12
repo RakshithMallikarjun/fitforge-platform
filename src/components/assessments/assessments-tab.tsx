@@ -45,7 +45,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { listAssessments, exportAssessmentReport, deleteAssessment } from "@/lib/assessments.functions";
+import {
+  listAssessments,
+  exportAssessmentReport,
+  deleteAssessment,
+} from "@/lib/assessments.functions";
 import { NewAssessmentSheet } from "./new-assessment-sheet";
 
 export function AssessmentsTab({ memberId }: { memberId: string }) {
@@ -67,7 +71,8 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
       qc.invalidateQueries({ queryKey: ["assessments", memberId] });
       qc.invalidateQueries({ queryKey: ["progress"] });
     },
-    onError: (e: any) => toast.error("Couldn't delete the assessment", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't delete the assessment", { description: formatServerError(e) }),
   });
   const [expanded, setExpanded] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -197,7 +202,9 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
                       <TableCell className="font-medium">
                         {format(new Date(a.date), "PP")}
                         {a.updated_at && (
-                          <span className="ml-2 text-xs font-normal text-muted-foreground">Edited</span>
+                          <span className="ml-2 text-xs font-normal text-muted-foreground">
+                            Edited
+                          </span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -308,7 +315,8 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
               Delete the assessment from {toDelete ? format(new Date(toDelete.date), "PP") : ""}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Its measurements are removed from the history and progress charts. This can't be undone.
+              Its measurements are removed from the history and progress charts. This can't be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

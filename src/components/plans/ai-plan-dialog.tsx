@@ -148,8 +148,8 @@ export function AiPlanDialog({
           <div className="space-y-4">
             {prefill.data?.assessment && (
               <p className="rounded-xl bg-muted p-3 text-xs text-muted-foreground">
-                Latest assessment ({prefill.data.assessment.date}): {prefill.data.assessment.summary}.
-                It's included in the draft.
+                Latest assessment ({prefill.data.assessment.date}):{" "}
+                {prefill.data.assessment.summary}. It's included in the draft.
               </p>
             )}
             <div>
@@ -241,7 +241,10 @@ export function AiPlanDialog({
               </Select>
               {experience === "beginner" && (
                 <label className="mt-2 flex items-center gap-2 text-sm">
-                  <Checkbox checked={allowAdvanced} onCheckedChange={(v) => setAllowAdvanced(v === true)} />
+                  <Checkbox
+                    checked={allowAdvanced}
+                    onCheckedChange={(v) => setAllowAdvanced(v === true)}
+                  />
                   Allow advanced exercises
                 </label>
               )}

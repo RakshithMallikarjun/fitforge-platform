@@ -17,14 +17,23 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
     }
     for (const item of toasts) {
-      const duration = notificationDeadline(item.type, item.duration ?? props.toastOptions?.duration ?? props.duration);
+      const duration = notificationDeadline(
+        item.type,
+        item.duration ?? props.toastOptions?.duration ?? props.duration,
+      );
       if (duration === null || deadlines.current.has(item.id)) continue;
-      deadlines.current.set(item.id, setTimeout(() => toast.dismiss(item.id), duration));
+      deadlines.current.set(
+        item.id,
+        setTimeout(() => toast.dismiss(item.id), duration),
+      );
     }
   }, [toasts, props.duration, props.toastOptions?.duration]);
-  useEffect(() => () => {
-    for (const timer of deadlines.current.values()) clearTimeout(timer);
-  }, []);
+  useEffect(
+    () => () => {
+      for (const timer of deadlines.current.values()) clearTimeout(timer);
+    },
+    [],
+  );
   return (
     <Sonner
       className="toaster group"

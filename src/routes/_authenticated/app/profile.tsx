@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { useState, useEffect } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
@@ -32,6 +33,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 export const Route = createFileRoute("/_authenticated/app/profile")({
+  head: () => consolePageHead("My profile", "My profile and records in your Fit Foundry account."),
   component: ProfilePage,
 });
 

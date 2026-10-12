@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { SupportWhatsappButton, SupportWhatsappLink } from "@/components/support-whatsapp";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { formatServerError } from "@/lib/format-error";
@@ -40,6 +41,8 @@ import {
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
+  head: () =>
+    consolePageHead("Gym settings", "Gym settings and records in your Fit Foundry account."),
   component: SettingsPage,
 });
 
@@ -231,7 +234,8 @@ function SettingsPage() {
       setConfirmRotate(false);
       qc.invalidateQueries({ queryKey: ["gym-join-code"] });
     },
-    onError: (e: any) => toast.error(formatServerError(e, {}, "Could not regenerate the join code")),
+    onError: (e: any) =>
+      toast.error(formatServerError(e, {}, "Could not regenerate the join code")),
   });
 
   const slug = joinInfo?.slug ?? gym?.slug ?? "";
@@ -645,7 +649,11 @@ function CustomDomainHelp({
 }) {
   const check = useServerFn(checkCustomDomain);
   const configFn = useServerFn(getDomainConfig);
-  const config = useQuery({ queryKey: ["domain-config"], queryFn: () => configFn(), staleTime: 60 * 60_000 });
+  const config = useQuery({
+    queryKey: ["domain-config"],
+    queryFn: () => configFn(),
+    staleTime: 60 * 60_000,
+  });
   const q = useQuery({
     queryKey: ["custom-domain-status", domain],
     queryFn: () => check({ data: { domain } }),
@@ -653,7 +661,15 @@ function CustomDomainHelp({
     refetchInterval: (query) => (query.state.data?.status === "waiting" ? 60_000 : false),
   });
   const host = draft.trim() || domain || "app.yourgym.com";
-  const status = !domain ? "Not set" : q.isLoading ? "Checking…" : q.error ? "Couldn't check" : q.data?.status === "active" ? "Active" : "Waiting for DNS";
+  const status = !domain
+    ? "Not set"
+    : q.isLoading
+      ? "Checking…"
+      : q.error
+        ? "Couldn't check"
+        : q.data?.status === "active"
+          ? "Active"
+          : "Waiting for DNS";
   return (
     <div className="space-y-2 rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
       <div className="flex items-center justify-between gap-2">

@@ -198,7 +198,8 @@ export function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
             {planLabel ? `You're on the ${planLabel} plan.` : "Active"}
           </p>
         </div>
-        <Button variant="ghost"
+        <Button
+          variant="ghost"
           onClick={signOut}
           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10"
         >

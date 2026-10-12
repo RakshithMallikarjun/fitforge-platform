@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,6 +18,11 @@ import {
 import { getEngagementReport, type EngagementRow } from "@/lib/admin-stats.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/reports/engagement")({
+  head: () =>
+    consolePageHead(
+      "Engagement report",
+      "Engagement report and records in your Fit Foundry account.",
+    ),
   component: EngagementReportPage,
 });
 

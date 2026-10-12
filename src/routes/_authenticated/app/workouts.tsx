@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { plural } from "@/lib/copy";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -15,6 +16,8 @@ import {
 } from "@/lib/workout-player.functions";
 
 export const Route = createFileRoute("/_authenticated/app/workouts")({
+  head: () =>
+    consolePageHead("My workouts", "My workouts and records in your Fit Foundry account."),
   component: WorkoutsPage,
 });
 
@@ -116,7 +119,8 @@ function WorkoutsPage() {
                         )}
                         <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
                           <span className="inline-flex items-center gap-1">
-                            <Dumbbell className="h-3.5 w-3.5" /> {plural(d.exerciseCount, "exercise")}
+                            <Dumbbell className="h-3.5 w-3.5" />{" "}
+                            {plural(d.exerciseCount, "exercise")}
                           </span>
                           <span className="inline-flex items-center gap-1">
                             <Clock className="h-3.5 w-3.5" /> ~{d.estimatedMinutes} min

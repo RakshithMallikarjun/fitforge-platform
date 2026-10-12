@@ -67,9 +67,16 @@ export function isNewGym(createdAt: string | null | undefined) {
  *   At risk  no workout or check-in in the last 14 days (gym's timezone)
  *   Healthy  health score >= 70, otherwise Watch
  */
-export function isAtRiskGym(createdAt: string | null | undefined, daysSinceActivity: number | null | undefined) {
+export function isAtRiskGym(
+  createdAt: string | null | undefined,
+  daysSinceActivity: number | null | undefined,
+) {
   if (isNewGym(createdAt)) return false;
-  return daysSinceActivity === null || daysSinceActivity === undefined || daysSinceActivity >= NEW_GYM_DAYS;
+  return (
+    daysSinceActivity === null ||
+    daysSinceActivity === undefined ||
+    daysSinceActivity >= NEW_GYM_DAYS
+  );
 }
 
 export function healthBand(

@@ -9,7 +9,15 @@ import {
 } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Building2, LayoutDashboard, LineChart, LogOut, Megaphone, Users2, Inbox } from "lucide-react";
+import {
+  Building2,
+  LayoutDashboard,
+  LineChart,
+  LogOut,
+  Megaphone,
+  Users2,
+  Inbox,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { isPlatformAdmin } from "@/lib/platform.functions";
@@ -24,6 +32,13 @@ export const Route = createFileRoute("/_authenticated/platform")({
         name: "description",
         content: "Site-owner console: all gyms, enablement, billing state and platform analytics.",
       },
+      { property: "og:title", content: "Platform console · Fit Foundry" },
+      {
+        property: "og:description",
+        content: "Platform console · Fit Foundry console and records.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -44,7 +59,12 @@ function PlatformShell() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const checkPlatformAdmin = useServerFn(isPlatformAdmin);
-  const { data: allowed, isLoading, isError, refetch } = useQuery({
+  const {
+    data: allowed,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["is-platform-admin"],
     queryFn: () => checkPlatformAdmin(),
     staleTime: 5 * 60_000,
@@ -101,9 +121,15 @@ function PlatformShell() {
       {isError ? (
         <main className="mx-auto max-w-[1400px] px-6 py-8" role="alert">
           <p className="text-sm text-muted-foreground">We couldn't check your platform access.</p>
-          <Button variant="outline" className="mt-3" onClick={() => void refetch()}>Try again</Button>
+          <Button variant="outline" className="mt-3" onClick={() => void refetch()}>
+            Try again
+          </Button>
         </main>
-      ) : loading ? <ConsoleContentSkeleton /> : <Outlet />}
+      ) : loading ? (
+        <ConsoleContentSkeleton />
+      ) : (
+        <Outlet />
+      )}
     </div>
   );
 }

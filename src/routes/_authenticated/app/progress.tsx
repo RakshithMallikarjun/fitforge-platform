@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
@@ -45,6 +46,8 @@ import {
 import { listPersonalRecords, type PersonalRecord } from "@/lib/workout-player.functions";
 
 export const Route = createFileRoute("/_authenticated/app/progress")({
+  head: () =>
+    consolePageHead("My progress", "My progress and records in your Fit Foundry account."),
   component: ProgressPage,
 });
 
@@ -288,51 +291,51 @@ function BodyTab({ data }: { data: ProgressData }) {
           Charts appear once you have two or more assessments.
         </p>
       ) : (
-      <>
-      <ChartCard title="Weight" dataKey="weight" data={chartData} color="var(--primary)" />
-      <ChartCard
-        title="Body fat %"
-        dataKey="body_fat_pct"
-        data={chartData}
-        color="var(--secondary)"
-      />
+        <>
+          <ChartCard title="Weight" dataKey="weight" data={chartData} color="var(--primary)" />
+          <ChartCard
+            title="Body fat %"
+            dataKey="body_fat_pct"
+            data={chartData}
+            color="var(--secondary)"
+          />
 
-      <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Measurements</h3>
-          <div className="flex gap-1 rounded-full bg-muted p-1">
-            {(["waist", "chest", "hips"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMeasure(m)}
-                className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition ${
-                  measure === m ? "bg-background shadow" : "text-muted-foreground"
-                }`}
-              >
-                {m}
-              </button>
-            ))}
+          <div className="rounded-[2rem] border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Measurements</h3>
+              <div className="flex gap-1 rounded-full bg-muted p-1">
+                {(["waist", "chest", "hips"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setMeasure(m)}
+                    className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition ${
+                      measure === m ? "bg-background shadow" : "text-muted-foreground"
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="mt-3 h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+                  <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey={measure}
+                    stroke="var(--primary)"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
-        <div className="mt-3 h-48">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-              <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey={measure}
-                stroke="var(--primary)"
-                strokeWidth={2}
-                dot={{ r: 3 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-      </>
+        </>
       )}
     </div>
   );
@@ -707,8 +710,16 @@ function PhotosTab() {
   const fetchFn = useServerFn(getProgressPhotos);
   const uploadFn = useServerFn(uploadProgressPhoto);
   const qc = useQueryClient();
-  const { data: me } = useQuery({ queryKey: ["me-id"], queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null });
-  const { data: photos = [], isLoading, error, refetch } = useQuery({
+  const { data: me } = useQuery({
+    queryKey: ["me-id"],
+    queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null,
+  });
+  const {
+    data: photos = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["progress-photos"],
     queryFn: () => fetchFn(),
   });
@@ -758,7 +769,9 @@ function PhotosTab() {
     return (
       <div className="flex items-center justify-between rounded-2xl border border-destructive/30 p-4 text-sm">
         <span className="text-destructive">Couldn't load photos. {formatServerError(error)}</span>
-        <Button size="sm" variant="outline" onClick={() => refetch()}>Retry</Button>
+        <Button size="sm" variant="outline" onClick={() => refetch()}>
+          Retry
+        </Button>
       </div>
     );
 
@@ -791,27 +804,27 @@ function PhotosTab() {
       </p>
       <div className="flex items-center justify-between gap-2">
         {uploader}
-      {sorted.length >= 2 && (
-        <div className="flex justify-end">
-          <Dialog open={compareOpen} onOpenChange={setCompareOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="secondary" className="rounded-lg">
-                <Camera className="mr-1 h-4 w-4" />
-                Compare
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl">
-              <DialogHeader>
-                <DialogTitle>Before &amp; After</DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-2 gap-3">
-                <PhotoTile photo={oldest} label="Before" />
-                <PhotoTile photo={newest} label="After" />
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      )}
+        {sorted.length >= 2 && (
+          <div className="flex justify-end">
+            <Dialog open={compareOpen} onOpenChange={setCompareOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="secondary" className="rounded-lg">
+                  <Camera className="mr-1 h-4 w-4" />
+                  Compare
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>Before &amp; After</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-3">
+                  <PhotoTile photo={oldest} label="Before" />
+                  <PhotoTile photo={newest} label="After" />
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">

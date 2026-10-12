@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -28,6 +29,11 @@ import { CopyButton, EmptyState, ErrorState, relTime } from "@/components/platfo
 import { listPlatformGymAdmins } from "@/lib/platform.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/contacts")({
+  head: () =>
+    consolePageHead(
+      "Platform gym contacts",
+      "Platform gym contacts and records in your Fit Foundry account.",
+    ),
   component: PlatformContactsPage,
 });
 
@@ -57,7 +63,15 @@ function PlatformContactsPage() {
   }, [data, search, role, state]);
 
   const adminEmails = useMemo(
-    () => Array.from(new Set(rows.filter((r) => r.role === "admin").map((r) => r.email).filter(Boolean))),
+    () =>
+      Array.from(
+        new Set(
+          rows
+            .filter((r) => r.role === "admin")
+            .map((r) => r.email)
+            .filter(Boolean),
+        ),
+      ),
     [rows],
   );
 
@@ -156,9 +170,7 @@ function PlatformContactsPage() {
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-sm">
-                    {r.display_name ?? "—"}
-                  </TableCell>
+                  <TableCell className="text-sm">{r.display_name ?? "—"}</TableCell>
                   <TableCell>
                     <Badge variant={r.active ? "default" : "secondary"}>
                       {r.active ? "Active" : "Inactive"}

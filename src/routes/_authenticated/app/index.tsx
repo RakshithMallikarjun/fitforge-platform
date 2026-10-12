@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { plural } from "@/lib/copy";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +23,11 @@ import { useMembershipExpired } from "@/lib/membership-context";
 import { formatDayDate, formatRelativeDay } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/app/")({
+  head: () =>
+    consolePageHead(
+      "My training home",
+      "My training home and records in your Fit Foundry account.",
+    ),
   component: MemberHome,
 });
 
@@ -155,7 +161,9 @@ function MemberHome() {
               From {data.latestNote.author ?? "your trainer"}
             </p>
           </div>
-          <p className="mt-2 text-sm leading-relaxed text-card-foreground">{data.latestNote.body}</p>
+          <p className="mt-2 text-sm leading-relaxed text-card-foreground">
+            {data.latestNote.body}
+          </p>
           <p className="mt-2 text-[11px] text-muted-foreground">
             {formatRelativeDay(data.latestNote.created_at)}
           </p>

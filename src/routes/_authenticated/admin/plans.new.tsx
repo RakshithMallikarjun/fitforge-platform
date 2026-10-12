@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { plural } from "@/lib/copy";
 import { formatPrescription } from "@/lib/workout-math";
 import { useEffect, useMemo, useState } from "react";
@@ -48,6 +49,8 @@ import type { PlanDraft } from "@/lib/plan-ai.functions";
 import type { ExerciseRow } from "@/lib/exercises.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/plans/new")({
+  head: () =>
+    consolePageHead("Plan builder", "Plan builder and records in your Fit Foundry account."),
   validateSearch: z.object({
     memberId: z.string().uuid().optional(),
     isTemplate: z.boolean().optional(),
@@ -426,7 +429,8 @@ function PlanBuilder() {
                       <ul className="mt-1 text-xs text-muted-foreground">
                         {d.exercises.map((e) => (
                           <li key={e.uid}>
-                            • {e.exercise.name} — {formatPrescription(e.sets, e.reps, e.exercise.tracking)}
+                            • {e.exercise.name} —{" "}
+                            {formatPrescription(e.sets, e.reps, e.exercise.tracking)}
                           </li>
                         ))}
                         {d.exercises.length === 0 && <li className="italic">No exercises</li>}
@@ -783,9 +787,7 @@ function SortableExercise({
             max={10}
             value={Number.isFinite(ex.sets) && ex.sets !== 0 ? ex.sets : ""}
             aria-invalid={!!exerciseErrors(ex).sets}
-            onChange={(e) =>
-              onChange({ sets: e.target.value === "" ? 0 : Number(e.target.value) })
-            }
+            onChange={(e) => onChange({ sets: e.target.value === "" ? 0 : Number(e.target.value) })}
           />
           {exerciseErrors(ex).sets && (
             <p className="mt-1 text-[11px] text-destructive">{exerciseErrors(ex).sets}</p>

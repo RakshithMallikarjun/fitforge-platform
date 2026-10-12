@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { plural } from "@/lib/copy";
 import { useState } from "react";
 import { formatServerError } from "@/lib/format-error";
@@ -49,6 +50,11 @@ import { formatMoney } from "@/lib/format-money";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 export const Route = createFileRoute("/_authenticated/admin/membership-plans")({
+  head: () =>
+    consolePageHead(
+      "Membership tiers",
+      "Membership tiers and records in your Fit Foundry account.",
+    ),
   component: () => (
     <AdminOnly area="Membership tiers">
       <MembershipPlansPage />
@@ -96,7 +102,8 @@ function MembershipPlansPage() {
       toast.success("Tier archived");
       invalidate();
     },
-    onError: (e: any) => toast.error("Couldn't archive the tier", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't archive the tier", { description: formatServerError(e) }),
   });
 
   const reorder = useMutation({
@@ -282,7 +289,8 @@ function PlanCard({
       clearDraft(variables.period);
       qc.invalidateQueries({ queryKey: ["membership-plans"] });
     },
-    onError: (e: any) => toast.error("Couldn't save the price", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't save the price", { description: formatServerError(e) }),
   });
 
   const clearPrice = useMutation({
@@ -293,7 +301,8 @@ function PlanCard({
       toast.success("Price removed");
       qc.invalidateQueries({ queryKey: ["membership-plans"] });
     },
-    onError: (e: any) => toast.error("Couldn't remove the price", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't remove the price", { description: formatServerError(e) }),
   });
 
   return (
@@ -367,23 +376,33 @@ function PlanCard({
           };
 
           return (
-            <div key={period} className="grid grid-cols-[6rem_minmax(0,1fr)_2.5rem] items-center gap-2">
+            <div
+              key={period}
+              className="grid grid-cols-[6rem_minmax(0,1fr)_2.5rem] items-center gap-2"
+            >
               <div className="min-w-0">
-                <Label htmlFor={`${plan.id}-${period}-price`} className="text-xs text-muted-foreground">
+                <Label
+                  htmlFor={`${plan.id}-${period}-price`}
+                  className="text-xs text-muted-foreground"
+                >
                   {PERIOD_LABEL[period]}
                 </Label>
                 <p className="text-xs text-muted-foreground" aria-live="polite">
-                  {pending
-                    ? "Saving…"
-                    : (savePrice.isError && savePrice.variables?.period === period) ||
-                        (clearPrice.isError && clearPrice.variables === period)
-                      ? <span className="text-destructive">Not saved</span>
-                      : changed && !valid && value.trim() !== ""
-                        ? <span className="text-destructive">Invalid amount</span>
-                        : (savePrice.isSuccess && savePrice.variables?.period === period) ||
-                            (clearPrice.isSuccess && clearPrice.variables === period)
-                          ? <span className="text-primary">Saved ✓</span>
-                          : row?.is_enabled ? "On sale" : "Not on sale"}
+                  {pending ? (
+                    "Saving…"
+                  ) : (savePrice.isError && savePrice.variables?.period === period) ||
+                    (clearPrice.isError && clearPrice.variables === period) ? (
+                    <span className="text-destructive">Not saved</span>
+                  ) : changed && !valid && value.trim() !== "" ? (
+                    <span className="text-destructive">Invalid amount</span>
+                  ) : (savePrice.isSuccess && savePrice.variables?.period === period) ||
+                    (clearPrice.isSuccess && clearPrice.variables === period) ? (
+                    <span className="text-primary">Saved ✓</span>
+                  ) : row?.is_enabled ? (
+                    "On sale"
+                  ) : (
+                    "Not on sale"
+                  )}
                 </p>
               </div>
               {canEdit ? (
@@ -480,7 +499,8 @@ function PlanDialog({
       qc.invalidateQueries({ queryKey: ["membership-plans"] });
       onOpenChange(false);
     },
-    onError: (e: any) => toast.error("Couldn't save the tier", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't save the tier", { description: formatServerError(e) }),
   });
 
   return (

@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { formatServerError } from "@/lib/format-error";
 import { formatMoney } from "@/lib/format-money";
 import { plural, sentenceCase } from "@/lib/copy";
@@ -78,6 +79,11 @@ import {
 } from "@/lib/platform.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/gyms/$gymId")({
+  head: () =>
+    consolePageHead(
+      "Platform gym detail",
+      "Platform gym detail and records in your Fit Foundry account.",
+    ),
   component: PlatformGymDetailPage,
 });
 
@@ -176,7 +182,8 @@ function PlatformGymDetailPage() {
     }
     if (!(CURRENCIES as readonly string[]).includes(currency)) e.currency = "Choose a currency";
     const be = billingEmail.trim();
-    if (be && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(be)) e.billingEmail = "Enter a valid billing email";
+    if (be && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(be))
+      e.billingEmail = "Enter a valid billing email";
     setBillingErr(e);
     return Object.keys(e).length === 0;
   }
@@ -194,7 +201,16 @@ function PlatformGymDetailPage() {
     onMutate: async (v) => {
       await qc.cancelQueries({ queryKey: ["platform-gym", gymId] });
       const previous = qc.getQueryData<typeof g>(["platform-gym", gymId]);
-      qc.setQueryData<typeof g>(["platform-gym", gymId], (old) => old ? { ...old, is_enabled: v.enabled, disabled_at: v.enabled ? null : old.disabled_at, disabled_reason: v.enabled ? null : v.reason ?? old.disabled_reason } : old);
+      qc.setQueryData<typeof g>(["platform-gym", gymId], (old) =>
+        old
+          ? {
+              ...old,
+              is_enabled: v.enabled,
+              disabled_at: v.enabled ? null : old.disabled_at,
+              disabled_reason: v.enabled ? null : (v.reason ?? old.disabled_reason),
+            }
+          : old,
+      );
       return { previous };
     },
     onSuccess: (_r, v) => {
@@ -228,7 +244,11 @@ function PlatformGymDetailPage() {
       invalidate();
     },
     onError: (e) => {
-      const msg = formatServerError(e, { monthlyAmount: "Monthly amount", billingEmail: "Billing email", currency: "Currency" }, "Could not update billing");
+      const msg = formatServerError(
+        e,
+        { monthlyAmount: "Monthly amount", billingEmail: "Billing email", currency: "Currency" },
+        "Could not update billing",
+      );
       if (/billing email/i.test(msg)) setBillingErr({ billingEmail: msg });
       else if (/amount/i.test(msg)) setBillingErr({ amount: msg });
       else if (/currency/i.test(msg)) setBillingErr({ currency: msg });
@@ -242,7 +262,19 @@ function PlatformGymDetailPage() {
       toast.success("Plan updated");
       invalidate();
     },
-    onError: (e) => toast.error(formatServerError(e, {ownerEmail:"Owner email",primaryColor:"Primary colour",supportEmail:"Support email",slug:"Web address"}, "Could not update the plan")),
+    onError: (e) =>
+      toast.error(
+        formatServerError(
+          e,
+          {
+            ownerEmail: "Owner email",
+            primaryColor: "Primary colour",
+            supportEmail: "Support email",
+            slug: "Web address",
+          },
+          "Could not update the plan",
+        ),
+      ),
   });
 
   const resendMutation = useMutation({
@@ -252,7 +284,19 @@ function PlatformGymDetailPage() {
       invalidate();
       qc.invalidateQueries({ queryKey: ["platform-gym-owner", gymId] });
     },
-    onError: (e) => toast.error(formatServerError(e, {ownerEmail:"Owner email",primaryColor:"Primary colour",supportEmail:"Support email",slug:"Web address"}, "Could not send the invite")),
+    onError: (e) =>
+      toast.error(
+        formatServerError(
+          e,
+          {
+            ownerEmail: "Owner email",
+            primaryColor: "Primary colour",
+            supportEmail: "Support email",
+            slug: "Web address",
+          },
+          "Could not send the invite",
+        ),
+      ),
   });
 
   const inviteMutation = useMutation({
@@ -263,7 +307,19 @@ function PlatformGymDetailPage() {
       invalidate();
       qc.invalidateQueries({ queryKey: ["platform-gym-owner", gymId] });
     },
-    onError: (e) => toast.error(formatServerError(e, {ownerEmail:"Owner email",primaryColor:"Primary colour",supportEmail:"Support email",slug:"Web address"}, "Could not invite the owner")),
+    onError: (e) =>
+      toast.error(
+        formatServerError(
+          e,
+          {
+            ownerEmail: "Owner email",
+            primaryColor: "Primary colour",
+            supportEmail: "Support email",
+            slug: "Web address",
+          },
+          "Could not invite the owner",
+        ),
+      ),
   });
 
   const os = ownerStatus.data;
@@ -328,7 +384,10 @@ function PlatformGymDetailPage() {
               checked={g.is_enabled}
               disabled={toggleMutation.isPending}
               onCheckedChange={(enabled) => {
-                if (enabled) { toggleMutation.mutate({ enabled: true }); return; }
+                if (enabled) {
+                  toggleMutation.mutate({ enabled: true });
+                  return;
+                }
                 setReason("");
                 setToggleOpen(true);
               }}
@@ -358,7 +417,10 @@ function PlatformGymDetailPage() {
           value={`${g.active_member_count}/${g.member_count}`}
           hint="Active of total accounts"
         />
-        <KpiCard label="Staff" value={`${plural(g.admin_count, "admin")} · ${plural(g.trainer_count, "trainer")}`} />
+        <KpiCard
+          label="Staff"
+          value={`${plural(g.admin_count, "admin")} · ${plural(g.trainer_count, "trainer")}`}
+        />
         <KpiCard
           label="Workouts 30d"
           value={g.workouts_30d}
@@ -388,8 +450,7 @@ function PlatformGymDetailPage() {
             daysSinceActivity={g.days_since_activity}
           />
           <p className="mt-3 text-xs text-muted-foreground">
-            Last activity {activityAgo(g.days_since_activity)}
-            . Check-in rate{" "}
+            Last activity {activityAgo(g.days_since_activity)}. Check-in rate{" "}
             {pct(g.checkin_rate_30d)}, active ratio {pct(g.active_member_ratio)}.
           </p>
         </Section>
@@ -630,12 +691,18 @@ function PlatformGymDetailPage() {
                 </span>
                 {a.detail && (
                   <Collapsible className="w-full min-w-0">
-                    <p className="text-xs leading-relaxed text-muted-foreground">{auditSummary(a.detail)}</p>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      {auditSummary(a.detail)}
+                    </p>
                     <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm" className="mt-1 h-7 text-xs">Raw view</Button>
+                      <Button variant="ghost" size="sm" className="mt-1 h-7 text-xs">
+                        Raw view
+                      </Button>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted p-3 text-xs">{JSON.stringify(a.detail, null, 2)}</pre>
+                      <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted p-3 text-xs">
+                        {JSON.stringify(a.detail, null, 2)}
+                      </pre>
                     </CollapsibleContent>
                   </Collapsible>
                 )}
@@ -762,7 +829,9 @@ function PlatformGymDetailPage() {
                   ))}
                 </SelectContent>
               </Select>
-              {billingErr.currency && <p className="text-xs text-destructive">{billingErr.currency}</p>}
+              {billingErr.currency && (
+                <p className="text-xs text-destructive">{billingErr.currency}</p>
+              )}
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="billing-email" className="text-xs">

@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -35,6 +36,11 @@ import {
 } from "@/lib/platform.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/analytics")({
+  head: () =>
+    consolePageHead(
+      "Platform analytics",
+      "Platform analytics and records in your Fit Foundry account.",
+    ),
   component: PlatformAnalyticsPage,
 });
 
@@ -373,9 +379,12 @@ function PlatformAnalyticsPage() {
                       {g.checkins_30d}
                     </TableCell>
                     <TableCell>
-                      <HealthBar score={g.health_score} memberCount={g.member_count} createdAt={g.created_at}
-                      daysSinceActivity={g.days_since_activity}
-                    />
+                      <HealthBar
+                        score={g.health_score}
+                        memberCount={g.member_count}
+                        createdAt={g.created_at}
+                        daysSinceActivity={g.days_since_activity}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

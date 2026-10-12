@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
@@ -32,6 +33,8 @@ import { useTheme } from "@/lib/theme-provider";
 import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
+  head: () =>
+    consolePageHead("Gym dashboard", "Gym dashboard and records in your Fit Foundry account."),
   component: AdminDashboard,
 });
 
@@ -342,8 +345,8 @@ function AtRiskMembers({ isAdmin }: { isAdmin: boolean }) {
                     </span>
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {plural(r.workouts30d, "workout")} · {plural(r.checkIns30d, "check-in")} · {plural(r.messages30d, "message")} sent
-                    (30d)
+                    {plural(r.workouts30d, "workout")} · {plural(r.checkIns30d, "check-in")} ·{" "}
+                    {plural(r.messages30d, "message")} sent (30d)
                   </p>
                 </div>
                 <Button asChild size="sm" className="rounded-lg">

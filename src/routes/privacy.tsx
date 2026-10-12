@@ -65,10 +65,9 @@ function Privacy() {
           <h2 className="font-display text-lg font-semibold">Contact and grievance officer</h2>
           <p className="mt-2">
             For privacy questions, requests about your personal data, or grievances under India's
-            Digital Personal Data Protection Act, contact [Grievance officer name] at [email].
-            The grievance officer is based in [city], India. We aim to acknowledge requests within
-            7 days and respond within 30 days, subject to
-            applicable legal requirements.
+            Digital Personal Data Protection Act, contact [Grievance officer name] at [email]. The
+            grievance officer is based in [city], India. We aim to acknowledge requests within 7
+            days and respond within 30 days, subject to applicable legal requirements.
           </p>
         </section>
         <section>

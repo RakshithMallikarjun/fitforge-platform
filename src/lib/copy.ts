@@ -1,5 +1,9 @@
 /** Count labels share singular/plural handling, including zero. */
-export function plural(count: number | string, singular: string, multiple = `${singular}s`): string {
+export function plural(
+  count: number | string,
+  singular: string,
+  multiple = `${singular}s`,
+): string {
   return `${count} ${Number(count) === 1 ? singular : multiple}`;
 }
 

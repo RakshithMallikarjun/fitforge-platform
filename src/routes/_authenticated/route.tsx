@@ -49,7 +49,10 @@ export const Route = createFileRoute("/_authenticated")({
         }
       }
       await supabase.auth.signOut();
-      throw redirect({ to: "/auth", search: { reason: "gym_disabled", gym: info?.gymSlug ?? undefined } });
+      throw redirect({
+        to: "/auth",
+        search: { reason: "gym_disabled", gym: info?.gymSlug ?? undefined },
+      });
     }
     return { user: data.user };
   },
@@ -91,10 +94,25 @@ function GymBrandHead() {
       el.setAttribute(attr, value);
       restore.push(() => (created ? el!.remove() : prev != null && el!.setAttribute(attr, prev)));
     };
-    setAttr('link[rel="manifest"]', () => Object.assign(document.createElement("link"), { rel: "manifest" }), "href", `/manifest/${encodeURIComponent(slug)}.webmanifest`);
-    setAttr('meta[name="theme-color"]', () => Object.assign(document.createElement("meta"), { name: "theme-color" }), "content", theme.primaryColor);
+    setAttr(
+      'link[rel="manifest"]',
+      () => Object.assign(document.createElement("link"), { rel: "manifest" }),
+      "href",
+      `/manifest/${encodeURIComponent(slug)}.webmanifest`,
+    );
+    setAttr(
+      'meta[name="theme-color"]',
+      () => Object.assign(document.createElement("meta"), { name: "theme-color" }),
+      "content",
+      theme.primaryColor,
+    );
     if (theme.logoUrl)
-      setAttr('link[rel="apple-touch-icon"]', () => Object.assign(document.createElement("link"), { rel: "apple-touch-icon" }), "href", theme.logoUrl);
+      setAttr(
+        'link[rel="apple-touch-icon"]',
+        () => Object.assign(document.createElement("link"), { rel: "apple-touch-icon" }),
+        "href",
+        theme.logoUrl,
+      );
     return () => restore.reverse().forEach((f) => f());
   }, [theme]);
   return null;

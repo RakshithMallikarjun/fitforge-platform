@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
@@ -23,6 +24,8 @@ import { listMembers } from "@/lib/members.functions";
 import { PlanActions } from "@/components/plans/plan-actions";
 
 export const Route = createFileRoute("/_authenticated/admin/templates")({
+  head: () =>
+    consolePageHead("Plan templates", "Plan templates and records in your Fit Foundry account."),
   component: TemplatesPage,
 });
 
@@ -242,15 +245,16 @@ function TemplatesPage() {
             <Button variant="outline" onClick={() => setAssignFor(null)} disabled={bulk.isPending}>
               Cancel
             </Button>
-            <Button disabled={selected.size === 0 || !assignDate || bulk.isPending} onClick={() => bulk.mutate()}>
+            <Button
+              disabled={selected.size === 0 || !assignDate || bulk.isPending}
+              onClick={() => bulk.mutate()}
+            >
               {bulk.isPending ? (
                 <>
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Assigning…
                 </>
               ) : (
-                <>
-                  Assign to {plural(selected.size, "member")}
-                </>
+                <>Assign to {plural(selected.size, "member")}</>
               )}
             </Button>
           </DialogFooter>

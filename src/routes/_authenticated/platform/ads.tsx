@@ -56,6 +56,13 @@ export const Route = createFileRoute("/_authenticated/platform/ads")({
         content:
           "Platform sponsor campaigns, reach across opted-in gyms, and addressable inventory.",
       },
+      { property: "og:title", content: "Ad campaigns · Fit Foundry platform" },
+      {
+        property: "og:description",
+        content: "Ad campaigns · Fit Foundry platform console and records.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -89,7 +96,8 @@ function PlatformAdsPage() {
       toast.success("Status updated");
       void qc.invalidateQueries({ queryKey: ["platform-ads"] });
     },
-    onError: (e: any) => toast.error("Couldn't change the status", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't change the status", { description: formatServerError(e) }),
   });
 
   const deleteMutation = useMutation({
@@ -99,7 +107,8 @@ function PlatformAdsPage() {
       setPendingDelete(null);
       void qc.invalidateQueries({ queryKey: ["platform-ads"] });
     },
-    onError: (e: any) => toast.error("Couldn't delete this campaign", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't delete this campaign", { description: formatServerError(e) }),
   });
 
   const statsByAd = new Map((report.data?.campaigns ?? []).map((c) => [c.ad_id, c]));
@@ -216,7 +225,9 @@ function PlatformAdsPage() {
                           {st?.impressions ?? 0}
                         </TableCell>
                         <TableCell className="text-right font-numeric">{st?.clicks ?? 0}</TableCell>
-                        <TableCell className="text-right font-numeric">{st?.dismisses ?? 0}</TableCell>
+                        <TableCell className="text-right font-numeric">
+                          {st?.dismisses ?? 0}
+                        </TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"
@@ -288,7 +299,8 @@ function GymInventoryCard({ report }: { report: ReturnType<typeof useQuery<any>>
       toast.success("Note saved");
       void qc.invalidateQueries({ queryKey: ["platform-ad-report"] });
     },
-    onError: (e: any) => toast.error("Couldn't save the note", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't save the note", { description: formatServerError(e) }),
   });
 
   const gyms = (report.data?.gyms ?? []) as {

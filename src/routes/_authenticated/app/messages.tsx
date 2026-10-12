@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,6 +14,11 @@ import { formatRelativeDay } from "@/lib/format-date";
 const search = z.object({ with: z.string().optional() });
 
 export const Route = createFileRoute("/_authenticated/app/messages")({
+  head: () =>
+    consolePageHead(
+      "Trainer messages",
+      "Trainer messages and records in your Fit Foundry account.",
+    ),
   validateSearch: search,
   component: MessagesPage,
 });

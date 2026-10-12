@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { plural } from "@/lib/copy";
 import { formatPrescription } from "@/lib/workout-math";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -78,6 +79,8 @@ function isOfflineError(e: unknown): boolean {
 }
 
 export const Route = createFileRoute("/_authenticated/app/workout/$dayId")({
+  head: () =>
+    consolePageHead("Workout player", "Workout player and records in your Fit Foundry account."),
   component: WorkoutPlayer,
 });
 
@@ -406,7 +409,12 @@ function WorkoutPlayer() {
             }));
             any = true;
           } else {
-            next[ex.id] = Array.from({ length: ex.sets }, () => ({ weight: "", reps: "", seconds: "", done: false }));
+            next[ex.id] = Array.from({ length: ex.sets }, () => ({
+              weight: "",
+              reps: "",
+              seconds: "",
+              done: false,
+            }));
           }
         }
         if (any) {
@@ -550,7 +558,8 @@ function WorkoutPlayer() {
       const rows = cur[exId] ?? [];
       const edited = { ...rows[idx], ...patch, touched: true };
       const valuePatch: Partial<SetState> = {};
-      for (const k of ["weight", "reps", "seconds"] as const) if (k in patch) valuePatch[k] = patch[k];
+      for (const k of ["weight", "reps", "seconds"] as const)
+        if (k in patch) valuePatch[k] = patch[k];
       let carry = Object.keys(valuePatch).length > 0;
       const next = rows.map((r, i) => {
         if (i === idx) return edited;
@@ -719,7 +728,10 @@ function WorkoutPlayer() {
       </div>
 
       {resumed && (
-        <div role="status" className="rounded-2xl border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">
+        <div
+          role="status"
+          className="rounded-2xl border border-border bg-muted px-3 py-2 text-xs text-muted-foreground"
+        >
           Resumed your workout.
         </div>
       )}
@@ -994,8 +1006,8 @@ function WorkoutPlayer() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {plural(confirmFinish ?? 0, "exercise")} {confirmFinish === 1 ? "has" : "have"} no sets logged. Finish
-              anyway?
+              {plural(confirmFinish ?? 0, "exercise")} {confirmFinish === 1 ? "has" : "have"} no
+              sets logged. Finish anyway?
             </AlertDialogTitle>
             <AlertDialogDescription>
               Unlogged exercises won't count toward your history or PRs.
@@ -1027,7 +1039,12 @@ function WorkoutPlayer() {
             toast.success("Exercise substituted");
             setSets((cur) => ({
               ...cur,
-              [ex.id]: (cur[ex.id] ?? []).map(() => ({ weight: "", reps: "", seconds: "", done: false })),
+              [ex.id]: (cur[ex.id] ?? []).map(() => ({
+                weight: "",
+                reps: "",
+                seconds: "",
+                done: false,
+              })),
             }));
             setSwapOpen(false);
             await queryClient.invalidateQueries({ queryKey: ["workout-day", dayId] });
@@ -1147,8 +1164,12 @@ function setMissing(
 ): string | null {
   const pos = (v: string) => v !== "" && Number(v) > 0;
   if (tracking === "time") return pos(row.seconds) ? null : "a time";
-  if (!pos(row.reps)) return tracking === "weight_reps" && !pos(row.weight) ? "weight and reps" : "reps";
-  if (tracking === "weight_reps" && !(row.weight !== "" && Number(row.weight) >= 0 && pos(row.weight)))
+  if (!pos(row.reps))
+    return tracking === "weight_reps" && !pos(row.weight) ? "weight and reps" : "reps";
+  if (
+    tracking === "weight_reps" &&
+    !(row.weight !== "" && Number(row.weight) >= 0 && pos(row.weight))
+  )
     return "a weight";
   return null;
 }
@@ -1192,11 +1213,19 @@ function HoldTimer({
             }
           }}
         >
-          {running ? "Stop" : <><Play className="mr-1 h-4 w-4" /> {hasValue ? "Redo" : "Start"}</>}
+          {running ? (
+            "Stop"
+          ) : (
+            <>
+              <Play className="mr-1 h-4 w-4" /> {hasValue ? "Redo" : "Start"}
+            </>
+          )}
         </Button>
       )}
       {running ? (
-        <span className="flex-1 text-center font-display text-2xl font-bold tabular-nums">{elapsed} s</span>
+        <span className="flex-1 text-center font-display text-2xl font-bold tabular-nums">
+          {elapsed} s
+        </span>
       ) : editing || !hasValue ? (
         <Input
           aria-label="Seconds"

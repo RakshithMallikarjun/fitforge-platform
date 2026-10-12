@@ -143,7 +143,8 @@ export function RecordPaymentDialog({
       setReference("");
       setNote("");
     },
-    onError: (e: any) => toast.error("Couldn't record the payment", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't record the payment", { description: formatServerError(e) }),
   });
 
   const currency = quote?.currency ?? null;
@@ -253,8 +254,8 @@ export function RecordPaymentDialog({
             {isBackdated && (
               <div className="space-y-2 rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-sm">
                 <p className="text-destructive">
-                  This payment is dated {plural(backdatedDays, "day")} ago. Revenue will be booked to{" "}
-                  {bookedMonth}.
+                  This payment is dated {plural(backdatedDays, "day")} ago. Revenue will be booked
+                  to {bookedMonth}.
                 </p>
                 <div className="flex items-center gap-2">
                   <Checkbox

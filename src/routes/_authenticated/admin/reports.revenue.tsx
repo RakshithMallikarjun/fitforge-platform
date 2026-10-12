@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminOnly } from "@/components/admin-only";
 import { useMemo } from "react";
@@ -20,6 +21,8 @@ import { PERIOD_LABEL, getRevenueReport } from "@/lib/membership-plans.functions
 import { formatMoney } from "@/lib/format-money";
 
 export const Route = createFileRoute("/_authenticated/admin/reports/revenue")({
+  head: () =>
+    consolePageHead("Revenue report", "Revenue report and records in your Fit Foundry account."),
   component: () => (
     <AdminOnly area="Revenue reports">
       <RevenueReportPage />

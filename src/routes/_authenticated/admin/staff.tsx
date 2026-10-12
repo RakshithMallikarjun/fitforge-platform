@@ -1,9 +1,19 @@
+import { consolePageHead } from "@/lib/page-head";
 import { plural } from "@/lib/copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { formatServerError } from "@/lib/format-error";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, ShieldCheck, UserCog, MoreHorizontal, UserX, UserCheck, Send, XCircle } from "lucide-react";
+import {
+  Plus,
+  ShieldCheck,
+  UserCog,
+  MoreHorizontal,
+  UserX,
+  UserCheck,
+  Send,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
@@ -59,6 +69,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/staff")({
+  head: () => consolePageHead("Gym staff", "Gym staff and records in your Fit Foundry account."),
   component: StaffPage,
 });
 

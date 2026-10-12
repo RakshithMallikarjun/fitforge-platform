@@ -21,6 +21,10 @@ export const Route = createFileRoute("/_authenticated/admin")({
         name: "description",
         content: "Manage members, plans, check-ins and reports for your gym.",
       },
+      { property: "og:title", content: "Gym console · Fit Foundry" },
+      { property: "og:description", content: "Gym console · Fit Foundry console and records." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -58,7 +62,8 @@ function AdminShell() {
     navigate({ to: "/auth", replace: true });
   }
 
-  const loading = sessionLoading || isLoading || (user && !user.primaryRole && platformAdmin === undefined);
+  const loading =
+    sessionLoading || isLoading || (user && !user.primaryRole && platformAdmin === undefined);
   // Site owners have no gym role; send them to their own console.
   if (user && !user.primaryRole && platformAdmin) {
     return <Navigate to="/platform" replace />;
@@ -88,7 +93,12 @@ function AdminShell() {
               <SidebarBody onNavigate={() => setNavOpen(false)} />
             </SheetContent>
           </Sheet>
-          <Button variant="ghost" size="sm" onClick={signOut} className="text-destructive md:hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={signOut}
+            className="text-destructive md:hidden"
+          >
             <LogOut className="mr-1.5 h-4 w-4" /> Log out
           </Button>
         </div>

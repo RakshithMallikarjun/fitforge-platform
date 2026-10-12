@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { createFileRoute, Link, useNavigate, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, ClipboardList } from "lucide-react";
@@ -18,6 +19,8 @@ import { PlanActions } from "@/components/plans/plan-actions";
 import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/plans")({
+  head: () =>
+    consolePageHead("Training plans", "Training plans and records in your Fit Foundry account."),
   component: PlansPageShell,
 });
 
