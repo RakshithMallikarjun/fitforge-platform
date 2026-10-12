@@ -222,7 +222,7 @@ function MembersPage() {
             />
           </div>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
-            <SelectTrigger className="w-[170px]">
+            <SelectTrigger className="w-[170px]" aria-label="Filter by status">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -238,7 +238,7 @@ function MembersPage() {
           </Select>
           {isAdmin && (
             <Select value={trainerFilter} onValueChange={setTrainerFilter}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[200px]" aria-label="Filter by trainer">
                 <SelectValue placeholder="Trainer" />
               </SelectTrigger>
               <SelectContent>
@@ -397,7 +397,10 @@ function MembersPage() {
                       <TableCell>
                         {isAdmin && (
                           <DropdownMenu>
-                            <DropdownMenuTrigger className="rounded-lg p-1.5 hover:bg-muted">
+                            <DropdownMenuTrigger
+                              aria-label={`Actions for ${m.display_name ?? m.email ?? "member"}`}
+                              className="rounded-lg p-2.5 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
                               <MoreHorizontal className="h-4 w-4" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">

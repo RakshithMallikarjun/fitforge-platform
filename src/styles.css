@@ -69,7 +69,7 @@
   --font-heading: "General Sans", ui-sans-serif, system-ui, sans-serif;
 
   /* Brand — overridable at runtime */
-  --primary: oklch(0.62 0.14 162); /* emerald-600 #059669 */
+  --primary: oklch(0.51 0.11 166); /* emerald-700 #047857 — 4.5:1 with white text */
   --primary-foreground: oklch(0.99 0.005 162);
   --primary-soft: oklch(0.96 0.04 162); /* emerald-50  */
   --primary-deep: oklch(0.32 0.07 162); /* emerald-900 #064E3B */
@@ -88,14 +88,14 @@
   --popover-foreground: var(--foreground);
 
   --muted: oklch(0.97 0.005 250);
-  --muted-foreground: oklch(0.55 0.03 256); /* slate-500 */
+  --muted-foreground: oklch(0.45 0.03 256); /* slate-600 — 4.5:1 on cards and muted fills */
   --accent: oklch(0.96 0.04 162); /* primary-soft */
   --accent-foreground: var(--primary-deep);
 
   --success: oklch(0.62 0.14 162);
   --info: oklch(0.62 0.14 232);
   --warning: oklch(0.78 0.16 70);
-  --destructive: oklch(0.6 0.22 27);
+  --destructive: oklch(0.55 0.22 27);
   --destructive-foreground: oklch(0.99 0.005 27);
 
   --border: oklch(0.93 0.01 250); /* slate-200 #E2E8F0 */

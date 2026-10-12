@@ -174,7 +174,7 @@ export function AiPlanDialog({
             </div>
 
             <div>
-              <Label>Available equipment</Label>
+              <p id="ai-equipment-label" className="text-sm font-medium">Available equipment</p>
               {equipmentOptions.isLoading ? (
                 <Skeleton className="mt-2 h-8 w-full" />
               ) : equipmentOptions.isError ? (
@@ -186,11 +186,17 @@ export function AiPlanDialog({
                   No equipment tags in your exercise library yet — the plan will use everything.
                 </p>
               ) : (
-                <div className="mt-2 flex flex-wrap gap-2">
+                <div role="group" aria-labelledby="ai-equipment-label" className="mt-2 flex flex-wrap gap-2">
                   {(equipmentOptions.data ?? []).map((item) => {
                     const active = equipment.includes(item);
                     return (
-                      <button key={item} type="button" onClick={() => toggleEquipment(item)}>
+                      <button
+                        key={item}
+                        type="button"
+                        aria-pressed={active}
+                        className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        onClick={() => toggleEquipment(item)}
+                      >
                         <Badge variant={active ? "default" : "outline"} className="cursor-pointer">
                           {item}
                         </Badge>
@@ -228,9 +234,9 @@ export function AiPlanDialog({
             </div>
 
             <div>
-              <Label>Experience</Label>
+              <Label htmlFor="ai-experience">Experience</Label>
               <Select value={experience} onValueChange={(v) => setExperience(v as Experience)}>
-                <SelectTrigger>
+                <SelectTrigger id="ai-experience" aria-label="Experience">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

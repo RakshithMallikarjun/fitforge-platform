@@ -99,9 +99,10 @@ function ProfilePage() {
 
         {editing ? (
           <div className="mx-auto mt-4 flex max-w-xs items-center gap-2">
-            <Input value={name} onChange={(e) => setName(e.target.value)} className="rounded-xl" />
+            <Input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} className="rounded-xl" />
             <Button
               size="icon"
+              aria-label="Save name"
               className="rounded-xl"
               disabled={updateName.isPending || !name.trim()}
               onClick={() => updateName.mutate(name.trim())}
@@ -111,6 +112,7 @@ function ProfilePage() {
             <Button
               size="icon"
               variant="outline"
+              aria-label="Cancel"
               className="rounded-xl"
               onClick={() => {
                 setEditing(false);
@@ -286,6 +288,7 @@ function PushNotificationsSection() {
           <p className="text-xs text-muted-foreground">{hint}</p>
         </div>
         <Switch
+          aria-label="Push notifications"
           checked={enabled}
           disabled={!supported || !configured || !allowedHere || busy}
           onCheckedChange={(v) => (v ? enable() : disable())}

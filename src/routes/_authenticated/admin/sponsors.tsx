@@ -217,7 +217,7 @@ function SponsorsPage() {
               <>
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <Label className="text-sm font-semibold">Ads enabled</Label>
+                    <Label htmlFor="ads-enabled" className="text-sm font-semibold">Ads enabled</Label>
                     <p className="mt-1 max-w-xl text-xs text-muted-foreground">
                       Your members will start seeing sponsored cards. You keep 100% of what you
                       charge your sponsors — Fit Foundry takes nothing and shares nothing with
@@ -225,6 +225,8 @@ function SponsorsPage() {
                     </p>
                   </div>
                   <Switch
+                    id="ads-enabled"
+                    aria-label="Ads enabled"
                     checked={s.ads_enabled}
                     onCheckedChange={(v) => patchSettings({ adsEnabled: v })}
                   />
@@ -232,7 +234,7 @@ function SponsorsPage() {
 
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <Label className="text-sm font-semibold">
+                    <Label htmlFor="ads-platform-fill" className="text-sm font-semibold">
                       Let Fit Foundry fill empty slots
                     </Label>
                     <p className="mt-1 max-w-xl text-xs text-muted-foreground">
@@ -240,6 +242,8 @@ function SponsorsPage() {
                     </p>
                   </div>
                   <Switch
+                    id="ads-platform-fill"
+                    aria-label="Let Fit Foundry fill empty slots"
                     checked={s.allow_platform_fill}
                     onCheckedChange={(v) => patchSettings({ allowPlatformFill: v })}
                   />

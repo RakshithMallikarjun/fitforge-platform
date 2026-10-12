@@ -130,7 +130,7 @@ export function ThreadView({
                 <p
                   className={[
                     "mt-1 text-[10px]",
-                    mine ? "text-primary-foreground/70" : "text-muted-foreground",
+                    mine ? "text-primary-foreground/90" : "text-muted-foreground",
                   ].join(" ")}
                 >
                   {formatTime(m.created_at)}

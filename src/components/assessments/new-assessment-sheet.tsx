@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { useForm } from "react-hook-form";
@@ -491,10 +492,16 @@ function Field({
   error?: string;
   children: React.ReactNode;
 }) {
+  const id = React.useId();
+  const child = React.isValidElement(children)
+    ? React.cloneElement(children as React.ReactElement<{ id?: string }>, { id })
+    : children;
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
-      {children}
+      <Label htmlFor={id} className="text-xs text-muted-foreground">
+        {label}
+      </Label>
+      {child}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );

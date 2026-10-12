@@ -197,11 +197,11 @@ function WorkoutOfTheDay({
   if (!next) {
     return (
       <div className="bento-emerald">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary-foreground/70">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary-foreground/90">
           Workout of the day
         </p>
         <p className="font-numeric mt-2 text-xl font-bold">No active plan yet</p>
-        <p className="mt-1 text-xs text-primary-foreground/70">
+        <p className="mt-1 text-xs text-primary-foreground/90">
           Your trainer will assign one shortly. Check back soon.
         </p>
         <Button variant="secondary" size="sm" disabled className="mt-5 rounded-lg opacity-70">
@@ -214,16 +214,16 @@ function WorkoutOfTheDay({
 
   return (
     <div className="bento-emerald">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary-foreground/70">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary-foreground/90">
         Workout of the day
       </p>
       <p className="font-numeric mt-2 text-2xl font-bold leading-tight">{next.dayLabel}</p>
       {next.muscleGroups.length > 0 && (
-        <p className="mt-1 text-xs capitalize text-primary-foreground/70">
+        <p className="mt-1 text-xs capitalize text-primary-foreground/90">
           {next.muscleGroups.join(" · ")}
         </p>
       )}
-      <div className="mt-3 flex items-center gap-4 text-xs text-primary-foreground/80">
+      <div className="mt-3 flex items-center gap-4 text-xs text-primary-foreground/90">
         <span className="inline-flex items-center gap-1">
           <Dumbbell className="h-3.5 w-3.5" /> {plural(next.exerciseCount, "exercise")}
         </span>
@@ -241,7 +241,7 @@ function WorkoutOfTheDay({
         Start workout
       </Button>
       {disabled && (
-        <p className="mt-2 text-xs text-primary-foreground/80">
+        <p className="mt-2 text-xs text-primary-foreground/90">
           Renew your membership to start workouts.
         </p>
       )}

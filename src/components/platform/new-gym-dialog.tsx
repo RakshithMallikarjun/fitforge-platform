@@ -295,9 +295,9 @@ export function NewGymDialog({
 
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <Label>Timezone</Label>
+              <Label htmlFor="gym-tz">Timezone</Label>
               <Select value={timezone} onValueChange={setTimezone}>
-                <SelectTrigger>
+                <SelectTrigger id="gym-tz" aria-label="Timezone">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -310,9 +310,9 @@ export function NewGymDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Currency</Label>
+              <Label htmlFor="gym-currency">Currency</Label>
               <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger>
+                <SelectTrigger id="gym-currency" aria-label="Currency">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -325,9 +325,9 @@ export function NewGymDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Plan</Label>
+              <Label htmlFor="gym-plan">Plan</Label>
               <Select value={plan} onValueChange={(v) => setPlan(v as SubscriptionPlan)}>
-                <SelectTrigger className="capitalize">
+                <SelectTrigger id="gym-plan" aria-label="Plan" className="capitalize">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -345,6 +345,7 @@ export function NewGymDialog({
             <button
               type="button"
               className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold"
+              aria-expanded={showOptional}
               onClick={() => setShowOptional((s) => !s)}
             >
               Optional

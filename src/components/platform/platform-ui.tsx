@@ -169,7 +169,7 @@ export function KpiCard({
               <button
                 type="button"
                 aria-label={`What does ${label} mean?`}
-                className="grid h-4 w-4 place-items-center rounded-full border border-border text-[9px] text-muted-foreground"
+                className="grid h-6 w-6 place-items-center rounded-full border border-border text-[11px] text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 ?
               </button>
