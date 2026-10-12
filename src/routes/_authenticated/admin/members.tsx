@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
@@ -182,7 +183,7 @@ function MembersPage() {
     <>
       <GlassHeader
         title="Members"
-        subtitle={`${(members as any[]).length} ${(members as any[]).length === 1 ? "member" : "members"} in your gym`}
+        subtitle={`${plural((members as any[]).length, "member")} in your gym`}
         rightExtra={
           isAdmin ? (
             <div className="flex gap-2">

@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Loader2, Sparkles } from "lucide-react";
@@ -111,7 +112,7 @@ export function AiPlanDialog({
       onDraft(draft);
       onOpenChange(false);
       toast.success("Draft ready", {
-        description: `${draft.days.length} day${draft.days.length === 1 ? "" : "s"} loaded — review before saving.`,
+        description: `${plural(draft.days.length, "day")} loaded — review before saving.`,
       });
     },
   });

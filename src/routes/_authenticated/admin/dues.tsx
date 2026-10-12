@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute } from "@tanstack/react-router";
@@ -119,7 +120,7 @@ function DuesPage() {
   const remindMany = useMutation({
     mutationFn: (memberIds: string[]) => sendBulkReminders({ data: { memberIds } }),
     onSuccess: (res) => {
-      toast.success(`${res.sent} reminder${res.sent === 1 ? "" : "s"} sent`, {
+      toast.success(`${plural(res.sent, "reminder")} sent`, {
         description: res.skipped
           ? `Sent ${res.sent}, skipped ${res.skipped} (already reminded today)`
           : undefined,
@@ -198,7 +199,7 @@ function DuesPage() {
               sub={
                 summary.data.refunded_this_month > 0
                   ? `Refunded this month: ${formatMoney(summary.data.refunded_this_month, currency)}`
-                  : `${summary.data.current_count} members current`
+                  : `${plural(summary.data.current_count, "member")} current`
               }
               icon={<IndianRupee className="h-4 w-4 text-primary" />}
             />
@@ -330,7 +331,7 @@ function DuesPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Send {selectedIds.length} reminder{selectedIds.length === 1 ? "" : "s"}?
+              Send {plural(selectedIds.length, "reminder")}?
             </AlertDialogTitle>
             <AlertDialogDescription>
               Each selected member gets an in-app message and a push notification about their dues.

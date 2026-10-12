@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { formatPrescription } from "@/lib/workout-math";
 import { useEffect, useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
@@ -619,7 +620,7 @@ function DayBuilder({
         <div className="flex items-center gap-3">
           {invalidCount > 0 && (
             <p className="text-xs text-destructive">
-              Fix sets/reps on {invalidCount} exercise{invalidCount === 1 ? "" : "s"}
+              Fix sets/reps on {plural(invalidCount, "exercise")}
             </p>
           )}
           <Button onClick={onNext} disabled={days.length === 0 || invalidCount > 0}>
@@ -712,7 +713,7 @@ function SortableDay({
           <span>{meta.emoji}</span> {meta.label}
         </span>
         <Badge variant="secondary" className="ml-auto">
-          {day.exercises.length} exercises
+          {plural(day.exercises.length, "exercise")}
         </Badge>
         <Button variant="ghost" size="icon" onClick={remove}>
           <Trash2 className="h-4 w-4 text-destructive" />

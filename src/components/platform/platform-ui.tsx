@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useState, type ReactNode } from "react";
 import { Check, Copy } from "lucide-react";
 import { formatDistanceToNowStrict, format } from "date-fns";
@@ -89,7 +90,7 @@ export function activityAgo(days: number | null | undefined, never = "never") {
   if (days === null || days === undefined) return never;
   if (days <= 0) return "today";
   if (days === 1) return "yesterday";
-  return `${days} days ago`;
+  return `${plural(days, "day")} ago`;
 }
 
 export function HealthBar({

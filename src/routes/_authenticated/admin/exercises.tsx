@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute } from "@tanstack/react-router";
@@ -127,7 +128,7 @@ function ExercisesPage() {
             <h2 className="text-2xl font-bold tracking-tight">Exercise library</h2>
             <p className="text-sm text-muted-foreground">
               <Badge variant="secondary" className="rounded-full">
-                {exercises.length} exercises
+                {plural(exercises.length, "exercise")}
               </Badge>
             </p>
           </div>

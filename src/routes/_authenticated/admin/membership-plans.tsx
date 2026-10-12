@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { AdminOnly } from "@/components/admin-only";
@@ -192,7 +193,7 @@ function MembershipPlansPage() {
                 <li key={p.id} className="flex items-center justify-between px-4 py-3 text-sm">
                   <span>{p.name}</span>
                   <span className="text-xs text-muted-foreground">
-                    {p.member_count} active member{p.member_count === 1 ? "" : "s"}
+                    {plural(p.member_count, "active member")}
                   </span>
                 </li>
               ))}
@@ -220,7 +221,7 @@ function MembershipPlansPage() {
             <AlertDialogTitle>Archive {archiveTarget?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
               {archiveTarget?.member_count
-                ? `${archiveTarget.member_count} member(s) stay on this tier until their term ends, but you can't sell it again.`
+                ? `${plural(archiveTarget.member_count, "member")} ${archiveTarget.member_count === 1 ? "stays" : "stay"} on this tier until their term ends, but you can't sell it again.`
                 : "You won't be able to sell this tier any more. Past payments are kept."}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -313,7 +314,7 @@ function PlanCard({
             <p className="mt-1 text-xs text-muted-foreground">{plan.description}</p>
           )}
           <p className="mt-1 text-xs text-muted-foreground">
-            {plan.member_count} active member{plan.member_count === 1 ? "" : "s"}
+            {plural(plan.member_count, "active member")}
           </p>
         </div>
         {canEdit && (

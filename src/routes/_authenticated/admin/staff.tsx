@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { formatServerError } from "@/lib/format-error";
 import { useState } from "react";
@@ -361,5 +362,5 @@ function timeAgo(iso: string): string {
   const h = Math.round(mins / 60);
   if (h < 24) return `${h}h ago`;
   const d = Math.round(h / 24);
-  return `${d} day${d === 1 ? "" : "s"} ago`;
+  return `${plural(d, "day")} ago`;
 }

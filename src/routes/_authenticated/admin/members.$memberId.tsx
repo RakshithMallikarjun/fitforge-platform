@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { ExpandablePlanSessions } from "@/components/plans/plan-sessions";
 import { OverloadSuggestions } from "@/components/plans/overload-suggestions";
 import { useState } from "react";
@@ -357,7 +358,7 @@ function MemberProfile() {
                                   : ""}
                               </p>
                               <p className="mt-1 text-xs font-medium text-foreground">
-                                {completed} / {total} sessions logged
+                                {completed} / {plural(total, "session")} logged
                               </p>
                             </div>
                             <Link

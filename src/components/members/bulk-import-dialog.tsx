@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useState, type ChangeEvent } from "react";
 import Papa from "papaparse";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -307,7 +308,7 @@ export function BulkImportDialog({ open, onOpenChange }: Props) {
                 disabled={!good.length || checking || mut.isPending}
               >
                 {mut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Invite {good.length} new member{good.length === 1 ? "" : "s"}
+                Invite {plural(good.length, "new member")}
               </Button>
             </>
           )}

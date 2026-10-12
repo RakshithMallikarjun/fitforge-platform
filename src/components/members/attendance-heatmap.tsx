@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { formatShortDate } from "@/lib/format-date";
 /**
  * GitHub-style 12-week attendance heatmap for the Member 360 Attendance tab.
@@ -50,7 +51,7 @@ export function AttendanceHeatmap({ entries }: { entries: Entry[] }) {
     <div className="rounded-2xl border border-border bg-card p-5">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold tracking-tight">Last 12 weeks</h3>
-        <span className="text-xs text-muted-foreground">{total} check-ins</span>
+        <span className="text-xs text-muted-foreground">{plural(total, "check-in")}</span>
       </div>
       <div className="mt-4 overflow-x-auto">
         <div className="flex gap-1">
@@ -59,7 +60,7 @@ export function AttendanceHeatmap({ entries }: { entries: Entry[] }) {
               {col.map((cell) => (
                 <div
                   key={cell.key}
-                  title={`${formatShortDate(cell.date)} — ${cell.count} check-in${cell.count === 1 ? "" : "s"}`}
+                  title={`${formatShortDate(cell.date)} — ${plural(cell.count, "check-in")}`}
                   className={["h-3 w-3 rounded-sm", shade(cell.count, cell.inRange)].join(" ")}
                 />
               ))}

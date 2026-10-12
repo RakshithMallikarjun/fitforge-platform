@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { formatPrescription } from "@/lib/workout-math";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
@@ -536,7 +537,7 @@ function WorkoutPlayer() {
         /* ignore */
       }
       if (prs.length > 0) {
-        toast.success(`🏆 ${prs.length} new PR${prs.length > 1 ? "s" : ""}!`);
+        toast.success(`🏆 ${plural(prs.length, "new PR")}!`);
       } else {
         toast.success("Workout logged. Great work.");
       }
@@ -699,8 +700,8 @@ function WorkoutPlayer() {
         >
           <CloudOff className="h-3.5 w-3.5" />
           {online
-            ? `Syncing ${queuedSets} saved set${queuedSets === 1 ? "" : "s"}…`
-            : `You're offline — ${queuedSets} set${queuedSets === 1 ? "" : "s"} will sync when you're back online.`}
+            ? `Syncing ${plural(queuedSets, "saved set")}…`
+            : `You're offline — ${plural(queuedSets, "set")} will sync when you're back online.`}
         </div>
       )}
       <div className="flex items-center justify-between">
@@ -813,7 +814,7 @@ function WorkoutPlayer() {
         <p className="mt-2 text-xs font-medium text-foreground">
           {ex.exercise.tracking === "time"
             ? formatPrescription(ex.sets, ex.reps, "time")
-            : `${ex.sets} sets${ex.reps ? ` × ${ex.reps} reps` : ""}`}{" "}
+            : `${plural(ex.sets, "set")}${ex.reps ? ` × ${plural(ex.reps, "rep")}` : ""}`}{" "}
           · rest {ex.rest_seconds}s
         </p>
         {ex.notes && (
@@ -993,7 +994,7 @@ function WorkoutPlayer() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmFinish} exercise{confirmFinish === 1 ? " has" : "s have"} no sets logged. Finish
+              {plural(confirmFinish, "exercise")} {confirmFinish === 1 ? "has" : "have"} no sets logged. Finish
               anyway?
             </AlertDialogTitle>
             <AlertDialogDescription>

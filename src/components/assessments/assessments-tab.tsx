@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { Fragment, useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -146,7 +147,7 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
           <div className="text-sm">
             <p className="font-semibold">Due for assessment</p>
             <p className="text-xs opacity-80">
-              It's been {dueDays} days since the last assessment.
+              It's been {plural(dueDays, "day")} since the last assessment.
             </p>
           </div>
         </div>

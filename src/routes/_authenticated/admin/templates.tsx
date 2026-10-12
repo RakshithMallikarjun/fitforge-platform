@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -65,10 +66,10 @@ function TemplatesPage() {
       }),
     onSuccess: (r) => {
       if (r.assigned > 0) {
-        toast.success(`Assigned to ${r.assigned} member${r.assigned === 1 ? "" : "s"}`);
+        toast.success(`Assigned to ${plural(r.assigned, "member")}`);
       }
       if (r.errors.length > 0) {
-        toast.warning(`${r.errors.length} assignment${r.errors.length === 1 ? "" : "s"} failed`, {
+        toast.warning(`${plural(r.errors.length, "assignment")} failed`, {
           description: r.errors.slice(0, 5).join("\n"),
         });
       }
@@ -141,7 +142,7 @@ function TemplatesPage() {
                   <p className="mt-1 text-xs text-muted-foreground">Archived</p>
                 )}
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {t.day_count} {t.day_count === 1 ? "day" : "days"} · {t.exercise_count ?? 0} exercises
+                  {plural(t.day_count, "day")} · {plural(t.exercise_count ?? 0, "exercise")}
                   {t.duration_weeks ? ` · ${t.duration_weeks} wk` : ""}
                 </p>
                 {t.trainer_name && (
@@ -248,7 +249,7 @@ function TemplatesPage() {
                 </>
               ) : (
                 <>
-                  Assign to {selected.size} member{selected.size === 1 ? "" : "s"}
+                  Assign to {plural(selected.size, "member")}
                 </>
               )}
             </Button>

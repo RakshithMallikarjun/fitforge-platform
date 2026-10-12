@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute } from "@tanstack/react-router";
@@ -648,7 +649,7 @@ function HistoryTab({ data }: { data: ProgressData }) {
                 <p className="text-sm font-semibold">{h.plan_name ?? "Workout"}</p>
                 <p className="text-xs text-muted-foreground">
                   {format(parseISO(h.date), "PPP")} · {h.day_label ?? "Session"} ·{" "}
-                  {h.exercise_count} exercises
+                  {plural(h.exercise_count, "exercise")}
                 </p>
               </div>
               {h.effort_rating != null && (

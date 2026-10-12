@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -101,8 +102,7 @@ function AdminDashboard() {
                 footer={
                   <span className="flex flex-col gap-0.5">
                     <span>
-                      Paid & current · {stats.activeAccounts.toLocaleString()} member{" "}
-                      {stats.activeAccounts === 1 ? "account" : "accounts"} enabled
+                      Paid & current · {plural(stats.activeAccounts, "member account")} enabled
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <ArrowUpRight className="h-3 w-3" /> {stats.newThisMonth} new this month
@@ -342,8 +342,7 @@ function AtRiskMembers({ isAdmin }: { isAdmin: boolean }) {
                     </span>
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {r.workouts30d} workouts · {r.checkIns30d} check-ins · {r.messages30d}{" "}
-                    {r.messages30d === 1 ? "message" : "messages"} sent
+                    {plural(r.workouts30d, "workout")} · {plural(r.checkIns30d, "check-in")} · {plural(r.messages30d, "message")} sent
                     (30d)
                   </p>
                 </div>

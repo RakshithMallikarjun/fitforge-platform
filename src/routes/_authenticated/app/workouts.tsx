@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -115,7 +116,7 @@ function WorkoutsPage() {
                         )}
                         <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
                           <span className="inline-flex items-center gap-1">
-                            <Dumbbell className="h-3.5 w-3.5" /> {d.exerciseCount} exercises
+                            <Dumbbell className="h-3.5 w-3.5" /> {plural(d.exerciseCount, "exercise")}
                           </span>
                           <span className="inline-flex items-center gap-1">
                             <Clock className="h-3.5 w-3.5" /> ~{d.estimatedMinutes} min
@@ -234,7 +235,7 @@ function SessionSummaryDialog({ logId, onClose }: { logId: string | null; onClos
                 </span>
               )}
               <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
-                {data.exercises.length} exercise{data.exercises.length === 1 ? "" : "s"}
+                {plural(data.exercises.length, "exercise")}
               </span>
             </div>
             {data.exercises.length === 0 ? (

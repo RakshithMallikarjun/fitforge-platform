@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useQuery } from "@tanstack/react-query";
 import { differenceInCalendarDays } from "date-fns";
 import { CreditCard } from "lucide-react";
@@ -66,12 +67,12 @@ export function MyMembershipCard() {
                   );
                   if (days < 0)
                     return data.status === "overdue_grace"
-                      ? `overdue · in grace period (ended ${Math.abs(days)} day${days === -1 ? "" : "s"} ago)`
-                      : `expired ${Math.abs(days)} day${days === -1 ? "" : "s"} ago`;
+                      ? `overdue · in grace period (ended ${plural(Math.abs(days), "day")} ago)`
+                      : `expired ${plural(Math.abs(days), "day")} ago`;
                   if (data.status === "cancelled")
                     return `Cancelled — access until ${formatShortDate(data.ends_on!)}`;
                   if (days === 0) return "expires today";
-                  return `${days} day${days === 1 ? "" : "s"} left`;
+                  return `${plural(days, "day")} left`;
                 })()}
               </span>
             </p>

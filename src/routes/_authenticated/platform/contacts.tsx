@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -104,7 +105,7 @@ function PlatformContactsPage() {
           onClick={async () => {
             try {
               await navigator.clipboard.writeText(adminEmails.join(", "));
-              toast.success(`Copied ${adminEmails.length} admin email${adminEmails.length === 1 ? "" : "s"}`);
+              toast.success(`Copied ${plural(adminEmails.length, "admin email")}`);
             } catch {
               toast.error("Couldn't copy — your browser blocked clipboard access");
             }

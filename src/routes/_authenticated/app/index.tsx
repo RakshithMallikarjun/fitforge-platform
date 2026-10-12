@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -85,7 +86,7 @@ function MemberHome() {
           footer={
             (data?.currentStreak ?? 0) === 0
               ? "Start your streak today"
-              : `${data?.currentStreak} day${(data?.currentStreak ?? 0) === 1 ? "" : "s"} — keep it going`
+              : `${plural(data?.currentStreak ?? 0, "day")} — keep it going`
           }
         />
         <BentoStatCard
@@ -216,7 +217,7 @@ function WorkoutOfTheDay({
       )}
       <div className="mt-3 flex items-center gap-4 text-xs text-primary-foreground/80">
         <span className="inline-flex items-center gap-1">
-          <Dumbbell className="h-3.5 w-3.5" /> {next.exerciseCount} exercises
+          <Dumbbell className="h-3.5 w-3.5" /> {plural(next.exerciseCount, "exercise")}
         </span>
         <span className="inline-flex items-center gap-1">
           <Clock className="h-3.5 w-3.5" /> ~{next.estimatedMinutes} min
