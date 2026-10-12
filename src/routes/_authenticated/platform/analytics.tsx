@@ -1,4 +1,5 @@
 import { consolePageHead } from "@/lib/page-head";
+import { plural } from "@/lib/copy";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -163,7 +164,7 @@ function PlatformAnalyticsPage() {
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="Growth" subtitle={`Gyms and members created, last ${days} days`}>
+        <Panel title="Growth" subtitle={`Gyms and members created, last ${plural(days, "day")}`}>
           {signups.isError ? (
             <ErrorState
               message={(signups.error as Error).message}
@@ -206,7 +207,7 @@ function PlatformAnalyticsPage() {
 
         <Panel
           title="Engagement"
-          subtitle={`Workouts, check-ins and active members, last ${days} days`}
+          subtitle={`Workouts, check-ins and active members, last ${plural(days, "day")}`}
         >
           {activity.isError ? (
             <ErrorState

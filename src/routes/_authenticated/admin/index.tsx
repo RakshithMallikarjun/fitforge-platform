@@ -77,7 +77,7 @@ function AdminDashboard() {
             className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-accent/40 px-4 py-3 text-sm"
           >
             <span className="font-semibold">
-              {duesToChase} {duesToChase === 1 ? "member" : "members"} to chase
+              {plural(duesToChase, "member")} to chase
             </span>
             <span className="text-muted-foreground">
               {duesSummary?.overdue_count ?? 0} overdue · {duesSummary?.due_today_count ?? 0} due
