@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { accessibleBrand } from "@/lib/brand-contrast";
 
 export type GymTheme = {
   primaryColor: string; // hex
@@ -66,19 +67,26 @@ const fmt = (L: number, C: number, H: number) =>
   `oklch(${L.toFixed(3)} ${C.toFixed(3)} ${H.toFixed(1)})`;
 
 /** Full token set derived from a single brand hex (same hue, shifted L/C). */
-function deriveTokens(hex: string, prefix: "primary" | "secondary"): Record<string, string> {
+function deriveTokens(
+  hex: string,
+  prefix: "primary" | "secondary",
+  foreground: string,
+  dark: boolean,
+): Record<string, string> {
   const c = hexToOklchParts(hex);
-  if (!c) return {};
+  const f = hexToOklchParts(foreground);
+  if (!c || !f) return {};
   const { L, C, H } = c;
   const out: Record<string, string> = {
     [`--${prefix}`]: fmt(L, C, H),
-    [`--${prefix}-foreground`]: L > 0.7 ? fmt(0.2, 0.03, H) : fmt(0.99, 0.005, H),
-    [`--${prefix}-soft`]: fmt(0.96, Math.min(C, 0.05), H),
+    [`--${prefix}-foreground`]: fmt(f.L, f.C, f.H),
+    [`--${prefix}-soft`]: dark ? fmt(0.28, Math.min(C, 0.05), H) : fmt(0.96, Math.min(C, 0.05), H),
   };
   if (prefix === "primary") {
-    out["--primary-deep"] = fmt(0.32, Math.min(C * 0.6, 0.09), H);
+    out["--primary-deep"] = dark ? fmt(0.24, Math.min(C * 0.6, 0.05), H) : fmt(0.32, Math.min(C * 0.6, 0.09), H);
     out["--accent"] = out["--primary-soft"];
-    out["--accent-foreground"] = out["--primary-deep"];
+    // Accent text sits on the soft tint: deep shade in light mode, light tint in dark mode.
+    out["--accent-foreground"] = dark ? fmt(0.92, Math.min(C, 0.05), H) : out["--primary-deep"];
     out["--ring"] = out["--primary"];
     out["--success"] = out["--primary"];
     out["--sidebar-primary"] = out["--primary"];
@@ -91,6 +99,13 @@ function deriveTokens(hex: string, prefix: "primary" | "secondary"): Record<stri
   return out;
 }
 
+function brandTokens(hex: string, prefix: "primary" | "secondary", dark: boolean) {
+  const b = accessibleBrand(hex);
+  return dark
+    ? deriveTokens(b.dark, prefix, b.darkForeground, true)
+    : deriveTokens(b.light, prefix, b.lightForeground, false);
+}
+
 /** Neutral secondary set used when a gym hasn't picked one (never sky blue). */
 const NEUTRAL_SECONDARY: Record<string, string> = {
   "--secondary": "oklch(0.45 0.01 260)",
@@ -98,6 +113,15 @@ const NEUTRAL_SECONDARY: Record<string, string> = {
   "--secondary-soft": "oklch(0.96 0.005 260)",
   "--info": "oklch(0.45 0.01 260)",
 };
+const NEUTRAL_SECONDARY_DARK: Record<string, string> = {
+  "--secondary": "oklch(0.75 0.01 260)",
+  "--secondary-foreground": "oklch(0.2 0.02 260)",
+  "--secondary-soft": "oklch(0.28 0.01 260)",
+  "--info": "oklch(0.75 0.01 260)",
+};
+
+const block = (sel: string, t: Record<string, string>) =>
+  `${sel}{${Object.entries(t).map(([k, v]) => `${k}:${v};`).join("")}}`;
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<GymTheme>(DEFAULT_THEME);
@@ -105,13 +129,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
-    const tokens: Record<string, string> = {
-      ...deriveTokens(theme.primaryColor, "primary"),
-      ...(theme.secondaryColor
-        ? deriveTokens(theme.secondaryColor, "secondary")
-        : NEUTRAL_SECONDARY),
+    const light = {
+      ...brandTokens(theme.primaryColor, "primary", false),
+      ...(theme.secondaryColor ? brandTokens(theme.secondaryColor, "secondary", false) : NEUTRAL_SECONDARY),
     };
-    for (const [k, v] of Object.entries(tokens)) root.style.setProperty(k, v);
+    const dark = {
+      ...brandTokens(theme.primaryColor, "primary", true),
+      ...(theme.secondaryColor ? brandTokens(theme.secondaryColor, "secondary", true) : NEUTRAL_SECONDARY_DARK),
+    };
+    let el = document.getElementById("gym-brand-tokens") as HTMLStyleElement | null;
+    if (!el) {
+      el = document.createElement("style");
+      el.id = "gym-brand-tokens";
+      document.head.appendChild(el);
+    }
+    // html:root / html.dark outrank the base :root and .dark rules in styles.css.
+    el.textContent = block("html:root", light) + block("html.dark", dark);
     const stack = `"${theme.fontFamily}", ui-sans-serif, system-ui, sans-serif`;
     root.style.setProperty("--font-body", stack);
     root.style.setProperty("--font-heading", stack);
