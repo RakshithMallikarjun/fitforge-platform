@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Toaster as Sonner, toast, useSonner } from "sonner";
+import { notificationDeadline } from "@/lib/notification-deadline";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
@@ -16,10 +17,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
     }
     for (const item of toasts) {
-      if (item.type !== "error" || !item.duration || item.duration <= 8000 || !Number.isFinite(item.duration) || deadlines.current.has(item.id)) continue;
-      deadlines.current.set(item.id, setTimeout(() => toast.dismiss(item.id), item.duration));
+      const duration = notificationDeadline(item.type, item.duration ?? props.toastOptions?.duration ?? props.duration);
+      if (duration === null || deadlines.current.has(item.id)) continue;
+      deadlines.current.set(item.id, setTimeout(() => toast.dismiss(item.id), duration));
     }
-  }, [toasts]);
+  }, [toasts, props.duration, props.toastOptions?.duration]);
   useEffect(() => () => {
     for (const timer of deadlines.current.values()) clearTimeout(timer);
   }, []);

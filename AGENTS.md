@@ -14,3 +14,4 @@
 - Use src/lib/copy.ts for counted labels and segment-aware navigation matching so plural forms and active links stay consistent.
 - Protected console pending states use public-safe ConsoleLoading chrome, then real shells with content skeletons until access checks finish; never render protected content before authorization.
 - The shared Sonner wrapper enforces wall-clock expiry for long error notifications so hovering cannot keep them indefinitely.
+- Render platform audit details through src/lib/audit-summary.ts with an expandable raw view so changes remain readable without losing the original data.
