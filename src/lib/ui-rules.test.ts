@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+// @ts-nocheck -- run with bun test; follows existing project test convention
+import { describe, expect, it } from "bun:test";
 import { isNavActive } from "./copy";
 import { notificationDeadline } from "./notification-deadline";
 

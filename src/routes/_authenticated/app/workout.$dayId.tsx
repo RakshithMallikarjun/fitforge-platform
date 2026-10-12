@@ -994,7 +994,7 @@ function WorkoutPlayer() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {plural(confirmFinish, "exercise")} {confirmFinish === 1 ? "has" : "have"} no sets logged. Finish
+              {plural(confirmFinish ?? 0, "exercise")} {confirmFinish === 1 ? "has" : "have"} no sets logged. Finish
               anyway?
             </AlertDialogTitle>
             <AlertDialogDescription>

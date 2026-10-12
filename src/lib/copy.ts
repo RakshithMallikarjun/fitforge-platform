@@ -1,6 +1,6 @@
 /** Count labels share singular/plural handling, including zero. */
-export function plural(count: number, singular: string, multiple = `${singular}s`): string {
-  return `${count} ${count === 1 ? singular : multiple}`;
+export function plural(count: number | string, singular: string, multiple = `${singular}s`): string {
+  return `${count} ${Number(count) === 1 ? singular : multiple}`;
 }
 
 export function sentenceCase(value: string): string {
