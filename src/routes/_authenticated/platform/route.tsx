@@ -44,7 +44,7 @@ function PlatformShell() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const checkPlatformAdmin = useServerFn(isPlatformAdmin);
-  const { data: allowed, isLoading } = useQuery({
+  const { data: allowed, isLoading, isError, refetch } = useQuery({
     queryKey: ["is-platform-admin"],
     queryFn: () => checkPlatformAdmin(),
     staleTime: 5 * 60_000,
@@ -98,7 +98,12 @@ function PlatformShell() {
           </Button>
         </div>
       </div>
-      {loading ? <ConsoleContentSkeleton /> : <Outlet />}
+      {isError ? (
+        <main className="mx-auto max-w-[1400px] px-6 py-8" role="alert">
+          <p className="text-sm text-muted-foreground">We couldn't check your platform access.</p>
+          <Button variant="outline" className="mt-3" onClick={() => void refetch()}>Try again</Button>
+        </main>
+      ) : loading ? <ConsoleContentSkeleton /> : <Outlet />}
     </div>
   );
 }

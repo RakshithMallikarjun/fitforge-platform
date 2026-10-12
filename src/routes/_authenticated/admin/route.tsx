@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 function AdminShell() {
-  const { data: user, isLoading } = useCurrentUser();
+  const { data: user, isLoading, sessionLoading } = useCurrentUser();
   const { setTheme } = useTheme();
   const fetchTheme = useServerFn(getGymTheme);
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ function AdminShell() {
     navigate({ to: "/auth", replace: true });
   }
 
-  const loading = isLoading || (user && !user.primaryRole && platformAdmin === undefined);
+  const loading = sessionLoading || isLoading || (user && !user.primaryRole && platformAdmin === undefined);
   // Site owners have no gym role; send them to their own console.
   if (user && !user.primaryRole && platformAdmin) {
     return <Navigate to="/platform" replace />;

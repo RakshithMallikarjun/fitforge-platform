@@ -351,10 +351,10 @@ function MemberProfile() {
                                   ? `Starts ${formatShortDate(p.start_date)}`
                                   : "No start date"}
                                 {p.duration_weeks
-                                  ? ` · ${p.duration_weeks} ${p.duration_weeks === 1 ? "week" : "weeks"}`
+                                  ? ` · ${plural(p.duration_weeks, "week")}`
                                   : ""}
                                 {typeof p.day_count === "number"
-                                  ? ` · ${p.day_count} ${p.day_count === 1 ? "day" : "days"}`
+                                  ? ` · ${plural(p.day_count, "day")}`
                                   : ""}
                               </p>
                               <p className="mt-1 text-xs font-medium text-foreground">

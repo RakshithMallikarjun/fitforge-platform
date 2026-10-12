@@ -22,6 +22,16 @@ test("landing page renders with legal links and no broken images", async ({ page
   expect(broken).toBe(0);
 });
 
+test("legal pages remain reachable from home", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: "Privacy Policy" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.getByRole("link", { name: "Terms of Service" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.getByRole("link", { name: "Back home" }).click();
+  await expect(page).toHaveURL(/\/$/);
+});
+
 test("gym management software page renders copy, FAQ and structured data", async ({ page }) => {
   await page.goto("/gym-management-software");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/gym management software/i);
