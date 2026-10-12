@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -35,6 +36,11 @@ import {
 } from "@/lib/platform.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/")({
+  head: () =>
+    consolePageHead(
+      "Platform overview",
+      "Platform overview and records in your Fit Foundry account.",
+    ),
   component: PlatformOverviewPage,
 });
 
@@ -75,10 +81,7 @@ function PlatformOverviewPage() {
   const o = overview.data;
   const gymRows = gyms.data ?? [];
   const needsAttention = [...gymRows]
-    .filter(
-      (g) =>
-        g.is_enabled && isAtRiskGym(g.created_at, g.days_since_activity),
-    )
+    .filter((g) => g.is_enabled && isAtRiskGym(g.created_at, g.days_since_activity))
     .sort((a, b) => (b.days_since_activity ?? 9999) - (a.days_since_activity ?? 9999));
   const overdue = gymRows.filter(
     (g) => g.payment_status === "overdue" || g.payment_status === "failed",

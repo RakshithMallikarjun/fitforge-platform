@@ -1,8 +1,19 @@
+import { consolePageHead } from "@/lib/page-head";
+import { plural } from "@/lib/copy";
 import { createFileRoute } from "@tanstack/react-router";
 import { formatServerError } from "@/lib/format-error";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, ShieldCheck, UserCog, MoreHorizontal, UserX, UserCheck, Send, XCircle } from "lucide-react";
+import {
+  Plus,
+  ShieldCheck,
+  UserCog,
+  MoreHorizontal,
+  UserX,
+  UserCheck,
+  Send,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { GlassHeader } from "@/components/glass-header";
 import { Button } from "@/components/ui/button";
@@ -58,6 +69,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/staff")({
+  head: () => consolePageHead("Gym staff", "Gym staff and records in your Fit Foundry account."),
   component: StaffPage,
 });
 
@@ -133,7 +145,7 @@ function StaffPage() {
     <>
       <GlassHeader
         title="Staff"
-        subtitle={`${(staff as any[]).length} ${(staff as any[]).length === 1 ? "person" : "people"} on your team`}
+        subtitle={`${plural((staff as any[]).length, "person", "people")} on your team`}
         rightExtra={
           <Button size="sm" className="rounded-lg" onClick={() => setOpen(true)}>
             <Plus className="mr-1.5 h-4 w-4" /> Invite staff
@@ -361,5 +373,5 @@ function timeAgo(iso: string): string {
   const h = Math.round(mins / 60);
   if (h < 24) return `${h}h ago`;
   const d = Math.round(h / 24);
-  return `${d} day${d === 1 ? "" : "s"} ago`;
+  return `${plural(d, "day")} ago`;
 }

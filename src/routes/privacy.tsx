@@ -25,7 +25,7 @@ function Privacy() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="font-display text-3xl font-bold tracking-tight">Privacy Policy</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Last updated: 31 August 2026</p>
+      <p className="mt-2 text-sm text-muted-foreground">Last updated: 12 October 2026</p>
 
       <div className="mt-8 space-y-6 text-sm leading-relaxed text-foreground/90">
         <section>
@@ -59,6 +59,15 @@ function Privacy() {
             You can request a copy of your data, correction of inaccuracies, or deletion of your
             account and photos at any time by contacting your gym or writing to us. Deactivated
             accounts stop being processed for training purposes immediately.
+          </p>
+        </section>
+        <section>
+          <h2 className="font-display text-lg font-semibold">Contact and grievance officer</h2>
+          <p className="mt-2">
+            For privacy questions, requests about your personal data, or grievances under India's
+            Digital Personal Data Protection Act, contact [Grievance officer name] at [email]. The
+            grievance officer is based in [city], India. We aim to acknowledge requests within 7
+            days and respond within 30 days, subject to applicable legal requirements.
           </p>
         </section>
         <section>

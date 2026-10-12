@@ -71,6 +71,10 @@ export const Route = createFileRoute("/_authenticated/admin/sponsors")({
         name: "description",
         content: "Sell local sponsorships in your member app and track impressions and clicks.",
       },
+      { property: "og:title", content: "Sponsors · Fit Foundry" },
+      { property: "og:description", content: "Sponsors · Fit Foundry console and records." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -130,7 +134,10 @@ function SponsorsPage() {
       qc.setQueryData(["gym-ad-settings"], ctx?.prev);
       toast.error("Couldn't save your ad settings", { description: formatServerError(e) });
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["gym-ad-settings"] }),
+    onSuccess: () => {
+      toast.success("Saved");
+      void qc.invalidateQueries({ queryKey: ["gym-ad-settings"] });
+    },
   });
 
   const statusMutation = useMutation({
@@ -139,7 +146,8 @@ function SponsorsPage() {
       toast.success("Status updated");
       void qc.invalidateQueries({ queryKey: ["gym-ads"] });
     },
-    onError: (e: any) => toast.error("Couldn't change the status", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't change the status", { description: formatServerError(e) }),
   });
 
   const deleteMutation = useMutation({
@@ -149,7 +157,8 @@ function SponsorsPage() {
       setPendingDelete(null);
       void qc.invalidateQueries({ queryKey: ["gym-ads"] });
     },
-    onError: (e: any) => toast.error("Couldn't delete this sponsor", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't delete this sponsor", { description: formatServerError(e) }),
   });
 
   const s = settings.data;
@@ -470,7 +479,8 @@ function PlatformCampaignsTab() {
   const mutation = useMutation({
     mutationFn: (v: { adId: string; blocked: boolean }) => setBlocked({ data: v }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["platform-ads-for-gym"] }),
-    onError: (e: any) => toast.error("Couldn't update this campaign", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't update this campaign", { description: formatServerError(e) }),
   });
 
   if (isLoading) return <Skeleton className="h-40 w-full" />;

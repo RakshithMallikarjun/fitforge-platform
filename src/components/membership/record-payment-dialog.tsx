@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useEffect, useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -142,7 +143,8 @@ export function RecordPaymentDialog({
       setReference("");
       setNote("");
     },
-    onError: (e: any) => toast.error("Couldn't record the payment", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't record the payment", { description: formatServerError(e) }),
   });
 
   const currency = quote?.currency ?? null;
@@ -252,8 +254,8 @@ export function RecordPaymentDialog({
             {isBackdated && (
               <div className="space-y-2 rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-sm">
                 <p className="text-destructive">
-                  This payment is dated {backdatedDays} days ago. Revenue will be booked to{" "}
-                  {bookedMonth}.
+                  This payment is dated {plural(backdatedDays, "day")} ago. Revenue will be booked
+                  to {bookedMonth}.
                 </p>
                 <div className="flex items-center gap-2">
                   <Checkbox
@@ -321,7 +323,7 @@ export function RecordPaymentDialog({
                       ? `Renewal — currently ends ${formatShortDate(quote.previous_ends_on)}`
                       : "First payment on this tier"}
                     {quote.is_lapsed_restart
-                      ? ` · lapsed ${quote.days_lapsed} day${quote.days_lapsed === 1 ? "" : "s"}, restarts ${formatShortDate(quote.covers_from)}`
+                      ? ` · lapsed ${plural(quote.days_lapsed, "day")}, restarts ${formatShortDate(quote.covers_from)}`
                       : ""}
                   </p>
                   {quote.supersedes_plan_name && (

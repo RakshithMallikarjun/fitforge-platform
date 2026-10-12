@@ -1,3 +1,5 @@
+import { consolePageHead } from "@/lib/page-head";
+import { plural } from "@/lib/copy";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,6 +23,11 @@ import { useMembershipExpired } from "@/lib/membership-context";
 import { formatDayDate, formatRelativeDay } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/app/")({
+  head: () =>
+    consolePageHead(
+      "My training home",
+      "My training home and records in your Fit Foundry account.",
+    ),
   component: MemberHome,
 });
 
@@ -85,7 +92,7 @@ function MemberHome() {
           footer={
             (data?.currentStreak ?? 0) === 0
               ? "Start your streak today"
-              : `${data?.currentStreak} day${(data?.currentStreak ?? 0) === 1 ? "" : "s"} — keep it going`
+              : `${plural(data?.currentStreak ?? 0, "day")} — keep it going`
           }
         />
         <BentoStatCard
@@ -154,7 +161,9 @@ function MemberHome() {
               From {data.latestNote.author ?? "your trainer"}
             </p>
           </div>
-          <p className="mt-2 text-sm leading-relaxed text-card-foreground">{data.latestNote.body}</p>
+          <p className="mt-2 text-sm leading-relaxed text-card-foreground">
+            {data.latestNote.body}
+          </p>
           <p className="mt-2 text-[11px] text-muted-foreground">
             {formatRelativeDay(data.latestNote.created_at)}
           </p>
@@ -216,7 +225,7 @@ function WorkoutOfTheDay({
       )}
       <div className="mt-3 flex items-center gap-4 text-xs text-primary-foreground/80">
         <span className="inline-flex items-center gap-1">
-          <Dumbbell className="h-3.5 w-3.5" /> {next.exerciseCount} exercises
+          <Dumbbell className="h-3.5 w-3.5" /> {plural(next.exerciseCount, "exercise")}
         </span>
         <span className="inline-flex items-center gap-1">
           <Clock className="h-3.5 w-3.5" /> ~{next.estimatedMinutes} min

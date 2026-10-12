@@ -1,3 +1,5 @@
+import { consolePageHead } from "@/lib/page-head";
+import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute } from "@tanstack/react-router";
@@ -62,6 +64,8 @@ import { formatMoney } from "@/lib/format-money";
 import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/dues")({
+  head: () =>
+    consolePageHead("Member dues", "Member dues and records in your Fit Foundry account."),
   component: DuesPage,
 });
 
@@ -119,7 +123,7 @@ function DuesPage() {
   const remindMany = useMutation({
     mutationFn: (memberIds: string[]) => sendBulkReminders({ data: { memberIds } }),
     onSuccess: (res) => {
-      toast.success(`${res.sent} reminder${res.sent === 1 ? "" : "s"} sent`, {
+      toast.success(`${plural(res.sent, "reminder")} sent`, {
         description: res.skipped
           ? `Sent ${res.sent}, skipped ${res.skipped} (already reminded today)`
           : undefined,
@@ -127,7 +131,8 @@ function DuesPage() {
       setSelected({});
       qc.invalidateQueries({ queryKey: ["dues"] });
     },
-    onError: (e: any) => toast.error("Couldn't send reminders", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't send reminders", { description: formatServerError(e) }),
   });
 
   const currency = summary.data?.currency;
@@ -198,7 +203,7 @@ function DuesPage() {
               sub={
                 summary.data.refunded_this_month > 0
                   ? `Refunded this month: ${formatMoney(summary.data.refunded_this_month, currency)}`
-                  : `${summary.data.current_count} members current`
+                  : `${plural(summary.data.current_count, "member")} current`
               }
               icon={<IndianRupee className="h-4 w-4 text-primary" />}
             />
@@ -287,14 +292,14 @@ function DuesPage() {
                     <TableCell>
                       <div className="flex justify-end gap-2">
                         <span title={r.reminded_today ? "Already reminded today" : undefined}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={remindOne.isPending || r.reminded_today}
-                          onClick={() => remindOne.mutate({ memberId: r.member_id })}
-                        >
-                          {r.reminded_today ? "Reminded today" : "Remind"}
-                        </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={remindOne.isPending || r.reminded_today}
+                            onClick={() => remindOne.mutate({ memberId: r.member_id })}
+                          >
+                            {r.reminded_today ? "Reminded today" : "Remind"}
+                          </Button>
                         </span>
                         <Button
                           size="sm"
@@ -329,9 +334,7 @@ function DuesPage() {
       <AlertDialog open={bulkConfirm} onOpenChange={setBulkConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Send {selectedIds.length} reminder{selectedIds.length === 1 ? "" : "s"}?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Send {plural(selectedIds.length, "reminder")}?</AlertDialogTitle>
             <AlertDialogDescription>
               Each selected member gets an in-app message and a push notification about their dues.
             </AlertDialogDescription>
@@ -436,13 +439,15 @@ function BillingSettingsDialog({
       qc.invalidateQueries({ queryKey: ["dues"] });
       onOpenChange(false);
     },
-    onError: (e: any) => toast.error("Couldn't save settings", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't save settings", { description: formatServerError(e) }),
   });
 
   const testEmail = useMutation({
     mutationFn: () => sendDailySummaryNow(),
     onSuccess: (res: any) => toast.success(`Summary sent to ${res?.sentTo ?? "your email"}`),
-    onError: (e: any) => toast.error("Couldn't send the summary", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't send the summary", { description: formatServerError(e) }),
   });
 
   return (
@@ -463,13 +468,11 @@ function BillingSettingsDialog({
             </Button>
           </div>
         ) : isLoading || !state ? (
-          (
-            <div className="space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-24 w-full" />
-            </div>
-          )
+          <div className="space-y-3">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
         ) : (
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">

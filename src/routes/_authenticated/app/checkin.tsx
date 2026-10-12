@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { useCallback, useEffect, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -14,6 +15,8 @@ import { useMembership } from "@/lib/membership-context";
 import { SponsoredSlot } from "@/components/ads/sponsored-card";
 
 export const Route = createFileRoute("/_authenticated/app/checkin")({
+  head: () =>
+    consolePageHead("My gym check-in", "My gym check-in and records in your Fit Foundry account."),
   component: CheckinPage,
 });
 

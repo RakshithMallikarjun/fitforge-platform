@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -24,6 +25,11 @@ import { cn } from "@/lib/utils";
 import { getAttendanceReport } from "@/lib/admin-stats.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/reports/attendance")({
+  head: () =>
+    consolePageHead(
+      "Attendance report",
+      "Attendance report and records in your Fit Foundry account.",
+    ),
   component: AttendanceReportPage,
 });
 

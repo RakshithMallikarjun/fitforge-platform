@@ -1,3 +1,5 @@
+import { consolePageHead } from "@/lib/page-head";
+import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
@@ -62,13 +64,12 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { AddMemberDialog } from "@/components/members/add-member-dialog";
 import { BulkImportDialog } from "@/components/members/bulk-import-dialog";
 import { AssignTrainersDialog } from "@/components/members/assign-trainers-dialog";
-import {
-  StatusBadge,
-  type MembershipStatus,
-} from "@/components/members/status-badge";
+import { StatusBadge, type MembershipStatus } from "@/components/members/status-badge";
 import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/members")({
+  head: () =>
+    consolePageHead("Gym members", "Gym members and records in your Fit Foundry account."),
   component: MembersPageShell,
 });
 
@@ -127,7 +128,8 @@ function MembersPage() {
   const resendInvite = useMutation({
     mutationFn: (memberId: string) => resendMemberInvite({ data: { memberId } }),
     onSuccess: (res: any) => toast.success(`Invite re-sent to ${res?.email ?? "member"}`),
-    onError: (e: any) => toast.error("Couldn't re-send the invite", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Couldn't re-send the invite", { description: formatServerError(e) }),
   });
 
   const rows = useMemo(() => {
@@ -135,7 +137,7 @@ function MembersPage() {
     const filtered = (members as any[]).filter((m) => {
       const name = (m.display_name ?? m.email ?? "").toLowerCase();
       if (q && !name.includes(q) && !(m.email ?? "").toLowerCase().includes(q)) return false;
-      const status = (m.membership?.status ?? "none");
+      const status = m.membership?.status ?? "none";
       if (statusFilter !== "all" && status !== statusFilter) return false;
       if (trainerFilter !== "all") {
         if (trainerFilter === "none" && m.trainers.length) return false;
@@ -156,8 +158,8 @@ function MembersPage() {
           bv = b.last_sign_in_at ?? "";
           break;
         case "status":
-          av = (a.membership?.status ?? "none");
-          bv = (b.membership?.status ?? "none");
+          av = a.membership?.status ?? "none";
+          bv = b.membership?.status ?? "none";
           break;
         default:
           av = (a.display_name ?? a.email ?? "").toLowerCase();
@@ -182,7 +184,7 @@ function MembersPage() {
     <>
       <GlassHeader
         title="Members"
-        subtitle={`${(members as any[]).length} ${(members as any[]).length === 1 ? "member" : "members"} in your gym`}
+        subtitle={`${plural((members as any[]).length, "member")} in your gym`}
         rightExtra={
           isAdmin ? (
             <div className="flex gap-2">
@@ -307,7 +309,7 @@ function MembersPage() {
               </TableHeader>
               <TableBody>
                 {rows.map((m: any) => {
-                  const status = (m.membership?.status ?? "none");
+                  const status = m.membership?.status ?? "none";
                   const initials = (m.display_name ?? m.email ?? "??").slice(0, 2).toUpperCase();
                   return (
                     <TableRow key={m.id}>

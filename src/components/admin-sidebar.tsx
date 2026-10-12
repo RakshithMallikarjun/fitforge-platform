@@ -25,6 +25,8 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { isPlatformAdmin } from "@/lib/platform.functions";
 import { getGymSettings } from "@/lib/gym-theme.functions";
 import { getDuesSummary } from "@/lib/membership-plans.functions";
+import { isNavActive } from "@/lib/copy";
+import { Button } from "@/components/ui/button";
 
 type NavItem = {
   to: string;
@@ -158,7 +160,7 @@ export function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
             } else if (!item.group) {
               lastGroup = undefined;
             }
-            const active = item.exact ? path === item.to : path.startsWith(item.to);
+            const active = isNavActive(path, item.to, item.exact);
             const Icon = item.icon;
             out.push(
               <Link
@@ -196,13 +198,14 @@ export function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
             {planLabel ? `You're on the ${planLabel} plan.` : "Active"}
           </p>
         </div>
-        <button
+        <Button
+          variant="ghost"
           onClick={signOut}
           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10"
         >
           <LogOut className="h-4 w-4" />
           Log out
-        </button>
+        </Button>
       </div>
     </div>
   );

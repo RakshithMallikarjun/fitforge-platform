@@ -25,7 +25,7 @@ function Terms() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="font-display text-3xl font-bold tracking-tight">Terms of Service</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Last updated: 31 August 2026</p>
+      <p className="mt-2 text-sm text-muted-foreground">Last updated: 12 October 2026</p>
 
       <div className="mt-8 space-y-6 text-sm leading-relaxed text-foreground/90">
         <section>
@@ -57,6 +57,14 @@ function Terms() {
           <p className="mt-2">
             Membership fees and billing cycles are set and collected by your gym. Records shown in
             the app reflect what your gym has entered.
+          </p>
+        </section>
+        <section>
+          <h2 className="font-display text-lg font-semibold">Governing law and jurisdiction</h2>
+          <p className="mt-2">
+            These terms are governed by the laws of India. Subject to applicable law and any
+            mandatory consumer rights, the courts in [city], India have jurisdiction over disputes
+            arising from these terms or use of Fit Foundry.
           </p>
         </section>
         <section>

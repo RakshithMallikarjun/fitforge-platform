@@ -1,3 +1,4 @@
+import { plural } from "@/lib/copy";
 import { useState, type ReactNode } from "react";
 import { Check, Copy } from "lucide-react";
 import { formatDistanceToNowStrict, format } from "date-fns";
@@ -66,9 +67,16 @@ export function isNewGym(createdAt: string | null | undefined) {
  *   At risk  no workout or check-in in the last 14 days (gym's timezone)
  *   Healthy  health score >= 70, otherwise Watch
  */
-export function isAtRiskGym(createdAt: string | null | undefined, daysSinceActivity: number | null | undefined) {
+export function isAtRiskGym(
+  createdAt: string | null | undefined,
+  daysSinceActivity: number | null | undefined,
+) {
   if (isNewGym(createdAt)) return false;
-  return daysSinceActivity === null || daysSinceActivity === undefined || daysSinceActivity >= NEW_GYM_DAYS;
+  return (
+    daysSinceActivity === null ||
+    daysSinceActivity === undefined ||
+    daysSinceActivity >= NEW_GYM_DAYS
+  );
 }
 
 export function healthBand(
@@ -89,7 +97,7 @@ export function activityAgo(days: number | null | undefined, never = "never") {
   if (days === null || days === undefined) return never;
   if (days <= 0) return "today";
   if (days === 1) return "yesterday";
-  return `${days} days ago`;
+  return `${plural(days, "day")} ago`;
 }
 
 export function HealthBar({

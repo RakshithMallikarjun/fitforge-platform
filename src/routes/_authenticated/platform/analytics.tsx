@@ -1,3 +1,5 @@
+import { consolePageHead } from "@/lib/page-head";
+import { plural } from "@/lib/copy";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -35,6 +37,11 @@ import {
 } from "@/lib/platform.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/analytics")({
+  head: () =>
+    consolePageHead(
+      "Platform analytics",
+      "Platform analytics and records in your Fit Foundry account.",
+    ),
   component: PlatformAnalyticsPage,
 });
 
@@ -157,7 +164,7 @@ function PlatformAnalyticsPage() {
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="Growth" subtitle={`Gyms and members created, last ${days} days`}>
+        <Panel title="Growth" subtitle={`Gyms and members created, last ${plural(days, "day")}`}>
           {signups.isError ? (
             <ErrorState
               message={(signups.error as Error).message}
@@ -200,7 +207,7 @@ function PlatformAnalyticsPage() {
 
         <Panel
           title="Engagement"
-          subtitle={`Workouts, check-ins and active members, last ${days} days`}
+          subtitle={`Workouts, check-ins and active members, last ${plural(days, "day")}`}
         >
           {activity.isError ? (
             <ErrorState
@@ -373,9 +380,12 @@ function PlatformAnalyticsPage() {
                       {g.checkins_30d}
                     </TableCell>
                     <TableCell>
-                      <HealthBar score={g.health_score} memberCount={g.member_count} createdAt={g.created_at}
-                      daysSinceActivity={g.days_since_activity}
-                    />
+                      <HealthBar
+                        score={g.health_score}
+                        memberCount={g.member_count}
+                        createdAt={g.created_at}
+                        daysSinceActivity={g.days_since_activity}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

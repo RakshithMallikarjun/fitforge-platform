@@ -1,0 +1,6 @@
+- [x] Shared plural copy and readable audit trail
+- [x] Console wording, navigation, loading shells and notifications
+- [x] Optimistic gym enablement and sponsor save feedback
+- [x] Home canonical and legal placeholders
+- [x] Verify targeted rules, home/legal and gym-admin preview
+- [ ] Platform-only click-through verification — requesting account has gym-admin access, not platform-admin access

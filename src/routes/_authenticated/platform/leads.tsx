@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -23,6 +24,8 @@ import { MEMBER_COUNT_OPTIONS, listLeads, setLeadStatus, type Lead } from "@/lib
 import { formatServerError } from "@/lib/format-error";
 
 export const Route = createFileRoute("/_authenticated/platform/leads")({
+  head: () =>
+    consolePageHead("Platform leads", "Platform leads and records in your Fit Foundry account."),
   component: PlatformLeadsPage,
 });
 
@@ -84,7 +87,9 @@ function PlatformLeadsPage() {
             <TableBody>
               {data.map((l) => (
                 <TableRow key={l.id}>
-                  <TableCell className="text-xs text-muted-foreground">{relTime(l.created_at)}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {relTime(l.created_at)}
+                  </TableCell>
                   <TableCell>
                     <p className="font-medium">{l.gym_name}</p>
                     <p className="text-xs text-muted-foreground">{l.city}</p>
@@ -104,7 +109,9 @@ function PlatformLeadsPage() {
                   <TableCell>
                     <Select
                       value={l.status}
-                      onValueChange={(v) => update.mutate({ id: l.id, status: v as Lead["status"] })}
+                      onValueChange={(v) =>
+                        update.mutate({ id: l.id, status: v as Lead["status"] })
+                      }
                     >
                       <SelectTrigger className="w-36" aria-label={`Status for ${l.gym_name}`}>
                         <SelectValue />

@@ -1,4 +1,6 @@
+import { consolePageHead } from "@/lib/page-head";
 import { formatServerError } from "@/lib/format-error";
+import { sentenceCase } from "@/lib/copy";
 import { useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -49,6 +51,8 @@ import { NewGymDialog } from "@/components/platform/new-gym-dialog";
 import { listPlatformGyms, setGymEnabled, type PlatformGymRow } from "@/lib/platform.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/gyms/")({
+  head: () =>
+    consolePageHead("Platform gyms", "Platform gyms and records in your Fit Foundry account."),
   component: PlatformGymsPage,
 });
 
@@ -84,7 +88,9 @@ function PlatformGymsPage() {
   const [plan, setPlan] = useState("all");
   const [sort, setSort] = useState<SortKey>("health_score");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
-  const [pendingState, setPendingState] = useState<{ gym: PlatformGymRow; enable: boolean } | null>(null);
+  const [pendingState, setPendingState] = useState<{ gym: PlatformGymRow; enable: boolean } | null>(
+    null,
+  );
   // Keep the last target while the dialog animates closed so the title never loses the gym name.
   const lastPending = useRef<{ gym: PlatformGymRow; enable: boolean } | null>(null);
   if (pendingState) lastPending.current = pendingState;
@@ -106,7 +112,18 @@ function PlatformGymsPage() {
     },
     onError: (err, _v, ctx) => {
       if (ctx?.prev) qc.setQueryData(["platform-gyms"], ctx.prev);
-      toast.error(formatServerError(err, {ownerEmail:"Owner email",primaryColor:"Primary colour",supportEmail:"Support email",slug:"Web address"}, "Could not update the gym"));
+      toast.error(
+        formatServerError(
+          err,
+          {
+            ownerEmail: "Owner email",
+            primaryColor: "Primary colour",
+            supportEmail: "Support email",
+            slug: "Web address",
+          },
+          "Could not update the gym",
+        ),
+      );
     },
     onSuccess: (_r, v) => {
       toast.success(v.enabled ? "Gym enabled" : "Gym disabled");
@@ -212,8 +229,8 @@ function PlatformGymsPage() {
           </SelectTrigger>
           <SelectContent>
             {PAYMENT_OPTIONS.map((p) => (
-              <SelectItem key={p} value={p} className="capitalize">
-                {p === "all" ? "All payments" : p}
+              <SelectItem key={p} value={p}>
+                {p === "all" ? "All payments" : sentenceCase(p)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -332,7 +349,10 @@ function PlatformGymsPage() {
                     {g.checkins_30d}
                   </TableCell>
                   <TableCell>
-                    <HealthBar score={g.health_score} memberCount={g.member_count} createdAt={g.created_at}
+                    <HealthBar
+                      score={g.health_score}
+                      memberCount={g.member_count}
+                      createdAt={g.created_at}
                       daysSinceActivity={g.days_since_activity}
                     />
                   </TableCell>

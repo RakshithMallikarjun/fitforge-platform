@@ -1,3 +1,5 @@
+import { consolePageHead } from "@/lib/page-head";
+import { plural } from "@/lib/copy";
 import { formatPrescription } from "@/lib/workout-math";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { PlanActions } from "@/components/plans/plan-actions";
@@ -11,6 +13,11 @@ import { PlanSessions } from "@/components/plans/plan-sessions";
 import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/plans/$planId")({
+  head: () =>
+    consolePageHead(
+      "Training plan detail",
+      "Training plan detail and records in your Fit Foundry account.",
+    ),
   component: PlanView,
 });
 
@@ -61,9 +68,7 @@ function PlanView() {
               <p className="truncate text-sm font-semibold">
                 {plan.users?.display_name ?? plan.users?.email ?? "Member"}
               </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {plan.users?.email}
-              </p>
+              <p className="truncate text-xs text-muted-foreground">{plan.users?.email}</p>
             </div>
             <span className="text-xs text-primary">View profile →</span>
           </Link>
@@ -110,7 +115,7 @@ function PlanView() {
                 <div className="border-b border-border p-4">
                   <h3 className="text-base font-semibold">{d.day_label}</h3>
                   <p className="text-xs text-muted-foreground">
-                    {d.workout_exercises.length} exercises
+                    {plural(d.workout_exercises.length, "exercise")}
                   </p>
                 </div>
                 <ul className="divide-y divide-border">

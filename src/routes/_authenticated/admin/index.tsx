@@ -1,3 +1,5 @@
+import { consolePageHead } from "@/lib/page-head";
+import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -31,6 +33,8 @@ import { useTheme } from "@/lib/theme-provider";
 import { formatShortDate } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
+  head: () =>
+    consolePageHead("Gym dashboard", "Gym dashboard and records in your Fit Foundry account."),
   component: AdminDashboard,
 });
 
@@ -73,7 +77,7 @@ function AdminDashboard() {
             className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-accent/40 px-4 py-3 text-sm"
           >
             <span className="font-semibold">
-              {duesToChase} {duesToChase === 1 ? "member" : "members"} to chase
+              {plural(duesToChase, "member")} to chase
             </span>
             <span className="text-muted-foreground">
               {duesSummary?.overdue_count ?? 0} overdue · {duesSummary?.due_today_count ?? 0} due
@@ -101,8 +105,7 @@ function AdminDashboard() {
                 footer={
                   <span className="flex flex-col gap-0.5">
                     <span>
-                      Paid & current · {stats.activeAccounts.toLocaleString()} member{" "}
-                      {stats.activeAccounts === 1 ? "account" : "accounts"} enabled
+                      Paid & current · {plural(stats.activeAccounts, "member account")} enabled
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <ArrowUpRight className="h-3 w-3" /> {stats.newThisMonth} new this month
@@ -342,9 +345,8 @@ function AtRiskMembers({ isAdmin }: { isAdmin: boolean }) {
                     </span>
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {r.workouts30d} workouts · {r.checkIns30d} check-ins · {r.messages30d}{" "}
-                    {r.messages30d === 1 ? "message" : "messages"} sent
-                    (30d)
+                    {plural(r.workouts30d, "workout")} · {plural(r.checkIns30d, "check-in")} ·{" "}
+                    {plural(r.messages30d, "message")} sent (30d)
                   </p>
                 </div>
                 <Button asChild size="sm" className="rounded-lg">

@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme-provider";
 import { getGymTheme } from "@/lib/gym-theme.functions";
 import { isPlatformAdmin } from "@/lib/platform.functions";
+import { ConsoleContentSkeleton } from "@/components/console-loading";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -20,6 +21,10 @@ export const Route = createFileRoute("/_authenticated/admin")({
         name: "description",
         content: "Manage members, plans, check-ins and reports for your gym.",
       },
+      { property: "og:title", content: "Gym console · Fit Foundry" },
+      { property: "og:description", content: "Gym console · Fit Foundry console and records." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -27,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 function AdminShell() {
-  const { data: user, isLoading } = useCurrentUser();
+  const { data: user, isLoading, sessionLoading } = useCurrentUser();
   const { setTheme } = useTheme();
   const fetchTheme = useServerFn(getGymTheme);
   const navigate = useNavigate();
@@ -57,18 +62,13 @@ function AdminShell() {
     navigate({ to: "/auth", replace: true });
   }
 
-  if (isLoading || (user && !user.primaryRole && platformAdmin === undefined)) {
-    return (
-      <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">
-        Loading…
-      </div>
-    );
-  }
+  const loading =
+    sessionLoading || isLoading || (user && !user.primaryRole && platformAdmin === undefined);
   // Site owners have no gym role; send them to their own console.
   if (user && !user.primaryRole && platformAdmin) {
     return <Navigate to="/platform" replace />;
   }
-  if (user && user.primaryRole !== "admin" && user.primaryRole !== "trainer") {
+  if (!loading && user && user.primaryRole !== "admin" && user.primaryRole !== "trainer") {
     return <Navigate to="/app" replace />;
   }
 
@@ -93,11 +93,16 @@ function AdminShell() {
               <SidebarBody onNavigate={() => setNavOpen(false)} />
             </SheetContent>
           </Sheet>
-          <Button variant="ghost" size="sm" onClick={signOut} className="text-destructive">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={signOut}
+            className="text-destructive md:hidden"
+          >
             <LogOut className="mr-1.5 h-4 w-4" /> Log out
           </Button>
         </div>
-        <Outlet />
+        {loading ? <ConsoleContentSkeleton /> : <Outlet />}
       </div>
     </div>
   );

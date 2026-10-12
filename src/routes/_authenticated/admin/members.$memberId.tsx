@@ -1,3 +1,5 @@
+import { consolePageHead } from "@/lib/page-head";
+import { plural } from "@/lib/copy";
 import { ExpandablePlanSessions } from "@/components/plans/plan-sessions";
 import { OverloadSuggestions } from "@/components/plans/overload-suggestions";
 import { useState } from "react";
@@ -41,6 +43,8 @@ import { formatDateTime, formatShortDate, formatTime } from "@/lib/format-date";
 import { formatMoney } from "@/lib/format-money";
 
 export const Route = createFileRoute("/_authenticated/admin/members/$memberId")({
+  head: () =>
+    consolePageHead("Member detail", "Member detail and records in your Fit Foundry account."),
   component: MemberProfile,
 });
 
@@ -67,7 +71,8 @@ function MemberProfile() {
 
       qc.invalidateQueries({ queryKey: ["member", memberId] });
     },
-    onError: (e: any) => toast.error("Could not log check-in", { description: formatServerError(e) }),
+    onError: (e: any) =>
+      toast.error("Could not log check-in", { description: formatServerError(e) }),
   });
 
   if (isLoading) {
@@ -133,7 +138,12 @@ function MemberProfile() {
               </span>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setEditOpen(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-lg"
+            onClick={() => setEditOpen(true)}
+          >
             <Pencil className="mr-1.5 h-4 w-4" /> Edit profile
           </Button>
           <EditProfileDialog
@@ -349,15 +359,13 @@ function MemberProfile() {
                                 {p.start_date
                                   ? `Starts ${formatShortDate(p.start_date)}`
                                   : "No start date"}
-                                {p.duration_weeks
-                                  ? ` · ${p.duration_weeks} ${p.duration_weeks === 1 ? "week" : "weeks"}`
-                                  : ""}
+                                {p.duration_weeks ? ` · ${plural(p.duration_weeks, "week")}` : ""}
                                 {typeof p.day_count === "number"
-                                  ? ` · ${p.day_count} ${p.day_count === 1 ? "day" : "days"}`
+                                  ? ` · ${plural(p.day_count, "day")}`
                                   : ""}
                               </p>
                               <p className="mt-1 text-xs font-medium text-foreground">
-                                {completed} / {total} sessions logged
+                                {completed} / {plural(total, "session")} logged
                               </p>
                             </div>
                             <Link

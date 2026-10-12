@@ -1,3 +1,5 @@
+import { consolePageHead } from "@/lib/page-head";
+import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute } from "@tanstack/react-router";
@@ -32,6 +34,11 @@ import {
 import { ExerciseFormDialog } from "@/components/exercises/exercise-form-dialog";
 
 export const Route = createFileRoute("/_authenticated/admin/exercises")({
+  head: () =>
+    consolePageHead(
+      "Exercise library",
+      "Exercise library and records in your Fit Foundry account.",
+    ),
   component: ExercisesPage,
 });
 
@@ -127,7 +134,7 @@ function ExercisesPage() {
             <h2 className="text-2xl font-bold tracking-tight">Exercise library</h2>
             <p className="text-sm text-muted-foreground">
               <Badge variant="secondary" className="rounded-full">
-                {exercises.length} exercises
+                {plural(exercises.length, "exercise")}
               </Badge>
             </p>
           </div>
@@ -246,36 +253,40 @@ function ExercisesPage() {
                     </div>
                   ) : (
                     <>
-                    <div className="pointer-events-none absolute left-3 top-3 inline-flex items-center rounded-full bg-primary/90 px-2 py-1 text-[10px] font-semibold text-primary-foreground shadow-sm">
-                      Gym
-                    </div>
-                    <div className="absolute right-2 top-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 bg-background/80">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setEditing(e);
-                              setFormOpen(true);
-                            }}
-                          >
-                            <Pencil className="mr-1.5 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          {isAdmin && (
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => del.mutate(e.id)}
+                      <div className="pointer-events-none absolute left-3 top-3 inline-flex items-center rounded-full bg-primary/90 px-2 py-1 text-[10px] font-semibold text-primary-foreground shadow-sm">
+                        Gym
+                      </div>
+                      <div className="absolute right-2 top-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 bg-background/80"
                             >
-                              <Trash2 className="mr-1.5 h-4 w-4" /> Delete
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setEditing(e);
+                                setFormOpen(true);
+                              }}
+                            >
+                              <Pencil className="mr-1.5 h-4 w-4" /> Edit
                             </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                            {isAdmin && (
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => del.mutate(e.id)}
+                              >
+                                <Trash2 className="mr-1.5 h-4 w-4" /> Delete
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </>
                   )}
                   {e.description && (

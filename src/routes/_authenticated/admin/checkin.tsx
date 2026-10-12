@@ -1,3 +1,4 @@
+import { consolePageHead } from "@/lib/page-head";
 import { useEffect, useRef, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { createFileRoute } from "@tanstack/react-router";
@@ -19,6 +20,11 @@ import {
 import { formatTime } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_authenticated/admin/checkin")({
+  head: () =>
+    consolePageHead(
+      "Front desk check-in",
+      "Front desk check-in and records in your Fit Foundry account.",
+    ),
   component: AdminCheckin,
 });
 
