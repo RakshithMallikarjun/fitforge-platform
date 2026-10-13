@@ -270,6 +270,41 @@ export type Database = {
           },
         ]
       }
+      dues_digest_log: {
+        Row: {
+          digest_date: string
+          gym_id: string
+          pushed: number
+          reminded: number
+          sent_at: string
+          skipped_reason: string | null
+        }
+        Insert: {
+          digest_date: string
+          gym_id: string
+          pushed?: number
+          reminded?: number
+          sent_at?: string
+          skipped_reason?: string | null
+        }
+        Update: {
+          digest_date?: string
+          gym_id?: string
+          pushed?: number
+          reminded?: number
+          sent_at?: string
+          skipped_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dues_digest_log_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise_logs: {
         Row: {
           completed: boolean
@@ -1639,6 +1674,39 @@ export type Database = {
           },
         ]
       }
+      scheduled_job_runs: {
+        Row: {
+          error: string | null
+          finished_at: string | null
+          gyms_processed: number
+          id: number
+          job: string
+          results: Json | null
+          sent_count: number
+          started_at: string
+        }
+        Insert: {
+          error?: string | null
+          finished_at?: string | null
+          gyms_processed?: number
+          id?: never
+          job: string
+          results?: Json | null
+          sent_count?: number
+          started_at?: string
+        }
+        Update: {
+          error?: string | null
+          finished_at?: string | null
+          gyms_processed?: number
+          id?: never
+          job?: string
+          results?: Json | null
+          sent_count?: number
+          started_at?: string
+        }
+        Relationships: []
+      }
       trainer_assignments: {
         Row: {
           active: boolean
@@ -2344,6 +2412,7 @@ export type Database = {
           workouts_per_active_member_30d: number
         }[]
       }
+      platform_job_runs: { Args: { _gym_id?: string }; Returns: Json }
       platform_mark_owner_invited: {
         Args: { _email: string; _gym_id: string }
         Returns: undefined
