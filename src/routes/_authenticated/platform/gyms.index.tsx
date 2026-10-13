@@ -169,17 +169,38 @@ function PlatformGymsPage() {
     }
   }
 
-  function Th({ k, children, right }: { k: SortKey; children: React.ReactNode; right?: boolean }) {
+  function Th({
+    k,
+    children,
+    right,
+    hint,
+  }: {
+    k: SortKey;
+    children: string;
+    right?: boolean;
+    hint?: string;
+  }) {
+    const button = (
+      <button
+        type="button"
+        className={`inline-flex items-center gap-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${right ? "justify-end" : ""} ${hint ? "underline decoration-dotted underline-offset-4" : ""}`}
+        onClick={() => toggleSort(k)}
+        aria-label={`Sort by ${children.toLowerCase()}`}
+      >
+        {children}
+        <ArrowUpDown className="h-3 w-3 opacity-50" aria-hidden="true" />
+      </button>
+    );
     return (
       <TableHead className={right ? "text-right" : undefined}>
-        <button
-          className={`inline-flex items-center gap-1 ${right ? "justify-end" : ""}`}
-          onClick={() => toggleSort(k)}
-          aria-label={typeof children === "string" ? `Sort by ${children.toLowerCase()}` : undefined}
-        >
-          {children}
-          <ArrowUpDown className="h-3 w-3 opacity-50" />
-        </button>
+        {hint ? (
+          <Tooltip>
+            <TooltipTrigger asChild>{button}</TooltipTrigger>
+            <TooltipContent className="max-w-xs">{hint}</TooltipContent>
+          </Tooltip>
+        ) : (
+          button
+        )}
       </TableHead>
     );
   }
@@ -273,17 +294,8 @@ function PlatformGymsPage() {
                 <TableHead>Enabled</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead>Plan</TableHead>
-                <Th k="active_member_count" right>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span tabIndex={0} className="rounded underline decoration-dotted underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                        Members
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      {ACTIVE_MEMBERSHIP_DEFINITION}
-                    </TooltipContent>
-                  </Tooltip>
+                <Th k="active_member_count" right hint={ACTIVE_MEMBERSHIP_DEFINITION}>
+                  Members
                 </Th>
                 <Th k="workouts_30d" right>
                   Workouts 30d
