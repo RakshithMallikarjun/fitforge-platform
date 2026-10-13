@@ -6,6 +6,8 @@
 export const MIN_CONTRAST = 4.5;
 export const LIGHT_SURFACE = "#ffffff";
 export const LIGHT_BACKGROUND = "#f8fafc";
+/** Darkest brand tint used behind brand text (active nav, accent chips). */
+export const LIGHT_TINT = "#e6ebef";
 /** Approximation of the dark theme card surface (oklch 0.22 0.02 260). */
 export const DARK_SURFACE = "#1e222c";
 
@@ -42,7 +44,7 @@ function mix(hex: string, target: [number, number, number], t: number) {
 }
 
 /** Darken (toward black) until the colour reaches 4.5:1 against every given surface. */
-export function darkenForContrast(hex: string, surfaces: string[] = [LIGHT_SURFACE, LIGHT_BACKGROUND]) {
+export function darkenForContrast(hex: string, surfaces: string[] = [LIGHT_SURFACE, LIGHT_BACKGROUND, LIGHT_TINT]) {
   if (!parse(hex)) return hex;
   const ok = (c: string) => surfaces.every((s) => contrastRatio(c, s) >= MIN_CONTRAST);
   for (let t = 0; t <= 1.0001; t += 0.02) {
