@@ -26,3 +26,11 @@ describe("error expiry", () => {
     expect(notificationDeadline("success", 9000)).toBeNull();
   });
 });
+
+describe("audit trail timestamps", () => {
+  it("renders ISO instants as readable IST dates", async () => {
+    const { formatAuditTimestamp, auditSummary } = await import("./audit-summary");
+    expect(formatAuditTimestamp("2026-10-11T17:35:00Z")).toBe("11 Oct 2026, 11:05 pm IST");
+    expect(auditSummary({ disabled_at: "2026-10-11T17:35:00Z" })).toBe("Disabled at: 11 Oct 2026, 11:05 pm IST");
+  });
+});

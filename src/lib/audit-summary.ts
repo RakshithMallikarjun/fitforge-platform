@@ -6,7 +6,32 @@ function fields(value: unknown): Fields {
     ? (value as Fields)
     : {};
 }
+const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+
+/** "11 Oct 2026, 11:05 pm IST" — readable instant in the given zone. */
+export function formatAuditTimestamp(iso: string, timeZone = "Asia/Kolkata"): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone,
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZoneName: "short",
+    })
+      .formatToParts(d)
+      .map((p) => [p.type, p.value]),
+  );
+  const zone = timeZone === "Asia/Kolkata" ? "IST" : parts.timeZoneName;
+  return `${parts.day} ${parts.month} ${parts.year}, ${parts.hour}:${parts.minute} ${String(parts.dayPeriod ?? "").toLowerCase()} ${zone}`.replace(/\s+/g, " ").trim();
+}
+
 function display(key: string, value: unknown, row: Fields): string {
+  if (typeof value === "string" && ISO_TIMESTAMP.test(value)) return formatAuditTimestamp(value);
   if (value === null || value === undefined || value === "") return "Not set";
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (key === "monthly_amount") {
