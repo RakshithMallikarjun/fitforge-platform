@@ -97,7 +97,7 @@ function TemplatesPage() {
   function openAssign(id: string) {
     setAssignFor(id);
     setSelected(new Set());
-    setAssignDate("");
+    setAssignDate(todayStr());
     setQuery("");
   }
 

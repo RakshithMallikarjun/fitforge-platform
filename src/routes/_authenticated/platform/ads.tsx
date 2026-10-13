@@ -136,7 +136,7 @@ function PlatformAdsPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">Campaigns</CardTitle>
           <Badge variant="outline">
-            {plural(report.data?.fill_enabled_gyms ?? 0, "gym")} accept platform fill
+            {plural(report.data?.fill_enabled_gyms ?? 0, "gym")} {(report.data?.fill_enabled_gyms ?? 0) === 1 ? "accepts" : "accept"} platform fill
           </Badge>
         </CardHeader>
         <CardContent className="p-0">
@@ -368,6 +368,7 @@ function GymInventoryCard({ report }: { report: ReturnType<typeof useQuery<any>>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Input
+                          aria-label={`Ad note for ${g.gym_name}`}
                           className="h-8 min-w-[180px]"
                           placeholder="e.g. 70/30 split, invoiced monthly"
                           value={notes[g.gym_id] ?? g.revenue_note ?? ""}

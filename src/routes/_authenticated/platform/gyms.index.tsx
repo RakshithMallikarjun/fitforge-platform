@@ -211,6 +211,7 @@ function PlatformGymsPage() {
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          aria-label="Search gyms"
           placeholder="Search gym name or slug…"
           className="w-56"
         />
