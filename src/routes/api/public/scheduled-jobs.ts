@@ -9,12 +9,15 @@ export const Route = createFileRoute("/api/public/scheduled-jobs")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env["NOTIFY_WEBHOOK_SECRET"];
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        // Accept the env secret (manual callers) or the database-held scheduler token (pg_cron).
         const provided = request.headers.get("x-webhook-secret") ?? "";
-        if (!secret || provided.length !== secret.length || provided !== secret) {
+        const envSecret = process.env["NOTIFY_WEBHOOK_SECRET"] ?? "";
+        const { data: cfg } = await supabaseAdmin.from("scheduler_config").select("token").maybeSingle();
+        const ok = (v: string) => !!v && v.length === provided.length && v === provided;
+        if (!provided || !(ok(envSecret) || ok((cfg as any)?.token ?? ""))) {
           return new Response("Unauthorized", { status: 401 });
         }
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { runDailySummary } = await import("@/lib/daily-summary.server");
         const { runDuesDigest } = await import("@/lib/dues-digest.server");
         const origin = new URL(request.url).origin;
