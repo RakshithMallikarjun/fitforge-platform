@@ -3,6 +3,7 @@ import { formatServerError } from "@/lib/format-error";
 import { formatMoney } from "@/lib/format-money";
 import { plural, sentenceCase } from "@/lib/copy";
 import { auditSummary } from "@/lib/audit-summary";
+import { JobsPanel } from "@/components/platform/jobs-panel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CURRENCIES } from "@/lib/currencies";
 import { useEffect, useState } from "react";
@@ -668,6 +669,10 @@ function PlatformGymDetailPage() {
         <p className="mt-3 text-[11px] text-muted-foreground">
           Staff contacts only. Member records are never shown in the platform console.
         </p>
+      </Section>
+
+      <Section title="Scheduled jobs">
+        <JobsPanel gymId={g.id} />
       </Section>
 
       <Section title="Audit trail">

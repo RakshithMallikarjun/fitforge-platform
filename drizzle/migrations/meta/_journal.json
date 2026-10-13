@@ -281,6 +281,27 @@
       "when": 1791739303321,
       "tag": "0039_0039_gym_pause_public_contact",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1791913051277,
+      "tag": "0040_scheduled_job_runs",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1791913112662,
+      "tag": "0041_enable_scheduler_extensions",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1791913144244,
+      "tag": "0042_scheduler_token",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,5 @@
-import { supportEmailFooter } from "@/lib/platform-brand";
+import { PLATFORM_URL, supportEmailFooter } from "@/lib/platform-brand";
+import { plural } from "@/lib/copy";
 /**
  * End-of-day membership summary email.
  *
@@ -247,7 +248,7 @@ export function renderSummaryEmail(a: Activity, duesUrl: string) {
     "Manually recorded by your staff — Fit Foundry does not process payments.",
   ].join("\n");
 
-  const subject = `${a.gym_name} — ${a.new_count + a.renewal_count} memberships today, ${money(a.total_collected, a.currency)} collected`;
+  const subject = `${a.gym_name} — ${plural(a.new_count + a.renewal_count, "membership")} today, ${money(a.total_collected, a.currency)} collected`;
   return { subject, html, text: `${text}\n\n${supportEmailFooter().text}` };
 }
 
@@ -298,7 +299,7 @@ export async function runDailySummary(opts: {
   duesBaseUrl?: string;
 }): Promise<SummaryRunResult[]> {
   const out: SummaryRunResult[] = [];
-  const duesUrl = `${opts.duesBaseUrl ?? "https://fitfinity-nexus.lovable.app"}/admin/dues`;
+  const duesUrl = `${opts.duesBaseUrl ?? PLATFORM_URL}/admin/dues`;
 
   let q = supabaseAdmin.from("gyms").select("id, name, timezone, is_enabled");
   if (opts.gymId) q = q.eq("id", opts.gymId);
@@ -335,7 +336,8 @@ export async function runDailySummary(opts: {
         push({ outcome: "skipped", reason: "disabled" });
         continue;
       }
-      if (!opts.force && hourInZone(tz) !== hour) {
+      // Runs every 15 min: send once the local hour has been reached; the log below stops repeats.
+      if (!opts.force && hourInZone(tz) < hour) {
         push({ outcome: "skipped", reason: "not_this_hour" });
         continue;
       }

@@ -401,7 +401,7 @@ export function NewAssessmentSheet({
 
           {/* Notes */}
           <Section title="Notes">
-            <Textarea rows={4} placeholder="Any observations…" {...form.register("notes")} />
+            <Textarea aria-label="Notes" rows={4} placeholder="Any observations…" {...form.register("notes")} />
           </Section>
 
           {/* Progress photo */}

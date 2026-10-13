@@ -594,3 +594,30 @@ export const getOwnerAccessStatus = createServerFn({ method: "GET" })
     if (email) return { state: "invited", email, invitedAt: g.owner_invited_at ?? null };
     return { state: "none" };
   });
+
+export type JobRun = {
+  job: string;
+  started_at: string;
+  finished_at: string | null;
+  gyms_processed: number;
+  sent_count: number;
+  error: string | null;
+  gym_result: { outcome?: string; reason?: string } | null;
+};
+export type JobRunsPayload = {
+  runs: JobRun[];
+  summary_log: { date: string; sent_at: string; recipients: number; skipped_reason: string | null }[];
+  digest_log: { date: string; sent_at: string; pushed: number; reminded: number; skipped_reason: string | null }[];
+};
+
+/** Last run of each scheduled job plus this gym's recent daily send log. */
+export const getJobRuns = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ gymId: z.string().uuid() }).parse(input))
+  .handler(async ({ context, data }): Promise<JobRunsPayload> => {
+    const { data: r, error } = await (context.supabase.rpc as any)("platform_job_runs", {
+      _gym_id: data.gymId,
+    });
+    if (error) fail(error);
+    return (r ?? { runs: [], summary_log: [], digest_log: [] }) as JobRunsPayload;
+  });

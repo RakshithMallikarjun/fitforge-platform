@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useReturnFocus } from "@/lib/focus-return";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 
 import { cn } from "@/lib/utils";
@@ -28,7 +29,9 @@ AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, ...props }, ref) => (
+>(({ className, onCloseAutoFocus: userCloseAutoFocus, ...props }, ref) => {
+  const onCloseAutoFocus = useReturnFocus(userCloseAutoFocus as any);
+  return (
   <AlertDialogPortal>
     <AlertDialogOverlay />
     <AlertDialogPrimitive.Content
@@ -38,9 +41,11 @@ const AlertDialogContent = React.forwardRef<
         className,
       )}
       {...props}
+      onCloseAutoFocus={onCloseAutoFocus}
     />
   </AlertDialogPortal>
-));
+  );
+});
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;
 
 const AlertDialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

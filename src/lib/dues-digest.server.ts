@@ -64,22 +64,42 @@ export async function runDuesDigest(opts: { force?: boolean; hour?: number }) {
       push({ outcome: "skipped", reason: "gym_disabled" });
       continue;
     }
-    if (!opts.force && hourInZone(tz) !== targetHour) {
+    if (!opts.force && hourInZone(tz) < targetHour) {
       push({ outcome: "skipped", reason: "not_this_hour" });
       continue;
     }
+    const today = dateInZone(tz);
+    // Once per gym per local day, even though the scheduler fires every 15 minutes.
+    if (!opts.force) {
+      const { data: done } = await supabaseAdmin
+        .from("dues_digest_log")
+        .select("gym_id")
+        .eq("gym_id", gym.id)
+        .eq("digest_date", today)
+        .maybeSingle();
+      if (done) {
+        push({ outcome: "skipped", reason: "already_logged" });
+        continue;
+      }
+    }
+    const logDigest = (o: { pushed?: number; reminded?: number; skipped_reason?: string | null }) =>
+      supabaseAdmin.from("dues_digest_log").upsert(
+        { gym_id: gym.id, digest_date: today, pushed: o.pushed ?? 0, reminded: o.reminded ?? 0, skipped_reason: o.skipped_reason ?? null },
+        { onConflict: "gym_id,digest_date" },
+      );
 
     const { data: settings } = await supabaseAdmin
       .from("gym_billing_settings")
-      .select("admin_digest_enabled, auto_remind_members, reminder_template")
+      .select("admin_digest_enabled, auto_remind_members, reminder_template, reminder_lead_days")
       .eq("gym_id", gym.id)
       .maybeSingle();
-    if (((settings as any)?.admin_digest_enabled ?? true) === false) {
+    const digestOn = ((settings as any)?.admin_digest_enabled ?? true) !== false;
+    const remindOn = !!(settings as any)?.auto_remind_members;
+    if (!digestOn && !remindOn) {
       push({ outcome: "skipped", reason: "digest_disabled" });
       continue;
     }
-
-    const today = dateInZone(tz);
+    const leadDays = Math.max(0, Number((settings as any)?.reminder_lead_days ?? 3));
     const { data: subs } = await supabaseAdmin
       .from("member_subscriptions")
       .select("id, member_id, plan_id, plan_name_snapshot, period, ends_on, state")
@@ -99,9 +119,11 @@ export async function runDuesDigest(opts: { force?: boolean; hour?: number }) {
     }));
     const overdue = rows.filter((r) => r.days < 0);
     const dueToday = rows.filter((r) => r.days === 0);
+    const dueSoon = rows.filter((r) => r.days > 0 && r.days <= leadDays);
 
     // Nothing outstanding: send nothing at all.
-    if (!overdue.length && !dueToday.length) {
+    if (!overdue.length && !dueToday.length && !dueSoon.length) {
+      await logDigest({ skipped_reason: "nothing_outstanding" });
       push({ outcome: "skipped", reason: "nothing_outstanding" });
       continue;
     }
@@ -140,6 +162,7 @@ export async function runDuesDigest(opts: { force?: boolean; hour?: number }) {
 
     let pushed = 0;
     for (const s of (staff ?? []) as any[]) {
+      if (!digestOn || (!overdue.length && !dueToday.length)) break;
       if (!s.push_subscription) continue;
       await notifyUserPush(
         s.id,
@@ -151,11 +174,11 @@ export async function runDuesDigest(opts: { force?: boolean; hour?: number }) {
     }
 
     let reminded = 0;
-    if ((settings as any)?.auto_remind_members) {
+    if (remindOn) {
       const template =
         (settings as any)?.reminder_template ??
         "Hi {member_name}, your {plan_name} membership at {gym_name} is due on {due_date}. Amount: {amount}.";
-      const targets = [...overdue, ...dueToday];
+      const targets = [...overdue, ...dueToday, ...dueSoon];
       const memberIds = targets.map((r) => r.member_id);
       const { data: recent } = memberIds.length
         ? await supabaseAdmin
@@ -197,6 +220,7 @@ export async function runDuesDigest(opts: { force?: boolean; hour?: number }) {
       }
     }
 
+    await logDigest({ pushed, reminded });
     push({
       outcome: "pushed",
       overdue: overdue.length,
