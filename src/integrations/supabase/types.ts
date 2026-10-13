@@ -1707,6 +1707,21 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduler_config: {
+        Row: {
+          id: boolean
+          token: string
+        }
+        Insert: {
+          id?: boolean
+          token?: string
+        }
+        Update: {
+          id?: boolean
+          token?: string
+        }
+        Relationships: []
+      }
       trainer_assignments: {
         Row: {
           active: boolean

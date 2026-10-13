@@ -295,6 +295,13 @@
       "when": 1791913112662,
       "tag": "0041_enable_scheduler_extensions",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1791913144244,
+      "tag": "0042_scheduler_token",
+      "breakpoints": true
     }
   ]
 }
