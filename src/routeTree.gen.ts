@@ -50,6 +50,7 @@ import { Route as AuthenticatedPlatformGymsRouteRouteImport } from './routes/_au
 import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform/leads'
 import { Route as ApiPublicDailySummaryRouteImport } from './routes/api/public/daily-summary'
 import { Route as ApiPublicDuesDigestRouteImport } from './routes/api/public/dues-digest'
+import { Route as ApiPublicScheduledJobsRouteImport } from './routes/api/public/scheduled-jobs'
 import { Route as AuthenticatedAdminMembersMemberIdRouteImport } from './routes/_authenticated/admin/members.$memberId'
 import { Route as AuthenticatedAdminPlansPlanIdRouteImport } from './routes/_authenticated/admin/plans.$planId'
 import { Route as AuthenticatedAdminPlansNewRouteImport } from './routes/_authenticated/admin/plans.new'
@@ -281,6 +282,11 @@ const ApiPublicDuesDigestRoute = ApiPublicDuesDigestRouteImport.update({
   path: '/api/public/dues-digest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicScheduledJobsRoute = ApiPublicScheduledJobsRouteImport.update({
+  id: '/api/public/scheduled-jobs',
+  path: '/api/public/scheduled-jobs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminMembersMemberIdRoute =
   AuthenticatedAdminMembersMemberIdRouteImport.update({
     id: '/$memberId',
@@ -374,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/api/public/daily-summary': typeof ApiPublicDailySummaryRoute
   '/api/public/dues-digest': typeof ApiPublicDuesDigestRoute
+  '/api/public/scheduled-jobs': typeof ApiPublicScheduledJobsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
@@ -421,6 +428,7 @@ export interface FileRoutesByTo {
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/api/public/daily-summary': typeof ApiPublicDailySummaryRoute
   '/api/public/dues-digest': typeof ApiPublicDuesDigestRoute
+  '/api/public/scheduled-jobs': typeof ApiPublicScheduledJobsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
@@ -474,6 +482,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/api/public/daily-summary': typeof ApiPublicDailySummaryRoute
   '/api/public/dues-digest': typeof ApiPublicDuesDigestRoute
+  '/api/public/scheduled-jobs': typeof ApiPublicScheduledJobsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
@@ -527,6 +536,7 @@ export interface FileRouteTypes {
     | '/platform/leads'
     | '/api/public/daily-summary'
     | '/api/public/dues-digest'
+    | '/api/public/scheduled-jobs'
     | '/admin/'
     | '/app/'
     | '/platform/'
@@ -574,6 +584,7 @@ export interface FileRouteTypes {
     | '/platform/leads'
     | '/api/public/daily-summary'
     | '/api/public/dues-digest'
+    | '/api/public/scheduled-jobs'
     | '/admin'
     | '/app'
     | '/platform'
@@ -626,6 +637,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/leads'
     | '/api/public/daily-summary'
     | '/api/public/dues-digest'
+    | '/api/public/scheduled-jobs'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/_authenticated/platform/'
@@ -656,6 +668,7 @@ export interface RootRouteChildren {
   ManifestFileRoute: typeof ManifestFileRoute
   ApiPublicDailySummaryRoute: typeof ApiPublicDailySummaryRoute
   ApiPublicDuesDigestRoute: typeof ApiPublicDuesDigestRoute
+  ApiPublicScheduledJobsRoute: typeof ApiPublicScheduledJobsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -947,6 +960,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicDuesDigestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/scheduled-jobs': {
+      id: '/api/public/scheduled-jobs'
+      path: '/api/public/scheduled-jobs'
+      fullPath: '/api/public/scheduled-jobs'
+      preLoaderRoute: typeof ApiPublicScheduledJobsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/members/$memberId': {
       id: '/_authenticated/admin/members/$memberId'
       path: '/$memberId'
@@ -1185,6 +1205,7 @@ const rootRouteChildren: RootRouteChildren = {
   ManifestFileRoute: ManifestFileRoute,
   ApiPublicDailySummaryRoute: ApiPublicDailySummaryRoute,
   ApiPublicDuesDigestRoute: ApiPublicDuesDigestRoute,
+  ApiPublicScheduledJobsRoute: ApiPublicScheduledJobsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
