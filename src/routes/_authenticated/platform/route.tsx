@@ -96,6 +96,10 @@ function PlatformShell() {
                 <Link
                   key={item.to}
                   to={item.to}
+                  activeOptions={{ exact: !!item.exact }}
+                  activeProps={{ "aria-current": active ? "page" : undefined } as any}
+                  inactiveProps={{ "aria-current": undefined } as any}
+                  aria-current={active ? "page" : undefined}
                   className={[
                     "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
                     active
