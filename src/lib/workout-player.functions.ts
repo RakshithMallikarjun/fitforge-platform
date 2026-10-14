@@ -159,9 +159,32 @@ export const getPreviousSetValues = createServerFn({ method: "GET" })
 
 export const startWorkoutLog = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { planId: string | null; workoutDayId: string }) => d)
+  .inputValidator(
+    (d: {
+      planId: string | null;
+      workoutDayId: string;
+      /** Client-generated id so an offline replay never creates a second session. */
+      clientLogId?: string;
+      /** Device-local day the session was performed on (offline replays). */
+      date?: string;
+    }) => {
+      const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (d.clientLogId != null && !uuid.test(d.clientLogId)) throw new Error("Invalid session id");
+      if (d.date != null && !/^\d{4}-\d{2}-\d{2}$/.test(d.date)) throw new Error("Invalid date");
+      return d;
+    },
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    if (data.clientLogId) {
+      const { data: mine } = await supabase
+        .from("workout_logs")
+        .select("id")
+        .eq("id", data.clientLogId)
+        .eq("member_id", userId)
+        .maybeSingle();
+      if (mine?.id) return { logId: mine.id as string };
+    }
     const { data: user, error: uErr } = await supabase
       .from("users")
       .select("gym_id")
@@ -171,7 +194,14 @@ export const startWorkoutLog = createServerFn({ method: "POST" })
 
     // Stamp the row with the gym-local calendar day so streak/consistency reads agree.
     const { timeZone } = await resolveGymTimezone(supabase, userId);
-    const today = dateStringInZone(timeZone);
+    const gymToday = dateStringInZone(timeZone);
+    // An offline session keeps the day it happened on, if within the last 2 days.
+    const today =
+      data.date &&
+      data.date <= gymToday &&
+      Date.parse(`${gymToday}T00:00:00Z`) - Date.parse(`${data.date}T00:00:00Z`) <= 2 * 864e5
+        ? data.date
+        : gymToday;
     // Reuse an in-progress log for the same day if present
     const { data: existing } = await supabase
       .from("workout_logs")
@@ -183,11 +213,12 @@ export const startWorkoutLog = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (existing?.id) return { logId: existing.id as string };
+    if (existing?.id && !data.clientLogId) return { logId: existing.id as string };
 
     const { data: ins, error } = await supabase
       .from("workout_logs")
       .insert({
+        ...(data.clientLogId ? { id: data.clientLogId } : {}),
         gym_id: user.gym_id,
         member_id: userId,
         plan_id: data.planId,
