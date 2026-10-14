@@ -621,3 +621,19 @@ export const getJobRuns = createServerFn({ method: "GET" })
     if (error) fail(error);
     return (r ?? { runs: [], summary_log: [], digest_log: [] }) as JobRunsPayload;
   });
+
+/** Platform admin "Run now" for one gym; still sends at most once per gym per day. */
+export const runJobNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ gymId: z.string().uuid(), job: z.enum(["daily_summary", "dues_digest"]) }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: ok, error } = await context.supabase.rpc("is_platform_admin");
+    if (error) fail(error);
+    if (!ok) throw new Error("Only platform admins can run jobs");
+    const { trackJob } = await import("@/lib/scheduled-jobs.server");
+    const r = await trackJob(data.job, { gymId: data.gymId, manual: true });
+    const mine = r.results.find((x: any) => x.gym_id === data.gymId);
+    return { error: r.error, outcome: mine?.outcome ?? null, reason: mine?.reason ?? null };
+  });

@@ -18,50 +18,12 @@ export const Route = createFileRoute("/api/public/scheduled-jobs")({
         if (!provided || !(ok(envSecret) || ok((cfg as any)?.token ?? ""))) {
           return new Response("Unauthorized", { status: 401 });
         }
-        const { runDailySummary } = await import("@/lib/daily-summary.server");
-        const { runDuesDigest } = await import("@/lib/dues-digest.server");
+        const { trackJob } = await import("@/lib/scheduled-jobs.server");
         const origin = new URL(request.url).origin;
-
-        async function track(job: string, fn: () => Promise<any[]>, sentOf: (r: any) => boolean) {
-          const { data: row } = await supabaseAdmin
-            .from("scheduled_job_runs")
-            .insert({ job })
-            .select("id")
-            .single();
-          let results: any[] = [];
-          let error: string | null = null;
-          try {
-            results = await fn();
-          } catch (e: any) {
-            error = e?.message ?? String(e);
-            console.error(`[scheduled-jobs] ${job}`, e);
-          }
-          const failures = results
-            .filter((r) => typeof r.reason === "string" && r.reason.includes("failed"))
-            .map((r) => `${r.gym_name}: ${r.reason}`);
-          if (row) {
-            await supabaseAdmin
-              .from("scheduled_job_runs")
-              .update({
-                finished_at: new Date().toISOString(),
-                gyms_processed: results.filter((r) => r.reason !== "not_this_hour").length,
-                sent_count: results.filter(sentOf).length,
-                error: error ?? (failures.length ? failures.join("; ") : null),
-                results,
-              })
-              .eq("id", row.id);
-          }
-          return { job, error, results: results.length };
-        }
-
         const out = [
-          await track(
-            "daily_summary",
-            () => runDailySummary({ duesBaseUrl: origin }),
-            (r) => r.outcome === "sent",
-          ),
-          await track("dues_digest", () => runDuesDigest({}), (r) => r.outcome === "pushed"),
-        ];
+          await trackJob("daily_summary", { origin }),
+          await trackJob("dues_digest", {}),
+        ].map((o) => ({ job: o.job, error: o.error, results: o.results.length }));
         return Response.json({ ok: out.every((o) => !o.error), out });
       },
     },
