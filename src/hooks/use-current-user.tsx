@@ -42,7 +42,20 @@ export function useCurrentUser() {
     queryKey: ["current-user", session?.user?.id],
     queryFn: async (): Promise<CurrentUser | null> => {
       if (!session?.user) return null;
-      const [{ data: userRow }, { data: rolesRows }] = await Promise.all([
+      const cacheKey = `fitfoundry:current-user:${session.user.id}`;
+      const readCache = () => {
+        try {
+          const raw = localStorage.getItem(cacheKey);
+          return raw ? ({ ...JSON.parse(raw), session } as CurrentUser) : null;
+        } catch {
+          return null;
+        }
+      };
+      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        const c = readCache();
+        if (c) return c;
+      }
+      const [{ data: userRow, error: uErr }, { data: rolesRows, error: rErr }] = await Promise.all([
         supabase
           .from("users")
           .select("gym_id, display_name, email")
@@ -50,6 +63,11 @@ export function useCurrentUser() {
           .maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", session.user.id),
       ]);
+      // A failed request never demotes or signs anyone out: use the last known profile.
+      if (uErr || rErr) {
+        const c = readCache();
+        if (c) return c;
+      }
       const roles = (rolesRows ?? []).map((r) => r.role as AppRole);
       const primaryRole: AppRole | null = roles.includes("admin")
         ? "admin"
@@ -58,7 +76,7 @@ export function useCurrentUser() {
           : roles.includes("member")
             ? "member"
             : null;
-      return {
+      const result = {
         session,
         userId: session.user.id,
         email: userRow?.email ?? session.user.email ?? "",
@@ -67,6 +85,13 @@ export function useCurrentUser() {
         roles,
         primaryRole,
       };
+      try {
+        const { session: _s, ...rest } = result;
+        localStorage.setItem(cacheKey, JSON.stringify(rest));
+      } catch {
+        /* ignore */
+      }
+      return result;
     },
   });
 

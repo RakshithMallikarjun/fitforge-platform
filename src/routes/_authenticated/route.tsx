@@ -17,12 +17,32 @@ function noteAuthReason(reason: "deactivated" | "gymDisabled") {
   }
 }
 
+function isNetworkAuthError(e: { name?: string; status?: number; message?: string }) {
+  const msg = String(e.message ?? "").toLowerCase();
+  return (
+    e.name === "AuthRetryableFetchError" ||
+    !e.status ||
+    e.status >= 500 ||
+    msg.includes("fetch") ||
+    msg.includes("network")
+  );
+}
+
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   pendingComponent: ConsoleLoading,
   pendingMs: 0,
   beforeLoad: async () => {
+    // Offline or unreachable server = "unknown": keep the cached session. Only a
+    // definite answer from the server (invalid session, disabled gym) signs out.
+    const offline = typeof navigator !== "undefined" && navigator.onLine === false;
+    const cached = (await supabase.auth.getSession()).data.session;
+    if (offline) {
+      if (cached?.user) return { user: cached.user };
+      throw redirect({ to: "/auth" });
+    }
     const { data, error } = await supabase.auth.getUser();
+    if ((error && isNetworkAuthError(error)) && cached?.user) return { user: cached.user };
     if (error || !data.user) throw redirect({ to: "/auth" });
     const { data: profile } = await supabase
       .from("users")
