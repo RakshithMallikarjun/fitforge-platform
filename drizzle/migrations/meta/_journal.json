@@ -309,6 +309,13 @@
       "when": 1791953787129,
       "tag": "0043_trainer_scoped_dues_attendance",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1791953959302,
+      "tag": "0044_payment_previous_ends_on",
+      "breakpoints": true
     }
   ]
 }
