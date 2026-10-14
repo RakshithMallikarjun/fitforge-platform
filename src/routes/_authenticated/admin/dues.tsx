@@ -216,7 +216,7 @@ function DuesPage() {
 
         <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3">
           <Select value={bucket} onValueChange={(v) => setBucket(v as Bucket)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px]" aria-label="Filter by due status">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -264,6 +264,7 @@ function DuesPage() {
                   <TableRow key={r.subscription_id}>
                     <TableCell>
                       <Checkbox
+                        aria-label={`Select ${r.display_name ?? r.email ?? "member"}`}
                         checked={!!selected[r.member_id]}
                         onCheckedChange={(v) =>
                           setSelected((s) => ({ ...s, [r.member_id]: v === true }))
