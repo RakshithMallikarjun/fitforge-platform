@@ -655,7 +655,7 @@ function WorkoutPlayer() {
     if (!row || !logId) return;
     const newDone = !row.done;
     if (newDone) {
-      const missing = setMissing(ex.exercise.tracking, row);
+      const missing = setMissing(ex.exercise.tracking, row, ex.exercise.bodyweight);
       if (missing) {
         toast.error(`Enter ${missing} before marking this set done`);
         return;
