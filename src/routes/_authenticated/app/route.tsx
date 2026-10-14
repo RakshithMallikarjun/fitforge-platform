@@ -14,6 +14,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme-provider";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { OfflineSyncStatus } from "@/components/pwa/offline-sync-status";
 import { registerSW } from "@/lib/pwa/register-sw";
 import { unreadCount } from "@/lib/messages.functions";
 import { getGymTheme } from "@/lib/gym-theme.functions";
@@ -171,7 +172,9 @@ function MemberShell() {
         )}
       </main>
 
-      <InstallPrompt />
+      {/* Home only — never over the workout player or completion screen. */}
+      {path === "/app" && <InstallPrompt />}
+      <OfflineSyncStatus />
 
       <nav
         className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur"
