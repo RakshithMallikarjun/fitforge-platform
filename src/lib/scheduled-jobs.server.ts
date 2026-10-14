@@ -32,7 +32,7 @@ export async function trackJob(
         gyms_processed: results.filter((r) => r.reason !== "not_this_hour").length,
         sent_count: results.filter((r) => r.outcome === "sent" || r.outcome === "pushed").length,
         error: error ?? (failures.length ? failures.join("; ") : null),
-        results: { manual: !!opts.manual, items: results } as any,
+        results: results as any,
       })
       .eq("id", row.id);
   }
