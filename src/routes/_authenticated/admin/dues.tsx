@@ -264,7 +264,6 @@ function DuesPage() {
                   <TableRow key={r.subscription_id}>
                     <TableCell>
                       <Checkbox
-                        aria-label={`Select ${r.display_name ?? r.email ?? "member"}`}
                         checked={!!selected[r.member_id]}
                         onCheckedChange={(v) =>
                           setSelected((s) => ({ ...s, [r.member_id]: v === true }))
