@@ -1,3 +1,4 @@
+import { formatShortDate } from "@/lib/format-date";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -225,13 +226,20 @@ export const exportAssessmentReport = createServerFn({ method: "POST" })
     const memberName = (member as any)?.display_name || (member as any)?.email || "Member";
 
     let gymName = "";
+    let brand = "#047857";
+    let logoUrl: string | null = null;
     if ((member as any)?.gym_id) {
       const { data: gym } = await supabase
         .from("gyms")
-        .select("name")
+        .select("name, primary_color, logo_url")
         .eq("id", (member as any).gym_id)
         .maybeSingle();
       gymName = (gym as any)?.name || "";
+      const { darkenForContrast } = await import("@/lib/brand-contrast");
+      const c = (gym as any)?.primary_color;
+      if (typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c)) brand = darkenForContrast(c);
+      const l = (gym as any)?.logo_url;
+      if (typeof l === "string" && /^https:\/\//.test(l)) logoUrl = l;
     }
 
     const { data: rows } = await supabase
@@ -263,7 +271,7 @@ export const exportAssessmentReport = createServerFn({ method: "POST" })
     ];
 
     const headerCells = assessments
-      .map((a: any) => `<th>${esc(new Date(a.date).toLocaleDateString())}</th>`)
+      .map((a: any) => `<th>${esc(formatShortDate(a.date))}</th>`)
       .join("");
 
     const rowsHtml = metrics
@@ -290,19 +298,21 @@ export const exportAssessmentReport = createServerFn({ method: "POST" })
   @page { size: A4 landscape; margin: 16mm; }
   * { box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #111; background: #fff; margin: 24px; }
-  h1 { font-size: 22px; margin: 0 0 4px; }
+  h1 { font-size: 22px; margin: 0 0 4px; color: ${brand}; }
+  .brandbar { display: flex; align-items: center; gap: 12px; border-bottom: 3px solid ${brand}; padding-bottom: 12px; margin-bottom: 12px; }
+  .brandbar img { height: 40px; width: auto; border-radius: 6px; }
   .sub { color: #6b7280; font-size: 12px; margin-bottom: 20px; }
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
   th, td { border: 1px solid #e5e7eb; padding: 6px 8px; text-align: left; }
-  thead th { background: #f3f4f6; font-weight: 600; }
+  thead th { background: ${brand}; color: #fff; font-weight: 600; }
   .actions { margin-bottom: 16px; }
-  .actions button { padding: 8px 14px; border: 1px solid #111; background: #111; color: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .actions button { padding: 8px 14px; border: 1px solid ${brand}; background: ${brand}; color: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; }
   @media print { .actions { display: none; } body { margin: 0; } }
 </style></head>
 <body>
   <div class="actions"><button onclick="window.print()">Print / Save as PDF</button></div>
-  <h1>${esc(gymName ? gymName + " — " : "")}Assessment Report</h1>
-  <div class="sub">${esc(memberName)} · Generated ${esc(new Date().toLocaleDateString())} · ${assessments.length} assessment${assessments.length === 1 ? "" : "s"}</div>
+  <div class="brandbar">${logoUrl ? `<img src="${esc(logoUrl)}" alt="${esc(gymName)} logo">` : ""}<h1>${esc(gymName ? gymName + " — " : "")}Assessment Report</h1></div>
+  <div class="sub">${esc(memberName)} · Generated ${esc(formatShortDate(new Date()))} · ${assessments.length} assessment${assessments.length === 1 ? "" : "s"}</div>
   ${
     assessments.length === 0
       ? '<p style="color:#6b7280">No assessments recorded.</p>'
