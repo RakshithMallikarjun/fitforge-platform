@@ -1,4 +1,5 @@
 import { consolePageHead } from "@/lib/page-head";
+import { PendingSyncNotice } from "@/components/pwa/offline-sync-status";
 import { plural } from "@/lib/copy";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -49,6 +50,7 @@ function MemberHome() {
 
   return (
     <div className="space-y-6">
+      <PendingSyncNotice />
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">

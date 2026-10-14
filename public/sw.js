@@ -15,6 +15,7 @@ const KILL = params.get("kill") === "1";
 const STATIC_CACHE = `ff-static-${VERSION}`;
 const OFFLINE_CACHE = `ff-offline-${VERSION}`;
 const OFFLINE_URL = "/offline.html";
+const APP_SHELL_URL = "/__app-shell";
 const PRECACHE = [OFFLINE_URL, "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -113,10 +114,20 @@ self.addEventListener("fetch", (event) => {
 async function navigate(req, url) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 3000);
+  const isApp = url.pathname === "/app" || url.pathname.startsWith("/app/");
   try {
-    return await fetch(req, { signal: controller.signal });
+    const res = await fetch(req, { signal: controller.signal });
+    // Remember the latest /app shell: the member app renders on the device, so the
+    // same HTML opens any /app route offline (data comes from on-device caches).
+    if (isApp && res.ok && (res.headers.get("content-type") || "").includes("text/html")) {
+      const copy = res.clone();
+      caches.open(OFFLINE_CACHE).then((c) => c.put(APP_SHELL_URL, copy)).catch(() => {});
+    }
+    return res;
   } catch {
-    if (url.pathname === "/app" || url.pathname.startsWith("/app/")) {
+    if (isApp) {
+      const shell = await caches.match(APP_SHELL_URL);
+      if (shell) return shell;
       const offline = await caches.match(OFFLINE_URL);
       if (offline) return offline;
     }

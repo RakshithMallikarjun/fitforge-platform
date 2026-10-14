@@ -1,4 +1,5 @@
 import { consolePageHead } from "@/lib/page-head";
+import { PendingSyncNotice } from "@/components/pwa/offline-sync-status";
 import { plural } from "@/lib/copy";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -42,6 +43,7 @@ function WorkoutsPage() {
 
   return (
     <div className="space-y-6">
+      <PendingSyncNotice />
       <h1 className="font-display text-2xl font-bold tracking-tight">Workouts</h1>
 
       {isLoading ? (
