@@ -11,7 +11,7 @@
  *    clears every cache and unregisters itself.
  */
 import { toast } from "sonner";
-import { flushQueue } from "@/lib/pwa/offline-queue";
+import { flushQueue, getQueueSize } from "@/lib/pwa/offline-queue";
 
 function refusedContext(): boolean {
   if (import.meta.env.DEV) return true;
@@ -47,9 +47,17 @@ function wireFlushHooks() {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") tryFlush();
   });
+  window.addEventListener("focus", tryFlush);
   navigator.serviceWorker?.addEventListener("message", (e) => {
     if (e.data?.type === "FITFOUNDRY_FLUSH_QUEUE") tryFlush();
   });
+  // Every 30 s while anything is pending (cheap local read when the queue is empty).
+  setInterval(() => {
+    if (!navigator.onLine) return;
+    void getQueueSize()
+      .then((n) => n > 0 && tryFlush())
+      .catch(() => {});
+  }, 30_000);
   tryFlush();
 }
 
@@ -83,9 +91,10 @@ function promptUpdate(worker: ServiceWorker) {
 let started: Promise<ServiceWorkerRegistration | null> | null = null;
 
 export function registerSW(): Promise<ServiceWorkerRegistration | null> {
-  if (typeof navigator === "undefined" || !("serviceWorker" in navigator))
-    return Promise.resolve(null);
+  if (typeof navigator === "undefined") return Promise.resolve(null);
+  // Queue sync works with or without a service worker (e.g. in the preview).
   wireFlushHooks();
+  if (!("serviceWorker" in navigator)) return Promise.resolve(null);
   if (started) return started;
   started = (async () => {
     if (refusedContext()) {

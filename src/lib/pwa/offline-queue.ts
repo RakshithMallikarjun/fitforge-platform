@@ -15,7 +15,7 @@
  *  - The queue is capped; the oldest entries are dead-lettered when it fills.
  */
 import { get, set, del } from "idb-keyval";
-import { logSet, completeWorkout } from "@/lib/workout-player.functions";
+import { logSet, completeWorkout, startWorkoutLog } from "@/lib/workout-player.functions";
 
 const QUEUE_KEY = "fitfoundry:offline-queue";
 const DEAD_KEY = "fitfoundry:offline-dead-letter";
@@ -59,6 +59,10 @@ export type QueuedItem = {
   lastError?: string;
 } & (
   | {
+      type: "startLog";
+      payload: { logId: string; planId: string | null; workoutDayId: string; date: string };
+    }
+  | {
       type: "logSet";
       payload: {
         logId: string;
@@ -66,6 +70,7 @@ export type QueuedItem = {
         setNumber: number;
         weight: number | null;
         reps: number | null;
+        durationSeconds?: number | null;
         completed: boolean;
       };
     }
@@ -171,6 +176,14 @@ async function requestBackgroundSync() {
   }
 }
 
+/** Workouts finished on this device that are still waiting to sync. */
+export async function getPendingSessionCount(): Promise<number> {
+  const q = await readQueue();
+  return new Set(q.filter((i) => i.type === "completeWorkout").map((i) => i.payload.logId)).size;
+}
+
+export const SYNCED_EVENT = "fitfoundry:queue-synced";
+
 /** Number of queued set logs (for the offline banner). */
 export async function getQueuedSetCount(): Promise<number> {
   const q = await readQueue();
@@ -211,7 +224,16 @@ function isPermanentFailure(err: unknown): boolean {
 }
 
 async function runItem(item: QueuedItem): Promise<void> {
-  if (item.type === "logSet") {
+  if (item.type === "startLog") {
+    await startWorkoutLog({
+      data: {
+        planId: item.payload.planId,
+        workoutDayId: item.payload.workoutDayId,
+        clientLogId: item.payload.logId,
+        date: item.payload.date,
+      },
+    });
+  } else if (item.type === "logSet") {
     await logSet({ data: item.payload });
   } else {
     await completeWorkout({
@@ -297,6 +319,8 @@ export async function flushQueue(): Promise<{ ok: number; failed: number; dead: 
 
     await writeQueueAndNotify(remaining.slice(-MAX_QUEUE_SIZE));
     await addDeadLetter(dead);
+    if (ok > 0 && remaining.length === 0 && typeof window !== "undefined")
+      window.dispatchEvent(new CustomEvent(SYNCED_EVENT, { detail: { ok } }));
   } finally {
     flushing = false;
   }
