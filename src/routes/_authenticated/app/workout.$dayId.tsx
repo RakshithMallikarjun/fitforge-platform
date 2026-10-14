@@ -333,6 +333,7 @@ function WorkoutPlayer() {
 
   const { data: dayData, isLoading } = useQuery({
     queryKey: ["workout-day", dayId],
+    networkMode: "always", // falls back to the on-device copy when offline
     queryFn: async (): Promise<WorkoutDayData> => {
       try {
         const fresh = await fetchDay({ data: { dayId } });
@@ -536,7 +537,10 @@ function WorkoutPlayer() {
     });
   }, [current, prevMap]);
 
+  // networkMode "always": react-query otherwise pauses mutations while offline,
+  // which left "Saving…" spinning instead of writing to the on-device queue.
   const logSetMut = useMutation({
+    networkMode: "always",
     mutationFn: async (input: {
       exerciseId: string;
       setNumber: number;
@@ -585,6 +589,7 @@ function WorkoutPlayer() {
   }
 
   const completeMut = useMutation({
+    networkMode: "always",
     mutationFn: async () => {
       const payload = {
         logId: logId!,
