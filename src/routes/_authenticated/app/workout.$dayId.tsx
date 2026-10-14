@@ -1240,13 +1240,15 @@ function RestTimer({ total, left, onSkip }: { total: number; left: number; onSki
 function setMissing(
   tracking: WorkoutDayExercise["exercise"]["tracking"],
   row: SetState,
+  bodyweight = false,
 ): string | null {
   const pos = (v: string) => v !== "" && Number(v) > 0;
   if (tracking === "time") return pos(row.seconds) ? null : "a time";
   if (!pos(row.reps))
-    return tracking === "weight_reps" && !pos(row.weight) ? "weight and reps" : "reps";
+    return tracking === "weight_reps" && !bodyweight && !pos(row.weight) ? "weight and reps" : "reps";
   if (
     tracking === "weight_reps" &&
+    !bodyweight &&
     !(row.weight !== "" && Number(row.weight) >= 0 && pos(row.weight))
   )
     return "a weight";
