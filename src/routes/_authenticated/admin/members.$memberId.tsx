@@ -31,6 +31,7 @@ import { logAttendanceManual } from "@/lib/checkin.functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { AssignTrainersDialog } from "@/components/members/assign-trainers-dialog";
 import { AdjustExpiryDialog } from "@/components/membership/adjust-expiry-dialog";
+import { AdminOnlyButton } from "@/components/admin-only-button";
 import { RecordPaymentDialog } from "@/components/membership/record-payment-dialog";
 import { MemberBillingPanel } from "@/components/membership/member-billing-panel";
 import { StatusBadge } from "@/components/members/status-badge";
@@ -153,27 +154,30 @@ function MemberProfile() {
             open={editOpen}
             onOpenChange={setEditOpen}
           />
-          {isAdmin && (
+          {me && (
             <div className="flex flex-wrap gap-2">
+              {/* Trainers can record payments for their assigned members; the rest is admin-only. */}
               <Button size="sm" className="rounded-lg" onClick={() => setPayOpen(true)}>
                 <CreditCard className="mr-1.5 h-4 w-4" /> Record payment
               </Button>
-              <Button
+              <AdminOnlyButton
+                isAdmin={!!isAdmin}
                 variant="outline"
                 size="sm"
                 className="rounded-lg"
                 onClick={() => setMembershipOpen(true)}
               >
                 Adjust expiry
-              </Button>
-              <Button
+              </AdminOnlyButton>
+              <AdminOnlyButton
+                isAdmin={!!isAdmin}
                 variant="outline"
                 size="sm"
                 className="rounded-lg"
                 onClick={() => setAssignOpen(true)}
               >
                 <UserCog className="mr-1.5 h-4 w-4" /> Assign trainers
-              </Button>
+              </AdminOnlyButton>
             </div>
           )}
         </div>
@@ -453,6 +457,12 @@ function MemberProfile() {
         </Tabs>
       </main>
 
+      <RecordPaymentDialog
+        open={payOpen}
+        onOpenChange={setPayOpen}
+        memberId={memberId}
+        memberName={user.display_name ?? user.email}
+      />
       {isAdmin && (
         <>
           <AssignTrainersDialog
@@ -461,12 +471,6 @@ function MemberProfile() {
             memberId={memberId}
             memberName={user.display_name ?? user.email}
             initialTrainerIds={trainers.map((t: any) => t.id)}
-          />
-          <RecordPaymentDialog
-            open={payOpen}
-            onOpenChange={setPayOpen}
-            memberId={memberId}
-            memberName={user.display_name ?? user.email}
           />
           <AdjustExpiryDialog
             key={membership?.endsOn ?? "none"}
