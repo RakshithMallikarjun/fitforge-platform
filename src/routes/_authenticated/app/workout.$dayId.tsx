@@ -359,23 +359,71 @@ function WorkoutPlayer() {
   const [effort, setEffort] = useState<number | null>(null);
   const [newPRs, setNewPRs] = useState<NewPR[]>([]);
   const [finished, setFinished] = useState(false);
+  const [savedLocally, setSavedLocally] = useState(false);
+  // True when this session exists only on the device (started offline): every
+  // write then goes through the queue so it replays in order after the start.
+  const localSessionRef = useRef(false);
 
-  // Start a log as soon as the day loads.
+  const localYmd = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }, []);
+  // Unfinished workout saved on this device, keyed by plan day + local date.
+  const wipKey = `fitfoundry:wip:${dayId}:${localYmd}`;
+
+  // Drop drafts older than 2 days so stale sessions never resurface.
+  useEffect(() => {
+    try {
+      const cutoff = Date.now() - 2 * 864e5;
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        const m = k && /^fitfoundry:wip:.+:(\d{4}-\d{2}-\d{2})$/.exec(k);
+        if (m && Date.parse(`${m[1]}T23:59:59`) < cutoff) localStorage.removeItem(k!);
+      }
+    } catch {
+      /* storage blocked */
+    }
+  }, []);
+
+  // Start a log as soon as the day loads. Offline, the device makes the id and
+  // queues the start; the server reuses that id on sync, so retries never duplicate.
   useEffect(() => {
     if (!dayData || logId) return;
+    let savedLog: { logId?: string; local?: boolean } | null = null;
+    try {
+      savedLog = JSON.parse(localStorage.getItem(wipKey) ?? "null");
+    } catch {
+      savedLog = null;
+    }
+    if (savedLog?.logId && savedLog.local) {
+      localSessionRef.current = true;
+      setLogId(savedLog.logId);
+      return;
+    }
+    const goLocal = async () => {
+      const id = crypto.randomUUID();
+      localSessionRef.current = true;
+      setLogId(id);
+      await enqueueLog("startLog", {
+        logId: id,
+        planId: dayData.plan?.id ?? null,
+        workoutDayId: dayData.day.id,
+        date: localYmd,
+      });
+    };
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      void goLocal();
+      return;
+    }
     startLog({
       data: { planId: dayData.plan?.id ?? null, workoutDayId: dayData.day.id },
     })
       .then((r) => setLogId(r.logId))
-      .catch((e) => toast.error("Could not start session", { description: formatServerError(e) }));
-  }, [dayData, logId, startLog]);
-
-  // Unfinished workout saved on this device, keyed by plan day + local date.
-  const wipKey = useMemo(() => {
-    const d = new Date();
-    const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    return `fitfoundry:wip:${dayId}:${ymd}`;
-  }, [dayId]);
+      .catch((e) => {
+        if (isOfflineError(e)) void goLocal();
+        else toast.error("Could not start session", { description: formatServerError(e) });
+      });
+  }, [dayData, logId, startLog, wipKey, localYmd]);
   const [resumed, setResumed] = useState(false);
   const restoredRef = useRef(false);
 
@@ -417,7 +465,7 @@ function WorkoutPlayer() {
             }));
           }
         }
-        if (any) {
+        if (any && saved.sets && Object.values(saved.sets).some((rs) => rs?.some((x) => x.done))) {
           const idx = Math.min(Math.max(0, saved.currentIdx ?? 0), dayData.exercises.length - 1);
           setCurrentIdx(idx);
           setResumed(true);
@@ -442,11 +490,14 @@ function WorkoutPlayer() {
   useEffect(() => {
     if (!restoredRef.current || !Object.keys(sets).length || finished) return;
     try {
-      localStorage.setItem(wipKey, JSON.stringify({ currentIdx, sets }));
+      localStorage.setItem(
+        wipKey,
+        JSON.stringify({ currentIdx, sets, logId, local: localSessionRef.current }),
+      );
     } catch {
       /* storage full or blocked: resume is best-effort */
     }
-  }, [sets, currentIdx, wipKey, finished]);
+  }, [sets, currentIdx, wipKey, finished, logId]);
   const current = exercises[currentIdx];
 
   // Fetch previous set values per exercise (parallel).
@@ -503,19 +554,35 @@ function WorkoutPlayer() {
         durationSeconds: input.durationSeconds,
         completed: input.completed,
       };
+      const queue = async () => {
+        await enqueueLog("logSet", payload);
+        return { queued: true } as any;
+      };
+      if (localSessionRef.current || !navigator.onLine) return queue();
       try {
         return await logOneSet({ data: payload });
       } catch (err) {
-        if (isOfflineError(err)) {
-          await enqueueLog("logSet", payload);
-          toast.info("Saved offline — will sync when reconnected.");
-          return { queued: true } as any;
-        }
+        if (isOfflineError(err)) return queue();
         throw err;
       }
     },
     onError: (e: any) => toast.error("Could not save set", { description: formatServerError(e) }),
   });
+
+  /** Best weight per exercise beating every earlier logged set — confirmed by the server on sync. */
+  function provisionalPRs(): NewPR[] {
+    const out: NewPR[] = [];
+    for (const ex of exercises) {
+      if (ex.exercise.tracking !== "weight_reps") continue;
+      const done = (sets[ex.id] ?? []).filter((r) => r.done && Number(r.weight) > 0);
+      if (!done.length) continue;
+      const best = done.reduce((a, b) => (Number(b.weight) > Number(a.weight) ? b : a));
+      const prevBest = Math.max(0, ...(prevMap.get(ex.exercise.id) ?? []).map((p) => Number(p.weight ?? 0)));
+      if (Number(best.weight) > prevBest)
+        out.push({ exerciseName: ex.exercise.name, weight: Number(best.weight), reps: Number(best.reps) || 0, provisional: true } as NewPR);
+    }
+    return out;
+  }
 
   const completeMut = useMutation({
     mutationFn: async () => {
@@ -524,14 +591,15 @@ function WorkoutPlayer() {
         notes: notes.trim() || null,
         effortRating: effort,
       };
+      const queue = async () => {
+        await enqueueLog("completeWorkout", { ...payload, synced_offline: true });
+        return { ok: true, newPRs: provisionalPRs(), queued: true } as any;
+      };
+      if (localSessionRef.current || !navigator.onLine) return queue();
       try {
         return await finishWorkout({ data: payload });
       } catch (err) {
-        if (isOfflineError(err)) {
-          await enqueueLog("completeWorkout", { ...payload, synced_offline: true });
-          toast.info("Session saved offline — will sync when reconnected.");
-          return { ok: true, newPRs: [] as NewPR[], queued: true } as any;
-        }
+        if (isOfflineError(err)) return queue();
         throw err;
       }
     },
@@ -539,6 +607,16 @@ function WorkoutPlayer() {
       const prs: NewPR[] = res?.newPRs ?? [];
       setNewPRs(prs);
       setFinished(true);
+      if (res?.queued) {
+        setSavedLocally(true);
+        try {
+          localStorage.removeItem(wipKey);
+        } catch {
+          /* ignore */
+        }
+        toast.info("Saved on this device — it will sync when you're back online");
+        return;
+      }
       try {
         localStorage.removeItem(wipKey);
       } catch {
@@ -577,7 +655,7 @@ function WorkoutPlayer() {
     if (!row || !logId) return;
     const newDone = !row.done;
     if (newDone) {
-      const missing = setMissing(ex.exercise.tracking, row);
+      const missing = setMissing(ex.exercise.tracking, row, ex.exercise.bodyweight);
       if (missing) {
         toast.error(`Enter ${missing} before marking this set done`);
         return;
@@ -690,6 +768,7 @@ function WorkoutPlayer() {
         onFinish={() => completeMut.mutate()}
         submitting={completeMut.isPending}
         finished={finished}
+        savedLocally={savedLocally}
         newPRs={newPRs}
         onDone={() => navigate({ to: "/app" })}
       />
@@ -1161,13 +1240,15 @@ function RestTimer({ total, left, onSkip }: { total: number; left: number; onSki
 function setMissing(
   tracking: WorkoutDayExercise["exercise"]["tracking"],
   row: SetState,
+  bodyweight = false,
 ): string | null {
   const pos = (v: string) => v !== "" && Number(v) > 0;
   if (tracking === "time") return pos(row.seconds) ? null : "a time";
   if (!pos(row.reps))
-    return tracking === "weight_reps" && !pos(row.weight) ? "weight and reps" : "reps";
+    return tracking === "weight_reps" && !bodyweight && !pos(row.weight) ? "weight and reps" : "reps";
   if (
     tracking === "weight_reps" &&
+    !bodyweight &&
     !(row.weight !== "" && Number(row.weight) >= 0 && pos(row.weight))
   )
     return "a weight";
@@ -1260,6 +1341,7 @@ function CompletionScreen({
   onFinish,
   submitting,
   finished,
+  savedLocally,
   newPRs,
   onDone,
 }: {
@@ -1270,6 +1352,7 @@ function CompletionScreen({
   onFinish: () => void;
   submitting: boolean;
   finished: boolean;
+  savedLocally?: boolean;
   newPRs: NewPR[];
   onDone: () => void;
 }) {
@@ -1281,7 +1364,11 @@ function CompletionScreen({
         </div>
         <p className="mt-4 font-display text-2xl font-bold">Workout Complete</p>
         <p className="mt-1 text-xs text-primary-foreground/90">
-          {finished ? "Nice session — your log is saved." : "Log your effort and notes below."}
+          {savedLocally
+            ? "Saved on this device — it will sync when you're back online."
+            : finished
+              ? "Nice session — your log is saved."
+              : "Log your effort and notes below."}
         </p>
       </div>
 
@@ -1289,7 +1376,9 @@ function CompletionScreen({
         <div className="rounded-[2rem] border border-primary/30 bg-primary/5 p-5 shadow-[var(--shadow-card)] animate-scale-in">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🏆</span>
-            <p className="font-display text-lg font-bold tracking-tight">New Personal Records!</p>
+            <p className="font-display text-lg font-bold tracking-tight">
+              New Personal Records!{savedLocally ? " (provisional)" : ""}
+            </p>
           </div>
           <ul className="mt-3 space-y-2">
             {newPRs.map((pr, i) => (

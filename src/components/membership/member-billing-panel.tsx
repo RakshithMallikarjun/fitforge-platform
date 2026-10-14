@@ -1,3 +1,4 @@
+import { AdminOnlyButton } from "@/components/admin-only-button";
 import { useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -130,15 +131,16 @@ export function MemberBillingPanel({
                     Cancelled — access until {formatShortDate(s.ends_on)}
                   </span>
                 )}
-                {canManage && s.state === "active" && (
-                  <Button
+                {s.state === "active" && (
+                  <AdminOnlyButton
+                    isAdmin={canManage}
                     variant="ghost"
                     size="sm"
                     className="ml-auto text-destructive"
                     onClick={() => setCancelTarget({ id: s.id, plan: s.plan_name_snapshot })}
                   >
                     Cancel
-                  </Button>
+                  </AdminOnlyButton>
                 )}
               </li>
             ))}
@@ -206,8 +208,9 @@ export function MemberBillingPanel({
                     {p.recorded_by_name ?? "—"}
                   </TableCell>
                   <TableCell>
-                    {canManage && p.kind !== "adjustment" && p.state === "recorded" && !p.refund_of && (
-                      <Button
+                    {p.kind !== "adjustment" && p.state === "recorded" && !p.refund_of && (
+                      <AdminOnlyButton
+                        isAdmin={canManage}
                         variant="ghost"
                         size="sm"
                         className="text-destructive"
@@ -222,7 +225,7 @@ export function MemberBillingPanel({
                         }}
                       >
                         Refund
-                      </Button>
+                      </AdminOnlyButton>
                     )}
                   </TableCell>
                 </TableRow>

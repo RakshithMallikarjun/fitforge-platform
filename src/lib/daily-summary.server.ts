@@ -1,3 +1,4 @@
+import { formatShortDate } from "@/lib/format-date";
 import { PLATFORM_URL, supportEmailFooter } from "@/lib/platform-brand";
 import { plural } from "@/lib/copy";
 /**
@@ -117,7 +118,7 @@ export function renderSummaryEmail(a: Activity, duesUrl: string) {
   const tz = a.gym_timezone;
   const backdated = (p: any) =>
     p.paid_on && p.paid_on !== a.day
-      ? ` <span style="color:#b45309">(back-dated to ${esc(p.paid_on)})</span>`
+      ? ` <span style="color:#b45309">(back-dated to ${esc(formatShortDate(p.paid_on))})</span>`
       : "";
 
   const html = `<!doctype html><html><body style="margin:0;background:#f6f7f9">
@@ -143,7 +144,7 @@ export function renderSummaryEmail(a: Activity, duesUrl: string) {
        esc(p.plan_name),
        esc(PERIOD_LABEL[p.period] ?? p.period),
        esc(money(Number(p.amount), a.currency)),
-       esc(p.covers_to),
+       esc(formatShortDate(p.covers_to)),
        esc(p.recorded_by_name),
      ]),
    )}
@@ -155,8 +156,8 @@ export function renderSummaryEmail(a: Activity, duesUrl: string) {
        esc(p.plan_name),
        esc(PERIOD_LABEL[p.period] ?? p.period),
        esc(money(Number(p.amount), a.currency)),
-       esc(p.previous_ends_on),
-       esc(p.covers_to),
+       esc(formatShortDate(p.previous_ends_on)),
+       esc(formatShortDate(p.covers_to)),
        esc(p.recorded_by_name),
      ]),
    )}
@@ -176,8 +177,8 @@ export function renderSummaryEmail(a: Activity, duesUrl: string) {
      (a.adjustments ?? []).map((p) => [
        esc(p.member_name),
        esc(p.plan_name),
-       esc(p.previous_ends_on),
-       esc(p.ends_on),
+       esc(formatShortDate(p.previous_ends_on)),
+       esc(formatShortDate(p.ends_on)),
        esc(p.note ?? "—"),
        esc(p.recorded_by_name),
      ]),
@@ -225,18 +226,18 @@ export function renderSummaryEmail(a: Activity, duesUrl: string) {
     "",
     ...(a.new ?? []).map(
       (p: any) =>
-        `NEW  ${p.member_name} — ${p.plan_name} ${PERIOD_LABEL[p.period] ?? p.period} ${money(Number(p.amount), a.currency)} until ${p.covers_to} (by ${p.recorded_by_name})${p.paid_on !== a.day ? ` [back-dated to ${p.paid_on}]` : ""}`,
+        `NEW  ${p.member_name} — ${p.plan_name} ${PERIOD_LABEL[p.period] ?? p.period} ${money(Number(p.amount), a.currency)} until ${formatShortDate(p.covers_to)} (by ${p.recorded_by_name})${p.paid_on !== a.day ? ` [back-dated to ${formatShortDate(p.paid_on)}]` : ""}`,
     ),
     ...(a.renewals ?? []).map(
       (p: any) =>
-        `RNW  ${p.member_name} — ${p.plan_name} ${PERIOD_LABEL[p.period] ?? p.period} ${money(Number(p.amount), a.currency)} ${p.previous_ends_on} -> ${p.covers_to} (by ${p.recorded_by_name})${p.paid_on !== a.day ? ` [back-dated to ${p.paid_on}]` : ""}`,
+        `RNW  ${p.member_name} — ${p.plan_name} ${PERIOD_LABEL[p.period] ?? p.period} ${money(Number(p.amount), a.currency)} ${formatShortDate(p.previous_ends_on)} -> ${formatShortDate(p.covers_to)} (by ${p.recorded_by_name})${p.paid_on !== a.day ? ` [back-dated to ${formatShortDate(p.paid_on)}]` : ""}`,
     ),
     ...(a.refunds ?? []).map(
       (p: any) => `REF  ${p.member_name} — ${money(Number(p.amount), a.currency)} ${p.note ?? ""}`,
     ),
     ...(a.adjustments ?? []).map(
       (p: any) =>
-        `ADJ  ${p.member_name} — expiry ${p.previous_ends_on} -> ${p.ends_on}: ${p.note ?? ""} (by ${p.recorded_by_name})`,
+        `ADJ  ${p.member_name} — expiry ${formatShortDate(p.previous_ends_on)} -> ${formatShortDate(p.ends_on)}: ${p.note ?? ""} (by ${p.recorded_by_name})`,
     ),
     "",
     "Collected by:",

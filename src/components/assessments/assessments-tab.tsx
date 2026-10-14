@@ -78,20 +78,34 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
   const [exporting, setExporting] = useState(false);
 
   async function handleDownload() {
+    // Open the tab inside the click so pop-up blockers allow it; fill it once ready.
+    const w = window.open("", "_blank");
     setExporting(true);
     const tId = toast.loading("Generating report…");
     try {
       const { html } = await exportFn({ data: { memberId } });
-      const w = window.open("", "_blank");
-      if (!w) {
-        toast.error("Popup blocked — allow popups to download the report", { id: tId });
+      if (w && !w.closed) {
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
+        toast.success("Report ready — use the print dialog to save as PDF", { id: tId });
         return;
       }
-      w.document.open();
-      w.document.write(html);
-      w.document.close();
-      toast.success("Report ready — use the print dialog to save as PDF", { id: tId });
+      // Blocked: download the report instead of doing nothing.
+      const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "assessment-report.html";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      toast.warning("Allow pop-ups to open the report", {
+        id: tId,
+        description: "We downloaded it instead — open the file and print to PDF.",
+      });
     } catch (e: any) {
+      w?.close();
       toast.error(formatServerError(e, {}, "Failed to generate report"), { id: tId });
     } finally {
       setExporting(false);
@@ -291,7 +305,7 @@ export function AssessmentsTab({ memberId }: { memberId: string }) {
               <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="bench" stroke="#059669" strokeWidth={2} dot />
+              <Line type="monotone" dataKey="bench" stroke="var(--primary)" strokeWidth={2} dot />
               <Line type="monotone" dataKey="squat" stroke="#0284c7" strokeWidth={2} dot />
               <Line type="monotone" dataKey="deadlift" stroke="#9333ea" strokeWidth={2} dot />
             </LineChart>

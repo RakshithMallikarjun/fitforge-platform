@@ -881,6 +881,7 @@ export type Database = {
           period_snapshot: Database["public"]["Enums"]["billing_period"]
           plan_id: string | null
           plan_name_snapshot: string
+          previous_ends_on: string | null
           provider: string
           provider_ref: string | null
           recorded_by: string | null
@@ -905,6 +906,7 @@ export type Database = {
           period_snapshot: Database["public"]["Enums"]["billing_period"]
           plan_id?: string | null
           plan_name_snapshot: string
+          previous_ends_on?: string | null
           provider?: string
           provider_ref?: string | null
           recorded_by?: string | null
@@ -929,6 +931,7 @@ export type Database = {
           period_snapshot?: Database["public"]["Enums"]["billing_period"]
           plan_id?: string | null
           plan_name_snapshot?: string
+          previous_ends_on?: string | null
           provider?: string
           provider_ref?: string | null
           recorded_by?: string | null

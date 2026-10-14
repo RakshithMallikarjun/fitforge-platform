@@ -198,10 +198,14 @@ function DuesPage() {
               icon={<Mail className="h-4 w-4 text-primary" />}
             />
             <StatCard
-              label="Collected this month"
+              label={
+                (summary.data as any).money_scope === "mine"
+                  ? "Collected by you this month"
+                  : "Collected this month"
+              }
               value={formatMoney(summary.data.collected_this_month, currency)}
               sub={
-                summary.data.refunded_this_month > 0
+                (summary.data as any).money_scope !== "mine" && summary.data.refunded_this_month > 0
                   ? `Refunded this month: ${formatMoney(summary.data.refunded_this_month, currency)}`
                   : `${plural(summary.data.current_count, "member")} current`
               }
@@ -212,7 +216,7 @@ function DuesPage() {
 
         <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3">
           <Select value={bucket} onValueChange={(v) => setBucket(v as Bucket)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px]" aria-label="Filter by due status">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -260,6 +264,7 @@ function DuesPage() {
                   <TableRow key={r.subscription_id}>
                     <TableCell>
                       <Checkbox
+                        aria-label={`Select ${r.display_name ?? r.email ?? "member"}`}
                         checked={!!selected[r.member_id]}
                         onCheckedChange={(v) =>
                           setSelected((s) => ({ ...s, [r.member_id]: v === true }))

@@ -2,7 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { getJobRuns } from "@/lib/platform.functions";
+import { getJobRuns, runJobNow } from "@/lib/platform.functions";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Loader2, Play } from "lucide-react";
 import { formatAuditTimestamp } from "@/lib/audit-summary";
 import { plural, sentenceCase } from "@/lib/copy";
 
@@ -13,6 +16,18 @@ const JOB_LABEL: Record<string, string> = {
 
 export function JobsPanel({ gymId }: { gymId: string }) {
   const fetchRuns = useServerFn(getJobRuns);
+  const runFn = useServerFn(runJobNow);
+  const run = useMutation({
+    mutationFn: (job: "daily_summary" | "dues_digest") => runFn({ data: { gymId, job } }),
+    onSuccess: (r, job) => {
+      const what = JOB_LABEL[job];
+      if (r.error) toast.error(`${what} failed`, { description: r.error });
+      else
+        toast.success(`${what}: ${sentenceCase(r.reason ?? r.outcome ?? "done").replace(/_/g, " ")}`);
+      void q.refetch();
+    },
+    onError: (e: any) => toast.error("Couldn't run the job", { description: e?.message }),
+  });
   const q = useQuery({
     queryKey: ["platform-job-runs", gymId],
     queryFn: () => fetchRuns({ data: { gymId } }),
@@ -31,6 +46,25 @@ export function JobsPanel({ gymId }: { gymId: string }) {
   const d = q.data;
   return (
     <div className="space-y-4 text-sm">
+      <div className="flex flex-wrap gap-2">
+        {(["daily_summary", "dues_digest"] as const).map((job) => (
+          <Button
+            key={job}
+            size="sm"
+            variant="outline"
+            disabled={run.isPending}
+            onClick={() => run.mutate(job)}
+            aria-label={`Run now: ${JOB_LABEL[job]}`}
+          >
+            {run.isPending && run.variables === job ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+            ) : (
+              <Play className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+            )}
+            Run now — {JOB_LABEL[job]}
+          </Button>
+        ))}
+      </div>
       {!d || d.runs.length === 0 ? (
         <p className="text-muted-foreground">The scheduler hasn't run yet. It runs every 15 minutes.</p>
       ) : (
@@ -56,7 +90,7 @@ export function JobsPanel({ gymId }: { gymId: string }) {
               <li key={l.date}>
                 {l.date}:{" "}
                 {l.skipped_reason
-                  ? `Skipped — ${l.skipped_reason.replace(/_/g, " ")}`
+                  ? `skipped: ${l.skipped_reason.replace(/_/g, " ")}`
                   : `Sent to ${plural(l.recipients, "recipient")} at ${formatAuditTimestamp(l.sent_at)}`}
               </li>
             ))}
@@ -73,7 +107,7 @@ export function JobsPanel({ gymId }: { gymId: string }) {
               <li key={l.date}>
                 {l.date}:{" "}
                 {l.skipped_reason
-                  ? `Skipped — ${l.skipped_reason.replace(/_/g, " ")}`
+                  ? `skipped: ${l.skipped_reason.replace(/_/g, " ")}`
                   : `${plural(l.pushed, "staff alert")}, ${plural(l.reminded, "member reminder")}`}
               </li>
             ))}

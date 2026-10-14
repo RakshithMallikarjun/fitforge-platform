@@ -22,8 +22,15 @@ export type WorkoutDayExercise = {
     video_url: string | null;
     thumbnail_url: string | null;
     description: string | null;
+    /** Tagged "bodyweight": a set can be marked done without a weight. */
+    bodyweight: boolean;
   };
 };
+
+/** Default prescription when a swap changes how the exercise is tracked. */
+export function defaultTarget(tracking: ExerciseTracking): string {
+  return tracking === "time" ? "30" : "12";
+}
 
 export type ExerciseTracking = "weight_reps" | "reps" | "time";
 
@@ -51,7 +58,7 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
     const { data: rows, error: exErr } = await supabase
       .from("workout_exercises")
       .select(
-        "id, order, sets, reps, rest_seconds, notes, tempo, exercises(id, name, muscle_groups, tracking, video_url, thumbnail_url, description)",
+        "id, order, sets, reps, rest_seconds, notes, tempo, exercises(id, name, muscle_groups, tracking, equipment, video_url, thumbnail_url, description)",
       )
       .eq("day_id", data.dayId)
       .is("hidden_at", null)
@@ -64,7 +71,7 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
       const { data: subs } = await supabase
         .from("workout_exercise_substitutions")
         .select(
-          "original_workout_exercise_id, substitute_exercise_id, exercises:substitute_exercise_id(id, name, muscle_groups, tracking, video_url, thumbnail_url, description)",
+          "original_workout_exercise_id, substitute_exercise_id, exercises:substitute_exercise_id(id, name, muscle_groups, tracking, equipment, video_url, thumbnail_url, description)",
         )
         .eq("member_id", userId)
         .in("original_workout_exercise_id", weIds);
@@ -76,11 +83,15 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
     const exercises: WorkoutDayExercise[] = (rows ?? []).map((r: any) => {
       const sub = subMap.get(r.id);
       const src = sub?.exercises ?? r.exercises;
+      const tracking = (src?.tracking ?? "weight_reps") as ExerciseTracking;
+      const originalTracking = (r.exercises?.tracking ?? "weight_reps") as ExerciseTracking;
+      // A swap keeps the original's target only when both are tracked the same way.
+      const reps = sub && originalTracking !== tracking ? defaultTarget(tracking) : r.reps;
       return {
         id: r.id,
         order: r.order ?? 0,
         sets: r.sets ?? 3,
-        reps: r.reps,
+        reps,
         rest_seconds: r.rest_seconds ?? 60,
         notes: r.notes,
         tempo: r.tempo,
@@ -89,7 +100,8 @@ export const getWorkoutDay = createServerFn({ method: "GET" })
           id: src?.id,
           name: src?.name ?? "Exercise",
           muscle_groups: src?.muscle_groups ?? [],
-          tracking: (src?.tracking ?? "weight_reps") as ExerciseTracking,
+          tracking,
+          bodyweight: ((src?.equipment ?? []) as string[]).includes("bodyweight"),
           video_url: src?.video_url ?? null,
           thumbnail_url: src?.thumbnail_url ?? null,
           description: src?.description ?? null,
@@ -159,9 +171,32 @@ export const getPreviousSetValues = createServerFn({ method: "GET" })
 
 export const startWorkoutLog = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { planId: string | null; workoutDayId: string }) => d)
+  .inputValidator(
+    (d: {
+      planId: string | null;
+      workoutDayId: string;
+      /** Client-generated id so an offline replay never creates a second session. */
+      clientLogId?: string;
+      /** Device-local day the session was performed on (offline replays). */
+      date?: string;
+    }) => {
+      const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (d.clientLogId != null && !uuid.test(d.clientLogId)) throw new Error("Invalid session id");
+      if (d.date != null && !/^\d{4}-\d{2}-\d{2}$/.test(d.date)) throw new Error("Invalid date");
+      return d;
+    },
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    if (data.clientLogId) {
+      const { data: mine } = await supabase
+        .from("workout_logs")
+        .select("id")
+        .eq("id", data.clientLogId)
+        .eq("member_id", userId)
+        .maybeSingle();
+      if (mine?.id) return { logId: mine.id as string };
+    }
     const { data: user, error: uErr } = await supabase
       .from("users")
       .select("gym_id")
@@ -171,7 +206,14 @@ export const startWorkoutLog = createServerFn({ method: "POST" })
 
     // Stamp the row with the gym-local calendar day so streak/consistency reads agree.
     const { timeZone } = await resolveGymTimezone(supabase, userId);
-    const today = dateStringInZone(timeZone);
+    const gymToday = dateStringInZone(timeZone);
+    // An offline session keeps the day it happened on, if within the last 2 days.
+    const today =
+      data.date &&
+      data.date <= gymToday &&
+      Date.parse(`${gymToday}T00:00:00Z`) - Date.parse(`${data.date}T00:00:00Z`) <= 2 * 864e5
+        ? data.date
+        : gymToday;
     // Reuse an in-progress log for the same day if present
     const { data: existing } = await supabase
       .from("workout_logs")
@@ -183,11 +225,12 @@ export const startWorkoutLog = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (existing?.id) return { logId: existing.id as string };
+    if (existing?.id && !data.clientLogId) return { logId: existing.id as string };
 
     const { data: ins, error } = await supabase
       .from("workout_logs")
       .insert({
+        ...(data.clientLogId ? { id: data.clientLogId } : {}),
         gym_id: user.gym_id,
         member_id: userId,
         plan_id: data.planId,

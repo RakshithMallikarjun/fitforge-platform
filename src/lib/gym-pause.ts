@@ -10,6 +10,7 @@ const KEY = "fitfoundry:gym-paused";
 
 /** Returns pause details when the signed-in user's gym is disabled, else null. */
 export async function checkGymPaused(): Promise<PauseInfo | null> {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return null;
   const { data, error } = await supabase.rpc("my_gym_pause_info");
   if (error) return null; // never sign someone out on a network blip
   const row = (data ?? [])[0] as any;

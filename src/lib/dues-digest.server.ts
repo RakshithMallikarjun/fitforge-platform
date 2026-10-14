@@ -42,7 +42,13 @@ export type DigestResult = {
   reminded?: number;
 };
 
-export async function runDuesDigest(opts: { force?: boolean; hour?: number }) {
+export async function runDuesDigest(opts: {
+  force?: boolean;
+  hour?: number;
+  gymId?: string;
+  /** Run now regardless of the local hour, still at most once per day. */
+  ignoreHour?: boolean;
+}) {
   const targetHour = opts.hour ?? 9;
   const results: DigestResult[] = [];
 
@@ -50,9 +56,9 @@ export async function runDuesDigest(opts: { force?: boolean; hour?: number }) {
   const { error: expErr } = await supabaseAdmin.rpc("expire_lapsed_subscriptions");
   if (expErr) console.error("[dues-digest] expire_lapsed_subscriptions", expErr.message);
 
-  const { data: gyms, error } = await supabaseAdmin
-    .from("gyms")
-    .select("id, name, timezone, currency, is_enabled");
+  let gq = supabaseAdmin.from("gyms").select("id, name, timezone, currency, is_enabled");
+  if (opts.gymId) gq = gq.eq("id", opts.gymId);
+  const { data: gyms, error } = await gq;
   if (error) throw new Error(error.message);
 
   for (const gym of (gyms ?? []) as any[]) {
@@ -64,7 +70,7 @@ export async function runDuesDigest(opts: { force?: boolean; hour?: number }) {
       push({ outcome: "skipped", reason: "gym_disabled" });
       continue;
     }
-    if (!opts.force && hourInZone(tz) < targetHour) {
+    if (!opts.force && !opts.ignoreHour && hourInZone(tz) < targetHour) {
       push({ outcome: "skipped", reason: "not_this_hour" });
       continue;
     }

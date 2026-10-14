@@ -11,8 +11,12 @@ type BIPEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
+const SHOWN_KEY = "fitfoundry:install-shown-at";
+
 function recentlyDismissed() {
   try {
+    const shown = Number(localStorage.getItem(SHOWN_KEY));
+    if (shown && Date.now() - shown < DISMISS_DAYS * 86400_000) return true;
     const v = localStorage.getItem(DISMISS_KEY);
     if (!v) return false;
     const ts = Number(v);
@@ -64,6 +68,16 @@ export function InstallPrompt() {
     }
     return () => window.removeEventListener("beforeinstallprompt", onBIP);
   }, []);
+
+  // Once per week: the first time the banner is actually shown counts.
+  useEffect(() => {
+    if (!show) return;
+    try {
+      localStorage.setItem(SHOWN_KEY, String(Date.now()));
+    } catch {
+      /* ignore */
+    }
+  }, [show]);
 
   if (!show) return null;
 
