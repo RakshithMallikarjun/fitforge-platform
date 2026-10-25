@@ -49,6 +49,7 @@ import {
 
 import {
   completeWorkout,
+  deleteSet,
   getPreviousSetValues,
   getWorkoutDay,
   logSet,
@@ -308,6 +309,7 @@ function WorkoutPlayer() {
   const fetchDay = useServerFn(getWorkoutDay);
   const startLog = useServerFn(startWorkoutLog);
   const logOneSet = useServerFn(logSet);
+  const deleteOneSet = useServerFn(deleteSet);
   const finishWorkout = useServerFn(completeWorkout);
   const fetchPrev = useServerFn(getPreviousSetValues);
   const fetchAlts = useServerFn(getExerciseAlternatives);
