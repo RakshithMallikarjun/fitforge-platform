@@ -555,6 +555,56 @@ function WorkoutPlayer() {
     onError: (e: any) => toast.error("Could not save set", { description: formatServerError(e) }),
   });
 
+  const deleteSetMut = useMutation({
+    networkMode: "always",
+    mutationFn: async (input: { exerciseId: string; setNumber: number }) => {
+      const payload = { logId: logId!, exerciseId: input.exerciseId, setNumber: input.setNumber };
+      const queue = async () => {
+        await enqueueLog("deleteSet", payload);
+        return { queued: true } as any;
+      };
+      if (localSessionRef.current || !navigator.onLine) return queue();
+      try {
+        return await deleteOneSet({ data: payload });
+      } catch (err) {
+        if (isOfflineError(err)) return queue();
+        throw err;
+      }
+    },
+    onError: (e: any) => toast.error("Could not remove set", { description: formatServerError(e) }),
+  });
+
+  function setPayload(ex: WorkoutDayExercise, row: SetState, setNumber: number) {
+    const tracking = ex.exercise.tracking;
+    return {
+      exerciseId: ex.exercise.id,
+      setNumber,
+      weight: tracking === "weight_reps" && row.weight ? Number(row.weight) : null,
+      reps: tracking !== "time" && row.reps ? Number(row.reps) : null,
+      durationSeconds: tracking === "time" && row.seconds ? Number(row.seconds) : null,
+      completed: row.done,
+    };
+  }
+
+  function addSet(ex: WorkoutDayExercise) {
+    setSets((cur) => ({ ...cur, [ex.id]: addSetRow(cur[ex.id] ?? []) }));
+  }
+
+  function removeSet(ex: WorkoutDayExercise, idx: number) {
+    const rows = sets[ex.id] ?? [];
+    if (rows.length <= 1) return;
+    const next = removeSetRow(rows, idx);
+    setSets((cur) => ({ ...cur, [ex.id]: next }));
+    if (!logId) return;
+    // Rows after the removed one shift up a set number: re-save the done ones
+    // under their new number, then delete the stale trailing row. The offline
+    // queue replays these in order per workout, so the sequence is safe.
+    for (let i = idx; i < next.length; i++) {
+      if (next[i].done) logSetMut.mutate(setPayload(ex, next[i], i + 1));
+    }
+    deleteSetMut.mutate({ exerciseId: ex.exercise.id, setNumber: rows.length });
+  }
+
   /** Best weight per exercise beating every earlier logged set — confirmed by the server on sync. */
   function provisionalPRs(): NewPR[] {
     const out: NewPR[] = [];
