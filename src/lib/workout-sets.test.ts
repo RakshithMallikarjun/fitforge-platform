@@ -1,3 +1,4 @@
+// @ts-nocheck -- run with `bun test`; bun types are not installed in this project
 import { describe, expect, test } from "bun:test";
 import {
   addSetRow,
