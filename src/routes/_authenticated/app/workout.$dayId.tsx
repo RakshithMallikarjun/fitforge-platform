@@ -65,6 +65,14 @@ import {
   type AlternativeRow,
 } from "@/lib/exercises.functions";
 import { enqueueLog, getQueuedSetCount, QUEUE_EVENT } from "@/lib/pwa/offline-queue";
+import {
+  addSetRow,
+  applySetPatch,
+  emptySet,
+  fillFromPrevious,
+  removeSetRow,
+  type SetState,
+} from "@/lib/workout-sets";
 import { SponsoredSlot } from "@/components/ads/sponsored-card";
 
 function isOfflineError(e: unknown): boolean {
@@ -229,8 +237,6 @@ function Stepper({
     </div>
   );
 }
-
-type SetState = { weight: string; reps: string; seconds: string; done: boolean; touched?: boolean };
 
 /** Video with poster, degrading to a poster image and then an icon placeholder. */
 function ExerciseMedia({
