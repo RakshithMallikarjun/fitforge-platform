@@ -524,24 +524,8 @@ function WorkoutPlayer() {
     return m;
   }, [exercises, prevQueries]);
 
-  // Set 1 starts from last session's set 1; later untouched sets follow the set before.
-  useEffect(() => {
-    if (!current) return;
-    const prev = prevMap.get(current.exercise.id) ?? [];
-    const p = prev.find((x) => x.set_number === 1) ?? prev[0];
-    if (!p) return;
-    setSets((cur) => {
-      const rows = cur[current.id];
-      if (!rows || rows.some((r) => r.touched || r.done || r.weight || r.reps || r.seconds))
-        return cur;
-      const seed = {
-        weight: p.weight != null ? String(p.weight) : "",
-        reps: p.reps != null ? String(p.reps) : "",
-        seconds: p.duration_seconds != null ? String(p.duration_seconds) : "",
-      };
-      return { ...cur, [current.id]: rows.map((r) => ({ ...r, ...seed })) };
-    });
-  }, [current, prevMap]);
+  // No automatic prefill: fields stay empty until the member types or taps
+  // "Use last" on that specific set. Last session's values show as hints.
 
   // networkMode "always": react-query otherwise pauses mutations while offline,
   // which left "Saving…" spinning instead of writing to the on-device queue.
@@ -642,23 +626,9 @@ function WorkoutPlayer() {
     onError: (e: any) => toast.error("Could not finish", { description: formatServerError(e) }),
   });
 
+  // Every set row owns its values: editing set N never changes any other set.
   function updateSet(exId: string, idx: number, patch: Partial<SetState>) {
-    setSets((cur) => {
-      const rows = cur[exId] ?? [];
-      const edited = { ...rows[idx], ...patch, touched: true };
-      const valuePatch: Partial<SetState> = {};
-      for (const k of ["weight", "reps", "seconds"] as const)
-        if (k in patch) valuePatch[k] = patch[k];
-      let carry = Object.keys(valuePatch).length > 0;
-      const next = rows.map((r, i) => {
-        if (i === idx) return edited;
-        // Later sets that the member hasn't touched start from the set before.
-        if (i > idx && carry && !r.done && !r.touched) return { ...r, ...valuePatch };
-        if (i > idx) carry = false;
-        return r;
-      });
-      return { ...cur, [exId]: next };
-    });
+    setSets((cur) => ({ ...cur, [exId]: applySetPatch(cur[exId] ?? [], idx, patch) }));
   }
 
   function toggleSetDone(ex: WorkoutDayExercise, idx: number) {
