@@ -314,6 +314,37 @@ export const logSet = createServerFn({ method: "POST" })
     return { id: ins.id as string };
   });
 
+/** Delete one set row — used when the member removes a set so renumbering
+ *  doesn't leave a stale row at the old last set_number. */
+export const deleteSet = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (d: { logId: string; exerciseId: string; setNumber: number }) => {
+      if (!d.logId || !d.exerciseId || !Number.isInteger(d.setNumber) || d.setNumber < 1)
+        throw new Error("Invalid set reference");
+      return d;
+    },
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireActiveMembership(supabase, userId);
+    const { data: ownLog } = await supabase
+      .from("workout_logs")
+      .select("id")
+      .eq("id", data.logId)
+      .eq("member_id", userId)
+      .maybeSingle();
+    if (!ownLog) throw new Error("Workout log not found");
+    const { error } = await supabase
+      .from("exercise_logs")
+      .delete()
+      .eq("log_id", data.logId)
+      .eq("exercise_id", data.exerciseId)
+      .eq("set_number", data.setNumber);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
 export type NewPR = { exerciseName: string; weight: number; reps: number };
 
 export const completeWorkout = createServerFn({ method: "POST" })

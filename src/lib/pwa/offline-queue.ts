@@ -15,7 +15,7 @@
  *  - The queue is capped; the oldest entries are dead-lettered when it fills.
  */
 import { get, set, del } from "idb-keyval";
-import { logSet, completeWorkout, startWorkoutLog } from "@/lib/workout-player.functions";
+import { logSet, deleteSet, completeWorkout, startWorkoutLog } from "@/lib/workout-player.functions";
 
 const QUEUE_KEY = "fitfoundry:offline-queue";
 const DEAD_KEY = "fitfoundry:offline-dead-letter";
