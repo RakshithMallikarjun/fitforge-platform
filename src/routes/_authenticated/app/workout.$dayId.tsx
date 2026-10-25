@@ -1075,6 +1075,16 @@ function WorkoutPlayer() {
           })}
         </div>
 
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="mt-3 w-full rounded-xl"
+          onClick={() => addSet(ex)}
+        >
+          <Plus className="mr-1 h-3.5 w-3.5" /> Add set
+        </Button>
+
         {prev.length === 0 && (
           <p className="mt-3 text-[11px] text-muted-foreground">
             No previous data — this is your baseline.
@@ -1161,14 +1171,11 @@ function WorkoutPlayer() {
           try {
             await swapExerciseFn({ data: { workoutExerciseId: ex.id, newExerciseId } });
             toast.success("Exercise substituted");
+            // Reset only the swapped exercise's sets; every other exercise
+            // keeps its logged values.
             setSets((cur) => ({
               ...cur,
-              [ex.id]: (cur[ex.id] ?? []).map(() => ({
-                weight: "",
-                reps: "",
-                seconds: "",
-                done: false,
-              })),
+              [ex.id]: (cur[ex.id] ?? []).map(() => emptySet()),
             }));
             setSwapOpen(false);
             await queryClient.invalidateQueries({ queryKey: ["workout-day", dayId] });
