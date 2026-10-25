@@ -684,16 +684,8 @@ function WorkoutPlayer() {
         return;
       }
     }
-    const tracking = ex.exercise.tracking;
     updateSet(ex.id, idx, { done: newDone });
-    logSetMut.mutate({
-      exerciseId: ex.exercise.id,
-      setNumber: idx + 1,
-      weight: tracking === "weight_reps" && row.weight ? Number(row.weight) : null,
-      reps: tracking !== "time" && row.reps ? Number(row.reps) : null,
-      durationSeconds: tracking === "time" && row.seconds ? Number(row.seconds) : null,
-      completed: newDone,
-    });
+    logSetMut.mutate({ ...setPayload(ex, { ...row, done: newDone }, idx + 1) });
     if (newDone && ex.rest_seconds > 0) {
       startTimer(ex.rest_seconds);
     }
@@ -959,14 +951,44 @@ function WorkoutPlayer() {
                     ? `Last: ${p.weight ?? "—"} kg × ${p.reps ?? "—"}`
                     : null;
             return (
-              <div key={idx} className="rounded-2xl border border-border bg-background/60 p-3">
-                <div className="mb-2 flex items-center justify-between">
+              <div
+                key={`${ex.id}-set-${idx + 1}`}
+                className="rounded-2xl border border-border bg-background/60 p-3"
+              >
+                <div className="mb-2 flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-muted-foreground">Set {idx + 1}</span>
-                  {lastPill && (
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      {lastPill}
-                    </span>
-                  )}
+                  <span className="flex items-center gap-1.5">
+                    {lastPill && (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        {lastPill}
+                      </span>
+                    )}
+                    {p && !row.done && (
+                      <button
+                        type="button"
+                        aria-label={`Use last session's values for set ${idx + 1}`}
+                        onClick={() =>
+                          setSets((cur) => ({
+                            ...cur,
+                            [ex.id]: fillFromPrevious(cur[ex.id] ?? [], idx, p),
+                          }))
+                        }
+                        className="rounded-full border border-input px-2 py-0.5 text-[10px] font-semibold text-muted-foreground hover:bg-muted"
+                      >
+                        Use last
+                      </button>
+                    )}
+                    {rows.length > 1 && !row.done && (
+                      <button
+                        type="button"
+                        aria-label={`Remove set ${idx + 1}`}
+                        onClick={() => removeSet(ex, idx)}
+                        className="grid h-5 w-5 place-items-center rounded-full text-muted-foreground hover:bg-muted"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                    )}
+                  </span>
                 </div>
                 {/* Below 400px the two steppers stack so nothing pushes off-canvas. */}
                 <div
