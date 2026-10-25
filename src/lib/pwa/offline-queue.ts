@@ -15,7 +15,7 @@
  *  - The queue is capped; the oldest entries are dead-lettered when it fills.
  */
 import { get, set, del } from "idb-keyval";
-import { logSet, completeWorkout, startWorkoutLog } from "@/lib/workout-player.functions";
+import { logSet, deleteSet, completeWorkout, startWorkoutLog } from "@/lib/workout-player.functions";
 
 const QUEUE_KEY = "fitfoundry:offline-queue";
 const DEAD_KEY = "fitfoundry:offline-dead-letter";
@@ -73,6 +73,10 @@ export type QueuedItem = {
         durationSeconds?: number | null;
         completed: boolean;
       };
+    }
+  | {
+      type: "deleteSet";
+      payload: { logId: string; exerciseId: string; setNumber: number };
     }
   | {
       type: "completeWorkout";
@@ -235,6 +239,8 @@ async function runItem(item: QueuedItem): Promise<void> {
     });
   } else if (item.type === "logSet") {
     await logSet({ data: item.payload });
+  } else if (item.type === "deleteSet") {
+    await deleteSet({ data: item.payload });
   } else {
     await completeWorkout({
       data: {

@@ -49,6 +49,7 @@ import {
 
 import {
   completeWorkout,
+  deleteSet,
   getPreviousSetValues,
   getWorkoutDay,
   logSet,
@@ -65,6 +66,14 @@ import {
   type AlternativeRow,
 } from "@/lib/exercises.functions";
 import { enqueueLog, getQueuedSetCount, QUEUE_EVENT } from "@/lib/pwa/offline-queue";
+import {
+  addSetRow,
+  applySetPatch,
+  emptySet,
+  fillFromPrevious,
+  removeSetRow,
+  type SetState,
+} from "@/lib/workout-sets";
 import { SponsoredSlot } from "@/components/ads/sponsored-card";
 
 function isOfflineError(e: unknown): boolean {
@@ -230,8 +239,6 @@ function Stepper({
   );
 }
 
-type SetState = { weight: string; reps: string; seconds: string; done: boolean; touched?: boolean };
-
 /** Video with poster, degrading to a poster image and then an icon placeholder. */
 function ExerciseMedia({
   name,
@@ -302,6 +309,7 @@ function WorkoutPlayer() {
   const fetchDay = useServerFn(getWorkoutDay);
   const startLog = useServerFn(startWorkoutLog);
   const logOneSet = useServerFn(logSet);
+  const deleteOneSet = useServerFn(deleteSet);
   const finishWorkout = useServerFn(completeWorkout);
   const fetchPrev = useServerFn(getPreviousSetValues);
   const fetchAlts = useServerFn(getExerciseAlternatives);
@@ -458,12 +466,7 @@ function WorkoutPlayer() {
             }));
             any = true;
           } else {
-            next[ex.id] = Array.from({ length: ex.sets }, () => ({
-              weight: "",
-              reps: "",
-              seconds: "",
-              done: false,
-            }));
+            next[ex.id] = Array.from({ length: ex.sets }, () => emptySet());
           }
         }
         if (any && saved.sets && Object.values(saved.sets).some((rs) => rs?.some((x) => x.done))) {
@@ -474,12 +477,7 @@ function WorkoutPlayer() {
         }
       }
       for (const ex of dayData.exercises) {
-        next[ex.id] = Array.from({ length: ex.sets }, () => ({
-          weight: "",
-          reps: "",
-          seconds: "",
-          done: false,
-        }));
+        next[ex.id] = Array.from({ length: ex.sets }, () => emptySet());
       }
       return next;
     });
@@ -518,24 +516,8 @@ function WorkoutPlayer() {
     return m;
   }, [exercises, prevQueries]);
 
-  // Set 1 starts from last session's set 1; later untouched sets follow the set before.
-  useEffect(() => {
-    if (!current) return;
-    const prev = prevMap.get(current.exercise.id) ?? [];
-    const p = prev.find((x) => x.set_number === 1) ?? prev[0];
-    if (!p) return;
-    setSets((cur) => {
-      const rows = cur[current.id];
-      if (!rows || rows.some((r) => r.touched || r.done || r.weight || r.reps || r.seconds))
-        return cur;
-      const seed = {
-        weight: p.weight != null ? String(p.weight) : "",
-        reps: p.reps != null ? String(p.reps) : "",
-        seconds: p.duration_seconds != null ? String(p.duration_seconds) : "",
-      };
-      return { ...cur, [current.id]: rows.map((r) => ({ ...r, ...seed })) };
-    });
-  }, [current, prevMap]);
+  // No automatic prefill: fields stay empty until the member types or taps
+  // "Use last" on that specific set. Last session's values show as hints.
 
   // networkMode "always": react-query otherwise pauses mutations while offline,
   // which left "Saving…" spinning instead of writing to the on-device queue.
@@ -572,6 +554,56 @@ function WorkoutPlayer() {
     },
     onError: (e: any) => toast.error("Could not save set", { description: formatServerError(e) }),
   });
+
+  const deleteSetMut = useMutation({
+    networkMode: "always",
+    mutationFn: async (input: { exerciseId: string; setNumber: number }) => {
+      const payload = { logId: logId!, exerciseId: input.exerciseId, setNumber: input.setNumber };
+      const queue = async () => {
+        await enqueueLog("deleteSet", payload);
+        return { queued: true } as any;
+      };
+      if (localSessionRef.current || !navigator.onLine) return queue();
+      try {
+        return await deleteOneSet({ data: payload });
+      } catch (err) {
+        if (isOfflineError(err)) return queue();
+        throw err;
+      }
+    },
+    onError: (e: any) => toast.error("Could not remove set", { description: formatServerError(e) }),
+  });
+
+  function setPayload(ex: WorkoutDayExercise, row: SetState, setNumber: number) {
+    const tracking = ex.exercise.tracking;
+    return {
+      exerciseId: ex.exercise.id,
+      setNumber,
+      weight: tracking === "weight_reps" && row.weight ? Number(row.weight) : null,
+      reps: tracking !== "time" && row.reps ? Number(row.reps) : null,
+      durationSeconds: tracking === "time" && row.seconds ? Number(row.seconds) : null,
+      completed: row.done,
+    };
+  }
+
+  function addSet(ex: WorkoutDayExercise) {
+    setSets((cur) => ({ ...cur, [ex.id]: addSetRow(cur[ex.id] ?? []) }));
+  }
+
+  function removeSet(ex: WorkoutDayExercise, idx: number) {
+    const rows = sets[ex.id] ?? [];
+    if (rows.length <= 1) return;
+    const next = removeSetRow(rows, idx);
+    setSets((cur) => ({ ...cur, [ex.id]: next }));
+    if (!logId) return;
+    // Rows after the removed one shift up a set number: re-save the done ones
+    // under their new number, then delete the stale trailing row. The offline
+    // queue replays these in order per workout, so the sequence is safe.
+    for (let i = idx; i < next.length; i++) {
+      if (next[i].done) logSetMut.mutate(setPayload(ex, next[i], i + 1));
+    }
+    deleteSetMut.mutate({ exerciseId: ex.exercise.id, setNumber: rows.length });
+  }
 
   /** Best weight per exercise beating every earlier logged set — confirmed by the server on sync. */
   function provisionalPRs(): NewPR[] {
@@ -636,23 +668,9 @@ function WorkoutPlayer() {
     onError: (e: any) => toast.error("Could not finish", { description: formatServerError(e) }),
   });
 
+  // Every set row owns its values: editing set N never changes any other set.
   function updateSet(exId: string, idx: number, patch: Partial<SetState>) {
-    setSets((cur) => {
-      const rows = cur[exId] ?? [];
-      const edited = { ...rows[idx], ...patch, touched: true };
-      const valuePatch: Partial<SetState> = {};
-      for (const k of ["weight", "reps", "seconds"] as const)
-        if (k in patch) valuePatch[k] = patch[k];
-      let carry = Object.keys(valuePatch).length > 0;
-      const next = rows.map((r, i) => {
-        if (i === idx) return edited;
-        // Later sets that the member hasn't touched start from the set before.
-        if (i > idx && carry && !r.done && !r.touched) return { ...r, ...valuePatch };
-        if (i > idx) carry = false;
-        return r;
-      });
-      return { ...cur, [exId]: next };
-    });
+    setSets((cur) => ({ ...cur, [exId]: applySetPatch(cur[exId] ?? [], idx, patch) }));
   }
 
   function toggleSetDone(ex: WorkoutDayExercise, idx: number) {
@@ -666,16 +684,8 @@ function WorkoutPlayer() {
         return;
       }
     }
-    const tracking = ex.exercise.tracking;
     updateSet(ex.id, idx, { done: newDone });
-    logSetMut.mutate({
-      exerciseId: ex.exercise.id,
-      setNumber: idx + 1,
-      weight: tracking === "weight_reps" && row.weight ? Number(row.weight) : null,
-      reps: tracking !== "time" && row.reps ? Number(row.reps) : null,
-      durationSeconds: tracking === "time" && row.seconds ? Number(row.seconds) : null,
-      completed: newDone,
-    });
+    logSetMut.mutate({ ...setPayload(ex, { ...row, done: newDone }, idx + 1) });
     if (newDone && ex.rest_seconds > 0) {
       startTimer(ex.rest_seconds);
     }
@@ -941,14 +951,44 @@ function WorkoutPlayer() {
                     ? `Last: ${p.weight ?? "—"} kg × ${p.reps ?? "—"}`
                     : null;
             return (
-              <div key={idx} className="rounded-2xl border border-border bg-background/60 p-3">
-                <div className="mb-2 flex items-center justify-between">
+              <div
+                key={`${ex.id}-set-${idx + 1}`}
+                className="rounded-2xl border border-border bg-background/60 p-3"
+              >
+                <div className="mb-2 flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-muted-foreground">Set {idx + 1}</span>
-                  {lastPill && (
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      {lastPill}
-                    </span>
-                  )}
+                  <span className="flex items-center gap-1.5">
+                    {lastPill && (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        {lastPill}
+                      </span>
+                    )}
+                    {p && !row.done && (
+                      <button
+                        type="button"
+                        aria-label={`Use last session's values for set ${idx + 1}`}
+                        onClick={() =>
+                          setSets((cur) => ({
+                            ...cur,
+                            [ex.id]: fillFromPrevious(cur[ex.id] ?? [], idx, p),
+                          }))
+                        }
+                        className="rounded-full border border-input px-2 py-0.5 text-[10px] font-semibold text-muted-foreground hover:bg-muted"
+                      >
+                        Use last
+                      </button>
+                    )}
+                    {rows.length > 1 && !row.done && (
+                      <button
+                        type="button"
+                        aria-label={`Remove set ${idx + 1}`}
+                        onClick={() => removeSet(ex, idx)}
+                        className="grid h-5 w-5 place-items-center rounded-full text-muted-foreground hover:bg-muted"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                    )}
+                  </span>
                 </div>
                 {/* Below 400px the two steppers stack so nothing pushes off-canvas. */}
                 <div
@@ -1034,6 +1074,16 @@ function WorkoutPlayer() {
             );
           })}
         </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="mt-3 w-full rounded-xl"
+          onClick={() => addSet(ex)}
+        >
+          <Plus className="mr-1 h-3.5 w-3.5" /> Add set
+        </Button>
 
         {prev.length === 0 && (
           <p className="mt-3 text-[11px] text-muted-foreground">
@@ -1121,14 +1171,11 @@ function WorkoutPlayer() {
           try {
             await swapExerciseFn({ data: { workoutExerciseId: ex.id, newExerciseId } });
             toast.success("Exercise substituted");
+            // Reset only the swapped exercise's sets; every other exercise
+            // keeps its logged values.
             setSets((cur) => ({
               ...cur,
-              [ex.id]: (cur[ex.id] ?? []).map(() => ({
-                weight: "",
-                reps: "",
-                seconds: "",
-                done: false,
-              })),
+              [ex.id]: (cur[ex.id] ?? []).map(() => emptySet()),
             }));
             setSwapOpen(false);
             await queryClient.invalidateQueries({ queryKey: ["workout-day", dayId] });
