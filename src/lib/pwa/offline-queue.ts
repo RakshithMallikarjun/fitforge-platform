@@ -75,6 +75,10 @@ export type QueuedItem = {
       };
     }
   | {
+      type: "deleteSet";
+      payload: { logId: string; exerciseId: string; setNumber: number };
+    }
+  | {
       type: "completeWorkout";
       payload: {
         logId: string;
@@ -235,6 +239,8 @@ async function runItem(item: QueuedItem): Promise<void> {
     });
   } else if (item.type === "logSet") {
     await logSet({ data: item.payload });
+  } else if (item.type === "deleteSet") {
+    await deleteSet({ data: item.payload });
   } else {
     await completeWorkout({
       data: {
