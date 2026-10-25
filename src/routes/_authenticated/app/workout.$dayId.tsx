@@ -464,12 +464,7 @@ function WorkoutPlayer() {
             }));
             any = true;
           } else {
-            next[ex.id] = Array.from({ length: ex.sets }, () => ({
-              weight: "",
-              reps: "",
-              seconds: "",
-              done: false,
-            }));
+            next[ex.id] = Array.from({ length: ex.sets }, () => emptySet());
           }
         }
         if (any && saved.sets && Object.values(saved.sets).some((rs) => rs?.some((x) => x.done))) {
@@ -480,12 +475,7 @@ function WorkoutPlayer() {
         }
       }
       for (const ex of dayData.exercises) {
-        next[ex.id] = Array.from({ length: ex.sets }, () => ({
-          weight: "",
-          reps: "",
-          seconds: "",
-          done: false,
-        }));
+        next[ex.id] = Array.from({ length: ex.sets }, () => emptySet());
       }
       return next;
     });
