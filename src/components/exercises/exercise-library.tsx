@@ -25,9 +25,6 @@ import { formatServerError } from "@/lib/format-error";
 
 export const exercisesQuery = queryOptions({ queryKey: ["exercises"], queryFn: () => listExercises({ data: {} }) });
 export const libraryPlansQuery = queryOptions({ queryKey: ["exercise-library-plans"], queryFn: () => getLibraryPlans() });
-export async function loadLibrary(queryClient: { ensureQueryData: <T>(options: T) => unknown }) {
-  await Promise.all([queryClient.ensureQueryData(exercisesQuery), queryClient.ensureQueryData(libraryPlansQuery)]);
-}
 export function LibrarySkeleton() { return <main className="p-6"><Skeleton className="h-12" /><div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3,4,5,6].map((n) => <Skeleton key={n} className="h-52" />)}</div></main>; }
 export function LibraryError({ error }: { error: unknown }) { return <div role="alert" className="p-6">Unable to load the exercise library. {formatServerError(error)}<Button variant="outline" onClick={() => window.location.reload()}>Retry</Button></div>; }
 function Thumb({ exercise }: { exercise: ExerciseRow }) {
@@ -41,7 +38,7 @@ export function ExerciseLibrary({ search }: { search: LibrarySearch }) {
   const { data: exercises } = useSuspenseQuery(exercisesQuery);
   const { data: plans } = useSuspenseQuery(libraryPlansQuery);
   const { data: me } = useCurrentUser();
-  const navigate = useNavigate({ from: "/_authenticated/admin/exercises" });
+  const navigate = useNavigate({ from: "/admin/exercises" });
   const [formOpen, setFormOpen] = useState(false);
   const change = (patch: Partial<LibrarySearch>) => navigate({ to: ".", search: (prev) => ({ ...prev, ...patch }) });
   const filtered = filterLibrary(exercises, search);
@@ -94,7 +91,7 @@ export function ExerciseDetail({ id, search }: { id: string; search: LibrarySear
   const used = plans.flatMap((p) => p.workout_days.flatMap((d) => d.workout_exercises.filter((w) => w.exercise_id === id).map((w) => ({ p, d, w }))));
   const embed = exercise?.video_url ? getYoutubeEmbedUrl(exercise.video_url) : null;
   const admin = !!me?.roles.includes("admin");
-  const editable = exercise && canEditLibraryExercise(admin, me?.gym_id ?? null, exercise);
+  const editable = exercise && canEditLibraryExercise(admin, me?.gymId ?? null, exercise);
   return <Sheet open onOpenChange={(open) => !open && close()}><SheetContent className="w-full overflow-y-auto sm:max-w-2xl" aria-describedby="exercise-detail-description"><SheetHeader><SheetTitle>{exercise?.name ?? "Exercise not found"}</SheetTitle><SheetDescription id="exercise-detail-description">{exercise?.gym_id ? "Gym" : "Global"} exercise</SheetDescription></SheetHeader>{exercise ? <div className="mt-5 space-y-6">
     <div className="aspect-video overflow-hidden rounded-lg bg-muted">{embed ? playing ? <iframe key={id} src={`${embed}?autoplay=1&playsinline=1`} title={`${exercise.name} demonstration`} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen className="h-full w-full" /> : <Button variant="ghost" aria-label={`Play ${exercise.name} video`} className="relative h-full w-full p-0" onClick={() => setPlaying(true)}><Thumb exercise={exercise} /><span className="absolute inset-0 grid place-items-center"><span className="rounded-full bg-background p-4 text-foreground"><Play /></span></span></Button> : <div className="grid h-full place-items-center text-sm text-muted-foreground">No video available</div>}</div>
     <div className="flex flex-wrap gap-2"><Badge variant="secondary">{exercise.gym_id ? "Gym" : "Global"}</Badge>{exercise.difficulty && <Badge variant="outline">{sentenceCase(exercise.difficulty)}</Badge>}<Badge variant="outline">{exercise.tracking === "time" ? "Timed" : "Repetitions"}</Badge></div>
