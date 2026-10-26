@@ -1,7 +1,19 @@
 // @ts-nocheck -- run with bun test, following project test conventions
 import { describe, it, expect } from "bun:test";
-import { canReadLibraryPlan, canEditLibraryExercise, filterLibrary, librarySearch } from "./exercise-library";
-const bench = { id: "bench", gym_id: null, name: "Bench Press", muscle_groups: ["chest"], equipment: ["barbell"], difficulty: "intermediate" };
+import {
+  canReadLibraryPlan,
+  canEditLibraryExercise,
+  filterLibrary,
+  librarySearch,
+} from "./exercise-library";
+const bench = {
+  id: "bench",
+  gym_id: null,
+  name: "Bench Press",
+  muscle_groups: ["chest"],
+  equipment: ["barbell"],
+  difficulty: "intermediate",
+};
 const gymExercise = { ...bench, id: "gym", gym_id: "my-gym", name: "Local Press" };
 describe("exercise library role rules", () => {
   it("allows admins to edit Gym exercises, not Global exercises", () => {
@@ -23,7 +35,12 @@ describe("exercise library role rules", () => {
     expect(canReadLibraryPlan(true, "other-member", false, new Set())).toBe(true);
   });
   it("combines URL name, muscle, equipment and scope filters", () => {
-    const filters = librarySearch({ q: "bench", muscle: "chest", equipment: "barbell", scope: "global" });
+    const filters = librarySearch({
+      q: "bench",
+      muscle: "chest",
+      equipment: "barbell",
+      scope: "global",
+    });
     expect(filterLibrary([gymExercise, bench], filters).map((e) => e.id)).toEqual(["bench"]);
     expect(filterLibrary([bench], { ...filters, equipment: "dumbbell" })).toEqual([]);
   });

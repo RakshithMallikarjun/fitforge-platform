@@ -138,14 +138,17 @@ function PlanBuilder() {
   const existing = useQuery({
     enabled: !!sourceId,
     queryKey: ["plan", sourceId],
-    queryFn: () => { if (!sourceId) throw new Error("Plan required"); return getPlan({ data: { planId: sourceId } }); },
+    queryFn: () => {
+      if (!sourceId) throw new Error("Plan required");
+      return getPlan({ data: { planId: sourceId } });
+    },
   });
   const [loadedId, setLoadedId] = useState<string | null>(null);
   useEffect(() => {
     const p = existing.data;
     if (!p || loadedId === p.id) return;
     setName(p.name ?? "");
-    setMemberId(editId ? p.member_id ?? "" : search.memberId ?? "");
+    setMemberId(editId ? (p.member_id ?? "") : (search.memberId ?? ""));
     if (editId) setStartDate(p.start_date ?? "");
     setDurationWeeks(p.duration_weeks ? String(p.duration_weeks) : "");
     setNotes(p.notes ?? "");

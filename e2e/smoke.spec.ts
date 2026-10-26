@@ -11,7 +11,10 @@ test("staff exercise library opens shareable details and template previews", asy
   await page.getByRole("button", { name: /sign in/i }).click();
   await page.waitForURL(/\/admin/);
   await page.goto("/admin/exercises");
-  await page.getByRole("link", { name: /^View exercise / }).first().click();
+  await page
+    .getByRole("link", { name: /^View exercise / })
+    .first()
+    .click();
   await expect(page.getByRole("heading", { name: "Used in", exact: true })).toBeVisible();
   await expect(page).toHaveURL(/\/admin\/exercises\/[a-f0-9-]+/);
   await page.reload();
