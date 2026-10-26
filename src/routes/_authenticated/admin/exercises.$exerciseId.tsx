@@ -4,11 +4,16 @@ import {
   ExerciseDetail,
   LibraryError,
   LibrarySkeleton,
+  exercisesQuery,
 } from "@/components/exercises/exercise-library";
 export const Route = createFileRoute("/_authenticated/admin/exercises/$exerciseId")({
-  head: ({ params }) =>
+  loader: async ({ context, params }) => {
+    const exercises = await context.queryClient.ensureQueryData(exercisesQuery);
+    return { name: exercises.find((e) => e.id === params.exerciseId)?.name ?? "Exercise unavailable" };
+  },
+  head: ({ loaderData }) =>
     consolePageHead(
-      `Exercise ${params.exerciseId}`,
+      loaderData?.name ?? "Exercise unavailable",
       "Exercise demonstration, instructions and workout usage in Fit Foundry.",
     ),
   pendingComponent: LibrarySkeleton,
