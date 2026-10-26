@@ -4,3 +4,6 @@
 - [x] Home canonical and legal placeholders
 - [x] Verify targeted rules, home/legal and gym-admin preview
 - [ ] Platform-only click-through verification — requesting account has gym-admin access, not platform-admin access
+- [ ] Exercise library: URL filters, list/grid, shareable exercise details and scoped Used in plans
+- [ ] Workout template previews, duplication, builder reuse and Add to plan
+- [ ] Verify exercise library rules, desktop/mobile browsing and smoke coverage
