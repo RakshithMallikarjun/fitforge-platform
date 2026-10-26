@@ -55,6 +55,7 @@ export const Route = createFileRoute("/_authenticated/admin/plans/new")({
     memberId: z.string().uuid().optional(),
     isTemplate: z.boolean().optional(),
     editPlanId: z.string().uuid().optional(),
+    templateId: z.string().uuid().optional(),
   }),
   component: PlanBuilder,
 });
@@ -132,31 +133,35 @@ function PlanBuilder() {
   const [pickerForDay, setPickerForDay] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
   const editId = search.editPlanId;
+  const sourceId = editId ?? search.templateId;
   const qc = useQueryClient();
   const existing = useQuery({
-    enabled: !!editId,
-    queryKey: ["plan", editId],
-    queryFn: () => getPlan({ data: { planId: editId! } }),
+    enabled: !!sourceId,
+    queryKey: ["plan", sourceId],
+    queryFn: () => {
+      if (!sourceId) throw new Error("Plan required");
+      return getPlan({ data: { planId: sourceId } });
+    },
   });
   const [loadedId, setLoadedId] = useState<string | null>(null);
   useEffect(() => {
     const p = existing.data;
     if (!p || loadedId === p.id) return;
     setName(p.name ?? "");
-    setMemberId(p.member_id ?? "");
-    setStartDate(p.start_date ?? "");
+    setMemberId(editId ? (p.member_id ?? "") : (search.memberId ?? ""));
+    if (editId) setStartDate(p.start_date ?? "");
     setDurationWeeks(p.duration_weeks ? String(p.duration_weeks) : "");
     setNotes(p.notes ?? "");
-    setIsTemplate(!!p.is_template);
+    setIsTemplate(editId ? !!p.is_template : forceTemplate);
     setDays(
       (p.workout_days ?? []).map((d: any) => ({
         uid: uid(),
-        dbId: d.id,
+        dbId: editId ? d.id : undefined,
         label: d.day_label,
         block_type: (d.block_type ?? "main") as BlockType,
         exercises: (d.workout_exercises ?? []).map((e: any) => ({
           uid: uid(),
-          dbId: e.id,
+          dbId: editId ? e.id : undefined,
           exercise: { ...(e.exercises ?? {}), id: e.exercise_id } as ExerciseRow,
           sets: e.sets ?? 0,
           reps: e.reps ?? "",
@@ -167,7 +172,7 @@ function PlanBuilder() {
       })),
     );
     setLoadedId(p.id);
-  }, [existing.data, loadedId]);
+  }, [existing.data, loadedId, editId, search.memberId, forceTemplate]);
 
   /** Loads an AI draft into the builder. Nothing is persisted until Save. */
   const applyDraft = (draft: PlanDraft) => {

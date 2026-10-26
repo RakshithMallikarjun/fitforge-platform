@@ -1,5 +1,37 @@
 import { test, expect } from "@playwright/test";
 
+test("staff exercise library opens shareable details and template previews", async ({ page }) => {
+  const staffEmail = process.env.SMOKE_STAFF_EMAIL;
+  const staffPassword = process.env.SMOKE_STAFF_PASSWORD;
+  test.skip(!staffEmail || !staffPassword, "Staff credentials required");
+  if (!staffEmail || !staffPassword) return;
+  await page.goto("/auth");
+  await page.getByLabel(/email/i).fill(staffEmail);
+  await page.getByLabel(/^password/i).fill(staffPassword);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.waitForURL(/\/admin/);
+  await page.goto("/admin/exercises");
+  await page
+    .getByRole("link", { name: /^View exercise / })
+    .first()
+    .click();
+  await expect(page.getByRole("heading", { name: "Used in", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/exercises\/[a-f0-9-]+/);
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Instructions", exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "List view", exact: true }).click();
+  await expect(page).toHaveURL(/view=list/);
+  await page.getByRole("tab", { name: "Workouts", exact: true }).click();
+  const template = page.locator("main article button").first();
+  if (await template.count()) {
+    await template.click();
+    await expect(page.getByRole("link", { name: "Use template", exact: true })).toBeVisible();
+    await page.getByRole("link", { name: "Use template", exact: true }).click();
+    await expect(page).toHaveURL(/templateId=/);
+  }
+});
+
 /**
  * Smoke test: sign in as a member, finish one workout, and assert the streak
  * increments. The streak assertion is the important one — it fails whenever
