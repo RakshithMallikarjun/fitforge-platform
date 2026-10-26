@@ -51,6 +51,7 @@ import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authen
 import { Route as ApiPublicDailySummaryRouteImport } from './routes/api/public/daily-summary'
 import { Route as ApiPublicDuesDigestRouteImport } from './routes/api/public/dues-digest'
 import { Route as ApiPublicScheduledJobsRouteImport } from './routes/api/public/scheduled-jobs'
+import { Route as AuthenticatedAdminExercisesExerciseIdRouteImport } from './routes/_authenticated/admin/exercises.$exerciseId'
 import { Route as AuthenticatedAdminMembersMemberIdRouteImport } from './routes/_authenticated/admin/members.$memberId'
 import { Route as AuthenticatedAdminPlansPlanIdRouteImport } from './routes/_authenticated/admin/plans.$planId'
 import { Route as AuthenticatedAdminPlansNewRouteImport } from './routes/_authenticated/admin/plans.new'
@@ -287,6 +288,12 @@ const ApiPublicScheduledJobsRoute = ApiPublicScheduledJobsRouteImport.update({
   path: '/api/public/scheduled-jobs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminExercisesExerciseIdRoute =
+  AuthenticatedAdminExercisesExerciseIdRouteImport.update({
+    id: '/$exerciseId',
+    path: '/$exerciseId',
+    getParentRoute: () => AuthenticatedAdminExercisesRoute,
+  } as any)
 const AuthenticatedAdminMembersMemberIdRoute =
   AuthenticatedAdminMembersMemberIdRouteImport.update({
     id: '/$memberId',
@@ -361,7 +368,7 @@ export interface FileRoutesByFullPath {
   '/platform/gyms': typeof AuthenticatedPlatformGymsRouteRouteWithChildren
   '/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/admin/dues': typeof AuthenticatedAdminDuesRoute
-  '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
+  '/admin/exercises': typeof AuthenticatedAdminExercisesRouteWithChildren
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/admin/membership-plans': typeof AuthenticatedAdminMembershipPlansRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
@@ -384,6 +391,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
+  '/admin/exercises/$exerciseId': typeof AuthenticatedAdminExercisesExerciseIdRoute
   '/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
   '/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
   '/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
@@ -409,7 +417,7 @@ export interface FileRoutesByTo {
   '/manifest/$file': typeof ManifestFileRoute
   '/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/admin/dues': typeof AuthenticatedAdminDuesRoute
-  '/admin/exercises': typeof AuthenticatedAdminExercisesRoute
+  '/admin/exercises': typeof AuthenticatedAdminExercisesRouteWithChildren
   '/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/admin/membership-plans': typeof AuthenticatedAdminMembershipPlansRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
@@ -432,6 +440,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
+  '/admin/exercises/$exerciseId': typeof AuthenticatedAdminExercisesExerciseIdRoute
   '/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
   '/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
   '/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
@@ -463,7 +472,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/gyms': typeof AuthenticatedPlatformGymsRouteRouteWithChildren
   '/_authenticated/admin/checkin': typeof AuthenticatedAdminCheckinRoute
   '/_authenticated/admin/dues': typeof AuthenticatedAdminDuesRoute
-  '/_authenticated/admin/exercises': typeof AuthenticatedAdminExercisesRoute
+  '/_authenticated/admin/exercises': typeof AuthenticatedAdminExercisesRouteWithChildren
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRouteWithChildren
   '/_authenticated/admin/membership-plans': typeof AuthenticatedAdminMembershipPlansRoute
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRouteWithChildren
@@ -486,6 +495,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
+  '/_authenticated/admin/exercises/$exerciseId': typeof AuthenticatedAdminExercisesExerciseIdRoute
   '/_authenticated/admin/members/$memberId': typeof AuthenticatedAdminMembersMemberIdRoute
   '/_authenticated/admin/plans/$planId': typeof AuthenticatedAdminPlansPlanIdRoute
   '/_authenticated/admin/plans/new': typeof AuthenticatedAdminPlansNewRoute
@@ -540,6 +550,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/app/'
     | '/platform/'
+    | '/admin/exercises/$exerciseId'
     | '/admin/members/$memberId'
     | '/admin/plans/$planId'
     | '/admin/plans/new'
@@ -588,6 +599,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/platform'
+    | '/admin/exercises/$exerciseId'
     | '/admin/members/$memberId'
     | '/admin/plans/$planId'
     | '/admin/plans/new'
@@ -641,6 +653,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/_authenticated/platform/'
+    | '/_authenticated/admin/exercises/$exerciseId'
     | '/_authenticated/admin/members/$memberId'
     | '/_authenticated/admin/plans/$planId'
     | '/_authenticated/admin/plans/new'
@@ -967,6 +980,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicScheduledJobsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/exercises/$exerciseId': {
+      id: '/_authenticated/admin/exercises/$exerciseId'
+      path: '/$exerciseId'
+      fullPath: '/admin/exercises/$exerciseId'
+      preLoaderRoute: typeof AuthenticatedAdminExercisesExerciseIdRouteImport
+      parentRoute: typeof AuthenticatedAdminExercisesRoute
+    }
     '/_authenticated/admin/members/$memberId': {
       id: '/_authenticated/admin/members/$memberId'
       path: '/$memberId'
@@ -1033,6 +1053,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAdminExercisesRouteChildren {
+  AuthenticatedAdminExercisesExerciseIdRoute: typeof AuthenticatedAdminExercisesExerciseIdRoute
+}
+
+const AuthenticatedAdminExercisesRouteChildren: AuthenticatedAdminExercisesRouteChildren =
+  {
+    AuthenticatedAdminExercisesExerciseIdRoute:
+      AuthenticatedAdminExercisesExerciseIdRoute,
+  }
+
+const AuthenticatedAdminExercisesRouteWithChildren =
+  AuthenticatedAdminExercisesRoute._addFileChildren(
+    AuthenticatedAdminExercisesRouteChildren,
+  )
+
 interface AuthenticatedAdminMembersRouteChildren {
   AuthenticatedAdminMembersMemberIdRoute: typeof AuthenticatedAdminMembersMemberIdRoute
 }
@@ -1067,7 +1102,7 @@ const AuthenticatedAdminPlansRouteWithChildren =
 interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminCheckinRoute: typeof AuthenticatedAdminCheckinRoute
   AuthenticatedAdminDuesRoute: typeof AuthenticatedAdminDuesRoute
-  AuthenticatedAdminExercisesRoute: typeof AuthenticatedAdminExercisesRoute
+  AuthenticatedAdminExercisesRoute: typeof AuthenticatedAdminExercisesRouteWithChildren
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRouteWithChildren
   AuthenticatedAdminMembershipPlansRoute: typeof AuthenticatedAdminMembershipPlansRoute
   AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRouteWithChildren
@@ -1085,7 +1120,8 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
   {
     AuthenticatedAdminCheckinRoute: AuthenticatedAdminCheckinRoute,
     AuthenticatedAdminDuesRoute: AuthenticatedAdminDuesRoute,
-    AuthenticatedAdminExercisesRoute: AuthenticatedAdminExercisesRoute,
+    AuthenticatedAdminExercisesRoute:
+      AuthenticatedAdminExercisesRouteWithChildren,
     AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRouteWithChildren,
     AuthenticatedAdminMembershipPlansRoute:
       AuthenticatedAdminMembershipPlansRoute,
