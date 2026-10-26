@@ -9,7 +9,9 @@ import {
 export const Route = createFileRoute("/_authenticated/admin/exercises/$exerciseId")({
   loader: async ({ context, params }) => {
     const exercises = await context.queryClient.ensureQueryData(exercisesQuery);
-    return { name: exercises.find((e) => e.id === params.exerciseId)?.name ?? "Exercise unavailable" };
+    return {
+      name: exercises.find((e) => e.id === params.exerciseId)?.name ?? "Exercise unavailable",
+    };
   },
   head: ({ loaderData }) =>
     consolePageHead(

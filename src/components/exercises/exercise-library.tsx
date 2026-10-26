@@ -138,7 +138,6 @@ function Filter({
 export function ExerciseLibrary({ search }: { search: LibrarySearch }) {
   const { data: exercises } = useSuspenseQuery(exercisesQuery);
   const { data: plans } = useSuspenseQuery(libraryPlansQuery);
-  const { data: me } = useCurrentUser();
   const navigate = useNavigate({ from: "/admin/exercises" });
   const [formOpen, setFormOpen] = useState(false);
   const change = (patch: Partial<LibrarySearch>) =>
