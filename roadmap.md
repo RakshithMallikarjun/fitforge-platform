@@ -1,3 +1,4 @@
+- [ ] Shared email contact actions, recipient context, and fallback verification
 - [x] Shared plural copy and readable audit trail
 - [x] Console wording, navigation, loading shells and notifications
 - [x] Optimistic gym enablement and sponsor save feedback
