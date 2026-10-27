@@ -1,4 +1,8 @@
 import { consolePageHead } from "@/lib/page-head";
+import { ContactByEmail } from "@/components/contact-by-email";
+import { Button } from "@/components/ui/button";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { listLeads } from "@/lib/leads.functions";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -32,6 +36,7 @@ import {
   getPlatformOverview,
   getPlatformSignupTrend,
   listPlatformGyms,
+  listPlatformGymAdmins,
   type PaymentStatus,
 } from "@/lib/platform.functions";
 
@@ -63,6 +68,33 @@ function Card({
 }
 
 function PlatformOverviewPage() {
+  const { data: sender } = useCurrentUser();
+  const fetchContacts = useServerFn(listPlatformGymAdmins);
+  const fetchLeads = useServerFn(listLeads);
+  const contacts = useQuery({ queryKey: ["platform-gym-admins"], queryFn: () => fetchContacts() });
+  const leads = useQuery({ queryKey: ["platform-leads"], queryFn: () => fetchLeads() });
+  const gymContact = (gymId: string, gymName: string) => {
+    const recipient = contacts.data?.find(
+      (r) => r.gym_id === gymId && r.role === "admin" && r.active,
+    );
+    return contacts.isLoading ? (
+      <Skeleton className="h-12 w-44" />
+    ) : contacts.isError ? (
+      <div>
+        <p className="text-xs text-destructive">Couldn't load contact.</p>
+        <Button variant="outline" size="sm" onClick={() => contacts.refetch()}>
+          Retry
+        </Button>
+      </div>
+    ) : (
+      <ContactByEmail
+        to={recipient?.email}
+        recipientName={recipient?.display_name ?? `${gymName} admin`}
+        subject={`Checking in on ${gymName}`}
+        body={`Hi ${recipient?.display_name ?? "there"},\n\nChecking in on ${gymName}. Is there anything we can help with?\n\n${sender?.displayName ?? sender?.email ?? ""}`}
+      />
+    );
+  };
   const fetchOverview = useServerFn(getPlatformOverview);
   const fetchSignups = useServerFn(getPlatformSignupTrend);
   const fetchActivity = useServerFn(getPlatformActivityTrend);
@@ -319,7 +351,10 @@ function PlatformOverviewPage() {
               ) : (
                 <ul className="divide-y divide-border">
                   {needsAttention.slice(0, 10).map((g) => (
-                    <li key={g.id} className="flex items-center justify-between gap-3 py-2">
+                    <li
+                      key={g.id}
+                      className="flex flex-wrap items-center justify-between gap-3 py-2"
+                    >
                       <Link
                         to="/platform/gyms/$gymId"
                         params={{ gymId: g.id }}
@@ -330,6 +365,7 @@ function PlatformOverviewPage() {
                       <span className="shrink-0 text-xs text-destructive">
                         {activityAgo(g.days_since_activity, "never active")}
                       </span>
+                      {gymContact(g.id, g.name)}
                     </li>
                   ))}
                 </ul>
@@ -344,7 +380,10 @@ function PlatformOverviewPage() {
               ) : (
                 <ul className="divide-y divide-border">
                   {overdue.map((g) => (
-                    <li key={g.id} className="flex items-center justify-between gap-3 py-2">
+                    <li
+                      key={g.id}
+                      className="flex flex-wrap items-center justify-between gap-3 py-2"
+                    >
                       <Link
                         to="/platform/gyms/$gymId"
                         params={{ gymId: g.id }}
@@ -356,12 +395,39 @@ function PlatformOverviewPage() {
                         <PaymentChip status={g.payment_status as PaymentStatus} />
                         due {fmtDate(g.next_due_at)}
                       </span>
+                      {gymContact(g.id, g.name)}
                     </li>
                   ))}
                 </ul>
               )}
             </Card>
           </div>
+          <Card title="Leads">
+            {leads.isLoading ? (
+              <Skeleton className="h-24" />
+            ) : leads.isError ? (
+              <ErrorState message="Couldn't load leads." onRetry={() => leads.refetch()} />
+            ) : !leads.data?.length ? (
+              <EmptyState>No leads yet.</EmptyState>
+            ) : (
+              <ul className="divide-y divide-border">
+                {leads.data.slice(0, 5).map((lead) => (
+                  <li
+                    key={lead.id}
+                    className="flex flex-wrap items-center justify-between gap-3 py-3"
+                  >
+                    <span className="text-sm font-medium">{lead.gym_name}</span>
+                    <ContactByEmail
+                      to={lead.email}
+                      recipientName={lead.contact_name}
+                      subject={`Fit Foundry for ${lead.gym_name}`}
+                      body={`Hi ${lead.contact_name},\n\nThanks for your interest in Fit Foundry for ${lead.gym_name}. When would be a good time to talk?\n\n${sender?.displayName ?? sender?.email ?? ""}`}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
         </>
       )}
     </main>

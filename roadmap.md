@@ -1,3 +1,5 @@
+- [x] Shared email contact actions and recipient context; signed-in gym support Gmail/copy/keyboard/fallback verified; 3 rules tests passed
+- [ ] Email contacts on Platform and populated member/dues pages — account has no platform access or member rows; published mail-client launch needs publishing and a configured desktop mail app
 - [x] Shared plural copy and readable audit trail
 - [x] Console wording, navigation, loading shells and notifications
 - [x] Optimistic gym enablement and sponsor save feedback

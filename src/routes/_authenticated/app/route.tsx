@@ -22,15 +22,12 @@ import { getMembershipStatus } from "@/lib/membership.functions";
 import { MembershipProvider } from "@/lib/membership-context";
 import { AlertTriangle } from "lucide-react";
 import { formatShortDate } from "@/lib/format-date";
+import { ContactByEmail } from "@/components/contact-by-email";
+import { consolePageHead } from "@/lib/page-head";
 
 export const Route = createFileRoute("/_authenticated/app")({
-  head: () => ({
-    meta: [
-      { title: "My training · Fit Foundry" },
-      { name: "description", content: "Your workouts, progress and messages with your trainer." },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
+  head: () =>
+    consolePageHead("My training", "Your workouts, progress and messages with your trainer."),
   component: MemberShell,
 });
 
@@ -150,14 +147,13 @@ function MemberShell() {
         {(theme.supportEmail || theme.supportPhone) && (
           <div className="mt-10 flex flex-col items-center gap-2 border-t border-border pt-6 text-xs text-muted-foreground">
             <p>Questions about your membership or training?</p>
-            {theme.supportEmail && (
-              <a
-                href={`mailto:${theme.supportEmail}?subject=${encodeURIComponent(`Help request — ${theme.name}`)}&body=${encodeURIComponent(`Member: ${user?.email ?? ""}\n\nHow can we help?`)}`}
-                className="font-medium text-primary hover:underline"
-              >
-                Email {theme.name}
-              </a>
-            )}
+            <ContactByEmail
+              to={theme.supportEmail}
+              recipientName={`${theme.name} support`}
+              label={`Email ${theme.name}`}
+              subject={`Help request — ${theme.name}`}
+              body={`Hi ${theme.name},\n\nHow can we help?\n\n${user?.displayName ?? user?.email ?? ""}`}
+            />
             {theme.supportPhone && (
               <a
                 href={`https://wa.me/${theme.supportPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hi ${theme.name}, I need help with my membership.`)}`}
