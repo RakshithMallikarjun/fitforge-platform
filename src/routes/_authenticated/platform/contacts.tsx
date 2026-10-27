@@ -181,7 +181,12 @@ function PlatformContactsPage() {
                   </TableCell>
                   <TableCell className="capitalize text-sm">{r.role}</TableCell>
                   <TableCell className="text-sm">
-                    <ContactByEmail to={r.email} recipientName={r.display_name} subject={`Checking in on ${r.gym_name}`} body={`Hi ${r.display_name ?? "there"},\n\nHow can Fit Foundry help ${r.gym_name}?\n\n${sender?.displayName ?? sender?.email ?? ""}`} />
+                    <ContactByEmail
+                      to={r.email}
+                      recipientName={r.display_name}
+                      subject={`Checking in on ${r.gym_name}`}
+                      body={`Hi ${r.display_name ?? "there"},\n\nHow can Fit Foundry help ${r.gym_name}?\n\n${sender?.displayName ?? sender?.email ?? ""}`}
+                    />
                   </TableCell>
                   <TableCell className="text-sm">
                     {r.phone ? (

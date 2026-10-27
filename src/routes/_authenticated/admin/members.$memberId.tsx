@@ -159,7 +159,16 @@ function MemberProfile() {
           />
           {me && (
             <div className="flex flex-wrap gap-2">
-              <ContactByEmail to={user.email} recipientName={user.display_name} subject={membership?.endsOn ? `Your ${theme.name} membership is due on ${formatShortDate(membership.endsOn)}` : `Checking in from ${theme.name}`} body={`Hi ${user.display_name ?? "there"},\n\n${membership?.endsOn ? `Your membership is due on ${formatShortDate(membership.endsOn)}. Please contact us about renewing.` : "How is your training going?"}\n\n${me.displayName ?? me.email}`} />
+              <ContactByEmail
+                to={user.email}
+                recipientName={user.display_name}
+                subject={
+                  membership?.endsOn
+                    ? `Your ${theme.name} membership is due on ${formatShortDate(membership.endsOn)}`
+                    : `Checking in from ${theme.name}`
+                }
+                body={`Hi ${user.display_name ?? "there"},\n\n${membership?.endsOn ? `Your membership is due on ${formatShortDate(membership.endsOn)}. Please contact us about renewing.` : "How is your training going?"}\n\n${me.displayName ?? me.email}`}
+              />
               {/* Trainers can record payments for their assigned members; the rest is admin-only. */}
               <Button size="sm" className="rounded-lg" onClick={() => setPayOpen(true)}>
                 <CreditCard className="mr-1.5 h-4 w-4" /> Record payment

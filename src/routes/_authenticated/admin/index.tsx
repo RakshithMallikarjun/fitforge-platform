@@ -77,9 +77,7 @@ function AdminDashboard() {
             to="/admin/dues"
             className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-accent/40 px-4 py-3 text-sm"
           >
-            <span className="font-semibold">
-              {plural(duesToChase, "member")} to chase
-            </span>
+            <span className="font-semibold">{plural(duesToChase, "member")} to chase</span>
             <span className="text-muted-foreground">
               {duesSummary?.overdue_count ?? 0} overdue · {duesSummary?.due_today_count ?? 0} due
               today · {duesSummary?.due_soon_count ?? 0} due soon
@@ -153,7 +151,13 @@ function AdminDashboard() {
                   Reach your {theme.name} support contacts.
                 </p>
                 <div className="mt-4 rounded-md bg-card p-3 text-card-foreground">
-                  <ContactByEmail to={theme.supportEmail} recipientName={`${theme.name} support`} label="Email support" subject={`Support request — ${theme.name}`} body={`Hi ${theme.name},\n\nPlease describe your issue:\n\n${user?.displayName ?? user?.email ?? ""}`} />
+                  <ContactByEmail
+                    to={theme.supportEmail}
+                    recipientName={`${theme.name} support`}
+                    label="Email support"
+                    subject={`Support request — ${theme.name}`}
+                    body={`Hi ${theme.name},\n\nPlease describe your issue:\n\n${user?.displayName ?? user?.email ?? ""}`}
+                  />
                 </div>
                 {theme.supportPhone && (
                   <a
@@ -344,7 +348,12 @@ function AtRiskMembers({ isAdmin }: { isAdmin: boolean }) {
                     {plural(r.messages30d, "message")} sent (30d)
                   </p>
                 </div>
-                <ContactByEmail to={r.email} recipientName={name} subject={`Checking in from ${theme.name}`} body={`Hi ${name},\n\nHow is your training going? Let us know how we can help.\n\n${sender?.displayName ?? sender?.email ?? ""}`} />
+                <ContactByEmail
+                  to={r.email}
+                  recipientName={name}
+                  subject={`Checking in from ${theme.name}`}
+                  body={`Hi ${name},\n\nHow is your training going? Let us know how we can help.\n\n${sender?.displayName ?? sender?.email ?? ""}`}
+                />
                 <Button asChild size="sm" className="rounded-lg">
                   <Link to="/admin/members/$memberId" params={{ memberId: r.memberId }}>
                     Open
@@ -363,15 +372,54 @@ function AtRiskMembers({ isAdmin }: { isAdmin: boolean }) {
 function DuesContacts() {
   const { data: sender } = useCurrentUser();
   const { theme } = useTheme();
-  const { data, isLoading, isError, refetch } = useQuery({ queryKey: ["dues", "all"], queryFn: () => getDues({ data: { bucket: "all" } }) });
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["dues", "all"],
+    queryFn: () => getDues({ data: { bucket: "all" } }),
+  });
   const rows = (data ?? []).filter((r) => r.bucket !== "current").slice(0, 5);
-  return <section className="rounded-2xl border border-border bg-card p-6">
-    <h2 className="text-base font-bold">Memberships needing attention</h2>
-    {isLoading ? <Skeleton className="mt-4 h-24" /> : isError ? <div className="mt-4"><p>Couldn't load membership contacts.</p><Button variant="outline" onClick={() => refetch()}>Retry</Button></div> : !rows.length ? <p className="mt-4 text-sm text-muted-foreground">No memberships due soon or overdue.</p> : <ul className="mt-4 divide-y divide-border">{rows.map((r) => <li key={r.subscription_id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-      <div><Link to="/admin/members/$memberId" params={{ memberId: r.member_id }} className="text-sm font-medium hover:underline">{r.display_name ?? r.email ?? "Member"}</Link><p className="text-xs text-muted-foreground">Due {formatShortDate(r.ends_on)}</p></div>
-      <ContactByEmail to={r.email} recipientName={r.display_name} subject={`Your ${theme.name} membership is due on ${formatShortDate(r.ends_on)}`} body={`Hi ${r.display_name ?? "there"},\n\nYour ${r.plan_name} membership is due on ${formatShortDate(r.ends_on)}. Please contact us about renewing.\n\n${sender?.displayName ?? sender?.email ?? ""}`} />
-    </li>)}</ul>}
-  </section>;
+  return (
+    <section className="rounded-2xl border border-border bg-card p-6">
+      <h2 className="text-base font-bold">Memberships needing attention</h2>
+      {isLoading ? (
+        <Skeleton className="mt-4 h-24" />
+      ) : isError ? (
+        <div className="mt-4">
+          <p>Couldn't load membership contacts.</p>
+          <Button variant="outline" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : !rows.length ? (
+        <p className="mt-4 text-sm text-muted-foreground">No memberships due soon or overdue.</p>
+      ) : (
+        <ul className="mt-4 divide-y divide-border">
+          {rows.map((r) => (
+            <li
+              key={r.subscription_id}
+              className="flex flex-wrap items-center justify-between gap-3 py-3"
+            >
+              <div>
+                <Link
+                  to="/admin/members/$memberId"
+                  params={{ memberId: r.member_id }}
+                  className="text-sm font-medium hover:underline"
+                >
+                  {r.display_name ?? r.email ?? "Member"}
+                </Link>
+                <p className="text-xs text-muted-foreground">Due {formatShortDate(r.ends_on)}</p>
+              </div>
+              <ContactByEmail
+                to={r.email}
+                recipientName={r.display_name}
+                subject={`Your ${theme.name} membership is due on ${formatShortDate(r.ends_on)}`}
+                body={`Hi ${r.display_name ?? "there"},\n\nYour ${r.plan_name} membership is due on ${formatShortDate(r.ends_on)}. Please contact us about renewing.\n\n${sender?.displayName ?? sender?.email ?? ""}`}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
 }
 
 function PaymentHistory() {

@@ -74,8 +74,26 @@ function PlatformOverviewPage() {
   const contacts = useQuery({ queryKey: ["platform-gym-admins"], queryFn: () => fetchContacts() });
   const leads = useQuery({ queryKey: ["platform-leads"], queryFn: () => fetchLeads() });
   const gymContact = (gymId: string, gymName: string) => {
-    const recipient = contacts.data?.find((r) => r.gym_id === gymId && r.role === "admin" && r.active);
-    return contacts.isLoading ? <Skeleton className="h-12 w-44" /> : contacts.isError ? <div><p className="text-xs text-destructive">Couldn't load contact.</p><Button variant="outline" size="sm" onClick={() => contacts.refetch()}>Retry</Button></div> : <ContactByEmail to={recipient?.email} recipientName={recipient?.display_name ?? `${gymName} admin`} subject={`Checking in on ${gymName}`} body={`Hi ${recipient?.display_name ?? "there"},\n\nChecking in on ${gymName}. Is there anything we can help with?\n\n${sender?.displayName ?? sender?.email ?? ""}`} />;
+    const recipient = contacts.data?.find(
+      (r) => r.gym_id === gymId && r.role === "admin" && r.active,
+    );
+    return contacts.isLoading ? (
+      <Skeleton className="h-12 w-44" />
+    ) : contacts.isError ? (
+      <div>
+        <p className="text-xs text-destructive">Couldn't load contact.</p>
+        <Button variant="outline" size="sm" onClick={() => contacts.refetch()}>
+          Retry
+        </Button>
+      </div>
+    ) : (
+      <ContactByEmail
+        to={recipient?.email}
+        recipientName={recipient?.display_name ?? `${gymName} admin`}
+        subject={`Checking in on ${gymName}`}
+        body={`Hi ${recipient?.display_name ?? "there"},\n\nChecking in on ${gymName}. Is there anything we can help with?\n\n${sender?.displayName ?? sender?.email ?? ""}`}
+      />
+    );
   };
   const fetchOverview = useServerFn(getPlatformOverview);
   const fetchSignups = useServerFn(getPlatformSignupTrend);
@@ -333,7 +351,10 @@ function PlatformOverviewPage() {
               ) : (
                 <ul className="divide-y divide-border">
                   {needsAttention.slice(0, 10).map((g) => (
-                    <li key={g.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
+                    <li
+                      key={g.id}
+                      className="flex flex-wrap items-center justify-between gap-3 py-2"
+                    >
                       <Link
                         to="/platform/gyms/$gymId"
                         params={{ gymId: g.id }}
@@ -359,7 +380,10 @@ function PlatformOverviewPage() {
               ) : (
                 <ul className="divide-y divide-border">
                   {overdue.map((g) => (
-                    <li key={g.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
+                    <li
+                      key={g.id}
+                      className="flex flex-wrap items-center justify-between gap-3 py-2"
+                    >
                       <Link
                         to="/platform/gyms/$gymId"
                         params={{ gymId: g.id }}
@@ -379,7 +403,30 @@ function PlatformOverviewPage() {
             </Card>
           </div>
           <Card title="Leads">
-            {leads.isLoading ? <Skeleton className="h-24" /> : leads.isError ? <ErrorState message="Couldn't load leads." onRetry={() => leads.refetch()} /> : !leads.data?.length ? <EmptyState>No leads yet.</EmptyState> : <ul className="divide-y divide-border">{leads.data.slice(0, 5).map((lead) => <li key={lead.id} className="flex flex-wrap items-center justify-between gap-3 py-3"><span className="text-sm font-medium">{lead.gym_name}</span><ContactByEmail to={lead.email} recipientName={lead.contact_name} subject={`Fit Foundry for ${lead.gym_name}`} body={`Hi ${lead.contact_name},\n\nThanks for your interest in Fit Foundry for ${lead.gym_name}. When would be a good time to talk?\n\n${sender?.displayName ?? sender?.email ?? ""}`} /></li>)}</ul>}
+            {leads.isLoading ? (
+              <Skeleton className="h-24" />
+            ) : leads.isError ? (
+              <ErrorState message="Couldn't load leads." onRetry={() => leads.refetch()} />
+            ) : !leads.data?.length ? (
+              <EmptyState>No leads yet.</EmptyState>
+            ) : (
+              <ul className="divide-y divide-border">
+                {leads.data.slice(0, 5).map((lead) => (
+                  <li
+                    key={lead.id}
+                    className="flex flex-wrap items-center justify-between gap-3 py-3"
+                  >
+                    <span className="text-sm font-medium">{lead.gym_name}</span>
+                    <ContactByEmail
+                      to={lead.email}
+                      recipientName={lead.contact_name}
+                      subject={`Fit Foundry for ${lead.gym_name}`}
+                      body={`Hi ${lead.contact_name},\n\nThanks for your interest in Fit Foundry for ${lead.gym_name}. When would be a good time to talk?\n\n${sender?.displayName ?? sender?.email ?? ""}`}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
           </Card>
         </>
       )}
