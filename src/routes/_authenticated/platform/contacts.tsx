@@ -1,4 +1,6 @@
 import { consolePageHead } from "@/lib/page-head";
+import { ContactByEmail } from "@/components/contact-by-email";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { plural } from "@/lib/copy";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -38,6 +40,7 @@ export const Route = createFileRoute("/_authenticated/platform/contacts")({
 });
 
 function PlatformContactsPage() {
+  const { data: sender } = useCurrentUser();
   const fetchGymAdmins = useServerFn(listPlatformGymAdmins);
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["platform-gym-admins"],
@@ -178,12 +181,7 @@ function PlatformContactsPage() {
                   </TableCell>
                   <TableCell className="capitalize text-sm">{r.role}</TableCell>
                   <TableCell className="text-sm">
-                    <span className="inline-flex items-center gap-1">
-                      <a href={`mailto:${r.email}`} className="hover:underline">
-                        {r.email}
-                      </a>
-                      <CopyButton value={r.email} />
-                    </span>
+                    <ContactByEmail to={r.email} recipientName={r.display_name} subject={`Checking in on ${r.gym_name}`} body={`Hi ${r.display_name ?? "there"},\n\nHow can Fit Foundry help ${r.gym_name}?\n\n${sender?.displayName ?? sender?.email ?? ""}`} />
                   </TableCell>
                   <TableCell className="text-sm">
                     {r.phone ? (

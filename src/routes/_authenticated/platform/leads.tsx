@@ -1,4 +1,6 @@
 import { consolePageHead } from "@/lib/page-head";
+import { ContactByEmail } from "@/components/contact-by-email";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -32,6 +34,7 @@ export const Route = createFileRoute("/_authenticated/platform/leads")({
 const STATUS_LABEL = { new: "New", contacted: "Contacted", converted: "Converted" } as const;
 
 function PlatformLeadsPage() {
+  const { data: sender } = useCurrentUser();
   const qc = useQueryClient();
   const fetchLeads = useServerFn(listLeads);
   const updateFn = useServerFn(setLeadStatus);
@@ -95,10 +98,7 @@ function PlatformLeadsPage() {
                     <p className="text-xs text-muted-foreground">{l.city}</p>
                   </TableCell>
                   <TableCell className="text-sm">
-                    <p>{l.contact_name}</p>
-                    <a href={`mailto:${l.email}`} className="block text-xs hover:underline">
-                      {l.email}
-                    </a>
+                    <ContactByEmail to={l.email} recipientName={l.contact_name} subject={`Fit Foundry for ${l.gym_name}`} body={`Hi ${l.contact_name},\n\nThanks for your interest in Fit Foundry for ${l.gym_name}. When would be a good time to talk?\n\n${sender?.displayName ?? sender?.email ?? ""}`} />
                     <a href={`tel:${l.phone}`} className="block text-xs hover:underline">
                       {l.phone}
                     </a>
