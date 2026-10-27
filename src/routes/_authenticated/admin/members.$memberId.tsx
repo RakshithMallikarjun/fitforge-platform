@@ -1,4 +1,6 @@
 import { consolePageHead } from "@/lib/page-head";
+import { ContactByEmail } from "@/components/contact-by-email";
+import { useTheme } from "@/lib/theme-provider";
 import { plural } from "@/lib/copy";
 import { ExpandablePlanSessions } from "@/components/plans/plan-sessions";
 import { OverloadSuggestions } from "@/components/plans/overload-suggestions";
@@ -52,6 +54,7 @@ export const Route = createFileRoute("/_authenticated/admin/members/$memberId")(
 function MemberProfile() {
   const { memberId } = Route.useParams();
   const { data: me } = useCurrentUser();
+  const { theme } = useTheme();
   const isAdmin = me?.roles.includes("admin");
   const [assignOpen, setAssignOpen] = useState(false);
   const [membershipOpen, setMembershipOpen] = useState(false);
@@ -156,6 +159,7 @@ function MemberProfile() {
           />
           {me && (
             <div className="flex flex-wrap gap-2">
+              <ContactByEmail to={user.email} recipientName={user.display_name} subject={membership?.endsOn ? `Your ${theme.name} membership is due on ${formatShortDate(membership.endsOn)}` : `Checking in from ${theme.name}`} body={`Hi ${user.display_name ?? "there"},\n\n${membership?.endsOn ? `Your membership is due on ${formatShortDate(membership.endsOn)}. Please contact us about renewing.` : "How is your training going?"}\n\n${me.displayName ?? me.email}`} />
               {/* Trainers can record payments for their assigned members; the rest is admin-only. */}
               <Button size="sm" className="rounded-lg" onClick={() => setPayOpen(true)}>
                 <CreditCard className="mr-1.5 h-4 w-4" /> Record payment

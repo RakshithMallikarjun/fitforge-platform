@@ -1,5 +1,33 @@
 import { test, expect } from "@playwright/test";
 
+test("staff email contact offers matching mail app and Gmail drafts and copying", async ({ page, context }) => {
+  const staffEmail = process.env.SMOKE_STAFF_EMAIL;
+  const staffPassword = process.env.SMOKE_STAFF_PASSWORD;
+  test.skip(!staffEmail || !staffPassword, "Staff credentials required");
+  if (!staffEmail || !staffPassword) return;
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto("/auth");
+  await page.getByLabel(/email/i).fill(staffEmail);
+  await page.getByLabel(/^password/i).fill(staffPassword);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.waitForURL(/\/admin/);
+  await page.goto("/admin/members");
+  await page.locator('a[href^="/admin/members/"]').first().click();
+  const contact = page.getByRole("link", { name: "Contact by email", exact: true });
+  const href = await contact.getAttribute("href");
+  const mail = new URL(href ?? "");
+  expect(mail.protocol).toBe("mailto:");
+  expect(mail.searchParams.get("subject")).toBeTruthy();
+  expect(mail.searchParams.get("body")).toBeTruthy();
+  await page.getByRole("button", { name: /^Email options for/ }).first().click();
+  const gmail = new URL(await page.getByRole("menuitem", { name: "Open in Gmail" }).getAttribute("href") ?? "");
+  expect(gmail.searchParams.get("to")).toBe(decodeURIComponent(mail.pathname));
+  expect(gmail.searchParams.get("body")).toBe(mail.searchParams.get("body"));
+  await page.getByRole("menuitem", { name: "Copy email address" }).click();
+  await expect(page.getByText("Email copied", { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(decodeURIComponent(mail.pathname));
+});
+
 test("staff exercise library opens shareable details and template previews", async ({ page }) => {
   const staffEmail = process.env.SMOKE_STAFF_EMAIL;
   const staffPassword = process.env.SMOKE_STAFF_PASSWORD;

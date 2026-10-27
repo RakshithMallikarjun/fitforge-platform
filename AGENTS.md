@@ -12,6 +12,7 @@
 <!-- LOVABLE:END -->
 
 - Use src/lib/copy.ts for counted labels and segment-aware navigation matching so plural forms and active links stay consistent.
+- Console and member email outreach uses ContactByEmail with real mailto anchors and shared Gmail/copy/fallback handling; platform overview resolves active gym admins through existing guarded contact reads, never member data.
 - Protected console pending states use public-safe ConsoleLoading chrome, then real shells with content skeletons until access checks finish; never render protected content before authorization.
 - The shared Sonner wrapper enforces wall-clock expiry for long error notifications so hovering cannot keep them indefinitely.
 - Render platform audit details through src/lib/audit-summary.ts with an expandable raw view so changes remain readable without losing the original data.

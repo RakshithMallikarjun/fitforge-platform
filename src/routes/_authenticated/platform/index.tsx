@@ -1,5 +1,6 @@
 import { consolePageHead } from "@/lib/page-head";
 import { ContactByEmail } from "@/components/contact-by-email";
+import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { listLeads } from "@/lib/leads.functions";
 import { createFileRoute, Link } from "@tanstack/react-router";
