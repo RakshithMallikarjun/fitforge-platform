@@ -16,6 +16,7 @@ import {
 } from "@/lib/gym-theme.functions";
 import { checkCustomDomain, getDomainConfig } from "@/lib/domain.functions";
 import { formatJoinCode } from "@/lib/join-code-format";
+import { CUSTOM_DOMAIN_CNAME_TARGET, publicGymUrl, validateCustomDomain } from "@/lib/public-config";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -240,7 +241,7 @@ function SettingsPage() {
 
   const slug = joinInfo?.slug ?? gym?.slug ?? "";
   const joinCode = formatJoinCode(joinInfo?.joinCode);
-  const appOrigin = typeof window !== "undefined" ? window.location.origin : "";
+  const appOrigin = publicGymUrl("", gym?.custom_domain).replace(/\/$/, "");
   const signupMessage = `Join ${name || "our gym"} on Fit Foundry 💪
 
 1. Open ${appOrigin}/auth?gym=${encodeURIComponent(slug)}
@@ -250,6 +251,7 @@ function SettingsPage() {
 
 See you at the gym!`;
 
+  const customDomainError = validateCustomDomain(customDomain);
   const validHex = /^#[0-9a-fA-F]{6}$/.test(primaryColor);
   const logoTrim = logoUrl.trim();
   const logoIsHttps = (() => {
@@ -598,7 +600,14 @@ See you at the gym!`;
               onChange={(e) => setCustomDomain(e.target.value)}
               placeholder="app.yourgym.com"
               className="max-w-[320px]"
+              aria-invalid={!!customDomainError}
+              aria-describedby={customDomainError ? "custom-domain-error" : undefined}
             />
+            {customDomainError && (
+              <p id="custom-domain-error" role="alert" className="text-xs text-destructive">
+                {customDomainError}
+              </p>
+            )}
             <CustomDomainHelp
               domain={gym?.custom_domain ?? ""}
               draft={customDomain}
@@ -628,8 +637,8 @@ See you at the gym!`;
 
           <div className="flex justify-end">
             <Button
-              onClick={() => opsMutation.mutate({ timezone, customDomain: customDomain || null })}
-              disabled={opsMutation.isPending || !timezone}
+              onClick={() => opsMutation.mutate({ timezone, customDomain: customDomain.trim() || null })}
+              disabled={opsMutation.isPending || !timezone || !!customDomainError}
             >
               {opsMutation.isPending ? "Saving…" : "Save operations"}
             </Button>
@@ -672,16 +681,27 @@ function CustomDomainHelp({
         : q.data?.status === "active"
           ? "Active"
           : "Waiting for DNS";
+  const target = config.data?.cnameTarget ?? CUSTOM_DOMAIN_CNAME_TARGET;
+  const label = host.split(".")[0] || "app";
   return (
-    <div className="space-y-2 rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
+    <div className="space-y-3 rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
       <div className="flex items-center justify-between gap-2">
         <p className="font-semibold text-foreground">DNS record to add</p>
         <Badge variant={status === "Active" ? "default" : "outline"}>{status}</Badge>
       </div>
-      <p className="font-mono text-foreground">
-        CNAME {host} → {config.data?.cnameTarget ?? "…"}
+      <p>
+        At your domain provider add a CNAME record: Host/Name = app (or www), Value ={" "}
+        {target}
       </p>
-      <p>Add this at your domain provider, then save. DNS changes can take up to 48 hours.</p>
+      <dl className="grid gap-2 sm:grid-cols-[auto_1fr_auto] sm:items-center">
+        <DnsValue term="Type" value="CNAME" />
+        <DnsValue term="Host/Name" value={label} />
+        <DnsValue term="Value" value={target} />
+      </dl>
+      <p>
+        Example result: <span className="font-mono text-foreground">{host}</span>
+      </p>
+      <p>DNS changes can take up to 24–48 hours to take effect.</p>
       <div className="flex flex-wrap items-center gap-2">
         <p>Then ask Fit Foundry support to attach the domain.</p>
         <SupportWhatsappButton text={supportText} />
@@ -692,5 +712,34 @@ function CustomDomainHelp({
         </Button>
       )}
     </div>
+  );
+}
+
+function DnsValue({ term, value }: { term: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <>
+      <dt className="font-medium text-foreground">{term}</dt>
+      <dd className="font-mono text-foreground break-all">{value}</dd>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        aria-label={`Copy ${term}`}
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(value);
+            setCopied(true);
+            toast.success(`${term} copied`);
+            setTimeout(() => setCopied(false), 2000);
+          } catch {
+            toast.error("Couldn't copy — select the text and copy it manually");
+          }
+        }}
+      >
+        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+        Copy
+      </Button>
+    </>
   );
 }

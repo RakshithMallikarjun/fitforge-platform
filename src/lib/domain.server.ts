@@ -1,3 +1,4 @@
+import { isHostingHost } from "@/lib/public-config";
 import { CUSTOM_DOMAIN_A_RECORD, CUSTOM_DOMAIN_CNAME_TARGET } from "@/lib/platform-brand";
 
 /** Branded CNAME target (env CUSTOM_DOMAIN_CNAME_TARGET overrides). */
@@ -7,7 +8,8 @@ export function cnameTarget() {
     .toLowerCase()
     .replace(/^https?:\/\//, "")
     .replace(/\/.*$/, "");
-  return v || CUSTOM_DOMAIN_CNAME_TARGET;
+  // Never hand gyms an internal hosting host, even if misconfigured.
+  return v && !isHostingHost(v) ? v : CUSTOM_DOMAIN_CNAME_TARGET;
 }
 
 export async function dohLookup(name: string, type: "CNAME" | "A"): Promise<string[]> {
