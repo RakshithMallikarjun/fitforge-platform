@@ -20,7 +20,6 @@ export const Route = createFileRoute("/api/public/daily-summary")({
           const results = await runDailySummary({
             gymId: body?.gym_id,
             force: !!body?.force,
-            duesBaseUrl: new URL(request.url).origin,
           });
           return Response.json({ ok: true, results });
         } catch (e: any) {

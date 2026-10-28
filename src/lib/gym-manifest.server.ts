@@ -1,3 +1,4 @@
+import { isHostingHost } from "@/lib/public-config";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { PLATFORM_DOMAIN, PLATFORM_NAME } from "@/lib/platform-brand";
@@ -25,9 +26,7 @@ export function hostKey(host: string | null): { slug?: string; domain?: string }
   const h = host.split(":")[0].toLowerCase();
   if (
     h === "localhost" ||
-    h.endsWith(".lovable.app") ||
-    h.endsWith(".lovableproject.com") ||
-    h.endsWith(".lovableproject-dev.com") ||
+    isHostingHost(h) ||
     h === PLATFORM_DOMAIN ||
     h === `www.${PLATFORM_DOMAIN}`
   )

@@ -56,9 +56,8 @@ export function migrateLegacyStorageKeys() {
   }
 }
 
-/** Fallback only — the live value comes from server config (CUSTOM_DOMAIN_CNAME_TARGET). Published host per project settings. */
-export const CUSTOM_DOMAIN_CNAME_TARGET = "fitffoundry.lovable.app";
-/** Lovable hosting IP, accepted when a registrar can't CNAME (apex domains). */
+export { CUSTOM_DOMAIN_CNAME_TARGET } from "./public-config";
+/** Hosting IP, accepted silently when a registrar can't CNAME (apex domains). */
 export const CUSTOM_DOMAIN_A_RECORD = "185.158.133.1";
 
 /** Fit Foundry's own support WhatsApp (digits, country code first). Gyms use their own number. */

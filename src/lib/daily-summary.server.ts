@@ -1,3 +1,4 @@
+import { PUBLIC_APP_URL } from "@/lib/public-config";
 import { formatShortDate } from "@/lib/format-date";
 import { PLATFORM_URL, supportEmailFooter } from "@/lib/platform-brand";
 import { plural } from "@/lib/copy";
@@ -300,7 +301,7 @@ export async function runDailySummary(opts: {
   duesBaseUrl?: string;
 }): Promise<SummaryRunResult[]> {
   const out: SummaryRunResult[] = [];
-  const duesUrl = `${opts.duesBaseUrl ?? PLATFORM_URL}/admin/dues`;
+  const duesUrl = `${PUBLIC_APP_URL}/admin/dues`;
 
   let q = supabaseAdmin.from("gyms").select("id, name, timezone, is_enabled");
   if (opts.gymId) q = q.eq("id", opts.gymId);
