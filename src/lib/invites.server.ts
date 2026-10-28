@@ -8,8 +8,8 @@ import { supportEmailFooter } from "@/lib/platform-brand";
  * redirect to /accept-invite, then send a branded email through Resend — the
  * default auth email is never used for invites.
  */
-import { getRequest } from "@tanstack/react-start/server";
-import { PLATFORM_NAME, PLATFORM_URL } from "./platform-brand";
+
+import { PLATFORM_NAME } from "./platform-brand";
 
 export type InviteRole = "owner" | "admin" | "trainer" | "member";
 
