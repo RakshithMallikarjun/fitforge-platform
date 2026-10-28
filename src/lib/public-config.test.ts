@@ -1,3 +1,4 @@
+// @ts-nocheck -- run with bun test; follows existing project test convention
 import { describe, expect, test } from "bun:test";
 import {
   CUSTOM_DOMAIN_CNAME_TARGET,
