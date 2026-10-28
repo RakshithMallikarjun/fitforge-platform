@@ -19,9 +19,8 @@ export const Route = createFileRoute("/api/public/scheduled-jobs")({
           return new Response("Unauthorized", { status: 401 });
         }
         const { trackJob } = await import("@/lib/scheduled-jobs.server");
-        const origin = new URL(request.url).origin;
         const out = [
-          await trackJob("daily_summary", { origin }),
+          await trackJob("daily_summary", {}),
           await trackJob("dues_digest", {}),
         ].map((o) => ({ job: o.job, error: o.error, results: o.results.length }));
         return Response.json({ ok: out.every((o) => !o.error), out });
