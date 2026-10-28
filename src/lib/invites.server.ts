@@ -1,3 +1,4 @@
+import { PUBLIC_APP_URL, publicGymUrl } from "@/lib/public-config";
 import { supportEmailFooter } from "@/lib/platform-brand";
 /**
  * Single invite path for every "invite someone to a gym" flow (owner, staff,
@@ -29,17 +30,17 @@ const ROLE_LABEL: Record<InviteRole, string> = {
   member: "Member",
 };
 
-function appUrl(): string {
-  const env = process.env["APP_URL"]?.trim().replace(/\/+$/, "");
-  if (env) return env;
-  try {
-    const req = getRequest();
-    const origin = req ? new URL(req.url).origin : "";
-    if (origin) return origin;
-  } catch {
-    // no request context
+/** Invite links: the gym's active custom domain, else the public brand URL. */
+async function appUrl(customDomain: string | null | undefined): Promise<string> {
+  if (customDomain) {
+    try {
+      const { checkDomainActive } = await import("@/lib/domain.server");
+      if (await checkDomainActive(customDomain)) return publicGymUrl("", customDomain).replace(/\/$/, "");
+    } catch {
+      /* fall back to the brand URL */
+    }
   }
-  return PLATFORM_URL;
+  return PUBLIC_APP_URL;
 }
 
 function esc(s: string): string {
@@ -167,12 +168,12 @@ export async function sendAccountInvite(
 
   const { data: gym, error: gErr } = await supabaseAdmin
     .from("gyms")
-    .select("name, slug, logo_url, primary_color, support_email, support_phone")
+    .select("name, slug, logo_url, primary_color, support_email, support_phone, custom_domain")
     .eq("id", input.gymId)
     .maybeSingle();
   if (gErr || !gym) throw new Error("Gym not found");
 
-  const redirectTo = `${appUrl()}/accept-invite`;
+  const redirectTo = `${await appUrl((gym as any).custom_domain)}/accept-invite`;
   const metadata: Record<string, string> = { gym_slug: gym.slug };
   if (input.displayName) metadata.display_name = input.displayName;
 

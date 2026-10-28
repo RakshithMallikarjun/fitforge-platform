@@ -3,10 +3,26 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { CUSTOM_DOMAIN_A_RECORD, CUSTOM_DOMAIN_CNAME_TARGET } from "@/lib/platform-brand";
 
-/** CNAME target from server config (CUSTOM_DOMAIN_CNAME_TARGET), defaulting to the published app host. */
+import { validateCustomDomain } from "@/lib/public-config";
+
+/** Branded CNAME target (env CUSTOM_DOMAIN_CNAME_TARGET overrides). */
 function cnameTarget() {
   const v = (process.env["CUSTOM_DOMAIN_CNAME_TARGET"] ?? "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
   return v || CUSTOM_DOMAIN_CNAME_TARGET;
+}
+
+/** Follow the CNAME chain (max 8 hops); true if any hop is the branded target. */
+async function cnameChainHits(name: string, target: string): Promise<{ hit: boolean; chain: string[] }> {
+  const chain: string[] = [];
+  let cur = name;
+  for (let i = 0; i < 8; i++) {
+    const next = (await dohLookup(cur, "CNAME"))[0];
+    if (!next || chain.includes(next)) break;
+    chain.push(next);
+    if (next === target) return { hit: true, chain };
+    cur = next;
+  }
+  return { hit: false, chain };
 }
 
 export type DomainStatus = "not_set" | "waiting" | "active";
@@ -32,19 +48,19 @@ export const checkCustomDomain = createServerFn({ method: "GET" })
           .trim()
           .toLowerCase()
           .max(253)
-          .regex(/^$|^([a-z0-9-]+\.)+[a-z]{2,}$/, "Enter a domain like app.yourgym.com"),
+          .refine((v) => !validateCustomDomain(v), { message: "Enter a domain like app.yourgym.com" }),
       })
       .parse(d),
   )
   .handler(async ({ data }): Promise<{ status: DomainStatus; found: string[] }> => {
     if (!data.domain) return { status: "not_set", found: [] };
     try {
-      const [cname, a] = await Promise.all([
-        dohLookup(data.domain, "CNAME"),
+      const [{ hit, chain }, a] = await Promise.all([
+        cnameChainHits(data.domain, cnameTarget()),
         dohLookup(data.domain, "A"),
       ]);
-      const ok = cname.includes(cnameTarget()) || a.includes(CUSTOM_DOMAIN_A_RECORD);
-      return { status: ok ? "active" : "waiting", found: [...cname, ...a].slice(0, 5) };
+      const ok = hit || (chain.length === 0 && a.includes(CUSTOM_DOMAIN_A_RECORD));
+      return { status: ok ? "active" : "waiting", found: chain.slice(0, 5) };
     } catch {
       return { status: "waiting", found: [] };
     }

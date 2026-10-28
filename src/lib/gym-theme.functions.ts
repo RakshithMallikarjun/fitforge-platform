@@ -1,3 +1,4 @@
+import { validateCustomDomain } from "@/lib/public-config";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -157,8 +158,8 @@ export const updateGymOperations = createServerFn({ method: "POST" })
       throw new Error("Unknown timezone");
     }
     const domain = data.customDomain?.trim().toLowerCase() || null;
-    if (domain && !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain))
-      throw new Error("Enter a bare domain like app.yourgym.com");
+    const domainError = domain ? validateCustomDomain(domain) : null;
+    if (domainError) throw new Error(domainError);
     return { timezone: data.timezone.trim(), customDomain: domain };
   })
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
