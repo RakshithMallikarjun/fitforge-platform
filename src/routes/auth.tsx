@@ -20,9 +20,22 @@ import { getPublicGymBrand, getPublicGymPauseNotice } from "@/lib/leads.function
 import { getAuthRedirectUrl } from "@/lib/authRedirect";
 import { enforceGymHost, useGymHostSlug } from "@/lib/gym-host";
 import { useTheme } from "@/lib/theme-provider";
-import { checkGymPaused, readPauseInfo, signOutPaused, whatsappLink, type PauseInfo } from "@/lib/gym-pause";
+import {
+  checkGymPaused,
+  readPauseInfo,
+  signOutPaused,
+  whatsappLink,
+  type PauseInfo,
+} from "@/lib/gym-pause";
 
-type AuthSearch = { gym?: string; deactivated?: boolean; gymDisabled?: boolean; reason?: string; forgot?: boolean; email?: string };
+type AuthSearch = {
+  gym?: string;
+  deactivated?: boolean;
+  gymDisabled?: boolean;
+  reason?: string;
+  forgot?: boolean;
+  email?: string;
+};
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): AuthSearch => ({
@@ -51,7 +64,10 @@ export const Route = createFileRoute("/auth")({
 
 function PausedNotice({ info }: { info: PauseInfo }) {
   return (
-    <div role="alert" className="mb-4 rounded-xl bg-destructive/10 px-3 py-3 text-sm text-destructive">
+    <div
+      role="alert"
+      className="mb-4 rounded-xl bg-destructive/10 px-3 py-3 text-sm text-destructive"
+    >
       <p className="font-medium">
         {info.gymName}'s Fit Foundry account is paused. Please contact the gym.
       </p>
@@ -63,7 +79,12 @@ function PausedNotice({ info }: { info: PauseInfo }) {
             </a>
           )}
           {info.supportPhone && (
-            <a className="underline" href={whatsappLink(info.supportPhone)} target="_blank" rel="noreferrer">
+            <a
+              className="underline"
+              href={whatsappLink(info.supportPhone)}
+              target="_blank"
+              rel="noreferrer"
+            >
               WhatsApp {info.supportPhone}
             </a>
           )}
@@ -91,12 +112,13 @@ function AuthPage() {
   const { setTheme } = useTheme();
   const brandQuery = useQuery({
     queryKey: ["public-gym-brand", gymFromSearch],
-    queryFn: () => gymFromSearch ? brandFn({ data: { slug: gymFromSearch } }) : null,
+    queryFn: () => (gymFromSearch ? brandFn({ data: { slug: gymFromSearch } }) : null),
     enabled: !!gymFromSearch,
   });
   const brand = brandQuery.data;
   useEffect(() => {
-    if (brand) setTheme({ name: brand.name, logoUrl: brand.logoUrl, primaryColor: brand.primaryColor });
+    if (brand)
+      setTheme({ name: brand.name, logoUrl: brand.logoUrl, primaryColor: brand.primaryColor });
   }, [brand, setTheme]);
   const pauseNoticeFn = useServerFn(getPublicGymPauseNotice);
   const { data: user, sessionLoading, refetch } = useCurrentUser();
@@ -138,11 +160,20 @@ function AuthPage() {
       // Public lookup by gym code; fall back to what was stored before sign-out.
       pauseNoticeFn({ data: { slug: gymFromSearch } })
         .then((n) => {
-          if (n) setPause({ gymName: n.gymName, supportEmail: n.supportEmail, supportPhone: n.supportPhone });
+          if (n)
+            setPause({
+              gymName: n.gymName,
+              supportEmail: n.supportEmail,
+              supportPhone: n.supportPhone,
+            });
           else if (info) setPause(info);
           else setPageError("This gym's Fit Foundry account is paused. Please contact the gym.");
         })
-        .catch(() => (info ? setPause(info) : setPageError("This gym's Fit Foundry account is paused. Please contact the gym.")));
+        .catch(() =>
+          info
+            ? setPause(info)
+            : setPageError("This gym's Fit Foundry account is paused. Please contact the gym."),
+        );
     } else if (gymDisabled && info) {
       setPause(info);
     } else if (gymDisabled || notice === "gymDisabled") {
@@ -159,54 +190,59 @@ function AuthPage() {
     if (sessionLoading || !user || platformAdminLoading || platformAdmin === undefined) return;
     // Platform access sits above gym roles. A platform admin may also retain
     // a gym role, but must still land in the site-owner console after sign-in.
-    if (platformAdmin) {
-      navigate({ to: "/platform", replace: true });
-      return;
-    }
     let active = true;
-    void enforceGymHost(user.userId).then((decision) => {
-    if (!active || decision === "forward") return;
-    const isStaff = user.roles.includes("admin") || user.roles.includes("trainer");
-    if (isStaff) {
-      navigate({ to: "/admin", replace: true });
-      return;
-    }
-    const slug = (user.session.user.user_metadata as any)?.gym_slug as string | undefined;
-    if (!user.primaryRole) {
-      setPageError(
-        slug
-          ? `We couldn't match your account to the gym "${slug}". Please contact your gym so they can finish setting up your membership.`
-          : "Your account isn't linked to a gym yet, so there's nothing to open. Ask your gym to add you, then sign in again.",
-      );
-      return;
-    }
-    if (!slug) {
-      navigate({ to: "/app", replace: true });
-      return;
-    }
-    let cancelled = false;
-    setChecking(true);
-    gymHasAdmin({ data: { gymSlug: slug } })
-      .then((res) => {
-        if (cancelled) return;
-        if (res.gymExists && !res.hasAdmin) {
-          setClaimSlug(slug);
-        } else if (user.primaryRole === "member") {
-          navigate({ to: "/app", replace: true });
-        } else {
-          // Terminal branch: signed in, but we can't resolve a gym or a role.
-          setPageError(
-            `We couldn't match your account to the gym "${slug}". Please contact your gym so they can finish setting up your membership.`,
-          );
+    void enforceGymHost(user.userId)
+      .then((decision) => {
+        if (!active || decision === "forward") return;
+        if (platformAdmin) {
+          navigate({ to: "/platform", replace: true });
+          return;
         }
+        const isStaff = user.roles.includes("admin") || user.roles.includes("trainer");
+        if (isStaff) {
+          navigate({ to: "/admin", replace: true });
+          return;
+        }
+        const slug = (user.session.user.user_metadata as any)?.gym_slug as string | undefined;
+        if (!user.primaryRole) {
+          setPageError(
+            slug
+              ? `We couldn't match your account to the gym "${slug}". Please contact your gym so they can finish setting up your membership.`
+              : "Your account isn't linked to a gym yet, so there's nothing to open. Ask your gym to add you, then sign in again.",
+          );
+          return;
+        }
+        if (!slug) {
+          navigate({ to: "/app", replace: true });
+          return;
+        }
+        setChecking(true);
+        gymHasAdmin({ data: { gymSlug: slug } })
+          .then((res) => {
+            if (!active) return;
+            if (res.gymExists && !res.hasAdmin) {
+              setClaimSlug(slug);
+            } else if (user.primaryRole === "member") {
+              navigate({ to: "/app", replace: true });
+            } else {
+              // Terminal branch: signed in, but we can't resolve a gym or a role.
+              setPageError(
+                `We couldn't match your account to the gym "${slug}". Please contact your gym so they can finish setting up your membership.`,
+              );
+            }
+          })
+          .catch((e) => {
+            if (active)
+              setPageError(friendlyAuthError(e, "We couldn't check your gym. Please try again."));
+          })
+          .finally(() => active && setChecking(false));
       })
-      .catch((e) => {
-        if (!cancelled)
-          setPageError(friendlyAuthError(e, "We couldn't check your gym. Please try again."));
-      })
-      .finally(() => !cancelled && setChecking(false));
-    }).catch((error) => { if (active) setPageError(friendlyAuthError(error, "We couldn't check your gym address.")); });
-    return () => { active = false; };
+      .catch((error) => {
+        if (active) setPageError(friendlyAuthError(error, "We couldn't check your gym address."));
+      });
+    return () => {
+      active = false;
+    };
   }, [user, sessionLoading, platformAdmin, platformAdminLoading, navigate]);
 
   async function onClaim() {
@@ -236,7 +272,9 @@ function AuthPage() {
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-primary-foreground">
             <Dumbbell className="h-5 w-5" />
           </div>
-          {brand?.logoUrl && <img src={brand.logoUrl} alt="" className="h-10 w-10 object-contain" />}
+          {brand?.logoUrl && (
+            <img src={brand.logoUrl} alt="" className="h-10 w-10 object-contain" />
+          )}
           <span className="font-display text-lg font-bold">{brand?.name ?? "Fit Foundry"}</span>
         </Link>
 
@@ -245,8 +283,18 @@ function AuthPage() {
         </h1>
 
         {pause && <PausedNotice info={pause} />}
-        {hostSlug && brandQuery.isLoading && <p role="status" className="mb-4 text-center text-sm text-muted-foreground">Loading gym…</p>}
-        {hostSlug && !brandQuery.isLoading && !brand && <ErrorBanner>{brandQuery.isError ? "We couldn't load this gym. Please refresh." : "This gym address isn't available. Please check with your gym."}</ErrorBanner>}
+        {hostSlug && brandQuery.isLoading && (
+          <p role="status" className="mb-4 text-center text-sm text-muted-foreground">
+            Loading gym…
+          </p>
+        )}
+        {hostSlug && !brandQuery.isLoading && !brand && (
+          <ErrorBanner>
+            {brandQuery.isError
+              ? "We couldn't load this gym. Please refresh."
+              : "This gym address isn't available. Please check with your gym."}
+          </ErrorBanner>
+        )}
 
         {pageError && (
           <div className="mb-4">
@@ -296,7 +344,10 @@ function AuthPage() {
           )}
           <p className="mt-6 text-center text-xs text-muted-foreground">
             Need help?{" "}
-            <SupportWhatsappLink label="WhatsApp support" text="Hi, I need help signing in to Fit Foundry." />
+            <SupportWhatsappLink
+              label="WhatsApp support"
+              text="Hi, I need help signing in to Fit Foundry."
+            />
           </p>
         </div>
       </div>
@@ -465,7 +516,7 @@ function SignUpForm({ hostSlug }: { hostSlug: string | null }) {
   const brandFn = useServerFn(getPublicGymBrand);
   const { data: brand } = useQuery({
     queryKey: ["public-gym-brand", gymFromLink],
-    queryFn: () => gymFromLink ? brandFn({ data: { slug: gymFromLink } }) : null,
+    queryFn: () => (gymFromLink ? brandFn({ data: { slug: gymFromLink } }) : null),
     enabled: !!gymFromLink,
     staleTime: 10 * 60_000,
   });
@@ -474,7 +525,9 @@ function SignUpForm({ hostSlug }: { hostSlug: string | null }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const verifyJoinCode = useServerFn(verifyGymJoinCode);
-  useEffect(() => { if (hostSlug) setGymSlug(hostSlug); }, [hostSlug]);
+  useEffect(() => {
+    if (hostSlug) setGymSlug(hostSlug);
+  }, [hostSlug]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

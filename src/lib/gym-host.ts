@@ -4,13 +4,19 @@ import { useEffect, useState } from "react";
 
 export function useGymHostSlug() {
   const [slug, setSlug] = useState<string | null>(null);
-  useEffect(() => { setSlug(gymSlugFromHost(window.location.hostname)); }, []);
+  useEffect(() => {
+    setSlug(gymSlugFromHost(window.location.hostname));
+  }, []);
   return slug;
 }
 
 /** Reads the signed-in account's own gym under RLS; metadata never decides tenancy. */
 export async function accountGymSlug(userId: string): Promise<string | null> {
-  const { data, error } = await supabase.from("users").select("gym_id, gyms(slug)").eq("id", userId).maybeSingle();
+  const { data, error } = await supabase
+    .from("users")
+    .select("gym_id, gyms(slug)")
+    .eq("id", userId)
+    .maybeSingle();
   if (error) throw new Error("We couldn't check your gym address. Please try again.");
   return data?.gyms?.slug ?? null;
 }

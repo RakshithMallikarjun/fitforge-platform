@@ -43,7 +43,7 @@ export const Route = createFileRoute("/_authenticated")({
       throw redirect({ to: "/auth" });
     }
     const { data, error } = await supabase.auth.getUser();
-    if ((error && isNetworkAuthError(error)) && cached?.user) return { user: cached.user };
+    if (error && isNetworkAuthError(error) && cached?.user) return { user: cached.user };
     if (error || !data.user) throw redirect({ to: "/auth" });
     const { data: profile } = await supabase
       .from("users")
@@ -76,7 +76,7 @@ export const Route = createFileRoute("/_authenticated")({
       });
     }
     try {
-      if (await enforceGymHost(data.user.id) === "forward") throw redirect({ to: "/auth" });
+      if ((await enforceGymHost(data.user.id)) === "forward") throw redirect({ to: "/auth" });
     } catch (error) {
       if (error instanceof Error) {
         throw redirect({ to: "/auth" });

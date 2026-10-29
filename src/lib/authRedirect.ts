@@ -29,9 +29,6 @@ export function getAuthRedirectUrl(path: string): string {
 }
 
 /** Server-side variant for emails: the gym's active custom domain, else the brand URL. */
-export function getGymAuthRedirectUrl(
-  gym: { slug: string },
-  path: string,
-): string {
+export function getGymAuthRedirectUrl(gym: { slug: string }, path: string): string {
   return gymSiteUrl(gym.slug, normalizePath(path));
 }
