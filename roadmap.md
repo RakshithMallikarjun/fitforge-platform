@@ -1,3 +1,7 @@
+- [x] Gym slug subdomains: branded sign-in, gym-host enforcement, invitations and Settings
+- [x] Verify subdomain rules (7 tests) and signed-in Settings with hard reload; document hosting/auth activation requirements
+- [ ] Real gym-host sign-in/invite checks — hosting addresses not connected; simulated cross-origin dev-server verification failed
+- [ ] Activate gym hosting addresses — requires platform domain connections, removal of primary redirect and auth allowlist
 - [x] Shared email contact actions and recipient context; signed-in gym support Gmail/copy/keyboard/fallback verified; 3 rules tests passed
 - [ ] Email contacts on Platform and populated member/dues pages — account has no platform access or member rows; published mail-client launch needs publishing and a configured desktop mail app
 - [x] Shared plural copy and readable audit trail

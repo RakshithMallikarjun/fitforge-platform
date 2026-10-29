@@ -14,9 +14,8 @@ import {
   updateGymOperations,
   updateGymSettings,
 } from "@/lib/gym-theme.functions";
-import { checkCustomDomain, getDomainConfig } from "@/lib/domain.functions";
 import { formatJoinCode } from "@/lib/join-code-format";
-import { CUSTOM_DOMAIN_CNAME_TARGET, publicGymUrl, validateCustomDomain } from "@/lib/public-config";
+import { gymSiteUrl } from "@/lib/public-config";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -175,7 +174,6 @@ function SettingsPage() {
   const [supportEmail, setSupportEmail] = useState("");
   const [supportPhone, setSupportPhone] = useState("");
   const [timezone, setTimezone] = useState("UTC");
-  const [customDomain, setCustomDomain] = useState("");
 
   useEffect(() => {
     if (!gym) return;
@@ -187,7 +185,6 @@ function SettingsPage() {
     setSupportEmail(gym.support_email ?? "");
     setSupportPhone(gym.support_phone ?? "");
     setTimezone(gym.timezone ?? "UTC");
-    setCustomDomain(gym.custom_domain ?? "");
   }, [gym]);
 
   const mutation = useMutation({
@@ -209,8 +206,7 @@ function SettingsPage() {
   });
 
   const opsMutation = useMutation({
-    mutationFn: (vars: { timezone: string; customDomain?: string | null }) =>
-      saveOperations({ data: vars }),
+    mutationFn: (vars: { timezone: string }) => saveOperations({ data: vars }),
     onSuccess: () => {
       toast.success("Operations settings saved");
       qc.invalidateQueries({ queryKey: ["gym-settings"] });
@@ -241,7 +237,7 @@ function SettingsPage() {
 
   const slug = joinInfo?.slug ?? gym?.slug ?? "";
   const joinCode = formatJoinCode(joinInfo?.joinCode);
-  const appOrigin = publicGymUrl("", gym?.custom_domain).replace(/\/$/, "");
+  const appOrigin = slug ? gymSiteUrl(slug, "").replace(/\/$/, "") : "";
   const signupMessage = `Join ${name || "our gym"} on Fit Foundry 💪
 
 1. Open ${appOrigin}/auth?gym=${encodeURIComponent(slug)}
@@ -251,7 +247,6 @@ function SettingsPage() {
 
 See you at the gym!`;
 
-  const customDomainError = validateCustomDomain(customDomain);
   const validHex = /^#[0-9a-fA-F]{6}$/.test(primaryColor);
   const logoTrim = logoUrl.trim();
   const logoIsHttps = (() => {
@@ -593,26 +588,20 @@ See you at the gym!`;
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="custom-domain">Custom domain</Label>
-            <Input
-              id="custom-domain"
-              value={customDomain}
-              onChange={(e) => setCustomDomain(e.target.value)}
-              placeholder="app.yourgym.com"
-              className="max-w-[320px]"
-              aria-invalid={!!customDomainError}
-              aria-describedby={customDomainError ? "custom-domain-error" : undefined}
-            />
-            {customDomainError && (
-              <p id="custom-domain-error" role="alert" className="text-xs text-destructive">
-                {customDomainError}
-              </p>
-            )}
-            <CustomDomainHelp
-              domain={gym?.custom_domain ?? ""}
-              draft={customDomain}
-              supportText={`Hi, I'm ${name || gym?.name || "a gym"} (${gym?.slug ?? ""}) and I need help with my Fit Foundry account.`}
-            />
+            <Label htmlFor="gym-address">Gym sign-in address</Label>
+            <div className="flex flex-wrap items-center gap-3">
+              <Input
+                id="gym-address"
+                readOnly
+                value={appOrigin ? `${appOrigin}/auth` : ""}
+                className="min-w-0 flex-1 font-mono"
+              />
+              <CopyButton value={appOrigin ? `${appOrigin}/auth` : ""} label="Copy address" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Your address uses your gym code. Fit Foundry manages activation; you don't need a
+              separate domain or DNS records.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -637,8 +626,8 @@ See you at the gym!`;
 
           <div className="flex justify-end">
             <Button
-              onClick={() => opsMutation.mutate({ timezone, customDomain: customDomain.trim() || null })}
-              disabled={opsMutation.isPending || !timezone || !!customDomainError}
+              onClick={() => opsMutation.mutate({ timezone })}
+              disabled={opsMutation.isPending || !timezone}
             >
               {opsMutation.isPending ? "Saving…" : "Save operations"}
             </Button>
@@ -646,100 +635,5 @@ See you at the gym!`;
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function CustomDomainHelp({
-  domain,
-  draft,
-  supportText,
-}: {
-  domain: string;
-  draft: string;
-  supportText: string;
-}) {
-  const check = useServerFn(checkCustomDomain);
-  const configFn = useServerFn(getDomainConfig);
-  const config = useQuery({
-    queryKey: ["domain-config"],
-    queryFn: () => configFn(),
-    staleTime: 60 * 60_000,
-  });
-  const q = useQuery({
-    queryKey: ["custom-domain-status", domain],
-    queryFn: () => check({ data: { domain } }),
-    enabled: !!domain,
-    refetchInterval: (query) => (query.state.data?.status === "waiting" ? 60_000 : false),
-  });
-  const host = draft.trim() || domain || "app.yourgym.com";
-  const status = !domain
-    ? "Not set"
-    : q.isLoading
-      ? "Checking…"
-      : q.error
-        ? "Couldn't check"
-        : q.data?.status === "active"
-          ? "Active"
-          : "Waiting for DNS";
-  const target = config.data?.cnameTarget ?? CUSTOM_DOMAIN_CNAME_TARGET;
-  const label = host.split(".")[0] || "app";
-  return (
-    <div className="space-y-3 rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
-      <div className="flex items-center justify-between gap-2">
-        <p className="font-semibold text-foreground">DNS record to add</p>
-        <Badge variant={status === "Active" ? "default" : "outline"}>{status}</Badge>
-      </div>
-      <p>
-        At your domain provider add a CNAME record: Host/Name = app (or www), Value ={" "}
-        {target}
-      </p>
-      <dl className="grid gap-2 sm:grid-cols-[auto_1fr_auto] sm:items-center">
-        <DnsValue term="Type" value="CNAME" />
-        <DnsValue term="Host/Name" value={label} />
-        <DnsValue term="Value" value={target} />
-      </dl>
-      <p>
-        Example result: <span className="font-mono text-foreground">{host}</span>
-      </p>
-      <p>DNS changes can take up to 24–48 hours to take effect.</p>
-      <div className="flex flex-wrap items-center gap-2">
-        <p>Then ask Fit Foundry support to attach the domain.</p>
-        <SupportWhatsappButton text={supportText} />
-      </div>
-      {domain && q.data?.status === "waiting" && (
-        <Button size="sm" variant="outline" onClick={() => q.refetch()} disabled={q.isFetching}>
-          Check again
-        </Button>
-      )}
-    </div>
-  );
-}
-
-function DnsValue({ term, value }: { term: string; value: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <>
-      <dt className="font-medium text-foreground">{term}</dt>
-      <dd className="font-mono text-foreground break-all">{value}</dd>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        aria-label={`Copy ${term}`}
-        onClick={async () => {
-          try {
-            await navigator.clipboard.writeText(value);
-            setCopied(true);
-            toast.success(`${term} copied`);
-            setTimeout(() => setCopied(false), 2000);
-          } catch {
-            toast.error("Couldn't copy — select the text and copy it manually");
-          }
-        }}
-      >
-        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-        Copy
-      </Button>
-    </>
   );
 }

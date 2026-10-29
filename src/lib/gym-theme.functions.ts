@@ -1,4 +1,4 @@
-import { validateCustomDomain } from "@/lib/public-config";
+import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -147,27 +147,33 @@ export const updateGymSettings = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Admin: update operational settings (timezone + custom domain). */
+/** Admin: update timezone; gym addresses derive from the platform-assigned slug. */
 export const updateGymOperations = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { timezone: string; customDomain?: string | null }) => {
-    if (!data.timezone?.trim()) throw new Error("Timezone is required");
-    try {
-      new Intl.DateTimeFormat("en-US", { timeZone: data.timezone });
-    } catch {
-      throw new Error("Unknown timezone");
-    }
-    const domain = data.customDomain?.trim().toLowerCase() || null;
-    const domainError = domain ? validateCustomDomain(domain) : null;
-    if (domainError) throw new Error(domainError);
-    return { timezone: data.timezone.trim(), customDomain: domain };
-  })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        timezone: z
+          .string()
+          .trim()
+          .min(1)
+          .refine((value) => {
+            try {
+              new Intl.DateTimeFormat("en-US", { timeZone: value });
+              return true;
+            } catch {
+              return false;
+            }
+          }, "Unknown timezone"),
+      })
+      .strict()
+      .parse(input),
+  )
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
-    const { supabase, userId } = context;
-    const gymId = await requireAdminGym(supabase, userId);
-    const { error } = await supabase
+    const gymId = await requireAdminGym(context.supabase, context.userId);
+    const { error } = await context.supabase
       .from("gyms")
-      .update({ timezone: data.timezone, custom_domain: data.customDomain })
+      .update({ timezone: data.timezone })
       .eq("id", gymId);
     if (error) throw error;
     return { ok: true };

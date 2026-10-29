@@ -110,9 +110,12 @@ export const submitLead = createServerFn({ method: "POST" })
     if (data.website) return { ok: true }; // honeypot hit: pretend success
     const id = crypto.randomUUID();
     const { website: _w, ...row } = data;
-    const { error } = await publicClient().from("platform_leads").insert({ id, ...row });
+    const { error } = await publicClient()
+      .from("platform_leads")
+      .insert({ id, ...row });
     if (error) {
-      if (/too many/i.test(error.message)) throw new Error("Too many submissions — please try again later.");
+      if (/too many/i.test(error.message))
+        throw new Error("Too many submissions — please try again later.");
       console.error("[leads] insert failed", error.message);
       throw new Error("We couldn't send that. Please try again.");
     }
@@ -165,24 +168,49 @@ export const setLeadStatus = createServerFn({ method: "POST" })
 /** Public: name + logo for a valid gym code, used to brand the sign-up form. */
 export const getPublicGymBrand = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) =>
-    z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]{1,64}$/) }).parse(d),
+    z
+      .object({
+        slug: z
+          .string()
+          .trim()
+          .toLowerCase()
+          .regex(/^[a-z0-9-]{1,64}$/),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
-    const { data: rows } = await publicClient().rpc("public_gym_manifest", {
+    const { data: rows, error } = await publicClient().rpc("public_gym_manifest", {
       _slug: data.slug,
       _domain: null as any,
     });
+    if (error) throw new Error("We couldn't load this gym.");
     const g = (rows ?? [])[0] as any;
-    return g ? { name: g.name as string, logoUrl: (g.logo_url as string | null) ?? null } : null;
+    return g
+      ? {
+          name: g.name as string,
+          logoUrl: (g.logo_url as string | null) ?? null,
+          primaryColor: (g.primary_color as string | null) ?? "#059669",
+        }
+      : null;
   });
 
 /** Public: name + support contacts for the "account paused" notice on /auth. */
 export const getPublicGymPauseNotice = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) =>
-    z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]{1,64}$/) }).parse(d),
+    z
+      .object({
+        slug: z
+          .string()
+          .trim()
+          .toLowerCase()
+          .regex(/^[a-z0-9-]{1,64}$/),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
-    const { data: rows } = await publicClient().rpc("public_gym_pause_notice", { _slug: data.slug });
+    const { data: rows } = await publicClient().rpc("public_gym_pause_notice", {
+      _slug: data.slug,
+    });
     const g = (rows ?? [])[0] as any;
     if (!g) return null;
     return {

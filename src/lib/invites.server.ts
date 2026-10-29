@@ -1,4 +1,4 @@
-import { PUBLIC_APP_URL, publicGymUrl } from "@/lib/public-config";
+import { getGymAuthRedirectUrl } from "@/lib/authRedirect";
 import { supportEmailFooter } from "@/lib/platform-brand";
 /**
  * Single invite path for every "invite someone to a gym" flow (owner, staff,
@@ -29,19 +29,6 @@ const ROLE_LABEL: Record<InviteRole, string> = {
   trainer: "Trainer",
   member: "Member",
 };
-
-/** Invite links: the gym's active custom domain, else the public brand URL. */
-async function appUrl(customDomain: string | null | undefined): Promise<string> {
-  if (customDomain) {
-    try {
-      const { checkDomainActive } = await import("@/lib/domain.server");
-      if (await checkDomainActive(customDomain)) return publicGymUrl("", customDomain).replace(/\/$/, "");
-    } catch {
-      /* fall back to the brand URL */
-    }
-  }
-  return PUBLIC_APP_URL;
-}
 
 function esc(s: string): string {
   return s.replace(
@@ -128,7 +115,11 @@ ${role === "owner" ? `<tr><td style="padding:0 28px">${supportEmailFooter().html
     .filter((l, i, a) => !(l === "" && a[i - 1] === ""))
     .join("\n");
 
-  return { subject, html, text: role === "owner" ? `${text}\n\n${supportEmailFooter().text}` : text };
+  return {
+    subject,
+    html,
+    text: role === "owner" ? `${text}\n\n${supportEmailFooter().text}` : text,
+  };
 }
 
 async function sendViaResend(args: {
@@ -140,7 +131,8 @@ async function sendViaResend(args: {
 }) {
   const key = process.env["RESEND_API_KEY"];
   const from = process.env["INVITE_FROM"];
-  if (!key || !from) throw new Error("Invite email is not configured (RESEND_API_KEY / INVITE_FROM).");
+  if (!key || !from)
+    throw new Error("Invite email is not configured (RESEND_API_KEY / INVITE_FROM).");
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -173,7 +165,7 @@ export async function sendAccountInvite(
     .maybeSingle();
   if (gErr || !gym) throw new Error("Gym not found");
 
-  const redirectTo = `${await appUrl((gym as any).custom_domain)}/accept-invite`;
+  const redirectTo = getGymAuthRedirectUrl(gym, "/accept-invite");
   const metadata: Record<string, string> = { gym_slug: gym.slug };
   if (input.displayName) metadata.display_name = input.displayName;
 

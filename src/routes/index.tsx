@@ -6,6 +6,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { Button } from "@/components/ui/button";
 import { jsonLdScript, softwareApplicationSchema } from "@/lib/structured-data";
 import { PLATFORM_URL } from "@/lib/platform-brand";
+import { useGymHostSlug } from "@/lib/gym-host";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,9 +33,14 @@ export const Route = createFileRoute("/")({
 function Landing() {
   const { data: user, sessionLoading } = useCurrentUser();
   const navigate = useNavigate();
+  const hostSlug = useGymHostSlug();
 
   // Auto-route signed-in users to their app.
   useEffect(() => {
+    if (hostSlug) {
+      navigate({ to: "/auth", replace: true });
+      return;
+    }
     if (sessionLoading) return;
     if (!user) return;
     if (user.primaryRole === "admin" || user.primaryRole === "trainer") {
@@ -42,7 +48,7 @@ function Landing() {
     } else if (user.primaryRole === "member") {
       navigate({ to: "/app", replace: true });
     }
-  }, [user, sessionLoading, navigate]);
+  }, [user, sessionLoading, navigate, hostSlug]);
 
   return (
     <main className="min-h-screen bg-background">

@@ -4,11 +4,10 @@
  * Every auth email / OAuth round-trip must come back to the SAME origin the
  * user started on, so a member on `gymname.fitfoundry.in` is never bounced to
  * the root domain or, worse, another gym's subdomain. Browsers give us that for
- * free via the current host; local dev keeps its origin and internal hosting
- * hosts fall back to the public brand URL.
+ * free via the current host; local dev and previews keep their own origins.
  */
 
-import { isHostingHost, PUBLIC_APP_URL, publicGymUrl } from "./public-config";
+import { PUBLIC_APP_URL, gymSiteUrl } from "./public-config";
 
 function normalizePath(path: string): string {
   if (!path) return "/";
@@ -19,19 +18,12 @@ function normalizePath(path: string): string {
 export function getAuthRedirectUrl(path: string): string {
   const p = normalizePath(path);
   if (typeof window !== "undefined" && window.location?.hostname) {
-    const h = window.location.hostname;
-    // Local dev keeps its own origin; hosting/preview hosts use the brand URL;
-    // the brand domain and gym custom domains return to where the user started.
-    if (h === "localhost" || h === "127.0.0.1") return `${window.location.origin}${p}`;
-    if (!isHostingHost(h)) return `https://${window.location.host}${p}`;
+    return `${window.location.origin}${p}`;
   }
   return `${PUBLIC_APP_URL}${p}`;
 }
 
-/** Server-side variant for emails: the gym's active custom domain, else the brand URL. */
-export function getGymAuthRedirectUrl(
-  gym: { custom_domain?: string | null },
-  path: string,
-): string {
-  return publicGymUrl(normalizePath(path), gym.custom_domain);
+/** Server-side variant for emails: the platform-assigned gym subdomain. */
+export function getGymAuthRedirectUrl(gym: { slug: string }, path: string): string {
+  return gymSiteUrl(gym.slug, normalizePath(path));
 }

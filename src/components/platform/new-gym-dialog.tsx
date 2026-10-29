@@ -1,9 +1,9 @@
 import { HEX_COLOR, formatServerError } from "@/lib/format-error";
-import { PLATFORM_DOMAIN, gymSubdomain } from "@/lib/platform-brand";
-import { getPlatformFlags } from "@/lib/domain.functions";
+import { gymSubdomain } from "@/lib/platform-brand";
+import { isGymSlug } from "@/lib/public-config";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, ChevronDown, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -60,6 +60,7 @@ function localValidation(slug: string): string | null {
   if (!/^[a-z0-9]([a-z0-9-]{1,30})[a-z0-9]$/.test(slug))
     return "Use lowercase letters, numbers and hyphens, starting and ending with a letter or number";
   if (slug.includes("--")) return "Gym code cannot contain two hyphens in a row";
+  if (!isGymSlug(slug)) return "That gym code is reserved for Fit Foundry";
   return null;
 }
 
@@ -74,8 +75,6 @@ export function NewGymDialog({
   const qc = useQueryClient();
   const submitGym = useServerFn(createGym);
   const verifySlug = useServerFn(checkGymSlug);
-  const flagsFn = useServerFn(getPlatformFlags);
-  const flags = useQuery({ queryKey: ["platform-flags"], queryFn: () => flagsFn(), staleTime: 10 * 60_000 });
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -252,11 +251,7 @@ export function NewGymDialog({
               placeholder="iron-works"
             />
             <p className="text-xs text-muted-foreground">
-              {!effectiveSlug
-                ? "Fills in from the gym name."
-                : flags.data?.subdomainsEnabled
-                  ? gymSubdomain(effectiveSlug)
-                  : `Members sign up at ${PLATFORM_DOMAIN}/auth with gym code ${effectiveSlug}`}
+              {!effectiveSlug ? "Fills in from the gym name." : gymSubdomain(effectiveSlug)}
             </p>
             {effectiveSlug && localError ? (
               <p className="flex items-center gap-1 text-xs font-medium text-destructive">

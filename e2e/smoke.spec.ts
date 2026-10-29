@@ -1,5 +1,27 @@
 import { test, expect } from "@playwright/test";
 
+test("gym settings shares the gym's Fit Foundry subdomain", async ({ page }) => {
+  const staffEmail = process.env.SMOKE_STAFF_EMAIL;
+  const staffPassword = process.env.SMOKE_STAFF_PASSWORD;
+  test.skip(!staffEmail || !staffPassword, "Staff credentials required");
+  if (!staffEmail || !staffPassword) return;
+  await page.goto("/auth");
+  await page.getByLabel("Email", { exact: true }).fill(staffEmail);
+  await page.getByLabel("Password", { exact: true }).fill(staffPassword);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.waitForURL(/\/admin/);
+  await page.goto("/admin/settings");
+  const slug = await page.getByLabel("Gym code — members enter this when signing up").inputValue();
+  await expect(page.getByLabel("Gym sign-in address")).toHaveValue(
+    `https://${slug}.fitfoundry.in/auth`,
+  );
+  await expect(page.getByLabel("Gym sign-in address")).toHaveAttribute("readonly", "");
+  await page.reload();
+  await expect(page.getByLabel("Gym sign-in address")).toHaveValue(
+    `https://${slug}.fitfoundry.in/auth`,
+  );
+});
+
 test("staff email contact offers matching mail app and Gmail drafts and copying", async ({
   page,
   context,

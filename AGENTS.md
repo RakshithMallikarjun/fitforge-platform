@@ -20,3 +20,4 @@
 - Admins and trainers share the exercise library under /admin/exercises; keep detail sheets nested there and filters in URL search so shared links and reloads preserve context.
 - Exercise library workout reads and additions use authenticated, gym-scoped server functions with explicit assigned-member checks for trainers; retain existing RLS as the final authorization boundary.
 - Reusing a template in the plan builder passes templateId and copies values without database row IDs, so Save creates a new plan rather than editing the source.
+- Gym addresses derive from authoritative gym slugs through public-config helpers; hostname is navigation context only, while existing authenticated gym reads and RLS remain the authorization boundary. Never transfer sessions or callback tokens across origins; root forwarding requires signing in again on the gym host.
