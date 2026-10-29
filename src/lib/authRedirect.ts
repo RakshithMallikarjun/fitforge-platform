@@ -8,7 +8,7 @@
  * hosts fall back to the public brand URL.
  */
 
-import { isHostingHost, PUBLIC_APP_URL, publicGymUrl } from "./public-config";
+import { PUBLIC_APP_URL, gymSiteUrl } from "./public-config";
 
 function normalizePath(path: string): string {
   if (!path) return "/";
@@ -23,15 +23,15 @@ export function getAuthRedirectUrl(path: string): string {
     // Local dev keeps its own origin; hosting/preview hosts use the brand URL;
     // the brand domain and gym custom domains return to where the user started.
     if (h === "localhost" || h === "127.0.0.1") return `${window.location.origin}${p}`;
-    if (!isHostingHost(h)) return `https://${window.location.host}${p}`;
+    return `${window.location.origin}${p}`;
   }
   return `${PUBLIC_APP_URL}${p}`;
 }
 
 /** Server-side variant for emails: the gym's active custom domain, else the brand URL. */
 export function getGymAuthRedirectUrl(
-  gym: { custom_domain?: string | null },
+  gym: { slug: string },
   path: string,
 ): string {
-  return publicGymUrl(normalizePath(path), gym.custom_domain);
+  return gymSiteUrl(gym.slug, normalizePath(path));
 }

@@ -42,6 +42,34 @@ export function publicGymUrl(path = "/", activeCustomDomain?: string | null): st
   return `${base}${normalizePath(path)}`;
 }
 
+const RESERVED_GYM_SLUGS = new Set(["www", "app", "api", "auth", "admin", "platform", "custom", "cdn", "videos", "support", "mail"]);
+
+export function isGymSlug(slug: string): boolean {
+  return /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/.test(slug) && !RESERVED_GYM_SLUGS.has(slug);
+}
+
+export function gymSlugFromHost(host: string): string | null {
+  const hostname = cleanHost(host).split(":")[0];
+  const suffix = `.${PUBLIC_APP_HOST}`;
+  if (!hostname.endsWith(suffix)) return null;
+  const slug = hostname.slice(0, -suffix.length);
+  return isGymSlug(slug) ? slug : null;
+}
+
+/** Tenant addresses derive from the stored gym slug, never a submitted external domain. */
+export function gymSiteUrl(slug: string, path = "/"): string {
+  if (!isGymSlug(slug)) throw new Error("This gym needs a valid, non-reserved address code.");
+  return `https://${slug}.${PUBLIC_APP_HOST}${normalizePath(path)}`;
+}
+
+export function gymHostDecision(host: string, accountSlug: string | null): "stay" | "forward" | "reject" {
+  const tenant = gymSlugFromHost(host);
+  if (tenant) return tenant === accountSlug ? "stay" : "reject";
+  const hostname = cleanHost(host).split(":")[0];
+  return (hostname === PUBLIC_APP_HOST || hostname === `www.${PUBLIC_APP_HOST}`) && accountSlug
+    ? "forward" : "stay";
+}
+
 /** Returns a friendly error, or null when the custom domain is acceptable. */
 export function validateCustomDomain(raw: string): string | null {
   const v = raw.trim();
