@@ -31,13 +31,13 @@ describe("public config", () => {
     expect(gymHostDecision("id-preview--example.lovable.app", "ironworks")).toBe("stay");
     expect(gymHostDecision("fitfoundry.in", null)).toBe("stay");
   });
-  test("gym invites return to Ironworks rather than an external domain", () => {
+  test("while subdomains are dormant, invites use fitfoundry.in", () => {
     expect(
       getGymAuthRedirectUrl(
         { slug: "ironworks", custom_domain: "app.oldgym.com" },
         "/accept-invite",
       ),
-    ).toBe("https://ironworks.fitfoundry.in/accept-invite");
+    ).toBe("https://fitfoundry.in/accept-invite");
   });
   test("brand URL and branded CNAME target", () => {
     expect(PUBLIC_APP_URL).toBe("https://fitfoundry.in");

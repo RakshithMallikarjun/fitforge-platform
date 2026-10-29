@@ -74,6 +74,17 @@ export function isGymSlug(slug: string): boolean {
   return /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/.test(slug) && !RESERVED_GYM_SLUGS.has(slug);
 }
 
+/**
+ * Gym subdomains are dormant (roadmap). While false, every gym uses the root
+ * fitfoundry.in address and hostnames never affect routing.
+ */
+export const GYM_SUBDOMAINS_ACTIVE = false;
+
+/** Address members and staff should use today: root while subdomains are dormant. */
+export function gymLoginUrl(slug: string, path = "/"): string {
+  return GYM_SUBDOMAINS_ACTIVE ? gymSiteUrl(slug, path) : `${PUBLIC_APP_URL}${normalizePath(path)}`;
+}
+
 export function gymSlugFromHost(host: string): string | null {
   const hostname = cleanHost(host).split(":")[0];
   const suffix = `.${PUBLIC_APP_HOST}`;

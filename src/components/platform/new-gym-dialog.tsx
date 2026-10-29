@@ -1,5 +1,4 @@
 import { HEX_COLOR, formatServerError } from "@/lib/format-error";
-import { gymSubdomain } from "@/lib/platform-brand";
 import { isGymSlug } from "@/lib/public-config";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
@@ -251,7 +250,9 @@ export function NewGymDialog({
               placeholder="iron-works"
             />
             <p className="text-xs text-muted-foreground">
-              {!effectiveSlug ? "Fills in from the gym name." : gymSubdomain(effectiveSlug)}
+              {!effectiveSlug
+                ? "Fills in from the gym name."
+                : "Members enter this code when they sign up."}
             </p>
             {effectiveSlug && localError ? (
               <p className="flex items-center gap-1 text-xs font-medium text-destructive">
