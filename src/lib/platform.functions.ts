@@ -325,7 +325,10 @@ export const setPaymentStatus = createServerFn({ method: "POST" })
             .string()
             .trim()
             .max(255)
-            .refine((v) => v === "" || z.string().email().safeParse(v).success, "Enter a valid billing email")
+            .refine(
+              (v) => v === "" || z.string().email().safeParse(v).success,
+              "Enter a valid billing email",
+            )
             .nullable()
             .optional(),
           note: z.string().max(1000).nullable().optional(),
@@ -609,8 +612,19 @@ export type JobRun = {
 };
 export type JobRunsPayload = {
   runs: JobRun[];
-  summary_log: { date: string; sent_at: string; recipients: number; skipped_reason: string | null }[];
-  digest_log: { date: string; sent_at: string; pushed: number; reminded: number; skipped_reason: string | null }[];
+  summary_log: {
+    date: string;
+    sent_at: string;
+    recipients: number;
+    skipped_reason: string | null;
+  }[];
+  digest_log: {
+    date: string;
+    sent_at: string;
+    pushed: number;
+    reminded: number;
+    skipped_reason: string | null;
+  }[];
 };
 
 /** Last run of each scheduled job plus this gym's recent daily send log. */
@@ -629,7 +643,9 @@ export const getJobRuns = createServerFn({ method: "GET" })
 export const runJobNow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ gymId: z.string().uuid(), job: z.enum(["daily_summary", "dues_digest"]) }).parse(input),
+    z
+      .object({ gymId: z.string().uuid(), job: z.enum(["daily_summary", "dues_digest"]) })
+      .parse(input),
   )
   .handler(async ({ context, data }) => {
     const { data: ok, error } = await context.supabase.rpc("is_platform_admin");
