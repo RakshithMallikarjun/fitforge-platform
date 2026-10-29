@@ -18,6 +18,8 @@ import { friendlyAuthError, scorePassword } from "@/lib/auth-errors";
 import { verifyGymJoinCode } from "@/lib/join-code.functions";
 import { getPublicGymBrand, getPublicGymPauseNotice } from "@/lib/leads.functions";
 import { getAuthRedirectUrl } from "@/lib/authRedirect";
+import { enforceGymHost, useGymHostSlug } from "@/lib/gym-host";
+import { useTheme } from "@/lib/theme-provider";
 import { checkGymPaused, readPauseInfo, signOutPaused, whatsappLink, type PauseInfo } from "@/lib/gym-pause";
 
 type AuthSearch = { gym?: string; deactivated?: boolean; gymDisabled?: boolean; reason?: string; forgot?: boolean; email?: string };
@@ -83,7 +85,19 @@ function AuthPage() {
   const { deactivated, gymDisabled: gymDisabledFlag, reason } = Route.useSearch();
   const gymDisabled = gymDisabledFlag || reason === "gym_disabled";
   const [pause, setPause] = useState<PauseInfo | null>(null);
-  const gymFromSearch = Route.useSearch().gym;
+  const hostSlug = useGymHostSlug();
+  const gymFromSearch = hostSlug ?? Route.useSearch().gym;
+  const brandFn = useServerFn(getPublicGymBrand);
+  const { setTheme } = useTheme();
+  const brandQuery = useQuery({
+    queryKey: ["public-gym-brand", gymFromSearch],
+    queryFn: () => gymFromSearch ? brandFn({ data: { slug: gymFromSearch } }) : null,
+    enabled: !!gymFromSearch,
+  });
+  const brand = brandQuery.data;
+  useEffect(() => {
+    if (brand) setTheme({ name: brand.name, logoUrl: brand.logoUrl, primaryColor: brand.primaryColor });
+  }, [brand, setTheme]);
   const pauseNoticeFn = useServerFn(getPublicGymPauseNotice);
   const { data: user, sessionLoading, refetch } = useCurrentUser();
   const navigate = useNavigate();
@@ -149,6 +163,9 @@ function AuthPage() {
       navigate({ to: "/platform", replace: true });
       return;
     }
+    let active = true;
+    void enforceGymHost(user.userId).then((decision) => {
+    if (!active || decision === "forward") return;
     const isStaff = user.roles.includes("admin") || user.roles.includes("trainer");
     if (isStaff) {
       navigate({ to: "/admin", replace: true });
@@ -188,9 +205,8 @@ function AuthPage() {
           setPageError(friendlyAuthError(e, "We couldn't check your gym. Please try again."));
       })
       .finally(() => !cancelled && setChecking(false));
-    return () => {
-      cancelled = true;
-    };
+    }).catch((error) => { if (active) setPageError(friendlyAuthError(error, "We couldn't check your gym address.")); });
+    return () => { active = false; };
   }, [user, sessionLoading, platformAdmin, platformAdminLoading, navigate]);
 
   async function onClaim() {
@@ -220,14 +236,17 @@ function AuthPage() {
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-primary-foreground">
             <Dumbbell className="h-5 w-5" />
           </div>
-          <span className="font-display text-lg font-bold">Fit Foundry</span>
+          {brand?.logoUrl && <img src={brand.logoUrl} alt="" className="h-10 w-10 object-contain" />}
+          <span className="font-display text-lg font-bold">{brand?.name ?? "Fit Foundry"}</span>
         </Link>
 
         <h1 className="mb-6 text-center font-display text-2xl font-bold tracking-tight">
-          Sign in to Fit Foundry
+          Sign in to {brand?.name ?? "Fit Foundry"}
         </h1>
 
         {pause && <PausedNotice info={pause} />}
+        {hostSlug && brandQuery.isLoading && <p role="status" className="mb-4 text-center text-sm text-muted-foreground">Loading gym…</p>}
+        {hostSlug && !brandQuery.isLoading && !brand && <ErrorBanner>{brandQuery.isError ? "We couldn't load this gym. Please refresh." : "This gym address isn't available. Please check with your gym."}</ErrorBanner>}
 
         {pageError && (
           <div className="mb-4">
@@ -269,7 +288,7 @@ function AuthPage() {
               <SignInForm />
             </TabsContent>
             <TabsContent value="signup" className="mt-6">
-              <SignUpForm />
+              <SignUpForm hostSlug={hostSlug} />
             </TabsContent>
           </Tabs>
           {checking && (
@@ -436,7 +455,7 @@ function SignInForm() {
   );
 }
 
-function SignUpForm() {
+function SignUpForm({ hostSlug }: { hostSlug: string | null }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -446,7 +465,7 @@ function SignUpForm() {
   const brandFn = useServerFn(getPublicGymBrand);
   const { data: brand } = useQuery({
     queryKey: ["public-gym-brand", gymFromLink],
-    queryFn: () => brandFn({ data: { slug: gymFromLink! } }),
+    queryFn: () => gymFromLink ? brandFn({ data: { slug: gymFromLink } }) : null,
     enabled: !!gymFromLink,
     staleTime: 10 * 60_000,
   });
@@ -455,10 +474,15 @@ function SignUpForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const verifyJoinCode = useServerFn(verifyGymJoinCode);
+  useEffect(() => { if (hostSlug) setGymSlug(hostSlug); }, [hostSlug]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (hostSlug && gymSlug !== hostSlug) {
+      setError("Please use this gym's code on this address.");
+      return;
+    }
     if (password !== confirm) {
       setError("Those passwords don't match.");
       return;
@@ -573,6 +597,7 @@ function SignUpForm() {
           id="su-gym"
           required
           value={gymSlug}
+          readOnly={!!hostSlug}
           onChange={(e) => setGymSlug(e.target.value)}
           placeholder="your-gym"
         />

@@ -168,12 +168,13 @@ export const getPublicGymBrand = createServerFn({ method: "GET" })
     z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]{1,64}$/) }).parse(d),
   )
   .handler(async ({ data }) => {
-    const { data: rows } = await publicClient().rpc("public_gym_manifest", {
+    const { data: rows, error } = await publicClient().rpc("public_gym_manifest", {
       _slug: data.slug,
       _domain: null as any,
     });
+    if (error) throw new Error("We couldn't load this gym.");
     const g = (rows ?? [])[0] as any;
-    return g ? { name: g.name as string, logoUrl: (g.logo_url as string | null) ?? null } : null;
+    return g ? { name: g.name as string, logoUrl: (g.logo_url as string | null) ?? null, primaryColor: (g.primary_color as string | null) ?? "#059669" } : null;
   });
 
 /** Public: name + support contacts for the "account paused" notice on /auth. */

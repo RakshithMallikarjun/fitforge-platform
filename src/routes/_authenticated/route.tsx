@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { registerSW } from "@/lib/pwa/register-sw";
 import { checkGymPaused } from "@/lib/gym-pause";
 import { ConsoleLoading } from "@/components/console-loading";
+import { enforceGymHost } from "@/lib/gym-host";
 
 /** Survives the sign-out navigation race so /auth can explain what happened. */
 function noteAuthReason(reason: "deactivated" | "gymDisabled") {
@@ -73,6 +74,14 @@ export const Route = createFileRoute("/_authenticated")({
         to: "/auth",
         search: { reason: "gym_disabled", gym: info?.gymSlug ?? undefined },
       });
+    }
+    try {
+      if (await enforceGymHost(data.user.id) === "forward") throw redirect({ to: "/auth" });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw redirect({ to: "/auth" });
+      }
+      throw error;
     }
     return { user: data.user };
   },

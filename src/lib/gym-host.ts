@@ -1,5 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
-import { gymHostDecision, gymSiteUrl } from "@/lib/public-config";
+import { gymHostDecision, gymSiteUrl, gymSlugFromHost } from "@/lib/public-config";
+import { useEffect, useState } from "react";
+
+export function useGymHostSlug() {
+  const [slug, setSlug] = useState<string | null>(null);
+  useEffect(() => { setSlug(gymSlugFromHost(window.location.hostname)); }, []);
+  return slug;
+}
 
 /** Reads the signed-in account's own gym under RLS; metadata never decides tenancy. */
 export async function accountGymSlug(userId: string): Promise<string | null> {
