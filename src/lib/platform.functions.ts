@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { CURRENCIES } from "@/lib/currencies";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isGymSlug } from "@/lib/public-config";
 
 /**
  * Platform (site-owner) console data access.
@@ -372,7 +373,8 @@ const slugSchema = z
   .toLowerCase()
   .min(3, "Gym code must be at least 3 characters")
   .max(32, "Gym code must be at most 32 characters")
-  .regex(/^[a-z0-9]([a-z0-9-]{1,30})[a-z0-9]$/, "Use lowercase letters, numbers and hyphens");
+  .regex(/^[a-z0-9]([a-z0-9-]{1,30})[a-z0-9]$/, "Use lowercase letters, numbers and hyphens")
+  .refine(isGymSlug, "That gym code is reserved for Fit Foundry");
 
 const createGymSchema = z.object({
   name: z.string().trim().min(1, "Gym name is required").max(80),
@@ -400,6 +402,7 @@ export const checkGymSlug = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { slug: string }) => z.object({ slug: z.string() }).parse(input))
   .handler(async ({ context, data: input }): Promise<{ available: boolean }> => {
+    if (!isGymSlug(input.slug.trim().toLowerCase())) return { available: false };
     const { data, error } = await context.supabase.rpc("platform_slug_available", {
       _slug: input.slug.trim().toLowerCase(),
     });
