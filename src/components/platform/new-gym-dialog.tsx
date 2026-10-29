@@ -251,9 +251,7 @@ export function NewGymDialog({
               placeholder="iron-works"
             />
             <p className="text-xs text-muted-foreground">
-              {!effectiveSlug
-                ? "Fills in from the gym name."
-                : gymSubdomain(effectiveSlug)}
+              {!effectiveSlug ? "Fills in from the gym name." : gymSubdomain(effectiveSlug)}
             </p>
             {effectiveSlug && localError ? (
               <p className="flex items-center gap-1 text-xs font-medium text-destructive">

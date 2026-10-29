@@ -12,10 +12,14 @@ test("gym settings shares the gym's Fit Foundry subdomain", async ({ page }) => 
   await page.waitForURL(/\/admin/);
   await page.goto("/admin/settings");
   const slug = await page.getByLabel("Gym code — members enter this when signing up").inputValue();
-  await expect(page.getByLabel("Gym sign-in address")).toHaveValue(`https://${slug}.fitfoundry.in/auth`);
+  await expect(page.getByLabel("Gym sign-in address")).toHaveValue(
+    `https://${slug}.fitfoundry.in/auth`,
+  );
   await expect(page.getByLabel("Gym sign-in address")).toHaveAttribute("readonly", "");
   await page.reload();
-  await expect(page.getByLabel("Gym sign-in address")).toHaveValue(`https://${slug}.fitfoundry.in/auth`);
+  await expect(page.getByLabel("Gym sign-in address")).toHaveValue(
+    `https://${slug}.fitfoundry.in/auth`,
+  );
 });
 
 test("staff email contact offers matching mail app and Gmail drafts and copying", async ({
