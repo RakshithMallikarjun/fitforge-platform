@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("gym settings shares the gym's Fit Foundry subdomain", async ({ page }) => {
+test.skip("gym settings shares the gym's Fit Foundry subdomain (dormant)", async ({ page }) => {
   const staffEmail = process.env.SMOKE_STAFF_EMAIL;
   const staffPassword = process.env.SMOKE_STAFF_PASSWORD;
   test.skip(!staffEmail || !staffPassword, "Staff credentials required");

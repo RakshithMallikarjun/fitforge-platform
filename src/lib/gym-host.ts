@@ -1,11 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
-import { gymHostDecision, gymSiteUrl, gymSlugFromHost } from "@/lib/public-config";
+import { GYM_SUBDOMAINS_ACTIVE, gymHostDecision, gymSiteUrl, gymSlugFromHost } from "@/lib/public-config";
 import { useEffect, useState } from "react";
 
 export function useGymHostSlug() {
   const [slug, setSlug] = useState<string | null>(null);
   useEffect(() => {
-    setSlug(gymSlugFromHost(window.location.hostname));
+    if (GYM_SUBDOMAINS_ACTIVE) setSlug(gymSlugFromHost(window.location.hostname));
   }, []);
   return slug;
 }
@@ -22,6 +22,7 @@ export async function accountGymSlug(userId: string): Promise<string | null> {
 }
 
 export async function enforceGymHost(userId: string): Promise<"stay" | "forward"> {
+  if (!GYM_SUBDOMAINS_ACTIVE) return "stay";
   const slug = await accountGymSlug(userId);
   const decision = gymHostDecision(window.location.hostname, slug);
   if (decision === "reject") {

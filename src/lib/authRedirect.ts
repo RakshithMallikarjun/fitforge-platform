@@ -7,7 +7,7 @@
  * free via the current host; local dev and previews keep their own origins.
  */
 
-import { PUBLIC_APP_URL, gymSiteUrl } from "./public-config";
+import { PUBLIC_APP_URL, gymLoginUrl } from "./public-config";
 
 function normalizePath(path: string): string {
   if (!path) return "/";
@@ -23,7 +23,7 @@ export function getAuthRedirectUrl(path: string): string {
   return `${PUBLIC_APP_URL}${p}`;
 }
 
-/** Server-side variant for emails: the platform-assigned gym subdomain. */
+/** Server-side variant for emails: root today; the gym subdomain once activated. */
 export function getGymAuthRedirectUrl(gym: { slug: string }, path: string): string {
-  return gymSiteUrl(gym.slug, normalizePath(path));
+  return gymLoginUrl(gym.slug, normalizePath(path));
 }

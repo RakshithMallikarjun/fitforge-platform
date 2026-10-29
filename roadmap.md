@@ -13,4 +13,4 @@
 - [x] Exercise library: URL filters, list/grid, shareable exercise details and scoped Used in plans
 - [x] Workout template previews, duplication, builder reuse and Add to plan
 - [x] Verify exercise library rules, desktop/mobile browsing and smoke coverage (Python browser checks passed; JS runner blocked by unavailable browser version)
-- [ ] Trainer-account click-through — no trainer session available; assignment isolation and hidden editing actions covered by unit tests
+- [ ] Trainer-account click-through — no trainer session available; assignment isolation and hidden editing actions covered by unit tests- [ ] Gym subdomains (`<slug>.fitfoundry.in`) — dormant; flip `GYM_SUBDOMAINS_ACTIVE` after domain connections + auth redirect allowlist are set up. Blocked on: product decision to revisit.
