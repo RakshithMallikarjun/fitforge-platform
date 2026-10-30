@@ -77,10 +77,7 @@ export function RecordPaymentDialog({
     enabled: open,
   });
 
-  const sellable = useMemo(
-    () => (plans ?? []).filter(isSellableTier),
-    [plans],
-  );
+  const sellable = useMemo(() => (plans ?? []).filter(isSellableTier), [plans]);
 
   const plan = sellable.find((p) => p.id === planId) ?? null;
   const enabledPeriods = useMemo(
@@ -92,7 +89,7 @@ export function RecordPaymentDialog({
 
   useEffect(() => {
     if (!open) return;
-    setPlanId((cur) => sellable.some((p) => p.id === cur) ? cur : (sellable[0]?.id ?? ""));
+    setPlanId((cur) => (sellable.some((p) => p.id === cur) ? cur : (sellable[0]?.id ?? "")));
   }, [open, sellable]);
 
   useEffect(() => {

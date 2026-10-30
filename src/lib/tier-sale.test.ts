@@ -8,7 +8,12 @@ describe("tier sale rules", () => {
     expect(hasTierPrice([{ price: NaN }])).toBe(false);
   });
   it("stops new sales for inactive or archived tiers", () => {
-    const tier = { is_active: true, archived_at: null, member_count: 2, prices: [{ price: 100, is_enabled: true }] };
+    const tier = {
+      is_active: true,
+      archived_at: null,
+      member_count: 2,
+      prices: [{ price: 100, is_enabled: true }],
+    };
     expect(isSellableTier(tier)).toBe(true);
     expect(isSellableTier({ ...tier, is_active: false })).toBe(false);
     expect(isSellableTier({ ...tier, archived_at: "2026-10-30" })).toBe(false);

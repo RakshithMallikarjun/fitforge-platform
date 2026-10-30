@@ -141,14 +141,15 @@ export const listPlans = createServerFn({ method: "GET" })
     const ids = (plans ?? []).map((p: any) => p.id);
     if (!ids.length) return [];
 
-    const [{ data: prices, error: pricesError }, { data: subs, error: subsError }] = await Promise.all([
-      supabase.from("membership_plan_prices").select("*").in("plan_id", ids),
-      supabase
-        .from("member_subscriptions")
-        .select("plan_id, state")
-        .eq("gym_id", gymId)
-        .in("plan_id", ids),
-    ]);
+    const [{ data: prices, error: pricesError }, { data: subs, error: subsError }] =
+      await Promise.all([
+        supabase.from("membership_plan_prices").select("*").in("plan_id", ids),
+        supabase
+          .from("member_subscriptions")
+          .select("plan_id, state")
+          .eq("gym_id", gymId)
+          .in("plan_id", ids),
+      ]);
     if (pricesError) fail(pricesError);
     if (subsError) fail(subsError);
 
@@ -219,12 +220,21 @@ export const updatePlan = createServerFn({ method: "POST" })
     const gymId = await requireAdmin(supabase, userId);
     await assertPlanInGym(supabase, data.id, gymId);
     if (data.isActive) {
-      const { data: tier, error: tierError } = await supabase.from("membership_plans").select("archived_at").eq("id", data.id).eq("gym_id", gymId).single();
+      const { data: tier, error: tierError } = await supabase
+        .from("membership_plans")
+        .select("archived_at")
+        .eq("id", data.id)
+        .eq("gym_id", gymId)
+        .single();
       if (tierError) fail(tierError);
       if (tier.archived_at) throw new Error("Archived tiers cannot be put on sale");
-      const { data: prices, error: priceError } = await supabase.from("membership_plan_prices").select("price").eq("plan_id", data.id);
+      const { data: prices, error: priceError } = await supabase
+        .from("membership_plan_prices")
+        .select("price")
+        .eq("plan_id", data.id);
       if (priceError) fail(priceError);
-      if (!hasTierPrice((prices ?? []).map((p) => ({ price: Number(p.price) })))) throw new Error("Add at least one price to put this tier on sale");
+      if (!hasTierPrice((prices ?? []).map((p) => ({ price: Number(p.price) }))))
+        throw new Error("Add at least one price to put this tier on sale");
     }
     const patch = {
       ...(data.name !== undefined ? { name: data.name } : {}),
@@ -236,7 +246,11 @@ export const updatePlan = createServerFn({ method: "POST" })
       ...(data.sortOrder !== undefined ? { sort_order: data.sortOrder } : {}),
     };
 
-    const { error } = await supabase.from("membership_plans").update(patch).eq("id", data.id).eq("gym_id", gymId);
+    const { error } = await supabase
+      .from("membership_plans")
+      .update(patch)
+      .eq("id", data.id)
+      .eq("gym_id", gymId);
     if (error) fail(error);
     return { ok: true };
   });

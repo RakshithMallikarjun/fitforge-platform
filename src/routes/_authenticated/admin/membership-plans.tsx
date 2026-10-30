@@ -117,7 +117,9 @@ function MembershipPlansPage() {
 
   const live = (plans ?? []).filter((p) => !p.archived_at);
   const archived = (plans ?? []).filter((p) => p.archived_at);
-  const visible = live.filter((p) => saleFilter === "All" || p.is_active === (saleFilter === "On sale"));
+  const visible = live.filter(
+    (p) => saleFilter === "All" || p.is_active === (saleFilter === "On sale"),
+  );
 
   function move(index: number, dir: -1 | 1) {
     const ids = live.map((p) => p.id);
@@ -160,12 +162,26 @@ function MembershipPlansPage() {
       />
 
       <main className="mx-auto max-w-[1100px] space-y-6 px-4 py-8 md:px-8">
-        {!isLoading && !error && <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">{plural(live.length, "tier")} · {live.filter((p) => p.is_active).length} on sale</p>
-          <div className="flex gap-1" aria-label="Filter tiers by sale status">
-            {["All", "On sale", "Not on sale"].map((filter) => <Button key={filter} size="sm" variant={saleFilter === filter ? "secondary" : "ghost"} aria-pressed={saleFilter === filter} onClick={() => setSaleFilter(filter)}>{filter}</Button>)}
+        {!isLoading && !error && (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              {plural(live.length, "tier")} · {live.filter((p) => p.is_active).length} on sale
+            </p>
+            <div className="flex gap-1" aria-label="Filter tiers by sale status">
+              {["All", "On sale", "Not on sale"].map((filter) => (
+                <Button
+                  key={filter}
+                  size="sm"
+                  variant={saleFilter === filter ? "secondary" : "ghost"}
+                  aria-pressed={saleFilter === filter}
+                  onClick={() => setSaleFilter(filter)}
+                >
+                  {filter}
+                </Button>
+              ))}
+            </div>
           </div>
-        </div>}
+        )}
         {isLoading ? (
           <div className="grid gap-4 md:grid-cols-2">
             {[0, 1, 2].map((i) => (
@@ -188,7 +204,9 @@ function MembershipPlansPage() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {visible.length === 0 && <p className="text-sm text-muted-foreground">No tiers match this filter.</p>}
+            {visible.length === 0 && (
+              <p className="text-sm text-muted-foreground">No tiers match this filter.</p>
+            )}
             {visible.map((plan) => (
               <PlanCard
                 key={plan.id}
@@ -224,7 +242,7 @@ function MembershipPlansPage() {
 
       {(creating || editing) && (
         <PlanDialog
-          plan={editing ? plans?.find((p) => p.id === editing.id) ?? editing : null}
+          plan={editing ? (plans?.find((p) => p.id === editing.id) ?? editing) : null}
           open
           onOpenChange={(v) => {
             if (!v) {
@@ -331,8 +349,21 @@ function PlanCard({
             >
               {plan.name}
             </Badge>
-            <Badge variant="secondary" className={plan.is_active ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}>{plan.is_active ? "On sale" : "Not on sale"}</Badge>
-            {canEdit && <TierSaleControl plan={plan} id={`${plan.id}-sale`} onMissingPrice={() => document.getElementById(`${plan.id}-monthly-price`)?.focus()} />}
+            <Badge
+              variant="secondary"
+              className={
+                plan.is_active ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"
+              }
+            >
+              {plan.is_active ? "On sale" : "Not on sale"}
+            </Badge>
+            {canEdit && (
+              <TierSaleControl
+                plan={plan}
+                id={`${plan.id}-sale`}
+                onMissingPrice={() => document.getElementById(`${plan.id}-monthly-price`)?.focus()}
+              />
+            )}
             {plan.hides_ads && <span className="text-xs text-muted-foreground">Ad-free</span>}
           </div>
           {plan.description && (
@@ -468,7 +499,9 @@ function PlanCard({
                 </>
               ) : (
                 <span className="col-span-2 text-sm">
-                  {plan.is_active && row?.is_enabled ? formatMoney(row.price, plan.currency) : "Not sold"}
+                  {plan.is_active && row?.is_enabled
+                    ? formatMoney(row.price, plan.currency)
+                    : "Not sold"}
                 </span>
               )}
             </div>
@@ -577,7 +610,33 @@ function PlanDialog({
             <Label htmlFor="tier-ads">Hide sponsor ads for these members</Label>
             <Switch id="tier-ads" checked={hidesAds} onCheckedChange={setHidesAds} />
           </div>
-          {plan ? <TierSaleControl plan={plan} id="tier-active" onMissingPrice={() => { onOpenChange(false); requestAnimationFrame(() => document.getElementById(`${plan.id}-monthly-price`)?.focus()); }} /> : <div className="space-y-2"><div className="flex items-center justify-between"><Label htmlFor="tier-active">On sale</Label><Switch id="tier-active" checked={false} disabled aria-label={`Put ${name || "new tier"} on sale`} /></div><p className="text-xs text-muted-foreground">Add at least one price to put this tier on sale</p></div>}
+          {plan ? (
+            <TierSaleControl
+              plan={plan}
+              id="tier-active"
+              onMissingPrice={() => {
+                onOpenChange(false);
+                requestAnimationFrame(() =>
+                  document.getElementById(`${plan.id}-monthly-price`)?.focus(),
+                );
+              }}
+            />
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="tier-active">On sale</Label>
+                <Switch
+                  id="tier-active"
+                  checked={false}
+                  disabled
+                  aria-label={`Put ${name || "new tier"} on sale`}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Add at least one price to put this tier on sale
+              </p>
+            </div>
+          )}
         </div>
 
         <DialogFooter>
