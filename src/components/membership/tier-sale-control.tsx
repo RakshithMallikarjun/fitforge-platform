@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useIsMutating, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -30,9 +30,11 @@ export function TierSaleControl({
 }) {
   const qc = useQueryClient();
   const update = useServerFn(updatePlan);
+  const pending = useIsMutating({ mutationKey: ["tier-sale", plan.id] }) > 0;
   const [confirm, setConfirm] = useState(false);
   const [missingPrice, setMissingPrice] = useState(false);
   const save = useMutation({
+    mutationKey: ["tier-sale", plan.id],
     mutationFn: (isActive: boolean) => update({ data: { id: plan.id, isActive } }),
     onMutate: async (isActive) => {
       await qc.cancelQueries({ queryKey: ["membership-plans"] });
@@ -43,7 +45,8 @@ export function TierSaleControl({
       return { previous };
     },
     onError: (error, _active, context) => {
-      if (context?.previous) qc.setQueryData(["membership-plans"], context.previous);
+      const previousTier = context?.previous?.find((p) => p.id === plan.id);
+      if (previousTier) qc.setQueryData<MembershipPlan[]>(["membership-plans"], (rows) => rows?.map((p) => p.id === plan.id ? { ...p, is_active: previousTier.is_active } : p));
       toast.error("Couldn't change sale status", { description: formatServerError(error) });
     },
     onSuccess: (_result, active) =>
@@ -60,7 +63,7 @@ export function TierSaleControl({
           id={id}
           aria-label={`Put ${plan.name} on sale`}
           checked={plan.is_active}
-          disabled={save.isPending}
+          disabled={pending || save.isPending}
           onCheckedChange={(active) => {
             if (active && !hasTierPrice(plan.prices)) {
               setMissingPrice(true);
