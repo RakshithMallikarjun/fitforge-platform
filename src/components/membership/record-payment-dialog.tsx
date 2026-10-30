@@ -341,7 +341,8 @@ export function RecordPaymentDialog({
           </Button>
           <Button
             disabled={
-              !plan || !enabledPeriods.includes(period) ||
+              !plan ||
+              !enabledPeriods.includes(period) ||
               amountInvalid ||
               record.isPending ||
               sellable.length === 0 ||
