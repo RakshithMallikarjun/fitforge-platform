@@ -1,4 +1,5 @@
 import { plural } from "@/lib/copy";
+import { isSellableTier } from "@/lib/tier-sale";
 import { useEffect, useMemo, useState } from "react";
 import { formatServerError } from "@/lib/format-error";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -77,7 +78,7 @@ export function RecordPaymentDialog({
   });
 
   const sellable = useMemo(
-    () => (plans ?? []).filter((p) => p.is_active && p.prices.some((pr) => pr.is_enabled)),
+    () => (plans ?? []).filter(isSellableTier),
     [plans],
   );
 
@@ -91,7 +92,7 @@ export function RecordPaymentDialog({
 
   useEffect(() => {
     if (!open) return;
-    setPlanId((cur) => cur || (sellable[0]?.id ?? ""));
+    setPlanId((cur) => sellable.some((p) => p.id === cur) ? cur : (sellable[0]?.id ?? ""));
   }, [open, sellable]);
 
   useEffect(() => {
@@ -106,7 +107,7 @@ export function RecordPaymentDialog({
   const { data: quote, isFetching: quoting } = useQuery({
     queryKey: ["payment-preview", memberId, planId, period, paidOn],
     queryFn: () => preview({ data: { memberId, planId, period, paidOn: paidOn || null } }),
-    enabled: open && !!planId && !!period,
+    enabled: open && !!plan && enabledPeriods.includes(period),
   });
 
   const record = useMutation({

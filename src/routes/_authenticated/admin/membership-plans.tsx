@@ -1,6 +1,8 @@
 import { consolePageHead } from "@/lib/page-head";
 import { plural } from "@/lib/copy";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { TierSaleControl } from "@/components/membership/tier-sale-control";
 import { formatServerError } from "@/lib/format-error";
 import { AdminOnly } from "@/components/admin-only";
 import { createFileRoute } from "@tanstack/react-router";
@@ -70,6 +72,7 @@ function MembershipPlansPage() {
   const [editing, setEditing] = useState<MembershipPlan | null>(null);
   const [creating, setCreating] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<MembershipPlan | null>(null);
+  const [saleFilter, setSaleFilter] = useState("All");
 
   const {
     data: plans,
@@ -114,14 +117,17 @@ function MembershipPlansPage() {
 
   const live = (plans ?? []).filter((p) => !p.archived_at);
   const archived = (plans ?? []).filter((p) => p.archived_at);
+  const visible = live.filter((p) => saleFilter === "All" || p.is_active === (saleFilter === "On sale"));
 
   function move(index: number, dir: -1 | 1) {
     const ids = live.map((p) => p.id);
     const to = index + dir;
     if (to < 0 || to >= ids.length) return;
     const next = [...ids];
-    const moved = next[index]!;
-    next[index] = next[to]!;
+    const moved = next[index];
+    const target = next[to];
+    if (!moved || !target) return;
+    next[index] = target;
     next[to] = moved;
     reorder.mutate(next);
   }
@@ -154,6 +160,12 @@ function MembershipPlansPage() {
       />
 
       <main className="mx-auto max-w-[1100px] space-y-6 px-4 py-8 md:px-8">
+        {!isLoading && !error && <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">{plural(live.length, "tier")} · {live.filter((p) => p.is_active).length} on sale</p>
+          <div className="flex gap-1" aria-label="Filter tiers by sale status">
+            {["All", "On sale", "Not on sale"].map((filter) => <Button key={filter} size="sm" variant={saleFilter === filter ? "secondary" : "ghost"} aria-pressed={saleFilter === filter} onClick={() => setSaleFilter(filter)}>{filter}</Button>)}
+          </div>
+        </div>}
         {isLoading ? (
           <div className="grid gap-4 md:grid-cols-2">
             {[0, 1, 2].map((i) => (
@@ -176,17 +188,18 @@ function MembershipPlansPage() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {live.map((plan, i) => (
+            {visible.length === 0 && <p className="text-sm text-muted-foreground">No tiers match this filter.</p>}
+            {visible.map((plan) => (
               <PlanCard
                 key={plan.id}
                 plan={plan}
                 canEdit={!!isAdmin}
                 onEdit={() => setEditing(plan)}
                 onArchive={() => setArchiveTarget(plan)}
-                onUp={() => move(i, -1)}
-                onDown={() => move(i, 1)}
-                first={i === 0}
-                last={i === live.length - 1}
+                onUp={() => move(live.indexOf(plan), -1)}
+                onDown={() => move(live.indexOf(plan), 1)}
+                first={live.indexOf(plan) === 0}
+                last={live.indexOf(plan) === live.length - 1}
               />
             ))}
           </div>
@@ -211,7 +224,7 @@ function MembershipPlansPage() {
 
       {(creating || editing) && (
         <PlanDialog
-          plan={editing}
+          plan={editing ? plans?.find((p) => p.id === editing.id) ?? editing : null}
           open
           onOpenChange={(v) => {
             if (!v) {
@@ -270,6 +283,8 @@ function PlanCard({
 }) {
   const qc = useQueryClient();
   const [draft, setDraft] = useState<Record<string, string>>({});
+  const setPrice = useServerFn(setPlanPrice);
+  const removePrice = useServerFn(removePlanPrice);
 
   const clearDraft = (period: (typeof BILLING_PERIODS)[number]) => {
     setDraft((current) => {
@@ -283,7 +298,7 @@ function PlanCard({
       period: (typeof BILLING_PERIODS)[number];
       price: number;
       isEnabled: boolean;
-    }) => setPlanPrice({ data: { planId: plan.id, ...vars } }),
+    }) => setPrice({ data: { planId: plan.id, ...vars } }),
     onSuccess: (_result, variables) => {
       toast.success("Price saved");
       clearDraft(variables.period);
@@ -295,7 +310,7 @@ function PlanCard({
 
   const clearPrice = useMutation({
     mutationFn: (period: (typeof BILLING_PERIODS)[number]) =>
-      removePlanPrice({ data: { planId: plan.id, period } }),
+      removePrice({ data: { planId: plan.id, period } }),
     onSuccess: (_result, period) => {
       clearDraft(period);
       toast.success("Price removed");
@@ -307,7 +322,7 @@ function PlanCard({
 
   return (
     <article className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
-      <header className="flex items-start justify-between gap-2">
+      <header className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <Badge
@@ -316,7 +331,8 @@ function PlanCard({
             >
               {plan.name}
             </Badge>
-            {!plan.is_active && <span className="text-xs text-muted-foreground">Not on sale</span>}
+            <Badge variant="secondary" className={plan.is_active ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}>{plan.is_active ? "On sale" : "Not on sale"}</Badge>
+            {canEdit && <TierSaleControl plan={plan} id={`${plan.id}-sale`} onMissingPrice={() => document.getElementById(`${plan.id}-monthly-price`)?.focus()} />}
             {plan.hides_ads && <span className="text-xs text-muted-foreground">Ad-free</span>}
           </div>
           {plan.description && (
@@ -398,7 +414,11 @@ function PlanCard({
                   ) : (savePrice.isSuccess && savePrice.variables?.period === period) ||
                     (clearPrice.isSuccess && clearPrice.variables === period) ? (
                     <span className="text-primary">Saved ✓</span>
-                  ) : row?.is_enabled ? (
+                  ) : !row ? (
+                    "Set a price first"
+                  ) : !plan.is_active ? (
+                    "Tier is not on sale"
+                  ) : row.is_enabled ? (
                     "On sale"
                   ) : (
                     "Not on sale"
@@ -438,8 +458,8 @@ function PlanCard({
                     </Button>
                   </div>
                   <Switch
-                    checked={!!row?.is_enabled}
-                    disabled={!row || pending}
+                    checked={plan.is_active && !!row?.is_enabled}
+                    disabled={!plan.is_active || !row || pending}
                     onCheckedChange={(v) =>
                       row && savePrice.mutate({ period, price: row.price, isEnabled: v })
                     }
@@ -448,7 +468,7 @@ function PlanCard({
                 </>
               ) : (
                 <span className="col-span-2 text-sm">
-                  {row?.is_enabled ? formatMoney(row.price, plan.currency) : "Not sold"}
+                  {plan.is_active && row?.is_enabled ? formatMoney(row.price, plan.currency) : "Not sold"}
                 </span>
               )}
             </div>
@@ -474,7 +494,8 @@ function PlanDialog({
   const [features, setFeatures] = useState((plan?.features ?? []).join("\n"));
   const [badgeColor, setBadgeColor] = useState(plan?.badge_color ?? "#64748b");
   const [hidesAds, setHidesAds] = useState(plan?.hides_ads ?? false);
-  const [isActive, setIsActive] = useState(plan?.is_active ?? true);
+  const create = useServerFn(createPlan);
+  const update = useServerFn(updatePlan);
 
   const payload = () => ({
     name: name.trim(),
@@ -486,13 +507,13 @@ function PlanDialog({
       .slice(0, 20),
     badgeColor,
     hidesAds,
-    isActive,
+    ...(plan ? {} : { isActive: false }),
   });
 
   const save = useMutation({
     mutationFn: async () => {
-      if (plan) await updatePlan({ data: { id: plan.id, ...payload() } });
-      else await createPlan({ data: payload() });
+      if (plan) await update({ data: { id: plan.id, ...payload() } });
+      else await create({ data: payload() });
     },
     onSuccess: () => {
       toast.success(plan ? "Tier updated" : "Tier created");
@@ -556,10 +577,7 @@ function PlanDialog({
             <Label htmlFor="tier-ads">Hide sponsor ads for these members</Label>
             <Switch id="tier-ads" checked={hidesAds} onCheckedChange={setHidesAds} />
           </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="tier-active">On sale</Label>
-            <Switch id="tier-active" checked={isActive} onCheckedChange={setIsActive} />
-          </div>
+          {plan ? <TierSaleControl plan={plan} id="tier-active" onMissingPrice={() => { onOpenChange(false); requestAnimationFrame(() => document.getElementById(`${plan.id}-monthly-price`)?.focus()); }} /> : <div className="space-y-2"><div className="flex items-center justify-between"><Label htmlFor="tier-active">On sale</Label><Switch id="tier-active" checked={false} disabled aria-label={`Put ${name || "new tier"} on sale`} /></div><p className="text-xs text-muted-foreground">Add at least one price to put this tier on sale</p></div>}
         </div>
 
         <DialogFooter>

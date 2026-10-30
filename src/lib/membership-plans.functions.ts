@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { dateStringInZone, shiftDateString } from "@/lib/gym-date";
+import { hasTierPrice } from "@/lib/tier-sale";
 
 /**
  * Membership tiers, the payment ledger and the dues engine.
@@ -140,7 +141,7 @@ export const listPlans = createServerFn({ method: "GET" })
     const ids = (plans ?? []).map((p: any) => p.id);
     if (!ids.length) return [];
 
-    const [{ data: prices }, { data: subs }] = await Promise.all([
+    const [{ data: prices, error: pricesError }, { data: subs, error: subsError }] = await Promise.all([
       supabase.from("membership_plan_prices").select("*").in("plan_id", ids),
       supabase
         .from("member_subscriptions")
@@ -148,6 +149,8 @@ export const listPlans = createServerFn({ method: "GET" })
         .eq("gym_id", gymId)
         .in("plan_id", ids),
     ]);
+    if (pricesError) fail(pricesError);
+    if (subsError) fail(subsError);
 
     return (plans ?? []).map((p: any) => ({
       ...p,
@@ -185,6 +188,7 @@ export const createPlan = createServerFn({ method: "POST" })
     const { gymId } = await gymOf(supabase, userId);
     if (!gymId) throw new Error("Forbidden");
 
+    if (data.isActive) throw new Error("Add at least one price to put this tier on sale");
     const { data: row, error } = await supabase
       .from("membership_plans")
       .insert({
@@ -194,7 +198,7 @@ export const createPlan = createServerFn({ method: "POST" })
         features: data.features ?? [],
         badge_color: data.badgeColor ?? null,
         hides_ads: data.hidesAds ?? false,
-        is_active: data.isActive ?? true,
+        is_active: false,
         sort_order: data.sortOrder ?? 0,
       })
       .select("id")
@@ -214,6 +218,14 @@ export const updatePlan = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const gymId = await requireAdmin(supabase, userId);
     await assertPlanInGym(supabase, data.id, gymId);
+    if (data.isActive) {
+      const { data: tier, error: tierError } = await supabase.from("membership_plans").select("archived_at").eq("id", data.id).eq("gym_id", gymId).single();
+      if (tierError) fail(tierError);
+      if (tier.archived_at) throw new Error("Archived tiers cannot be put on sale");
+      const { data: prices, error: priceError } = await supabase.from("membership_plan_prices").select("price").eq("plan_id", data.id);
+      if (priceError) fail(priceError);
+      if (!hasTierPrice((prices ?? []).map((p) => ({ price: Number(p.price) })))) throw new Error("Add at least one price to put this tier on sale");
+    }
     const patch = {
       ...(data.name !== undefined ? { name: data.name } : {}),
       ...(data.description !== undefined ? { description: data.description } : {}),
@@ -224,7 +236,7 @@ export const updatePlan = createServerFn({ method: "POST" })
       ...(data.sortOrder !== undefined ? { sort_order: data.sortOrder } : {}),
     };
 
-    const { error } = await supabase.from("membership_plans").update(patch).eq("id", data.id);
+    const { error } = await supabase.from("membership_plans").update(patch).eq("id", data.id).eq("gym_id", gymId);
     if (error) fail(error);
     return { ok: true };
   });
