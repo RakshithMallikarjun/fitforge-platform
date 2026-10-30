@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { TierSaleControl } from "@/components/membership/tier-sale-control";
 import { formatServerError } from "@/lib/format-error";
-import { AdminOnly } from "@/components/admin-only";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -57,15 +56,12 @@ export const Route = createFileRoute("/_authenticated/admin/membership-plans")({
       "Membership tiers",
       "Membership tiers and records in your Fit Foundry account.",
     ),
-  component: () => (
-    <AdminOnly area="Membership tiers">
-      <MembershipPlansPage />
-    </AdminOnly>
-  ),
+  component: MembershipPlansPage,
 });
 
 function MembershipPlansPage() {
   const qc = useQueryClient();
+  const fetchPlans = useServerFn(listPlans);
   const { data: me } = useCurrentUser();
   const isAdmin = me?.roles.includes("admin");
 
@@ -82,7 +78,7 @@ function MembershipPlansPage() {
   } = useQuery({
     retry: false,
     queryKey: ["membership-plans"],
-    queryFn: () => listPlans(),
+    queryFn: () => fetchPlans(),
   });
 
   const invalidate = () => {
