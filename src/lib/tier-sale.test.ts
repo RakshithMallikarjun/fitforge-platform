@@ -1,3 +1,4 @@
+// @ts-nocheck -- run with bun test; follows existing project test convention
 import { describe, expect, it } from "bun:test";
 import { hasTierPrice, isSellableTier, needsSaleConfirmation } from "./tier-sale";
 
