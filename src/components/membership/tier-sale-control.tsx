@@ -46,7 +46,10 @@ export function TierSaleControl({
     },
     onError: (error, _active, context) => {
       const previousTier = context?.previous?.find((p) => p.id === plan.id);
-      if (previousTier) qc.setQueryData<MembershipPlan[]>(["membership-plans"], (rows) => rows?.map((p) => p.id === plan.id ? { ...p, is_active: previousTier.is_active } : p));
+      if (previousTier)
+        qc.setQueryData<MembershipPlan[]>(["membership-plans"], (rows) =>
+          rows?.map((p) => (p.id === plan.id ? { ...p, is_active: previousTier.is_active } : p)),
+        );
       toast.error("Couldn't change sale status", { description: formatServerError(error) });
     },
     onSuccess: (_result, active) =>

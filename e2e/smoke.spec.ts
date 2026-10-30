@@ -322,7 +322,9 @@ test("gym admin manages membership tiers and reviews dues", async ({ page }) => 
   await expect(savedSale).toBeChecked();
   await expect(page.getByText(`${tierName} is now on sale`, { exact: true })).toBeVisible();
   await savedTier.getByRole("button", { name: "Edit tier" }).click();
-  await expect(page.getByRole("dialog").getByRole("switch", { name: `Put ${tierName} on sale` })).toBeChecked();
+  await expect(
+    page.getByRole("dialog").getByRole("switch", { name: `Put ${tierName} on sale` }),
+  ).toBeChecked();
   await page.keyboard.press("Escape");
   await expect(sellMonthly).toBeEnabled();
   await expect(sellMonthly).toBeChecked();
