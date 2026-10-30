@@ -1,3 +1,5 @@
+- [x] Membership tier overview sale switches, pricing/member safeguards, shared picker updates; 9 unit tests and signed-in sale/reload/modal checks passed
+- [ ] Tier sale confirmation with populated members and Record payment click-through — no populated members in available gym; JS smoke runner lacks required browser
 - [x] Gym slug subdomains: branded sign-in, gym-host enforcement, invitations and Settings
 - [x] Verify subdomain rules (7 tests) and signed-in Settings with hard reload; document hosting/auth activation requirements
 - [ ] Real gym-host sign-in/invite checks — hosting addresses not connected; simulated cross-origin dev-server verification failed

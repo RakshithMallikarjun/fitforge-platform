@@ -302,7 +302,12 @@ test("gym admin manages membership tiers and reviews dues", async ({ page }) => 
   await page.getByRole("button", { name: /save tier/i }).click();
 
   const tier = page.getByRole("article").filter({ hasText: tierName });
+  const sale = tier.getByRole("switch", { name: `Put ${tierName} on sale` });
+  await sale.click();
+  await expect(sale).not.toBeChecked();
+  await expect(tier.getByText("Add at least one price to put this tier on sale")).toBeVisible();
   const monthlyPrice = tier.getByLabel(`Monthly price for ${tierName}`);
+  await expect(monthlyPrice).toBeFocused();
   await monthlyPrice.fill("99");
   await tier.getByRole("button", { name: `Save Monthly price for ${tierName}` }).click();
   await expect(page.getByText("Price saved")).toBeVisible();
@@ -311,12 +316,25 @@ test("gym admin manages membership tiers and reviews dues", async ({ page }) => 
   const savedTier = page.getByRole("article").filter({ hasText: tierName });
   await expect(savedTier.getByLabel(`Monthly price for ${tierName}`)).toHaveValue("99");
   const sellMonthly = savedTier.getByRole("switch", { name: `Sell Monthly for ${tierName}` });
+  await expect(sellMonthly).toBeDisabled();
+  const savedSale = savedTier.getByRole("switch", { name: `Put ${tierName} on sale` });
+  await savedSale.click();
+  await expect(savedSale).toBeChecked();
+  await expect(page.getByText(`${tierName} is now on sale`, { exact: true })).toBeVisible();
+  await savedTier.getByRole("button", { name: "Edit tier" }).click();
+  await expect(
+    page.getByRole("dialog").getByRole("switch", { name: `Put ${tierName} on sale` }),
+  ).toBeChecked();
+  await page.keyboard.press("Escape");
   await expect(sellMonthly).toBeEnabled();
   await expect(sellMonthly).toBeChecked();
   await sellMonthly.click();
   await expect(savedTier.getByText("Not on sale").first()).toBeVisible();
   await sellMonthly.click();
   await expect(sellMonthly).toBeChecked();
+  await savedSale.click();
+  await expect(savedSale).not.toBeChecked();
+  await expect(sellMonthly).toBeDisabled();
 
   // Dues: totals and the chase list render.
   await page.goto("/admin/dues");
